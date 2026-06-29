@@ -366,6 +366,26 @@ var App = (function () {
       'Copiado para Séneca: ' + rejilla.alumnos.length + ' alumnos/as y ' + crits.length + ' criterios.');
   }
 
+  /** Explica el botón "Copiar para Séneca" y enlaza la extensión Autonotas. */
+  function infoSeneca() {
+    var url = 'https://chromewebstore.google.com/detail/autonotas-séneca/fgghhpmbkdhdgnnboeckhhnnjiknnkak?hl=es';
+    abrirModal('Copiar para Séneca',
+      '<p class="mensaje">El botón <b>📋 Copiar para Séneca</b> copia al portapapeles, en columnas, ' +
+      'el <b>nombre del alumnado</b> y la <b>nota de cada criterio</b> de esta unidad ' +
+      '(2 decimales con coma).</p>' +
+      '<p class="mensaje">Está pensado para usarse con la extensión de Chrome ' +
+      '<b>Autonotas Séneca</b> (de otro compañero), que pega esas notas directamente en una ' +
+      'actividad evaluable por criterios en Séneca.</p>' +
+      '<ol class="pasos">' +
+      '<li>Instala la extensión <b>Autonotas Séneca</b>.</li>' +
+      '<li>Aquí, pulsa <b>📋 Copiar para Séneca</b>.</li>' +
+      '<li>En Séneca, abre la actividad criterial y usa Autonotas para pegar.</li>' +
+      '</ol>' +
+      '<p><a class="enlace-ext" href="' + url + '" target="_blank" rel="noopener">' +
+      'Abrir Autonotas Séneca en Chrome Web Store ↗</a></p>',
+      'Entendido', cerrarModal);
+  }
+
   function copiarAlPortapapeles(texto, mensajeOk) {
     var ta = document.createElement('textarea');
     ta.value = texto;
@@ -1003,7 +1023,8 @@ var App = (function () {
     nuevaEvaluacion: nuevaEvaluacion, claseCambiada: claseCambiada, elegirColor: elegirColor,
     abrirEvaluacion: abrirEvaluacion, eliminarEvaluacionActual: eliminarEvaluacionActual,
     nuevaUnidad: nuevaUnidad, abrirUnidad: abrirUnidad,
-    clonarUnidad: clonarUnidad, eliminarUnidad: eliminarUnidad, copiarSeneca: copiarSeneca,
+    clonarUnidad: clonarUnidad, eliminarUnidad: eliminarUnidad,
+    copiarSeneca: copiarSeneca, infoSeneca: infoSeneca,
     verResumen: verResumen, pintarResumen: pintarResumen, copiarResumenSeneca: copiarResumenSeneca,
     nuevaActividad: nuevaActividad,
     editarActividadUI: editarActividadUI, eliminarActividadUI: eliminarActividadUI,

@@ -75,7 +75,10 @@
         <h1 id="unidad-titulo"></h1>
         <div class="acciones-unidad">
           <label class="check"><input type="checkbox" id="ver-criterios" checked onchange="App.pintarRejilla()"> Notas por criterio</label>
-          <button class="btn" onclick="App.copiarSeneca()">📋 Copiar para Séneca</button>
+          <span class="grupo-btn">
+            <button class="btn" onclick="App.copiarSeneca()">📋 Copiar para Séneca</button>
+            <button class="btn-info" title="¿Cómo funciona?" onclick="App.infoSeneca()">ⓘ</button>
+          </span>
           <button class="btn" onclick="App.variasActividades()">+ Varias</button>
           <button class="btn primario" onclick="App.nuevaActividad()">+ Nueva actividad</button>
         </div>
