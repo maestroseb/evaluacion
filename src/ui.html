@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <?!= include('estilos') ?>
+</head>
+<body>
+  <header class="barra">
+    <span class="logo">📊 Evaluación por Criterios</span>
+    <span id="usuario" class="usuario">…</span>
+  </header>
+
+  <main id="app">
+    <div id="cargando" class="aviso">Cargando tu cuaderno…</div>
+
+    <section id="vista-grupos" hidden>
+      <div class="cabecera-seccion">
+        <h1>Mis grupos</h1>
+        <button class="btn primario" onclick="App.nuevoGrupo()">+ Nuevo grupo</button>
+      </div>
+      <div id="lista-grupos" class="tarjetas"></div>
+    </section>
+  </main>
+
+  <?!= include('cliente') ?>
+</body>
+</html>

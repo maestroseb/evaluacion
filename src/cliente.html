@@ -1,0 +1,69 @@
+<script>
+/**
+ * Lógica de cliente. Habla con el backend Apps Script vía google.script.run.
+ * Fase 1: carga el estado inicial y pinta la lista de grupos.
+ * Las fases siguientes añadirán alumnos, unidades, actividades y la rejilla.
+ */
+var App = (function () {
+  var estado = null;
+
+  function iniciar() {
+    google.script.run
+      .withSuccessHandler(onEstado)
+      .withFailureHandler(onError)
+      .getEstadoInicial();
+  }
+
+  function onEstado(e) {
+    estado = e;
+    document.getElementById('usuario').textContent = e.usuario;
+    document.getElementById('cargando').hidden = true;
+    document.getElementById('vista-grupos').hidden = false;
+    pintarGrupos();
+  }
+
+  function pintarGrupos() {
+    var cont = document.getElementById('lista-grupos');
+    if (!estado.grupos.length) {
+      cont.innerHTML = '<div class="vacio">Aún no tienes grupos. ' +
+        'Crea el primero para empezar a evaluar.</div>';
+      return;
+    }
+    cont.innerHTML = estado.grupos.map(function (g) {
+      return '<div class="tarjeta" onclick="App.abrirGrupo(\'' + g.grupoId + '\')">' +
+        '<h3>' + esc(g.nombre) + '</h3>' +
+        '<div class="meta">' + esc(g.area) + ' · ' + esc(g.curso) + '</div>' +
+        '<div class="meta">' + g.numAlumnos + ' alumnos/as</div>' +
+        '</div>';
+    }).join('');
+  }
+
+  function nuevoGrupo() {
+    // Fase 2: formulario de creación (nombre, área+curso del mapa, alumnado).
+    alert('Crear grupo: disponible en la Fase 2.');
+  }
+
+  function abrirGrupo(id) {
+    // Fase 3: rejilla de unidades/actividades del grupo.
+    alert('Abrir grupo ' + id + ': disponible en la Fase 3.');
+  }
+
+  function onError(err) {
+    document.getElementById('cargando').textContent =
+      'Error al cargar: ' + err.message;
+  }
+
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  return {
+    iniciar: iniciar,
+    nuevoGrupo: nuevoGrupo,
+    abrirGrupo: abrirGrupo
+  };
+})();
+
+window.addEventListener('load', App.iniciar);
+</script>
