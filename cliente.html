@@ -137,9 +137,38 @@ var App = (function () {
       return;
     }
     cont.innerHTML = uds.map(function (u) {
-      return '<div class="tarjeta" onclick="App.abrirUnidad(\'' + u.unidadId + '\')">' +
-        '<h3>' + esc(u.nombre) + '</h3></div>';
+      return '<div class="tarjeta tarjeta-unidad" onclick="App.abrirUnidad(\'' + u.unidadId + '\')">' +
+        '<h3>' + esc(u.nombre) + '</h3>' +
+        '<div class="acciones-tarjeta">' +
+        '<button class="icono" title="Duplicar unidad" ' +
+        'onclick="event.stopPropagation();App.clonarUnidad(\'' + u.unidadId + '\')">⧉</button>' +
+        '<button class="icono peligro" title="Eliminar unidad" ' +
+        'onclick="event.stopPropagation();App.eliminarUnidad(\'' + u.unidadId + '\')">🗑</button>' +
+        '</div></div>';
     }).join('');
+  }
+
+  /** Duplicar desde la tarjeta del listado. */
+  function clonarUnidad(unidadId) {
+    aviso('Duplicando unidad…');
+    llamar('clonarUnidad', [unidadId], function (u) {
+      (evalActual.unidades = evalActual.unidades || []).push(u);
+      ocultarToast();
+      pintarUnidades();
+    });
+  }
+
+  /** Eliminar desde la tarjeta del listado. */
+  function eliminarUnidad(unidadId) {
+    var u = (evalActual.unidades || []).filter(function (x) { return x.unidadId === unidadId; })[0];
+    confirmar('Eliminar unidad',
+      'Se eliminarán la unidad "' + (u ? u.nombre : '') + '", sus actividades y notas. ¿Continuar?',
+      'Eliminar', function () {
+        delete rejillaCache[unidadId];
+        llamar('eliminarUnidad', [unidadId], function () {});
+        evalActual.unidades = (evalActual.unidades || []).filter(function (x) { return x.unidadId !== unidadId; });
+        pintarUnidades();
+      });
   }
   function nuevaUnidad() {
     abrirModal('Nueva unidad',
@@ -205,27 +234,6 @@ var App = (function () {
     pintarRejilla();
   }
 
-  function eliminarUnidadActual() {
-    confirmar('Eliminar unidad',
-      'Se eliminarán la unidad "' + rejilla.unidad.nombre + '", sus actividades y notas. ¿Continuar?',
-      'Eliminar', function () {
-        var id = rejilla.unidad.unidadId;
-        delete rejillaCache[id];
-        llamar('eliminarUnidad', [id], function () {});
-        evalActual.unidades = (evalActual.unidades || []).filter(function (u) { return u.unidadId !== id; });
-        abrirEvaluacionCargada(evalActual);
-      });
-  }
-
-  function clonarUnidadActual() {
-    var id = rejilla.unidad.unidadId;
-    aviso('Duplicando unidad…');
-    llamar('clonarUnidad', [id], function (u) {
-      (evalActual.unidades = evalActual.unidades || []).push(u);
-      ocultarToast();
-      abrirUnidad(u.unidadId);
-    });
-  }
 
   function nuevaActividad() { modalActividad(null); }
   function editarActividadUI(id) { modalActividad(actDe(id)); }
@@ -318,7 +326,7 @@ var App = (function () {
         '<span class="act-nom">' + esc(a.nombre) + '</span>' +
         '<small>/' + a.numItems + ' · ' + esc(a.criterios.join(', ')) + '</small></th>';
     });
-    h += '<th class="nota sep">Nota</th>';
+    h += '<th class="nota sep">NOTA</th>';
     crits.forEach(function (cod) {
       h += '<th class="crit-col" title="' + esc(infoCrit(cod).completo) + '">' + esc(cod) + '</th>';
     });
@@ -707,7 +715,7 @@ var App = (function () {
     nuevaEvaluacion: nuevaEvaluacion, claseCambiada: claseCambiada,
     abrirEvaluacion: abrirEvaluacion, eliminarEvaluacionActual: eliminarEvaluacionActual,
     nuevaUnidad: nuevaUnidad, abrirUnidad: abrirUnidad,
-    eliminarUnidadActual: eliminarUnidadActual, clonarUnidadActual: clonarUnidadActual,
+    clonarUnidad: clonarUnidad, eliminarUnidad: eliminarUnidad,
     nuevaActividad: nuevaActividad,
     editarActividadUI: editarActividadUI, eliminarActividadUI: eliminarActividadUI,
     pintarRejilla: pintarRejilla,

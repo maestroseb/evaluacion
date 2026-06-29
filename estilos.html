@@ -68,6 +68,18 @@
   .tarjeta:hover { transform: translateY(-2px); box-shadow: var(--sombra-2); border-color: var(--borde-fuerte); }
   .tarjeta h3 { margin: 0 0 8px; font-size: 15px; font-weight: 600; letter-spacing: -.01em; }
   .tarjeta .meta { color: var(--texto-2); font-size: 13px; line-height: 1.5; }
+  .tarjeta-unidad { position: relative; }
+  .acciones-tarjeta { position: absolute; top: 12px; right: 12px; display: flex; gap: 4px;
+    opacity: 0; transition: opacity .12s; }
+  .tarjeta-unidad:hover .acciones-tarjeta { opacity: 1; }
+  .icono {
+    border: 1px solid var(--borde); background: var(--surface); border-radius: 7px;
+    width: 28px; height: 28px; cursor: pointer; font-size: 13px; line-height: 1;
+    color: var(--texto-2); display: inline-flex; align-items: center; justify-content: center;
+    box-shadow: var(--sombra-1); transition: background .12s, color .12s, border-color .12s;
+  }
+  .icono:hover { background: var(--bg); color: var(--texto); }
+  .icono.peligro:hover { background: var(--peligro-bg); color: var(--peligro); border-color: #f3c6c2; }
   .vacio {
     grid-column: 1 / -1; color: var(--texto-3); padding: 48px 24px; text-align: center;
     font-size: 14px; background: var(--surface); border: 1px dashed var(--borde-fuerte);
@@ -167,7 +179,8 @@
 
   /* ---------- Rejilla ---------- */
   .rejilla-cont { overflow: auto; border: 1px solid var(--borde); border-radius: 12px;
-    background: var(--surface); box-shadow: var(--sombra-1); }
+    background: var(--surface); box-shadow: var(--sombra-1);
+    max-height: calc(100vh - 200px); }
   table.rejilla { border-collapse: separate; border-spacing: 0; width: auto; font-size: 13px; }
   table.rejilla th, table.rejilla td {
     border-bottom: 1px solid var(--borde); border-right: 1px solid var(--borde);
@@ -204,11 +217,15 @@
 
   table.rejilla .num { font-variant-numeric: tabular-nums; color: var(--texto-2); min-width: 48px; }
   table.rejilla .crit-col { color: var(--texto-2); font-weight: 600; font-size: 11px; }
-  table.rejilla td.nota, table.rejilla th.nota { font-weight: 700; color: var(--acento-fuerte); }
+  /* Columna NOTA destacada (fondo + negrita) */
+  table.rejilla th.nota { font-weight: 700; color: var(--acento-fuerte); background: #e6e8fb;
+    letter-spacing: .03em; }
+  table.rejilla td.nota { font-weight: 700; color: var(--acento-fuerte); background: var(--acento-suave); }
   /* Separador visual antes de la columna Nota */
-  table.rejilla .sep { border-left: 2px solid var(--borde-fuerte); }
-  /* Notas suspensas en rojo */
+  table.rejilla .sep { border-left: 2px solid var(--acento); }
+  /* Notas suspensas en rojo (mantienen la negrita de NOTA) */
   table.rejilla td.suspenso { color: var(--peligro); }
+  table.rejilla tbody tr:hover td.nota { background: #dfe2fb; }
 
   /* Zebra respetando columnas fijas */
   table.rejilla tbody tr:nth-child(odd) td { background: #fafbfc; }
