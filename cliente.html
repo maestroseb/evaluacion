@@ -321,7 +321,10 @@ var App = (function () {
     }).join('');
 
     var borrar = act
-      ? '<button type="button" class="link-peligro" onclick="App.eliminarActividadUI(\'' + act.actividadId + '\')">Eliminar actividad</button>'
+      ? '<div class="acciones-modal">' +
+        '<button type="button" class="link" onclick="App.duplicarActividadUI(\'' + act.actividadId + '\')">Duplicar</button>' +
+        '<button type="button" class="link-peligro" onclick="App.eliminarActividadUI(\'' + act.actividadId + '\')">Eliminar actividad</button>' +
+        '</div>'
       : '';
 
     abrirModal(act ? 'Editar actividad' : 'Nueva actividad',
@@ -358,6 +361,14 @@ var App = (function () {
           });
         }
       });
+  }
+
+  function duplicarActividadUI(id) {
+    botonModalCargando('Duplicando…');
+    llamar('duplicarActividad', [id], function (nueva) {
+      rejilla.actividades.push(nueva);
+      cerrarModal(); pintarRejilla();
+    });
   }
 
   function eliminarActividadUI(id) {
@@ -442,20 +453,26 @@ var App = (function () {
     });
   }
 
-  /** Guarda el valor de un input: clamp, estado local, persistencia y notas. */
-  function commitInput(inp) {
-    var actId = inp.dataset.act, alId = inp.dataset.al;
-    var act = actDe(actId);
+  /** Aplica el valor de un input al estado local (clamp). Devuelve el cambio o null. */
+  function aplicarValor(inp) {
+    var actId = inp.dataset.act, alId = inp.dataset.al, act = actDe(actId);
     var v = inp.value === '' ? '' : Number(String(inp.value).replace(',', '.'));
-    if (v !== '' && (isNaN(v))) return;
-    if (v !== '' && act && v > act.numItems) { v = act.numItems; inp.value = v; }
+    if (v !== '' && isNaN(v)) return null;
+    if (v !== '' && act && v > act.numItems) { v = act.numItems; inp.value = fmt(v); }
     if (v === '') {
       if (rejilla.items[actId]) delete rejilla.items[actId][alId];
     } else {
       (rejilla.items[actId] || (rejilla.items[actId] = {}))[alId] = v;
     }
-    actualizarNotasFila(alId);
-    llamar('guardarItem', [actId, alId, v === '' ? '' : v], function () {});
+    return { actividadId: actId, alumnoId: alId, conseguidos: v === '' ? '' : v };
+  }
+
+  /** Guarda el valor de un input (una celda): estado local, notas y persistencia. */
+  function commitInput(inp) {
+    var ch = aplicarValor(inp);
+    if (!ch) return;
+    actualizarNotasFila(ch.alumnoId);
+    llamar('guardarItem', [ch.actividadId, ch.alumnoId, ch.conseguidos], function () {});
   }
 
   /** Recalcula y actualiza solo las celdas de nota de una fila (sin repintar). */
@@ -504,15 +521,23 @@ var App = (function () {
     e.preventDefault();
     var inp = e.target, r0 = +inp.dataset.r, c0 = +inp.dataset.c;
     var lineas = texto.replace(/\r/g, '').replace(/\n+$/, '').split('\n');
+    var cambios = [], filas = {};
     lineas.forEach(function (linea, ri) {
       linea.split('\t').forEach(function (cel, ci) {
         var destino = inputs2d[r0 + ri] && inputs2d[r0 + ri][c0 + ci];
         if (!destino) return;
         var val = String(cel).trim();
         destino.value = val === '' ? '' : val.replace(',', '.');
-        commitInput(destino);
+        var ch = aplicarValor(destino);
+        if (ch) { cambios.push(ch); filas[ch.alumnoId] = true; }
       });
     });
+    Object.keys(filas).forEach(actualizarNotasFila);   // recalcula notas en pantalla
+    if (cambios.length) {                              // UNA sola llamada al servidor
+      llamar('guardarItems', [cambios], function () {
+        avisoOk('Pegadas ' + cambios.length + ' notas.');
+      });
+    }
   }
 
   // --- cálculo en vivo (espejo de Calc.gs) ---
@@ -794,6 +819,7 @@ var App = (function () {
     clonarUnidad: clonarUnidad, eliminarUnidad: eliminarUnidad, copiarSeneca: copiarSeneca,
     nuevaActividad: nuevaActividad,
     editarActividadUI: editarActividadUI, eliminarActividadUI: eliminarActividadUI,
+    duplicarActividadUI: duplicarActividadUI,
     pintarRejilla: pintarRejilla,
     nuevaClase: nuevaClase, copiarDeClase: copiarDeClase,
     abrirClase: abrirClase, editarAlumnos: editarAlumnos,

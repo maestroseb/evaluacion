@@ -36,14 +36,38 @@ function abrirCuaderno_() {
       Datos.asegurarEsquema_(ss);
       return ss;
     } catch (e) {
-      props.deleteProperty('cuadernoId'); // se borró: lo recreamos
+      // No tocamos la propiedad aquí: puede ser un fallo transitorio. La
+      // creación va protegida por lock más abajo para no duplicar cuadernos.
     }
   }
 
-  var nuevo = SpreadsheetApp.create(CONFIG.NOMBRE_CUADERNO);
-  Datos.inicializarEsquema_(nuevo);
-  props.setProperty('cuadernoId', nuevo.getId());
-  return nuevo;
+  // Bloqueo por usuario: evita que varias llamadas en paralelo (p. ej. al pegar)
+  // creen cada una su propio cuaderno.
+  var lock = LockService.getUserLock();
+  try {
+    lock.waitLock(25000);
+  } catch (e) {
+    throw new Error('No se pudo abrir tu cuaderno (bloqueo ocupado). Reintenta en un momento.');
+  }
+  try {
+    // Reintenta dentro del lock: otra llamada pudo crearlo ya.
+    id = props.getProperty('cuadernoId');
+    if (id) {
+      try {
+        var existente = SpreadsheetApp.openById(id);
+        Datos.asegurarEsquema_(existente);
+        return existente;
+      } catch (e2) {
+        props.deleteProperty('cuadernoId'); // realmente no existe: recrear
+      }
+    }
+    var nuevo = SpreadsheetApp.create(CONFIG.NOMBRE_CUADERNO);
+    Datos.inicializarEsquema_(nuevo);
+    props.setProperty('cuadernoId', nuevo.getId());
+    return nuevo;
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 var Datos = (function () {

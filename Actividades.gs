@@ -24,9 +24,26 @@ function eliminarActividad(actividadId) {
   return Actividades.eliminar_(abrirCuaderno_(), actividadId);
 }
 
+/** Duplica una actividad (mismos criterios y nº de ítems, sin notas). */
+function duplicarActividad(actividadId) {
+  return Actividades.duplicar_(abrirCuaderno_(), actividadId);
+}
+
 /** Guarda los ítems conseguidos de un alumno en una actividad. */
 function guardarItem(actividadId, alumnoId, conseguidos) {
   return Actividades.guardarItem_(abrirCuaderno_(), actividadId, alumnoId, conseguidos);
+}
+
+/**
+ * Guarda muchos ítems de una vez (una sola llamada). cambios: array de
+ * {actividadId, alumnoId, conseguidos}. Se usa al pegar un bloque de notas.
+ */
+function guardarItems(cambios) {
+  var ss = abrirCuaderno_();
+  (cambios || []).forEach(function (c) {
+    Actividades.guardarItem_(ss, c.actividadId, c.alumnoId, c.conseguidos);
+  });
+  return { ok: true, n: (cambios || []).length };
 }
 
 /**
@@ -89,6 +106,16 @@ var Actividades = (function () {
     var fila = Datos.filaDeId_(sh, actividadId);
     if (fila >= 0) sh.deleteRow(fila);
     return { ok: true };
+  }
+
+  function duplicar_(ss, actividadId) {
+    var sh = hojaA_(ss);
+    var fila = Datos.filaDeId_(sh, actividadId);
+    if (fila < 0) throw new Error('Actividad no encontrada.');
+    var f = sh.getRange(fila, 1, 1, 6).getValues()[0];
+    return crear_(ss, f[1], {
+      nombre: f[2] + ' (copia)', criterios: parseLista_(f[3]), numItems: Number(f[4]) || 0
+    });
   }
 
   function validarActividad_(p) {
@@ -163,6 +190,6 @@ var Actividades = (function () {
 
   return {
     listar_: listar_, crear_: crear_, editar_: editar_, eliminar_: eliminar_,
-    guardarItem_: guardarItem_, rejilla_: rejilla_
+    duplicar_: duplicar_, guardarItem_: guardarItem_, rejilla_: rejilla_
   };
 })();
