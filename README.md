@@ -49,6 +49,7 @@ Clases.gs         Clases: alumnado + curso (reutilizable)
 Evaluaciones.gs   Evaluaciones: una clase aplicada a un área
 Unidades.gs       Unidades de cada evaluación
 Actividades.gs    Actividades, ítems y datos de la rejilla
+Resumen.gs        Resumen global de la clase (criterios agregados + nota final)
 Exportador.gs     Regenera data/mapa-curricular.json desde la hoja completa
 Calc.gs           Motor de cálculo de notas (referencia; en vivo en cliente)
 ui.html           Interfaz
@@ -70,7 +71,8 @@ docs/
   con importación pegando lista o copiando de otra clase
 - [x] **Fase 3** — Unidades + actividades (criterios + nº ítems) + rejilla
   alumnos × actividades + notas por criterio y de unidad en vivo
-- [ ] **Fase 4** — Resumen de unidad + resumen global + nota final
+- [x] **Fase 4** — Resumen global de la clase: nota de cada criterio agregando
+  todas las unidades, nota por unidad y nota final; copiable para Séneca
 - [ ] **Fase 5** — Pulido visual tipo iDoceo y despliegue
 
 ## Puesta en marcha

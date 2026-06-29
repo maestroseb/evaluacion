@@ -55,7 +55,10 @@
       <a class="volver" onclick="App.irAEvaluaciones()">← Mis clases</a>
       <div class="cabecera-seccion">
         <h1 id="eval-titulo"></h1>
-        <button class="btn peligro" onclick="App.eliminarEvaluacionActual()">Eliminar clase</button>
+        <div class="acciones-unidad">
+          <button class="btn" onclick="App.verResumen()">📊 Resumen</button>
+          <button class="btn peligro" onclick="App.eliminarEvaluacionActual()">Eliminar clase</button>
+        </div>
       </div>
       <p id="eval-meta" class="meta"></p>
       <div class="cabecera-seccion">
@@ -79,6 +82,20 @@
       </div>
       <p id="unidad-meta" class="meta"></p>
       <div id="rejilla-cont" class="rejilla-cont"></div>
+    </section>
+
+    <!-- RESUMEN GLOBAL DE LA CLASE -->
+    <section id="vista-resumen" hidden>
+      <a class="volver" id="volver-resumen">← Unidades</a>
+      <div class="cabecera-seccion">
+        <h1 id="resumen-titulo"></h1>
+        <div class="acciones-unidad">
+          <label class="check"><input type="checkbox" id="ver-unidades-resumen" checked onchange="App.pintarResumen()"> Columnas por unidad</label>
+          <button class="btn" onclick="App.copiarResumenSeneca()">📋 Copiar para Séneca</button>
+        </div>
+      </div>
+      <p id="resumen-meta" class="meta"></p>
+      <div id="resumen-cont" class="rejilla-cont"></div>
     </section>
   </main>
 

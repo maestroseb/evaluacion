@@ -24,7 +24,7 @@ var App = (function () {
 
   // ---------- navegación ----------
   var SECCIONES = ['vista-evaluaciones', 'vista-clases', 'vista-clase',
-    'vista-evaluacion', 'vista-unidad'];
+    'vista-evaluacion', 'vista-unidad', 'vista-resumen'];
   function mostrar(id) {
     SECCIONES.forEach(function (s) { document.getElementById(s).hidden = (s !== id); });
     document.getElementById('nav-eval').classList.toggle('activo', id === 'vista-evaluaciones');
@@ -221,6 +221,90 @@ var App = (function () {
           irAEvaluaciones();
         });
       });
+  }
+
+  // ---------- resumen global de la clase ----------
+  var resumenData = null;
+
+  function verResumen() {
+    mostrar('vista-resumen');
+    document.getElementById('volver-resumen').onclick = function () {
+      abrirEvaluacionCargada(evalActual);
+    };
+    document.getElementById('resumen-titulo').textContent = 'Resumen — ' + evalActual.area;
+    document.getElementById('resumen-meta').textContent = '';
+    document.getElementById('resumen-cont').innerHTML = spinner();
+    llamar('getResumen', [evalActual.evalId], function (r) {
+      resumenData = r;
+      document.getElementById('resumen-meta').textContent =
+        r.claseNombre + ' · ' + r.curso + ' · ' + r.alumnos.length + ' alumnos/as · ' +
+        r.unidades.length + ' unidades';
+      pintarResumen();
+    });
+  }
+
+  function pintarResumen() {
+    var cont = document.getElementById('resumen-cont');
+    var R = resumenData;
+    if (!R.criterios.length && !R.unidades.length) {
+      cont.innerHTML = '<div class="vacio">Aún no hay datos. Crea unidades y evalúa actividades.</div>';
+      return;
+    }
+    var verUds = document.getElementById('ver-unidades-resumen').checked;
+    var uds = verUds ? R.unidades : [];
+
+    var h = '<table class="rejilla"><thead><tr>' +
+      '<th class="idx">#</th><th class="esq">Alumno/a</th>';
+    uds.forEach(function (u) {
+      h += '<th class="act" title="Nota de la unidad">' +
+        '<span class="act-nom">' + esc(u.nombre) + '</span></th>';
+    });
+    h += '<th class="nota sep">FINAL</th>';
+    R.criterios.forEach(function (cod) {
+      h += '<th class="crit-col" title="' + esc(infoCritR(cod).completo) + '">' + esc(cod) + '</th>';
+    });
+    h += '</tr></thead><tbody>';
+
+    R.alumnos.forEach(function (al, i) {
+      h += '<tr><td class="idx">' + (i + 1) + '</td><td class="esq">' + esc(al.nombre) + '</td>';
+      uds.forEach(function (u) {
+        h += celdaNum((R.unidadNota[al.id] || {})[u.unidadId]);
+      });
+      h += celdaNum(R.final[al.id], ' nota sep');
+      R.criterios.forEach(function (cod) {
+        h += celdaNum((R.critGlobal[al.id] || {})[cod], ' crit-col');
+      });
+      h += '</tr>';
+    });
+    h += '</tbody></table>';
+    cont.innerHTML = h;
+  }
+
+  function celdaNum(n, extra) {
+    var sus = (n != null && n < 5) ? ' suspenso' : '';
+    return '<td class="num' + (extra || '') + sus + '">' + fmt(n) + '</td>';
+  }
+  function infoCritR(cod) {
+    var v = (resumenData.criteriosInfo || {})[cod] || {};
+    var completo = v.descripcion ? (cod + '. ' + v.descripcion) : (cod + '. ' + (v.texto || ''));
+    return { completo: completo };
+  }
+
+  /** Copia el resumen (alumno + nota global de cada criterio) para Séneca. */
+  function copiarResumenSeneca() {
+    var R = resumenData;
+    if (!R || !R.criterios.length) return aviso('No hay criterios evaluados todavía.');
+    var lineas = [['Alumno'].concat(R.criterios).join('\t')];
+    R.alumnos.forEach(function (al) {
+      var fila = [al.nombre];
+      R.criterios.forEach(function (cod) {
+        var n = (R.critGlobal[al.id] || {})[cod];
+        fila.push(n == null ? '' : n.toFixed(2).replace('.', ','));
+      });
+      lineas.push(fila.join('\t'));
+    });
+    copiarAlPortapapeles(lineas.join('\n'),
+      'Resumen copiado: ' + R.alumnos.length + ' alumnos/as y ' + R.criterios.length + ' criterios.');
   }
 
   // ---------- unidad: rejilla de evaluación ----------
@@ -891,6 +975,7 @@ var App = (function () {
     abrirEvaluacion: abrirEvaluacion, eliminarEvaluacionActual: eliminarEvaluacionActual,
     nuevaUnidad: nuevaUnidad, abrirUnidad: abrirUnidad,
     clonarUnidad: clonarUnidad, eliminarUnidad: eliminarUnidad, copiarSeneca: copiarSeneca,
+    verResumen: verResumen, pintarResumen: pintarResumen, copiarResumenSeneca: copiarResumenSeneca,
     nuevaActividad: nuevaActividad,
     editarActividadUI: editarActividadUI, eliminarActividadUI: eliminarActividadUI,
     duplicarActividadUI: duplicarActividadUI, variasActividades: variasActividades,
