@@ -128,10 +128,10 @@ var Actividades = (function () {
     var ev = Evaluaciones.obtener_(ss, unidad.evalId);
     var actividades = listar_(ss, unidadId);
 
-    // Textos de los criterios del área (código -> texto corto).
+    // Info de los criterios del área: código -> {texto corto, descripción larga}.
     var criteriosInfo = {};
     Curriculo.criteriosDe(ev.curso, ev.area).forEach(function (c) {
-      criteriosInfo[c.codigo] = c.texto;
+      criteriosInfo[c.codigo] = { texto: c.texto, descripcion: c.descripcion };
     });
 
     // Ítems guardados de las actividades de esta unidad.

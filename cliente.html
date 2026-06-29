@@ -180,11 +180,13 @@ var App = (function () {
   }
 
   function nuevaActividad() {
-    // Criterios disponibles del área (código -> texto), como casillas.
+    // Criterios del área, ordenados de menor a mayor por su código.
     var info = rejilla.criteriosInfo;
-    var checks = Object.keys(info).map(function (cod) {
-      return '<label class="crit"><input type="checkbox" value="' + esc(cod) + '"> ' +
-        '<b>' + esc(cod) + '</b> ' + esc(info[cod]) + '</label>';
+    var checks = Object.keys(info).sort(cmpCodigo).map(function (cod) {
+      var c = infoCrit(cod);
+      return '<label class="crit" title="' + esc(c.completo) + '">' +
+        '<input type="checkbox" value="' + esc(cod) + '">' +
+        '<span class="crit-txt"><b>' + esc(cod) + '</b> ' + esc(c.texto) + '</span></label>';
     }).join('');
 
     abrirModal('Nueva actividad',
@@ -234,7 +236,7 @@ var App = (function () {
         esc(a.criterios.join(', ')) + '</small></th>';
     });
     crits.forEach(function (cod) {
-      h += '<th class="crit-col" title="' + esc(rejilla.criteriosInfo[cod] || '') + '">' + esc(cod) + '</th>';
+      h += '<th class="crit-col" title="' + esc(infoCrit(cod).completo) + '">' + esc(cod) + '</th>';
     });
     h += '<th class="nota">Nota</th></tr></thead><tbody>';
 
@@ -309,6 +311,24 @@ var App = (function () {
   function fmt(n) { return n == null ? '' : (Math.round(n * 100) / 100).toString().replace('.', ','); }
   function actDe(id) {
     return rejilla.actividades.filter(function (a) { return a.actividadId === id; })[0];
+  }
+  /** Normaliza criteriosInfo[cod] (objeto {texto,descripcion} o texto suelto). */
+  function infoCrit(cod) {
+    var v = rejilla.criteriosInfo[cod] || {};
+    if (typeof v === 'string') v = { texto: v, descripcion: '' };
+    var completo = v.descripcion ? (cod + '. ' + v.descripcion) : (cod + '. ' + (v.texto || ''));
+    return { texto: v.texto || '', descripcion: v.descripcion || '', completo: completo };
+  }
+  /** Orden natural de códigos tipo "LCL.4.8.3" (de menor a mayor). */
+  function cmpCodigo(a, b) {
+    var pa = a.split('.'), pb = b.split('.');
+    for (var i = 0; i < Math.max(pa.length, pb.length); i++) {
+      var na = parseInt(pa[i], 10), nb = parseInt(pb[i], 10);
+      if (isNaN(na) || isNaN(nb)) {
+        if ((pa[i] || '') !== (pb[i] || '')) return (pa[i] || '') < (pb[i] || '') ? -1 : 1;
+      } else if (na !== nb) return na - nb;
+    }
+    return 0;
   }
 
   // ---------- clases ----------

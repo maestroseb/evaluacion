@@ -20,13 +20,13 @@ function exportarMapaJson() {
 
   var ss = SpreadsheetApp.create('mapa-export ' + new Date().toISOString());
   var sh = ss.getSheets()[0];
-  sh.getRange(1, 1, 1, 5)
-    .setValues([['curso', 'area', 'competencia', 'codigo', 'texto']]);
+  sh.getRange(1, 1, 1, 6)
+    .setValues([['curso', 'area', 'competencia', 'codigo', 'texto', 'descripcion']]);
   if (filas.length) {
     var matriz = filas.map(function (f) {
-      return [f.curso, f.area, f.competencia, f.codigo, f.texto];
+      return [f.curso, f.area, f.competencia, f.codigo, f.texto, f.descripcion || ''];
     });
-    sh.getRange(2, 1, matriz.length, 5).setValues(matriz);
+    sh.getRange(2, 1, matriz.length, 6).setValues(matriz);
   }
 
   Logger.log('Criterios exportados: ' + filas.length);

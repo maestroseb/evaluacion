@@ -102,10 +102,11 @@
   .campo-crit .etq { font-size: 14px; font-weight: 600; display: block; margin-bottom: 6px; }
   .lista-crit { max-height: 220px; overflow: auto; border: 1px solid var(--borde);
     border-radius: 8px; padding: 6px; }
-  label.crit { display: block; font-weight: 400; font-size: 13px; padding: 5px 6px;
-    border-radius: 6px; margin: 0; cursor: pointer; }
+  label.crit { display: flex; align-items: center; gap: 8px; font-weight: 400;
+    font-size: 13px; padding: 7px 8px; border-radius: 6px; margin: 0; cursor: pointer; }
   label.crit:hover { background: var(--gris); }
-  label.crit input { margin-right: 6px; }
+  label.crit input { flex: 0 0 auto; margin: 0; }
+  label.crit .crit-txt { flex: 1 1 auto; }
 
   /* Rejilla */
   .rejilla-cont { overflow: auto; border: 1px solid var(--borde); border-radius: 10px; background: #fff; }

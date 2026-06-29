@@ -82,7 +82,8 @@ var Curriculo = (function () {
     return arr.map(function (o) {
       return {
         curso: txt_(o.curso), area: txt_(o.area),
-        competencia: txt_(o.competencia), codigo: txt_(o.codigo), texto: txt_(o.texto)
+        competencia: txt_(o.competencia), codigo: txt_(o.codigo),
+        texto: txt_(o.texto), descripcion: txt_(o.descripcion)
       };
     });
   }
@@ -176,7 +177,8 @@ var Curriculo = (function () {
         area: areaPorRef[materia] || materia,
         competencia: txt_(f[col['COMP. ESPECÍFICA']]),
         codigo: codigo,
-        texto: txt_(f[col['DESCRIPTOR']]) || txt_(f[col['DESCRIPCIÓN']])
+        texto: txt_(f[col['DESCRIPTOR']]) || txt_(f[col['DESCRIPCIÓN']]),
+        descripcion: txt_(f[col['DESCRIPCIÓN']])
       });
     }
     return filas;
@@ -236,7 +238,10 @@ var Curriculo = (function () {
     return leerFilas_()
       .filter(function (f) { return f.curso === curso && f.area === area; })
       .map(function (f) {
-        return { codigo: f.codigo, texto: f.texto, competencia: f.competencia };
+        return {
+          codigo: f.codigo, texto: f.texto,
+          descripcion: f.descripcion || '', competencia: f.competencia
+        };
       });
   }
 
