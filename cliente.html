@@ -51,7 +51,8 @@ var App = (function () {
 
   function nuevaEvaluacion() {
     if (!estado.clases.length) {
-      if (confirm('Primero necesitas una clase. ¿Crear una clase ahora?')) nuevaClase();
+      confirmar('Sin clases', 'Primero necesitas una clase. ¿Crear una clase ahora?',
+        'Crear clase', nuevaClase);
       return;
     }
     var optClases = estado.clases.map(function (c) {
@@ -104,12 +105,15 @@ var App = (function () {
       .map(function (a) { return '<li>' + esc(a.nombre) + '</li>'; }).join('');
   }
   function eliminarEvaluacionActual() {
-    if (!confirm('¿Eliminar esta evaluación? (La clase y su alumnado se conservan.)')) return;
-    var id = evalActual.evalId;
-    llamar('eliminarEvaluacion', [id], function () {
-      estado.evaluaciones = estado.evaluaciones.filter(function (e) { return e.evalId !== id; });
-      irAEvaluaciones();
-    });
+    confirmar('Eliminar evaluación',
+      '¿Eliminar esta evaluación? La clase y su alumnado se conservan.',
+      'Eliminar', function () {
+        var id = evalActual.evalId;
+        llamar('eliminarEvaluacion', [id], function () {
+          estado.evaluaciones = estado.evaluaciones.filter(function (e) { return e.evalId !== id; });
+          irAEvaluaciones();
+        });
+      });
   }
 
   // ---------- clases ----------
@@ -212,12 +216,14 @@ var App = (function () {
       });
   }
   function eliminarClaseActual() {
-    if (!confirm('¿Eliminar la clase "' + claseActual.nombre + '"?')) return;
-    var id = claseActual.claseId;
-    llamar('eliminarClase', [id], function () {
-      estado.clases = estado.clases.filter(function (c) { return c.claseId !== id; });
-      irAClases();
-    });
+    confirmar('Eliminar clase', '¿Eliminar la clase "' + claseActual.nombre + '"?',
+      'Eliminar', function () {
+        var id = claseActual.claseId;
+        llamar('eliminarClase', [id], function () {
+          estado.clases = estado.clases.filter(function (c) { return c.claseId !== id; });
+          irAClases();
+        });
+      });
   }
 
   // ---------- mapa: cursos y áreas ----------
@@ -272,6 +278,12 @@ var App = (function () {
     b.onclick = function () { if (accionModal) accionModal(); };
     document.getElementById('modal-fondo').hidden = false;
   }
+
+  /** Diálogo de confirmación propio (sustituye al confirm() nativo). */
+  function confirmar(titulo, mensaje, textoAceptar, onSi) {
+    abrirModal(titulo, '<p class="mensaje">' + esc(mensaje) + '</p>',
+      textoAceptar, function () { cerrarModal(); onSi(); });
+  }
   function botonModalCargando(txt) {
     var b = document.getElementById('modal-aceptar'); b.disabled = true; b.textContent = txt;
   }
@@ -287,9 +299,16 @@ var App = (function () {
       [fn].apply(google.script.run, args || []);
   }
   function val(id) { return document.getElementById(id).value; }
+
+  var toastTimer = null;
   function aviso(msg) {
     var b = document.getElementById('modal-aceptar'); if (b) b.disabled = false;
-    alert(msg);
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast error';
+    t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.hidden = true; }, 4000);
   }
   function esc(s) {
     return String(s == null ? '' : s)

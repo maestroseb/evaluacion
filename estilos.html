@@ -81,4 +81,14 @@
   .modal textarea { resize: vertical; }
   .ayuda { font-size: 12px; color: #888; margin: -6px 0 4px; }
   .modal-acciones { display: flex; justify-content: flex-end; gap: 10px; margin-top: 8px; }
+  .modal p.mensaje { margin: 0 0 4px; font-size: 15px; line-height: 1.45; }
+
+  /* Toast */
+  .toast {
+    position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%);
+    background: #323232; color: #fff; padding: 12px 18px; border-radius: 8px;
+    font-size: 14px; max-width: 90%; box-shadow: 0 3px 12px rgba(0,0,0,.3);
+    z-index: 10;
+  }
+  .toast.error { background: #c62828; }
 </style>
