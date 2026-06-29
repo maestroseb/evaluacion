@@ -52,8 +52,11 @@ src/
   cliente.html      JS de cliente
 docs/
   mapa-curricular.md  Cómo montar el mapa central (Fase 0)
-  despliegue.md       Pasos de clasp y despliegue al dominio
+  despliegue.md       Sincronización con GitHub Assistant y despliegue
 ```
+
+> Sincronización: se usa **Google Apps Script GitHub Assistant** (no clasp).
+> El editor de Apps Script hace *Pull* de este repo (carpeta `src`).
 
 ## Estado / hoja de ruta
 
@@ -66,5 +69,6 @@ docs/
 
 ## Puesta en marcha
 
-Ver **`docs/despliegue.md`**. Resumen: instalar `clasp`, crear el Mapa,
-pegar su ID en `Config.gs`, `clasp push` y desplegar como Web App para el dominio.
+Ver **`docs/despliegue.md`**. Resumen: con **GitHub Assistant**, hacer *Pull*
+de la carpeta `src` al proyecto de Apps Script, crear el Mapa y pegar su ID en
+`Config.gs`, y desplegar como Web App para el dominio.

@@ -1,53 +1,44 @@
-# Despliegue (paso a paso)
+# Despliegue con Google Apps Script GitHub Assistant
 
-El código se versiona aquí, en Git, en formato **clasp** (los `.gs`/`.html` de
-Apps Script). El `clasp push` y el despliegue final los haces **tú** desde tu
-cuenta de Google, porque solo tú tienes acceso a tu Workspace.
+El código se versiona aquí, en Git. Con la extensión **Google Apps Script
+GitHub Assistant** sincronizas el editor de Apps Script con este repositorio
+directamente, sin `clasp`.
 
 ## Requisitos (una vez)
 
-```bash
-npm install -g @google/clasp
-clasp login          # inicia sesión con tu cuenta g.educaand.es
-```
-
-> Si el dominio tiene bloqueada la API de Apps Script, un administrador debe
-> activar "Google Apps Script API" en https://script.google.com/home/usersettings
+1. Instala la extensión **Google Apps Script GitHub Assistant** en Chrome.
+2. En el editor de Apps Script aparecerá una barra con botones de GitHub.
+   Autoriza tu cuenta de GitHub cuando lo pida.
 
 ## Primer despliegue
 
-1. Crea el proyecto y enlázalo a esta carpeta:
-   ```bash
-   clasp create --type webapp --title "Evaluación por Criterios" --rootDir src
-   ```
-   Esto genera un `.clasp.json` (ignorado por Git) con tu `scriptId`.
-   Como referencia tienes `.clasp.json.example`.
-
-2. Crea el **Mapa Curricular** siguiendo `docs/mapa-curricular.md` y pega su ID
+1. Crea un proyecto nuevo en https://script.google.com (tipo: independiente).
+2. En la barra del Assistant, selecciona:
+   - **Repository**: `maestroseb/evaluacion`
+   - **Branch**: `claude/sheets-evaluation-criteria-3qsyay`
+   - **Directory / Path**: `src`  ← donde viven los `.gs`/`.html` y el manifiesto
+     (si prefieres tenerlo en la raíz del repo, pídelo y muevo los archivos).
+3. Pulsa **Pull** para traer todos los archivos del repo al proyecto.
+4. Activa "Mostrar manifiesto appsscript.json" en la configuración del editor
+   de Apps Script para que se sincronice también `appsscript.json`.
+5. Crea el **Mapa Curricular** siguiendo `docs/mapa-curricular.md` y pega su ID
    en `src/Config.gs` → `MAPA_CURRICULAR_ID`.
-
-3. Sube el código:
-   ```bash
-   clasp push
-   ```
-
-4. Despliega como Web App:
-   ```bash
-   clasp deploy --description "v1"
-   ```
-   O desde el editor: **Implementar → Nueva implementación → Aplicación web**
+6. Despliega como Web App: **Implementar → Nueva implementación →
+   Aplicación web**
    - *Ejecutar como*: **Usuario que accede a la aplicación web**
    - *Quién tiene acceso*: **Cualquier usuario de g.educaand.es**
+7. Comparte la URL con tus compañeros. Cada uno, al entrar la primera vez,
+   autoriza permisos y se le crea su cuaderno automáticamente.
 
-5. Comparte la URL de la Web App con tus compañeros. Cada uno, al entrar por
-   primera vez, autoriza los permisos y se le crea su cuaderno automáticamente.
+## Flujo de trabajo habitual
 
-## Actualizaciones posteriores
+- **Yo** hago cambios y los subo a la rama del repo.
+- **Tú** abres el proyecto en Apps Script y pulsas **Pull** en el Assistant
+  para traer la última versión.
+- Si tú tocas algo en el editor, pulsa **Push** para guardarlo en el repo.
 
-```bash
-clasp push
-clasp deploy --deploymentId <ID>   # re-despliega la MISMA URL
-```
+> Recomendación: edita siempre desde el repo (vía nuestra conversación) y usa el
+> Assistant solo para **Pull**, para no crear conflictos.
 
-Como la lógica y el mapa son centrales, basta con que tú actualices: todos los
-profes usan la última versión sin tocar nada.
+Como la lógica y el mapa son centrales, basta con que tú actualices el proyecto:
+todos los profes usan la última versión sin tocar nada.
