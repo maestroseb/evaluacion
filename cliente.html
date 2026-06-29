@@ -258,6 +258,52 @@ var App = (function () {
     pintarRejilla();
   }
 
+  /**
+   * Copia al portapapeles (TSV) el alumnado y la nota de cada criterio de la
+   * unidad, listo para pegar en Séneca (Autonotas) o en una hoja de cálculo.
+   * Formato: Alumno <tab> LCL.x.y.z <tab> ... con 2 decimales y coma.
+   */
+  function copiarSeneca() {
+    if (!rejilla || !rejilla.actividades.length) {
+      return aviso('Esta unidad no tiene actividades evaluadas.');
+    }
+    var crits = criteriosUsados();
+    var lineas = [['Alumno'].concat(crits).join('\t')];
+    rejilla.alumnos.forEach(function (al) {
+      var fila = [al.nombre];
+      crits.forEach(function (cod) {
+        var n = notaCriterio(al.id, cod);
+        fila.push(n == null ? '' : n.toFixed(2).replace('.', ','));
+      });
+      lineas.push(fila.join('\t'));
+    });
+    copiarAlPortapapeles(lineas.join('\n'),
+      'Copiado para Séneca: ' + rejilla.alumnos.length + ' alumnos/as y ' + crits.length + ' criterios.');
+  }
+
+  function copiarAlPortapapeles(texto, mensajeOk) {
+    var ta = document.createElement('textarea');
+    ta.value = texto;
+    ta.style.position = 'fixed'; ta.style.top = '-1000px'; ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+    document.body.removeChild(ta);
+    if (ok) avisoOk(mensajeOk);
+    else copiarManual(texto);
+  }
+
+  /** Si el navegador bloquea la copia automática, mostramos el texto para copiar. */
+  function copiarManual(texto) {
+    abrirModal('Copiar para Séneca',
+      '<p class="ayuda">Selecciona todo (Ctrl/Cmd+A) y copia (Ctrl/Cmd+C):</p>' +
+      '<textarea id="f-copia" rows="12" readonly></textarea>',
+      'Hecho', cerrarModal);
+    var t = document.getElementById('f-copia');
+    t.value = texto; t.focus(); t.select();
+  }
+
 
   function nuevaActividad() { modalActividad(null); }
   function editarActividadUI(id) { modalActividad(actDe(id)); }
@@ -723,6 +769,12 @@ var App = (function () {
     clearTimeout(toastTimer);
     toastTimer = setTimeout(function () { t.hidden = true; }, 4000);
   }
+  function avisoOk(msg) {
+    var t = document.getElementById('toast');
+    t.textContent = msg; t.className = 'toast'; t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.hidden = true; }, 4000);
+  }
   function ocultarToast() {
     clearTimeout(toastTimer);
     document.getElementById('toast').hidden = true;
@@ -739,7 +791,7 @@ var App = (function () {
     nuevaEvaluacion: nuevaEvaluacion, claseCambiada: claseCambiada, elegirColor: elegirColor,
     abrirEvaluacion: abrirEvaluacion, eliminarEvaluacionActual: eliminarEvaluacionActual,
     nuevaUnidad: nuevaUnidad, abrirUnidad: abrirUnidad,
-    clonarUnidad: clonarUnidad, eliminarUnidad: eliminarUnidad,
+    clonarUnidad: clonarUnidad, eliminarUnidad: eliminarUnidad, copiarSeneca: copiarSeneca,
     nuevaActividad: nuevaActividad,
     editarActividadUI: editarActividadUI, eliminarActividadUI: eliminarActividadUI,
     pintarRejilla: pintarRejilla,
