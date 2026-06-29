@@ -40,9 +40,13 @@ var Curriculo = (function () {
    * Lee la hoja central y devuelve filas normalizadas
    * {curso, area, competencia, codigo, texto}. Detecta el formato. Cacheado 6h.
    */
+  // La clave de caché incluye el ID de la hoja: si cambias MAPA_CURRICULAR_ID,
+  // la caché vieja se ignora automáticamente.
+  function claveCache_() { return 'mapa_filas_' + CONFIG.MAPA_CURRICULAR_ID; }
+
   function leerFilas_() {
     var cache = CacheService.getScriptCache();
-    var hit = cache.get('mapa_filas');
+    var hit = cache.get(claveCache_());
     if (hit) return JSON.parse(hit);
 
     var ss = abrirMapa_();
@@ -54,8 +58,14 @@ var Curriculo = (function () {
       ? parsearMapaPrimaria_(datos)
       : parsearFormatoLargo_(datos);
 
-    cache.put('mapa_filas', JSON.stringify(filas), 21600);
+    cache.put(claveCache_(), JSON.stringify(filas), 21600);
     return filas;
+  }
+
+  /** Vacía la caché del mapa. Útil tras editar la hoja central. */
+  function refrescar() {
+    CacheService.getScriptCache().remove(claveCache_());
+    return leerFilas_().length;
   }
 
   /** ¿Hay una tabla de criterios estilo "Mapa Curricular Primaria"? */
@@ -159,6 +169,17 @@ var Curriculo = (function () {
 
   return {
     listarAreasCursos: listarAreasCursos,
-    criteriosDe: criteriosDe
+    criteriosDe: criteriosDe,
+    refrescar: refrescar
   };
 })();
+
+/**
+ * Ejecuta esta función desde el editor de Apps Script (selecciona
+ * "refrescarMapa" y pulsa ▶) para vaciar la caché tras editar el mapa central.
+ */
+function refrescarMapa() {
+  var n = Curriculo.refrescar();
+  Logger.log('Mapa recargado: ' + n + ' criterios.');
+  return n;
+}
