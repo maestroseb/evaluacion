@@ -179,24 +179,36 @@ var App = (function () {
       });
   }
 
-  function nuevaActividad() {
-    // Criterios del área, ordenados de menor a mayor por su código.
+  function nuevaActividad() { modalActividad(null); }
+  function editarActividadUI(id) { modalActividad(actDe(id)); }
+
+  /** Modal compartido para crear o editar una actividad. act=null → crear. */
+  function modalActividad(act) {
     var info = rejilla.criteriosInfo;
+    var sel = act ? act.criterios : [];
     var checks = Object.keys(info).sort(cmpCodigo).map(function (cod) {
       var c = infoCrit(cod);
+      var marcado = sel.indexOf(cod) >= 0 ? ' checked' : '';
       return '<label class="crit" title="' + esc(c.completo) + '">' +
-        '<input type="checkbox" value="' + esc(cod) + '">' +
+        '<input type="checkbox" value="' + esc(cod) + '"' + marcado + '>' +
         '<span class="crit-txt"><b>' + esc(cod) + '</b> ' + esc(c.texto) + '</span></label>';
     }).join('');
 
-    abrirModal('Nueva actividad',
+    var borrar = act
+      ? '<button type="button" class="link-peligro" onclick="App.eliminarActividadUI(\'' + act.actividadId + '\')">Eliminar actividad</button>'
+      : '';
+
+    abrirModal(act ? 'Editar actividad' : 'Nueva actividad',
       '<label>Nombre de la actividad' +
-      '<input id="f-act-nombre" type="text" placeholder="Ej.: Dictado 1"></label>' +
+      '<input id="f-act-nombre" type="text" placeholder="Ej.: Dictado 1" value="' +
+        (act ? esc(act.nombre) : '') + '"></label>' +
       '<label>Nº de ítems a evaluar' +
-      '<input id="f-act-items" type="number" min="1" step="0.5" placeholder="Ej.: 10"></label>' +
+      '<input id="f-act-items" type="number" min="1" step="0.5" placeholder="Ej.: 10" value="' +
+        (act ? act.numItems : '') + '"></label>' +
       '<div class="campo-crit"><span class="etq">Criterios asociados</span>' +
-      '<div class="lista-crit">' + (checks || '<i>No hay criterios para esta área.</i>') + '</div></div>',
-      'Crear actividad',
+      '<div class="lista-crit">' + (checks || '<i>No hay criterios para esta área.</i>') + '</div></div>' +
+      borrar,
+      act ? 'Guardar cambios' : 'Crear actividad',
       function () {
         var nombre = val('f-act-nombre').trim();
         var numItems = Number(val('f-act-items'));
@@ -206,14 +218,32 @@ var App = (function () {
         if (!nombre) return aviso('Pon nombre a la actividad.');
         if (!(numItems > 0)) return aviso('El nº de ítems debe ser mayor que 0.');
         if (!criterios.length) return aviso('Marca al menos un criterio.');
-        botonModalCargando('Creando…');
-        llamar('crearActividad',
-          [rejilla.unidad.unidadId, { nombre: nombre, criterios: criterios, numItems: numItems }],
-          function (act) {
-            rejilla.actividades.push(act);
-            cerrarModal();
-            pintarRejilla();
+        var payload = { nombre: nombre, criterios: criterios, numItems: numItems };
+        botonModalCargando('Guardando…');
+        if (act) {
+          llamar('editarActividad', [act.actividadId, payload], function () {
+            act.nombre = nombre; act.criterios = criterios; act.numItems = numItems;
+            cerrarModal(); pintarRejilla();
           });
+        } else {
+          llamar('crearActividad', [rejilla.unidad.unidadId, payload], function (nueva) {
+            rejilla.actividades.push(nueva);
+            cerrarModal(); pintarRejilla();
+          });
+        }
+      });
+  }
+
+  function eliminarActividadUI(id) {
+    var act = actDe(id);
+    confirmar('Eliminar actividad',
+      'Se eliminará "' + act.nombre + '" y sus notas. ¿Continuar?', 'Eliminar',
+      function () {
+        llamar('eliminarActividad', [id], function () {
+          rejilla.actividades = rejilla.actividades.filter(function (a) { return a.actividadId !== id; });
+          delete rejilla.items[id];
+          cerrarModal(); pintarRejilla();
+        });
       });
   }
 
@@ -229,22 +259,25 @@ var App = (function () {
     var crits = verCrit ? criteriosUsados() : [];
 
     var h = '<table class="rejilla"><thead><tr>' +
-      '<th class="esq">Alumno/a</th>';
+      '<th class="idx">#</th><th class="esq">Alumno/a</th>';
     rejilla.actividades.forEach(function (a) {
       h += '<th class="act" title="' + esc(a.criterios.join(', ')) + '">' +
-        esc(a.nombre) + '<small>/' + a.numItems + ' · ' +
-        esc(a.criterios.join(', ')) + '</small></th>';
+        '<button class="edit-act" title="Editar actividad" ' +
+        'onclick="App.editarActividadUI(\'' + a.actividadId + '\')">✎</button>' +
+        '<span class="act-nom">' + esc(a.nombre) + '</span>' +
+        '<small>/' + a.numItems + ' · ' + esc(a.criterios.join(', ')) + '</small></th>';
     });
     crits.forEach(function (cod) {
       h += '<th class="crit-col" title="' + esc(infoCrit(cod).completo) + '">' + esc(cod) + '</th>';
     });
     h += '<th class="nota">Nota</th></tr></thead><tbody>';
 
-    rejilla.alumnos.forEach(function (al) {
-      h += '<tr><td class="esq">' + esc(al.nombre) + '</td>';
+    rejilla.alumnos.forEach(function (al, i) {
+      h += '<tr><td class="idx">' + (i + 1) + '</td>' +
+        '<td class="esq">' + esc(al.nombre) + '</td>';
       rejilla.actividades.forEach(function (a) {
         var v = valorItem(a.actividadId, al.id);
-        h += '<td><input type="number" min="0" max="' + a.numItems + '" step="0.5" ' +
+        h += '<td class="celda"><input type="number" min="0" max="' + a.numItems + '" step="0.5" ' +
           'value="' + (v == null ? '' : v) + '" ' +
           'onchange="App.cambiarItem(\'' + a.actividadId + '\',\'' + al.id + '\',this.value)"></td>';
       });
@@ -537,6 +570,7 @@ var App = (function () {
     abrirEvaluacion: abrirEvaluacion, eliminarEvaluacionActual: eliminarEvaluacionActual,
     nuevaUnidad: nuevaUnidad, abrirUnidad: abrirUnidad,
     eliminarUnidadActual: eliminarUnidadActual, nuevaActividad: nuevaActividad,
+    editarActividadUI: editarActividadUI, eliminarActividadUI: eliminarActividadUI,
     pintarRejilla: pintarRejilla, cambiarItem: cambiarItem,
     nuevaClase: nuevaClase, copiarDeClase: copiarDeClase,
     abrirClase: abrirClase, editarAlumnos: editarAlumnos,
