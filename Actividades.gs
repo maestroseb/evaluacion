@@ -35,14 +35,34 @@ function guardarItem(actividadId, alumnoId, conseguidos) {
 }
 
 /**
- * Guarda muchos ítems de una vez (una sola llamada). cambios: array de
- * {actividadId, alumnoId, conseguidos}. Se usa al pegar un bloque de notas.
+ * Guarda muchos ítems de una vez (una sola llamada) de forma eficiente: lee la
+ * hoja de ítems una vez, aplica todos los cambios en memoria y la reescribe en
+ * bloque. Pensado para pegar grandes cantidades sin timeouts ni llamadas
+ * simultáneas. cambios: array de {actividadId, alumnoId, conseguidos}.
  */
 function guardarItems(cambios) {
   var ss = abrirCuaderno_();
+  var sh = ss.getSheetByName(HOJAS.ITEMS);
+  var datos = sh.getDataRange().getValues(); // incluye cabecera
+
+  // Índice de todos los ítems existentes (de todas las unidades): clave -> valor.
+  var mapa = {};
+  for (var i = 1; i < datos.length; i++) {
+    if (datos[i][0]) mapa[datos[i][0] + '|' + datos[i][1]] = datos[i][2];
+  }
+  // Aplica los cambios (vacío = borrar).
   (cambios || []).forEach(function (c) {
-    Actividades.guardarItem_(ss, c.actividadId, c.alumnoId, c.conseguidos);
+    var k = c.actividadId + '|' + c.alumnoId;
+    if (c.conseguidos === '' || c.conseguidos == null) delete mapa[k];
+    else mapa[k] = Number(c.conseguidos);
   });
+  // Reconstruye y reescribe en bloque.
+  var filas = Object.keys(mapa).map(function (k) {
+    var p = k.split('|');
+    return [p[0], p[1], mapa[k]];
+  });
+  if (sh.getLastRow() > 1) sh.getRange(2, 1, sh.getLastRow() - 1, 3).clearContent();
+  if (filas.length) sh.getRange(2, 1, filas.length, 3).setValues(filas);
   return { ok: true, n: (cambios || []).length };
 }
 
