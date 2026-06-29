@@ -1,53 +1,28 @@
 /**
  * Acceso de SOLO LECTURA al Mapa Curricular central.
  *
- * El mapa vive en una única hoja que mantiene el administrador (tú). Contiene
- * todas las áreas y cursos con sus competencias específicas y criterios de
- * evaluación. Al estar centralizado, cualquier corrección o ampliación llega
- * a todos los profes sin que ellos hagan nada.
+ * Fuente principal: un JSON público en GitHub (CONFIG.MAPA_JSON_URL), un array
+ * de objetos { curso, area, competencia, codigo, texto, areaRef? }. Al ser una
+ * URL pública no requiere permisos de Drive y se sirve igual a toda la
+ * comunidad. Si MAPA_JSON_URL está vacío, se lee de la hoja de cálculo
+ * (CONFIG.MAPA_CURRICULAR_ID) como alternativa.
  *
- * Admite DOS formatos de hoja de forma automática:
- *
- *  A) Formato largo (simple): columnas
- *       curso | area | competencia | criterio_codigo | criterio_texto
- *
- *  B) Formato del "Mapa Curricular Primaria" (tablas apiladas en una pestaña):
- *       - Tabla de áreas:    CURSO | DESCRIPCIÓN | REF | SELECCIONADO...
- *       - Tabla de criterios: MATERIA | CURSO | COMP. ESPECÍFICA | Nº |
- *                             REF COMPLETA | DESCRIPTOR | DESCRIPCIÓN
- *     El área se resuelve uniendo MATERIA (p. ej. "LCL.2") con la REF de la
- *     tabla de áreas para obtener su nombre ("Lengua Castellana y Literatura").
+ * La hoja admite dos formatos (detectados solos):
+ *  A) Largo: curso | area | competencia | criterio_codigo | criterio_texto
+ *  B) "Mapa Curricular Primaria": tablas de áreas + criterios apiladas, donde
+ *     el área se resuelve uniendo MATERIA con la tabla de áreas.
  */
 var Curriculo = (function () {
-
-  function abrirMapa_() {
-    if (CONFIG.MAPA_CURRICULAR_ID === 'PEGA_AQUI_EL_ID_DE_TU_MAPA_CURRICULAR') {
-      throw new Error('Falta configurar MAPA_CURRICULAR_ID en Config.gs.');
-    }
-    return SpreadsheetApp.openById(CONFIG.MAPA_CURRICULAR_ID);
-  }
 
   /** Normaliza una celda a texto recortado. */
   function txt_(v) { return String(v == null ? '' : v).trim(); }
 
-  /** ¿La fila contiene todas estas cabeceras (insensible a may/min)? */
-  function esCabecera_(fila, cabeceras) {
-    var set = fila.map(function (c) { return txt_(c).toUpperCase(); });
-    return cabeceras.every(function (h) { return set.indexOf(h) >= 0; });
+  // ---------- caché (troceada: CacheService limita ~100 KB por valor) ----------
+  // La clave depende de la fuente: si cambias de URL/hoja, la caché se invalida.
+  function claveCache_() {
+    return 'mapa_' + (CONFIG.MAPA_JSON_URL || CONFIG.MAPA_CURRICULAR_ID || '');
   }
-
-  /**
-   * Lee la hoja central y devuelve filas normalizadas
-   * {curso, area, competencia, codigo, texto}. Detecta el formato. Cacheado 6h.
-   */
-  // La clave de caché incluye el ID de la hoja: si cambias MAPA_CURRICULAR_ID,
-  // la caché vieja se ignora automáticamente.
-  function claveCache_() { return 'mapa_filas_' + CONFIG.MAPA_CURRICULAR_ID; }
-
-  // CacheService limita cada valor a ~100 KB; el mapa completo no cabe en uno.
-  // Lo troceamos en varias entradas (clave..._0, _1, ...) con un índice que
-  // guarda cuántos trozos hay.
-  var CACHE_SEG = 90000; // bytes por trozo, con margen bajo el límite de 100 KB
+  var CACHE_SEG = 90000;
 
   function getCache_() {
     var cache = CacheService.getScriptCache();
@@ -60,7 +35,7 @@ var Curriculo = (function () {
     var s = '';
     for (var j = 0; j < n; j++) {
       var t = trozos[claveCache_() + '_' + j];
-      if (t == null) return null; // algún trozo expiró: cache inválida
+      if (t == null) return null;
       s += t;
     }
     try { return JSON.parse(s); } catch (e) { return null; }
@@ -69,8 +44,7 @@ var Curriculo = (function () {
   function putCache_(filas) {
     var cache = CacheService.getScriptCache();
     var s = JSON.stringify(filas);
-    var obj = {};
-    var n = 0;
+    var obj = {}, n = 0;
     for (var i = 0; i < s.length; i += CACHE_SEG) {
       obj[claveCache_() + '_' + n] = s.substring(i, i + CACHE_SEG);
       n++;
@@ -87,30 +61,71 @@ var Curriculo = (function () {
     cache.removeAll(claves);
   }
 
+  // ---------- carga ----------
   function leerFilas_() {
     var hit = getCache_();
     if (hit) return hit;
 
-    var ss = abrirMapa_();
-    var sh = ss.getSheetByName('Mapa') || ss.getSheets()[0];
-    if (!sh) throw new Error('La hoja central de mapa curricular está vacía.');
-    var datos = sh.getDataRange().getValues();
-
-    var filas = detectarCriterios_(datos)
-      ? parsearMapaPrimaria_(datos)
-      : parsearFormatoLargo_(datos);
-
+    var filas = CONFIG.MAPA_JSON_URL ? leerDesdeJson_() : leerDesdeHoja_();
     putCache_(filas);
     return filas;
   }
 
-  /** Vacía la caché del mapa. Útil tras editar la hoja central. */
+  /** Descarga el JSON público del mapa desde GitHub. */
+  function leerDesdeJson_() {
+    var resp = UrlFetchApp.fetch(CONFIG.MAPA_JSON_URL, { muteHttpExceptions: true });
+    if (resp.getResponseCode() !== 200) {
+      throw new Error('No se pudo descargar el mapa curricular (HTTP ' +
+        resp.getResponseCode() + '). Revisa MAPA_JSON_URL y que el repo sea público.');
+    }
+    var arr = JSON.parse(resp.getContentText());
+    return arr.map(function (o) {
+      return {
+        curso: txt_(o.curso), area: txt_(o.area),
+        competencia: txt_(o.competencia), codigo: txt_(o.codigo), texto: txt_(o.texto)
+      };
+    });
+  }
+
+  /** Vacía la caché del mapa. Útil tras actualizar el JSON o la hoja. */
   function refrescar() {
     borrarCache_();
     return leerFilas_().length;
   }
 
-  /** ¿Hay una tabla de criterios estilo "Mapa Curricular Primaria"? */
+  // ---------- lectura desde hoja (alternativa) ----------
+  function abrirMapa_() {
+    if (!CONFIG.MAPA_CURRICULAR_ID) {
+      throw new Error('No hay fuente de mapa: configura MAPA_JSON_URL o MAPA_CURRICULAR_ID.');
+    }
+    return SpreadsheetApp.openById(CONFIG.MAPA_CURRICULAR_ID);
+  }
+
+  function esCabecera_(fila, cabeceras) {
+    var set = fila.map(function (c) { return txt_(c).toUpperCase(); });
+    return cabeceras.every(function (h) { return set.indexOf(h) >= 0; });
+  }
+
+  /** ¿La fila es un separador de tabla (markdown/estructura :-:)? */
+  function esSeparador_(fila) {
+    var algo = false;
+    for (var i = 0; i < fila.length; i++) {
+      var c = txt_(fila[i]);
+      if (c) { algo = true; if (!/^:?-+:?$/.test(c)) return false; }
+    }
+    return algo;
+  }
+
+  function leerDesdeHoja_() {
+    var ss = abrirMapa_();
+    var sh = ss.getSheetByName('Mapa') || ss.getSheets()[0];
+    if (!sh) throw new Error('La hoja central de mapa curricular está vacía.');
+    var datos = sh.getDataRange().getValues();
+    return detectarCriterios_(datos)
+      ? parsearMapaPrimaria_(datos)
+      : parsearFormatoLargo_(datos);
+  }
+
   function detectarCriterios_(datos) {
     for (var i = 0; i < datos.length; i++) {
       if (esCabecera_(datos[i], ['REF COMPLETA', 'DESCRIPTOR'])) return true;
@@ -118,7 +133,6 @@ var Curriculo = (function () {
     return false;
   }
 
-  /** Formato largo simple: cabecera en la fila 1. */
   function parsearFormatoLargo_(datos) {
     var filas = [];
     for (var i = 1; i < datos.length; i++) {
@@ -132,28 +146,21 @@ var Curriculo = (function () {
     return filas;
   }
 
-  /** Formato "Mapa Curricular Primaria": tablas de áreas + criterios apiladas. */
+  /**
+   * "Mapa Curricular Primaria": tablas apiladas. Cada tabla acaba donde empieza
+   * la siguiente cabecera; usamos las filas separadoras (la fila tras una
+   * cabecera) para delimitar y no invadir la tabla siguiente.
+   */
   function parsearMapaPrimaria_(datos) {
-    var areaPorRef = construirAreas_(datos); // REF (LCL.2) -> nombre de área
-
-    // Localiza la cabecera de la tabla de criterios.
-    var inicio = -1, col = {};
-    for (var i = 0; i < datos.length; i++) {
-      if (esCabecera_(datos[i], ['REF COMPLETA', 'DESCRIPTOR', 'MATERIA'])) {
-        inicio = i + 1;
-        datos[i].forEach(function (c, j) { col[txt_(c).toUpperCase()] = j; });
-        break;
-      }
-    }
-    if (inicio < 0) return [];
-
-    var filas = [];
-    for (var r = inicio; r < datos.length; r++) {
+    var areaPorRef = construirAreas_(datos);
+    var t = localizarTabla_(datos, ['REF COMPLETA', 'DESCRIPTOR', 'MATERIA']);
+    if (!t) return [];
+    var col = t.col, filas = [];
+    for (var r = t.inicio; r < t.fin; r++) {
       var f = datos[r];
-      var materia = txt_(f[col['MATERIA']]);
       var codigo = txt_(f[col['REF COMPLETA']]);
-      if (!materia && !codigo) break; // fila en blanco = fin de la tabla
       if (!codigo) continue;
+      var materia = txt_(f[col['MATERIA']]);
       filas.push({
         curso: txt_(f[col['CURSO']]),
         area: areaPorRef[materia] || materia,
@@ -165,32 +172,44 @@ var Curriculo = (function () {
     return filas;
   }
 
-  /** Mapea la REF de cada área (LCL.2) a su nombre legible. */
   function construirAreas_(datos) {
     var mapa = {};
-    var inicio = -1, col = {};
-    for (var i = 0; i < datos.length; i++) {
-      if (esCabecera_(datos[i], ['CURSO', 'DESCRIPCIÓN', 'REF'])) {
-        inicio = i + 1;
-        datos[i].forEach(function (c, j) { col[txt_(c).toUpperCase()] = j; });
-        break;
-      }
-    }
-    if (inicio < 0) return mapa;
-    for (var r = inicio; r < datos.length; r++) {
-      var ref = txt_(datos[r][col['REF']]);
-      var nombre = txt_(datos[r][col['DESCRIPCIÓN']]);
-      if (!ref && !nombre) break;
+    var t = localizarTabla_(datos, ['CURSO', 'DESCRIPCIÓN', 'REF']);
+    if (!t) return mapa;
+    for (var r = t.inicio; r < t.fin; r++) {
+      var ref = txt_(datos[r][t.col['REF']]);
+      var nombre = txt_(datos[r][t.col['DESCRIPCIÓN']]);
       if (ref) mapa[ref] = nombre;
     }
     return mapa;
   }
 
-  /** Lista las combinaciones área+curso disponibles para crear un grupo. */
+  /**
+   * Localiza una tabla por sus cabeceras y devuelve {col, inicio, fin}, donde
+   * "fin" es el comienzo de la siguiente cabecera (o el final de los datos).
+   */
+  function localizarTabla_(datos, cabeceras) {
+    for (var i = 0; i < datos.length; i++) {
+      if (!esCabecera_(datos[i], cabeceras)) continue;
+      var col = {};
+      datos[i].forEach(function (c, j) { col[txt_(c).toUpperCase()] = j; });
+      var inicio = i + 1;
+      // Saltamos una posible fila separadora justo bajo la cabecera.
+      if (inicio < datos.length && esSeparador_(datos[inicio])) inicio++;
+      // El fin es la siguiente cabecera (fila seguida de separador).
+      var fin = datos.length;
+      for (var k = inicio; k < datos.length - 1; k++) {
+        if (esSeparador_(datos[k + 1])) { fin = k; break; }
+      }
+      return { col: col, inicio: inicio, fin: fin };
+    }
+    return null;
+  }
+
+  // ---------- API pública ----------
   function listarAreasCursos() {
     var filas = leerFilas_();
-    var vistos = {};
-    var out = [];
+    var vistos = {}, out = [];
     filas.forEach(function (f) {
       var clave = f.curso + '||' + f.area;
       if (vistos[clave]) return;
@@ -200,7 +219,6 @@ var Curriculo = (function () {
     return out;
   }
 
-  /** Devuelve los criterios (código + texto) de un área+curso concretos. */
   function criteriosDe(curso, area) {
     return leerFilas_()
       .filter(function (f) { return f.curso === curso && f.area === area; })
@@ -218,7 +236,7 @@ var Curriculo = (function () {
 
 /**
  * Ejecuta esta función desde el editor de Apps Script (selecciona
- * "refrescarMapa" y pulsa ▶) para vaciar la caché tras editar el mapa central.
+ * "refrescarMapa" y pulsa ▶) para vaciar la caché tras actualizar el mapa.
  */
 function refrescarMapa() {
   var n = Curriculo.refrescar();

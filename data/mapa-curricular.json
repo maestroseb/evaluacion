@@ -1,0 +1,2850 @@
+[
+ {
+  "curso": "Infantil",
+  "area": "Crecimiento en Armonía",
+  "areaRef": "CA",
+  "competencia": "CA.1",
+  "codigo": "CA.02.1.1",
+  "texto": "Conocimiento corporal"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Crecimiento en Armonía",
+  "areaRef": "CA",
+  "competencia": "CA.1",
+  "codigo": "CA.02.1.2",
+  "texto": "Seguridad personal"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Crecimiento en Armonía",
+  "areaRef": "CA",
+  "competencia": "CA.1",
+  "codigo": "CA.02.1.3",
+  "texto": "Motricidad fina"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Crecimiento en Armonía",
+  "areaRef": "CA",
+  "competencia": "CA.1",
+  "codigo": "CA.02.1.4",
+  "texto": "Juego adaptado"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Crecimiento en Armonía",
+  "areaRef": "CA",
+  "competencia": "CA.2",
+  "codigo": "CA.02.2.1",
+  "texto": "Gestión emocional"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Crecimiento en Armonía",
+  "areaRef": "CA",
+  "competencia": "CA.2",
+  "codigo": "CA.02.2.2",
+  "texto": "Cooperación y ayuda"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Crecimiento en Armonía",
+  "areaRef": "CA",
+  "competencia": "CA.2",
+  "codigo": "CA.02.2.3",
+  "texto": "Autoconfianza y preferencias"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Crecimiento en Armonía",
+  "areaRef": "CA",
+  "competencia": "CA.2",
+  "codigo": "CA.02.2.4",
+  "texto": "Valoración logros"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Crecimiento en Armonía",
+  "areaRef": "CA",
+  "competencia": "CA.3",
+  "codigo": "CA.02.3.1",
+  "texto": "Respeto ambiental"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Crecimiento en Armonía",
+  "areaRef": "CA",
+  "competencia": "CA.3",
+  "codigo": "CA.02.3.2",
+  "texto": "Rutinas y respeto grupal"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Crecimiento en Armonía",
+  "areaRef": "CA",
+  "competencia": "CA.3",
+  "codigo": "CA.02.3.3",
+  "texto": "Hábitos saludables"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Crecimiento en Armonía",
+  "areaRef": "CA",
+  "competencia": "CA.3",
+  "codigo": "CA.02.3.4",
+  "texto": "Responsable recursos"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Crecimiento en Armonía",
+  "areaRef": "CA",
+  "competencia": "CA.4",
+  "codigo": "CA.02.4.1",
+  "texto": "Juego inclusivo"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Crecimiento en Armonía",
+  "areaRef": "CA",
+  "competencia": "CA.4",
+  "codigo": "CA.02.4.2",
+  "texto": "Juego simbólico"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Crecimiento en Armonía",
+  "areaRef": "CA",
+  "competencia": "CA.4",
+  "codigo": "CA.02.4.3",
+  "texto": "Normas y convivencia"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Crecimiento en Armonía",
+  "areaRef": "CA",
+  "competencia": "CA.4",
+  "codigo": "CA.02.4.4",
+  "texto": "Gestión conflictos"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Crecimiento en Armonía",
+  "areaRef": "CA",
+  "competencia": "CA.4",
+  "codigo": "CA.02.4.5",
+  "texto": "Interés cultural"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Crecimiento en Armonía",
+  "areaRef": "CA",
+  "competencia": "CA.4",
+  "codigo": "CA.02.4.6",
+  "texto": "Cultura andaluza"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Descubrimiento y Exploración del Entorno",
+  "areaRef": "DEE",
+  "competencia": "DEE.1",
+  "codigo": "DEE.02.1.1",
+  "texto": "Relaciones objetos"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Descubrimiento y Exploración del Entorno",
+  "areaRef": "DEE",
+  "competencia": "DEE.1",
+  "codigo": "DEE.02.1.2",
+  "texto": "Uso cuantificadores"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Descubrimiento y Exploración del Entorno",
+  "areaRef": "DEE",
+  "competencia": "DEE.1",
+  "codigo": "DEE.02.1.3",
+  "texto": "Orientación espacial"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Descubrimiento y Exploración del Entorno",
+  "areaRef": "DEE",
+  "competencia": "DEE.1",
+  "codigo": "DEE.02.1.4",
+  "texto": "Medición cotidiana"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Descubrimiento y Exploración del Entorno",
+  "areaRef": "DEE",
+  "competencia": "DEE.1",
+  "codigo": "DEE.02.1.5",
+  "texto": "Secuencias temporales"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Descubrimiento y Exploración del Entorno",
+  "areaRef": "DEE",
+  "competencia": "DEE.1",
+  "codigo": "DEE.02.1.6",
+  "texto": "Relaciones espaciales"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Descubrimiento y Exploración del Entorno",
+  "areaRef": "DEE",
+  "competencia": "DEE.1",
+  "codigo": "DEE.02.1.7",
+  "texto": "Formas geométricas"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Descubrimiento y Exploración del Entorno",
+  "areaRef": "DEE",
+  "competencia": "DEE.1",
+  "codigo": "DEE.02.1.8",
+  "texto": "Funciones los números"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Descubrimiento y Exploración del Entorno",
+  "areaRef": "DEE",
+  "competencia": "DEE.2",
+  "codigo": "DEE.02.2.1",
+  "texto": "Resolución problemas"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Descubrimiento y Exploración del Entorno",
+  "areaRef": "DEE",
+  "competencia": "DEE.2",
+  "codigo": "DEE.02.2.2",
+  "texto": "Gestión frustración"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Descubrimiento y Exploración del Entorno",
+  "areaRef": "DEE",
+  "competencia": "DEE.2",
+  "codigo": "DEE.02.2.3",
+  "texto": "Formulación hipótesis"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Descubrimiento y Exploración del Entorno",
+  "areaRef": "DEE",
+  "competencia": "DEE.2",
+  "codigo": "DEE.02.2.4",
+  "texto": "Toma decisiones"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Descubrimiento y Exploración del Entorno",
+  "areaRef": "DEE",
+  "competencia": "DEE.2",
+  "codigo": "DEE.02.2.5",
+  "texto": "Pensamiento computacional"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Descubrimiento y Exploración del Entorno",
+  "areaRef": "DEE",
+  "competencia": "DEE.2",
+  "codigo": "DEE.02.2.6",
+  "texto": "Trabajo cooperativo"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Descubrimiento y Exploración del Entorno",
+  "areaRef": "DEE",
+  "competencia": "DEE.3",
+  "codigo": "DEE.02.3.1",
+  "texto": "Cuidado del medio natural"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Descubrimiento y Exploración del Entorno",
+  "areaRef": "DEE",
+  "competencia": "DEE.3",
+  "codigo": "DEE.02.3.2",
+  "texto": "Vivos e inertes"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Descubrimiento y Exploración del Entorno",
+  "areaRef": "DEE",
+  "competencia": "DEE.3",
+  "codigo": "DEE.02.3.3",
+  "texto": "Relaciones natural-social"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Descubrimiento y Exploración del Entorno",
+  "areaRef": "DEE",
+  "competencia": "DEE.3",
+  "codigo": "DEE.02.3.4",
+  "texto": "Patrimonio natural"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Descubrimiento y Exploración del Entorno",
+  "areaRef": "DEE",
+  "competencia": "DEE.3",
+  "codigo": "DEE.02.3.5",
+  "texto": "Biodiversidad andaluza"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Comunicación y Representación de la Realidad",
+  "areaRef": "CRR",
+  "competencia": "CRR.1",
+  "codigo": "CRR.02.1.1",
+  "texto": "Participación comunicativa"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Comunicación y Representación de la Realidad",
+  "areaRef": "CRR",
+  "competencia": "CRR.1",
+  "codigo": "CRR.02.1.2",
+  "texto": "Ajuste comunicativo"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Comunicación y Representación de la Realidad",
+  "areaRef": "CRR",
+  "competencia": "CRR.1",
+  "codigo": "CRR.02.1.3",
+  "texto": "Interés por lenguas"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Comunicación y Representación de la Realidad",
+  "areaRef": "CRR",
+  "competencia": "CRR.1",
+  "codigo": "CRR.02.1.4",
+  "texto": "Interacción digital"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Comunicación y Representación de la Realidad",
+  "areaRef": "CRR",
+  "competencia": "CRR.1",
+  "codigo": "CRR.02.1.5",
+  "texto": "Diversidad cultural"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Comunicación y Representación de la Realidad",
+  "areaRef": "CRR",
+  "competencia": "CRR.2",
+  "codigo": "CRR.02.2.1",
+  "texto": "Interpretación comunicativa"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Comunicación y Representación de la Realidad",
+  "areaRef": "CRR",
+  "competencia": "CRR.2",
+  "codigo": "CRR.02.2.2",
+  "texto": "Interpretación artística"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Comunicación y Representación de la Realidad",
+  "areaRef": "CRR",
+  "competencia": "CRR.2",
+  "codigo": "CRR.02.2.3",
+  "texto": "Oral andaluza"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Comunicación y Representación de la Realidad",
+  "areaRef": "CRR",
+  "competencia": "CRR.2",
+  "codigo": "CRR.02.2.4",
+  "texto": "Cultura andaluza"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Comunicación y Representación de la Realidad",
+  "areaRef": "CRR",
+  "competencia": "CRR.3",
+  "codigo": "CRR.02.3.1",
+  "texto": "Lenguaje funcional"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Comunicación y Representación de la Realidad",
+  "areaRef": "CRR",
+  "competencia": "CRR.3",
+  "codigo": "CRR.02.3.2",
+  "texto": "Lenguaje interacción"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Comunicación y Representación de la Realidad",
+  "areaRef": "CRR",
+  "competencia": "CRR.3",
+  "codigo": "CRR.02.3.3",
+  "texto": "Relato oral"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Comunicación y Representación de la Realidad",
+  "areaRef": "CRR",
+  "competencia": "CRR.3",
+  "codigo": "CRR.02.3.4",
+  "texto": "Creación plástica"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Comunicación y Representación de la Realidad",
+  "areaRef": "CRR",
+  "competencia": "CRR.3",
+  "codigo": "CRR.02.3.5",
+  "texto": "Interpretación musical"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Comunicación y Representación de la Realidad",
+  "areaRef": "CRR",
+  "competencia": "CRR.3",
+  "codigo": "CRR.02.3.6",
+  "texto": "Expresión corporal"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Comunicación y Representación de la Realidad",
+  "areaRef": "CRR",
+  "competencia": "CRR.3",
+  "codigo": "CRR.02.3.7",
+  "texto": "Creatividad digital"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Comunicación y Representación de la Realidad",
+  "areaRef": "CRR",
+  "competencia": "CRR.3",
+  "codigo": "CRR.02.3.8",
+  "texto": "Audición folklore"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Comunicación y Representación de la Realidad",
+  "areaRef": "CRR",
+  "competencia": "CRR.4",
+  "codigo": "CRR.02.4.1",
+  "texto": "Comunicación escrita"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Comunicación y Representación de la Realidad",
+  "areaRef": "CRR",
+  "competencia": "CRR.4",
+  "codigo": "CRR.02.4.2",
+  "texto": "Análisis textual"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Comunicación y Representación de la Realidad",
+  "areaRef": "CRR",
+  "competencia": "CRR.4",
+  "codigo": "CRR.02.4.3",
+  "texto": "Uso biblioteca"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Comunicación y Representación de la Realidad",
+  "areaRef": "CRR",
+  "competencia": "CRR.4",
+  "codigo": "CRR.02.4.4",
+  "texto": "Participación lectora"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Comunicación y Representación de la Realidad",
+  "areaRef": "CRR",
+  "competencia": "CRR.4",
+  "codigo": "CRR.02.4.5",
+  "texto": "Literatura infantil"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Comunicación y Representación de la Realidad",
+  "areaRef": "CRR",
+  "competencia": "CRR.5",
+  "codigo": "CRR.02.5.1",
+  "texto": "Pluralidad cultural"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Comunicación y Representación de la Realidad",
+  "areaRef": "CRR",
+  "competencia": "CRR.5",
+  "codigo": "CRR.02.5.2",
+  "texto": "Interacción ING"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Comunicación y Representación de la Realidad",
+  "areaRef": "CRR",
+  "competencia": "CRR.5",
+  "codigo": "CRR.02.5.3",
+  "texto": "Aproximación literaria"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Comunicación y Representación de la Realidad",
+  "areaRef": "CRR",
+  "competencia": "CRR.5",
+  "codigo": "CRR.02.5.4",
+  "texto": "Expresión artística"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Comunicación y Representación de la Realidad",
+  "areaRef": "CRR",
+  "competencia": "CRR.5",
+  "codigo": "CRR.02.5.5",
+  "texto": "Opinión artística"
+ },
+ {
+  "curso": "Infantil",
+  "area": "Comunicación y Representación de la Realidad",
+  "areaRef": "CRR",
+  "competencia": "CRR.5",
+  "codigo": "CRR.02.5.6",
+  "texto": "Diversidad cultural"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.1",
+  "competencia": "LCL.1",
+  "codigo": "LCL.1.1.1",
+  "texto": "Respeto lenguas"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.1",
+  "competencia": "LCL.1",
+  "codigo": "LCL.1.1.2",
+  "texto": "Prejuicios lingüísticos"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.1",
+  "competencia": "LCL.1",
+  "codigo": "LCL.1.1.3",
+  "texto": "Rasgos andaluces"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.1",
+  "competencia": "LCL.2",
+  "codigo": "LCL.1.2.1",
+  "texto": "Comprensión oral"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.1",
+  "competencia": "LCL.3",
+  "codigo": "LCL.1.3.1",
+  "texto": "Producción oral"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.1",
+  "competencia": "LCL.3",
+  "codigo": "LCL.1.3.2",
+  "texto": "Interacción oral"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.1",
+  "competencia": "LCL.3",
+  "codigo": "LCL.1.3.3",
+  "texto": "Literatura andaluza"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.1",
+  "competencia": "LCL.4",
+  "codigo": "LCL.1.4.1",
+  "texto": "Comprensión escrita"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.1",
+  "competencia": "LCL.4",
+  "codigo": "LCL.1.4.2",
+  "texto": "Análisis textos"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.1",
+  "competencia": "LCL.5",
+  "codigo": "LCL.1.5.1",
+  "texto": "Escritura textos"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.1",
+  "competencia": "LCL.6",
+  "codigo": "LCL.1.6.1",
+  "texto": "Búsqueda información"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.1",
+  "competencia": "LCL.6",
+  "codigo": "LCL.1.6.2",
+  "texto": "Presentar investigación"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.1",
+  "competencia": "LCL.6",
+  "codigo": "LCL.1.6.3",
+  "texto": "Uso tecnológico"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.1",
+  "competencia": "LCL.7",
+  "codigo": "LCL.1.7.1",
+  "texto": "Lectura acompañada"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.1",
+  "competencia": "LCL.7",
+  "codigo": "LCL.1.7.2",
+  "texto": "Compartir lectura"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.1",
+  "competencia": "LCL.8",
+  "codigo": "LCL.1.8.1",
+  "texto": "Leer literatura"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.1",
+  "competencia": "LCL.8",
+  "codigo": "LCL.1.8.2",
+  "texto": "Crear textos"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.1",
+  "competencia": "LCL.8",
+  "codigo": "LCL.1.8.3",
+  "texto": "Retahílas andaluzas"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.1",
+  "competencia": "LCL.9",
+  "codigo": "LCL.1.9.1",
+  "texto": "Gramática"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.1",
+  "competencia": "LCL.9",
+  "codigo": "LCL.1.9.2",
+  "texto": "Ortografía"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.1",
+  "competencia": "LCL.10",
+  "codigo": "LCL.1.10.1",
+  "texto": "Rechazar discriminación"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.1",
+  "competencia": "LCL.10",
+  "codigo": "LCL.1.10.2",
+  "texto": "Comunicación efectiva"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Matemáticas",
+  "areaRef": "MAT.1",
+  "competencia": "MAT.1",
+  "codigo": "MAT.1.1.1",
+  "texto": "Comprender preguntas"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Matemáticas",
+  "areaRef": "MAT.1",
+  "competencia": "MAT.1",
+  "codigo": "MAT.1.1.2",
+  "texto": "Resolver manipulativos"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Matemáticas",
+  "areaRef": "MAT.1",
+  "competencia": "MAT.2",
+  "codigo": "MAT.1.2.1",
+  "texto": "Estrategias guiadas"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Matemáticas",
+  "areaRef": "MAT.1",
+  "competencia": "MAT.2",
+  "codigo": "MAT.1.2.2",
+  "texto": "Soluciones problemas"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Matemáticas",
+  "areaRef": "MAT.1",
+  "competencia": "MAT.2",
+  "codigo": "MAT.1.2.3",
+  "texto": "Explicar soluciones"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Matemáticas",
+  "areaRef": "MAT.1",
+  "competencia": "MAT.3",
+  "codigo": "MAT.1.3.1",
+  "texto": "Conjeturas sencillas"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Matemáticas",
+  "areaRef": "MAT.1",
+  "competencia": "MAT.3",
+  "codigo": "MAT.1.3.2",
+  "texto": "Problemas cotidianos"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Matemáticas",
+  "areaRef": "MAT.1",
+  "competencia": "MAT.4",
+  "codigo": "MAT.1.4.1",
+  "texto": "Rutinas secuenciadas"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Matemáticas",
+  "areaRef": "MAT.1",
+  "competencia": "MAT.4",
+  "codigo": "MAT.1.4.2",
+  "texto": "Uso tecnológico"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Matemáticas",
+  "areaRef": "MAT.1",
+  "competencia": "MAT.5",
+  "codigo": "MAT.1.5.1",
+  "texto": "Conexiones conceptos"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Matemáticas",
+  "areaRef": "MAT.1",
+  "competencia": "MAT.5",
+  "codigo": "MAT.1.5.2",
+  "texto": "Matemáticas cotidianas"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Matemáticas",
+  "areaRef": "MAT.1",
+  "competencia": "MAT.6",
+  "codigo": "MAT.1.6.1",
+  "texto": "Vocabulario matemático"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Matemáticas",
+  "areaRef": "MAT.1",
+  "competencia": "MAT.6",
+  "codigo": "MAT.1.6.2",
+  "texto": "Explicar procesos"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Matemáticas",
+  "areaRef": "MAT.1",
+  "competencia": "MAT.7",
+  "codigo": "MAT.1.7.1",
+  "texto": "Gestionar emociones"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Matemáticas",
+  "areaRef": "MAT.1",
+  "competencia": "MAT.7",
+  "codigo": "MAT.1.7.2",
+  "texto": "Superar errores"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Matemáticas",
+  "areaRef": "MAT.1",
+  "competencia": "MAT.8",
+  "codigo": "MAT.1.8.1",
+  "texto": "Trabajo colaborativo"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Matemáticas",
+  "areaRef": "MAT.1",
+  "competencia": "MAT.8",
+  "codigo": "MAT.1.8.2",
+  "texto": "Roles equipo"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Educación Física",
+  "areaRef": "EFI.1",
+  "competencia": "EFI.1",
+  "codigo": "EFI.1.1.1",
+  "texto": "Desplazamientos activos"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Educación Física",
+  "areaRef": "EFI.1",
+  "competencia": "EFI.1",
+  "codigo": "EFI.1.1.2",
+  "texto": "Higiene y postura"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Educación Física",
+  "areaRef": "EFI.1",
+  "competencia": "EFI.1",
+  "codigo": "EFI.1.1.3",
+  "texto": "Juegos y prevención"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Educación Física",
+  "areaRef": "EFI.1",
+  "competencia": "EFI.1",
+  "codigo": "EFI.1.1.4",
+  "texto": "Valores motrices"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Educación Física",
+  "areaRef": "EFI.1",
+  "competencia": "EFI.2",
+  "codigo": "EFI.1.2.1",
+  "texto": "Metas motoras"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Educación Física",
+  "areaRef": "EFI.1",
+  "competencia": "EFI.2",
+  "codigo": "EFI.1.2.2",
+  "texto": "Toma decisiones"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Educación Física",
+  "areaRef": "EFI.1",
+  "competencia": "EFI.2",
+  "codigo": "EFI.1.2.3",
+  "texto": "Control corporal"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Educación Física",
+  "areaRef": "EFI.1",
+  "competencia": "EFI.3",
+  "codigo": "EFI.1.3.1",
+  "texto": "Gestión emocional"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Educación Física",
+  "areaRef": "EFI.1",
+  "competencia": "EFI.3",
+  "codigo": "EFI.1.3.2",
+  "texto": "Deportividad"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Educación Física",
+  "areaRef": "EFI.1",
+  "competencia": "EFI.3",
+  "codigo": "EFI.1.3.3",
+  "texto": "Habilidades sociales"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Educación Física",
+  "areaRef": "EFI.1",
+  "competencia": "EFI.4",
+  "codigo": "EFI.1.4.1",
+  "texto": "Expresión cultural"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Educación Física",
+  "areaRef": "EFI.1",
+  "competencia": "EFI.4",
+  "codigo": "EFI.1.4.2",
+  "texto": "Referentes deportivos"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Educación Física",
+  "areaRef": "EFI.1",
+  "competencia": "EFI.4",
+  "codigo": "EFI.1.4.3",
+  "texto": "Comunicación corporal"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Educación Física",
+  "areaRef": "EFI.1",
+  "competencia": "EFI.5",
+  "codigo": "EFI.1.5.1",
+  "texto": "Respeto ambiental"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Lengua Extranjera",
+  "areaRef": "ING.1",
+  "competencia": "ING.1",
+  "codigo": "ING.1.1.1",
+  "texto": "Reconocer palabras"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Lengua Extranjera",
+  "areaRef": "ING.1",
+  "competencia": "ING.1",
+  "codigo": "ING.1.1.2",
+  "texto": "Estrategias comunicativas"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Lengua Extranjera",
+  "areaRef": "ING.1",
+  "competencia": "ING.2",
+  "codigo": "ING.1.2.1",
+  "texto": "Identificar léxico"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Lengua Extranjera",
+  "areaRef": "ING.1",
+  "competencia": "ING.2",
+  "codigo": "ING.1.2.2",
+  "texto": "Expresiones sencillas"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Lengua Extranjera",
+  "areaRef": "ING.1",
+  "competencia": "ING.2",
+  "codigo": "ING.1.2.3",
+  "texto": "Producir mensajes"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Lengua Extranjera",
+  "areaRef": "ING.1",
+  "competencia": "ING.3",
+  "codigo": "ING.1.3.1",
+  "texto": "Participar diálogos"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Lengua Extranjera",
+  "areaRef": "ING.1",
+  "competencia": "ING.3",
+  "codigo": "ING.1.3.2",
+  "texto": "Expresión oral"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Lengua Extranjera",
+  "areaRef": "ING.1",
+  "competencia": "ING.4",
+  "codigo": "ING.1.4.1",
+  "texto": "Comprender textos"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Lengua Extranjera",
+  "areaRef": "ING.1",
+  "competencia": "ING.5",
+  "codigo": "ING.1.5.1",
+  "texto": "Comparar lenguas"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Lengua Extranjera",
+  "areaRef": "ING.1",
+  "competencia": "ING.5",
+  "codigo": "ING.1.5.2",
+  "texto": "Mejorar comunicación"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Lengua Extranjera",
+  "areaRef": "ING.1",
+  "competencia": "ING.5",
+  "codigo": "ING.1.5.3",
+  "texto": "Evaluar progresos"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Lengua Extranjera",
+  "areaRef": "ING.1",
+  "competencia": "ING.6",
+  "codigo": "ING.1.6.1",
+  "texto": "Interés intercultural"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Lengua Extranjera",
+  "areaRef": "ING.1",
+  "competencia": "ING.6",
+  "codigo": "ING.1.6.2",
+  "texto": "Diversidad lingüística"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.1",
+  "competencia": "CMN.1",
+  "codigo": "CMN.1.1.1",
+  "texto": "Uso dispositivos"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.1",
+  "competencia": "CMN.2",
+  "codigo": "CMN.1.2.1",
+  "texto": "Curiosidad entorno"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.1",
+  "competencia": "CMN.2",
+  "codigo": "CMN.1.2.2",
+  "texto": "Búsqueda información"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.1",
+  "competencia": "CMN.2",
+  "codigo": "CMN.1.2.3",
+  "texto": "Experimentos guiados"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.1",
+  "competencia": "CMN.2",
+  "codigo": "CMN.1.2.4",
+  "texto": "Comparar resultados"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.1",
+  "competencia": "CMN.2",
+  "codigo": "CMN.1.2.5",
+  "texto": "Comunicar investigaciones"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.1",
+  "competencia": "CMN.3",
+  "codigo": "CMN.1.3.1",
+  "texto": "Diseñar soluciones"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.1",
+  "competencia": "CMN.3",
+  "codigo": "CMN.1.3.2",
+  "texto": "Presentar proyectos"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.1",
+  "competencia": "CMN.3",
+  "codigo": "CMN.1.3.3",
+  "texto": "Pensamiento computacional"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.1",
+  "competencia": "CMN.4",
+  "codigo": "CMN.1.4.1",
+  "texto": "Reconocer emociones"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.1",
+  "competencia": "CMN.4",
+  "codigo": "CMN.1.4.2",
+  "texto": "Hábitos saludables"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.1",
+  "competencia": "CMN.5",
+  "codigo": "CMN.1.5.1",
+  "texto": "Explorar medio"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.1",
+  "competencia": "CMN.5",
+  "codigo": "CMN.1.5.2",
+  "texto": "Conexiones entorno"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.1",
+  "competencia": "CMN.5",
+  "codigo": "CMN.1.5.3",
+  "texto": "Respetar patrimonio"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.1",
+  "competencia": "CMN.6",
+  "codigo": "CMN.1.6.1",
+  "texto": "Vida sostenible"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.1",
+  "competencia": "CMN.7",
+  "codigo": "CMN.1.7.1",
+  "texto": "Ordenar hechos"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.1",
+  "competencia": "CMN.7",
+  "codigo": "CMN.1.7.2",
+  "texto": "Vida del pasado"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.1",
+  "competencia": "CMN.8",
+  "codigo": "CMN.1.8.1",
+  "texto": "Cultura cercana"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.1",
+  "competencia": "CMN.8",
+  "codigo": "CMN.1.8.2",
+  "texto": "Modelos igualitarios"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.1",
+  "competencia": "CMN.9",
+  "codigo": "CMN.1.9.1",
+  "texto": "Roles responsables"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.1",
+  "competencia": "CMN.9",
+  "codigo": "CMN.1.9.2",
+  "texto": "Conocer instituciones"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.1",
+  "competencia": "CMN.9",
+  "codigo": "CMN.1.9.3",
+  "texto": "Movilidad segura"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Educación Artística",
+  "areaRef": "EAR.1",
+  "competencia": "EAR.1",
+  "codigo": "EAR.1.1.1",
+  "texto": "Descubrimiento activo"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Educación Artística",
+  "areaRef": "EAR.1",
+  "competencia": "EAR.1",
+  "codigo": "EAR.1.1.2",
+  "texto": "Manifestaciones cercanas"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Educación Artística",
+  "areaRef": "EAR.1",
+  "competencia": "EAR.2",
+  "codigo": "EAR.1.2.1",
+  "texto": "Búsqueda guiada"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Educación Artística",
+  "areaRef": "EAR.1",
+  "competencia": "EAR.2",
+  "codigo": "EAR.1.2.2",
+  "texto": "Elementos patrimoniales"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Educación Artística",
+  "areaRef": "EAR.1",
+  "competencia": "EAR.3",
+  "codigo": "EAR.1.3.1",
+  "texto": "Producción creativa"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Educación Artística",
+  "areaRef": "EAR.1",
+  "competencia": "EAR.3",
+  "codigo": "EAR.1.3.2",
+  "texto": "Expresión emocional"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Educación Artística",
+  "areaRef": "EAR.1",
+  "competencia": "EAR.3",
+  "codigo": "EAR.1.3.3",
+  "texto": "Experimentación andaluza"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Educación Artística",
+  "areaRef": "EAR.1",
+  "competencia": "EAR.4",
+  "codigo": "EAR.1.4.1",
+  "texto": "Diseño cooperativo"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Educación Artística",
+  "areaRef": "EAR.1",
+  "competencia": "EAR.4",
+  "codigo": "EAR.1.4.2",
+  "texto": "Creación respetuosa"
+ },
+ {
+  "curso": "1º Primaria",
+  "area": "Educación Artística",
+  "areaRef": "EAR.1",
+  "competencia": "EAR.4",
+  "codigo": "EAR.1.4.3",
+  "texto": "Compartir experiencias"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.2",
+  "competencia": "LCL.1",
+  "codigo": "LCL.2.1.1",
+  "texto": "Respeto lenguas"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.2",
+  "competencia": "LCL.1",
+  "codigo": "LCL.2.1.2",
+  "texto": "Prejuicios lingüísticos"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.2",
+  "competencia": "LCL.1",
+  "codigo": "LCL.2.1.3",
+  "texto": "Rasgos andaluces"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.2",
+  "competencia": "LCL.2",
+  "codigo": "LCL.2.2.1",
+  "texto": "Comprensión oral"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.2",
+  "competencia": "LCL.3",
+  "codigo": "LCL.2.3.1",
+  "texto": "Producción oral"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.2",
+  "competencia": "LCL.3",
+  "codigo": "LCL.2.3.2",
+  "texto": "Interacción oral"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.2",
+  "competencia": "LCL.3",
+  "codigo": "LCL.2.3.3",
+  "texto": "Literatura andaluza"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.2",
+  "competencia": "LCL.4",
+  "codigo": "LCL.2.4.1",
+  "texto": "Comprensión escrita"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.2",
+  "competencia": "LCL.4",
+  "codigo": "LCL.2.4.2",
+  "texto": "Análisis textos"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.2",
+  "competencia": "LCL.5",
+  "codigo": "LCL.2.5.1",
+  "texto": "Escritura textos"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.2",
+  "competencia": "LCL.6",
+  "codigo": "LCL.2.6.1",
+  "texto": "Búsqueda información"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.2",
+  "competencia": "LCL.6",
+  "codigo": "LCL.2.6.2",
+  "texto": "Presentar investigación"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.2",
+  "competencia": "LCL.6",
+  "codigo": "LCL.2.6.3",
+  "texto": "Uso tecnológico"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.2",
+  "competencia": "LCL.7",
+  "codigo": "LCL.2.7.1",
+  "texto": "Lectura autónoma"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.2",
+  "competencia": "LCL.7",
+  "codigo": "LCL.2.7.2",
+  "texto": "Compartir lectura"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.2",
+  "competencia": "LCL.8",
+  "codigo": "LCL.2.8.1",
+  "texto": "Leer literatura"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.2",
+  "competencia": "LCL.8",
+  "codigo": "LCL.2.8.2",
+  "texto": "Crear textos"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.2",
+  "competencia": "LCL.8",
+  "codigo": "LCL.2.8.3",
+  "texto": "Retahílas andaluzas"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.2",
+  "competencia": "LCL.9",
+  "codigo": "LCL.2.9.1",
+  "texto": "Gramática"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.2",
+  "competencia": "LCL.9",
+  "codigo": "LCL.2.9.2",
+  "texto": "Ortografía"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.2",
+  "competencia": "LCL.10",
+  "codigo": "LCL.2.10.1",
+  "texto": "Rechazar discriminación"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.2",
+  "competencia": "LCL.10",
+  "codigo": "LCL.2.10.2",
+  "texto": "Comunicación efectiva"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Educación Física",
+  "areaRef": "EFI.2",
+  "competencia": "EFI.1",
+  "codigo": "EFI.2.1.1",
+  "texto": "Estilo vida activo"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Educación Física",
+  "areaRef": "EFI.2",
+  "competencia": "EFI.1",
+  "codigo": "EFI.2.1.2",
+  "texto": "Higiene y postura"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Educación Física",
+  "areaRef": "EFI.2",
+  "competencia": "EFI.1",
+  "codigo": "EFI.2.1.3",
+  "texto": "Prevención lesiones"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Educación Física",
+  "areaRef": "EFI.2",
+  "competencia": "EFI.1",
+  "codigo": "EFI.2.1.4",
+  "texto": "Valores inclusivos"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Educación Física",
+  "areaRef": "EFI.2",
+  "competencia": "EFI.2",
+  "codigo": "EFI.2.2.1",
+  "texto": "Metas y análisis"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Educación Física",
+  "areaRef": "EFI.2",
+  "competencia": "EFI.2",
+  "codigo": "EFI.2.2.2",
+  "texto": "Toma decisiones"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Educación Física",
+  "areaRef": "EFI.2",
+  "competencia": "EFI.2",
+  "codigo": "EFI.2.2.3",
+  "texto": "Control corporal"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Educación Física",
+  "areaRef": "EFI.2",
+  "competencia": "EFI.3",
+  "codigo": "EFI.2.3.1",
+  "texto": "Gestión emocional"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Educación Física",
+  "areaRef": "EFI.2",
+  "competencia": "EFI.3",
+  "codigo": "EFI.2.3.2",
+  "texto": "Deportividad y respeto"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Educación Física",
+  "areaRef": "EFI.2",
+  "competencia": "EFI.3",
+  "codigo": "EFI.2.3.3",
+  "texto": "Habilidades sociales"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Educación Física",
+  "areaRef": "EFI.2",
+  "competencia": "EFI.4",
+  "codigo": "EFI.2.4.1",
+  "texto": "Expresión cultural"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Educación Física",
+  "areaRef": "EFI.2",
+  "competencia": "EFI.4",
+  "codigo": "EFI.2.4.2",
+  "texto": "Referentes deportivos"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Educación Física",
+  "areaRef": "EFI.2",
+  "competencia": "EFI.4",
+  "codigo": "EFI.2.4.3",
+  "texto": "Comunicación corporal"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Educación Física",
+  "areaRef": "EFI.2",
+  "competencia": "EFI.5",
+  "codigo": "EFI.2.5.1",
+  "texto": "Respeto ambiental"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Lengua Extranjera",
+  "areaRef": "ING.2",
+  "competencia": "ING.1",
+  "codigo": "ING.2.1.1",
+  "texto": "Reconocer expresiones"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Lengua Extranjera",
+  "areaRef": "ING.2",
+  "competencia": "ING.1",
+  "codigo": "ING.2.1.2",
+  "texto": "Estrategias comunicación"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Lengua Extranjera",
+  "areaRef": "ING.2",
+  "competencia": "ING.2",
+  "codigo": "ING.2.2.1",
+  "texto": "Expresar frases"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Lengua Extranjera",
+  "areaRef": "ING.2",
+  "competencia": "ING.2",
+  "codigo": "ING.2.2.2",
+  "texto": "Escribir léxico"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Lengua Extranjera",
+  "areaRef": "ING.2",
+  "competencia": "ING.2",
+  "codigo": "ING.2.2.3",
+  "texto": "Producir mensajes"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Lengua Extranjera",
+  "areaRef": "ING.2",
+  "competencia": "ING.3",
+  "codigo": "ING.2.3.1",
+  "texto": "Participar interacciones"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Lengua Extranjera",
+  "areaRef": "ING.2",
+  "competencia": "ING.3",
+  "codigo": "ING.2.3.2",
+  "texto": "Saludar preguntas"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Lengua Extranjera",
+  "areaRef": "ING.2",
+  "competencia": "ING.4",
+  "codigo": "ING.2.4.1",
+  "texto": "Interpretar conceptos"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Lengua Extranjera",
+  "areaRef": "ING.2",
+  "competencia": "ING.5",
+  "codigo": "ING.2.5.1",
+  "texto": "Comparar lenguas"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Lengua Extranjera",
+  "areaRef": "ING.2",
+  "competencia": "ING.5",
+  "codigo": "ING.2.5.2",
+  "texto": "Mejorar estrategias"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Lengua Extranjera",
+  "areaRef": "ING.2",
+  "competencia": "ING.5",
+  "codigo": "ING.2.5.3",
+  "texto": "Evaluar aprendizaje"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Lengua Extranjera",
+  "areaRef": "ING.2",
+  "competencia": "ING.6",
+  "codigo": "ING.2.6.1",
+  "texto": "Interés intercultural"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Lengua Extranjera",
+  "areaRef": "ING.2",
+  "competencia": "ING.6",
+  "codigo": "ING.2.6.2",
+  "texto": "Diversidad cultural"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.2",
+  "competencia": "CMN.1",
+  "codigo": "CMN.2.1.1",
+  "texto": "Uso seguro dispositivos"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.2",
+  "competencia": "CMN.2",
+  "codigo": "CMN.2.2.1",
+  "texto": "Curiosidad fenómenos"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.2",
+  "competencia": "CMN.2",
+  "codigo": "CMN.2.2.2",
+  "texto": "Búsqueda guiada"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.2",
+  "competencia": "CMN.2",
+  "codigo": "CMN.2.2.3",
+  "texto": "Experimentación pautada"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.2",
+  "competencia": "CMN.2",
+  "codigo": "CMN.2.2.4",
+  "texto": "Comparar resultados"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.2",
+  "competencia": "CMN.2",
+  "codigo": "CMN.2.2.5",
+  "texto": "Comunicar investigaciones"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.2",
+  "competencia": "CMN.3",
+  "codigo": "CMN.2.3.1",
+  "texto": "Diseñar prototipos"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.2",
+  "competencia": "CMN.3",
+  "codigo": "CMN.2.3.2",
+  "texto": "Presentar proyectos"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.2",
+  "competencia": "CMN.3",
+  "codigo": "CMN.2.3.3",
+  "texto": "Resolver programación"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.2",
+  "competencia": "CMN.4",
+  "codigo": "CMN.2.4.1",
+  "texto": "Bienestar emocional"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.2",
+  "competencia": "CMN.4",
+  "codigo": "CMN.2.4.2",
+  "texto": "Hábitos saludables"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.2",
+  "competencia": "CMN.5",
+  "codigo": "CMN.2.5.1",
+  "texto": "Explorar medio"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.2",
+  "competencia": "CMN.5",
+  "codigo": "CMN.2.5.2",
+  "texto": "Conexiones entorno"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.2",
+  "competencia": "CMN.5",
+  "codigo": "CMN.2.5.3",
+  "texto": "Respetar patrimonio"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.2",
+  "competencia": "CMN.6",
+  "codigo": "CMN.2.6.1",
+  "texto": "Vida sostenible"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.2",
+  "competencia": "CMN.7",
+  "codigo": "CMN.2.7.1",
+  "texto": "Ordenar sucesos"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.2",
+  "competencia": "CMN.7",
+  "codigo": "CMN.2.7.2",
+  "texto": "Historia andaluza"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.2",
+  "competencia": "CMN.8",
+  "codigo": "CMN.2.8.1",
+  "texto": "Cultura andaluza"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.2",
+  "competencia": "CMN.8",
+  "codigo": "CMN.2.8.2",
+  "texto": "Fomentar igualdad"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.2",
+  "competencia": "CMN.9",
+  "codigo": "CMN.2.9.1",
+  "texto": "Roles responsables"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.2",
+  "competencia": "CMN.9",
+  "codigo": "CMN.2.9.2",
+  "texto": "Conocer instituciones"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.2",
+  "competencia": "CMN.9",
+  "codigo": "CMN.2.9.3",
+  "texto": "Movilidad sostenible"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Matemáticas",
+  "areaRef": "MAT.2",
+  "competencia": "MAT.1",
+  "codigo": "MAT.2.1.1",
+  "texto": "Comprender mensajes"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Matemáticas",
+  "areaRef": "MAT.2",
+  "competencia": "MAT.1",
+  "codigo": "MAT.2.1.2",
+  "texto": "Resolver problemas"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Matemáticas",
+  "areaRef": "MAT.2",
+  "competencia": "MAT.2",
+  "codigo": "MAT.2.2.1",
+  "texto": "Estrategias resolución"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Matemáticas",
+  "areaRef": "MAT.2",
+  "competencia": "MAT.2",
+  "codigo": "MAT.2.2.2",
+  "texto": "Soluciones guiadas"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Matemáticas",
+  "areaRef": "MAT.2",
+  "competencia": "MAT.2",
+  "codigo": "MAT.2.2.3",
+  "texto": "Describir soluciones"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Matemáticas",
+  "areaRef": "MAT.2",
+  "competencia": "MAT.3",
+  "codigo": "MAT.2.3.1",
+  "texto": "Conjeturas patrones"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Matemáticas",
+  "areaRef": "MAT.2",
+  "competencia": "MAT.3",
+  "codigo": "MAT.2.3.2",
+  "texto": "Problemas cotidianos"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Matemáticas",
+  "areaRef": "MAT.2",
+  "competencia": "MAT.4",
+  "codigo": "MAT.2.4.1",
+  "texto": "Rutinas secuenciadas"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Matemáticas",
+  "areaRef": "MAT.2",
+  "competencia": "MAT.4",
+  "codigo": "MAT.2.4.2",
+  "texto": "Herramientas digitales"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Matemáticas",
+  "areaRef": "MAT.2",
+  "competencia": "MAT.5",
+  "codigo": "MAT.2.5.1",
+  "texto": "Conexiones matemáticas"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Matemáticas",
+  "areaRef": "MAT.2",
+  "competencia": "MAT.5",
+  "codigo": "MAT.2.5.2",
+  "texto": "Matemáticas aplicadas"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Matemáticas",
+  "areaRef": "MAT.2",
+  "competencia": "MAT.6",
+  "codigo": "MAT.2.6.1",
+  "texto": "Vocabulario matemático"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Matemáticas",
+  "areaRef": "MAT.2",
+  "competencia": "MAT.6",
+  "codigo": "MAT.2.6.2",
+  "texto": "Explicar procesos"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Matemáticas",
+  "areaRef": "MAT.2",
+  "competencia": "MAT.7",
+  "codigo": "MAT.2.7.1",
+  "texto": "Gestionar emociones"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Matemáticas",
+  "areaRef": "MAT.2",
+  "competencia": "MAT.7",
+  "codigo": "MAT.2.7.2",
+  "texto": "Actitud positiva"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Matemáticas",
+  "areaRef": "MAT.2",
+  "competencia": "MAT.8",
+  "codigo": "MAT.2.8.1",
+  "texto": "Trabajo respetuoso"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Matemáticas",
+  "areaRef": "MAT.2",
+  "competencia": "MAT.8",
+  "codigo": "MAT.2.8.2",
+  "texto": "Roles colaborativos"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Educación Artística",
+  "areaRef": "EAR.2",
+  "competencia": "EAR.1",
+  "codigo": "EAR.2.1.1",
+  "texto": "Exploración artística"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Educación Artística",
+  "areaRef": "EAR.2",
+  "competencia": "EAR.1",
+  "codigo": "EAR.2.1.2",
+  "texto": "Manifestaciones culturales"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Educación Artística",
+  "areaRef": "EAR.2",
+  "competencia": "EAR.2",
+  "codigo": "EAR.2.2.1",
+  "texto": "Búsqueda elemental"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Educación Artística",
+  "areaRef": "EAR.2",
+  "competencia": "EAR.2",
+  "codigo": "EAR.2.2.2",
+  "texto": "Reconocimiento patrimonial"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Educación Artística",
+  "areaRef": "EAR.2",
+  "competencia": "EAR.3",
+  "codigo": "EAR.2.3.1",
+  "texto": "Producción expresiva"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Educación Artística",
+  "areaRef": "EAR.2",
+  "competencia": "EAR.3",
+  "codigo": "EAR.2.3.2",
+  "texto": "Comunicación emocional"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Educación Artística",
+  "areaRef": "EAR.2",
+  "competencia": "EAR.3",
+  "codigo": "EAR.2.3.3",
+  "texto": "Práctica andaluza"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Educación Artística",
+  "areaRef": "EAR.2",
+  "competencia": "EAR.4",
+  "codigo": "EAR.2.4.1",
+  "texto": "Diseño inclusivo"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Educación Artística",
+  "areaRef": "EAR.2",
+  "competencia": "EAR.4",
+  "codigo": "EAR.2.4.2",
+  "texto": "Creación cooperativa"
+ },
+ {
+  "curso": "2º Primaria",
+  "area": "Educación Artística",
+  "areaRef": "EAR.2",
+  "competencia": "EAR.4",
+  "codigo": "EAR.2.4.3",
+  "texto": "Valoración compartida"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.3",
+  "competencia": "LCL.1",
+  "codigo": "LCL.3.1.1",
+  "texto": "Respeto lenguas"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.3",
+  "competencia": "LCL.1",
+  "codigo": "LCL.3.1.2",
+  "texto": "Prejuicios lingüísticos"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.3",
+  "competencia": "LCL.1",
+  "codigo": "LCL.3.1.3",
+  "texto": "Dialectos andaluces"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.3",
+  "competencia": "LCL.2",
+  "codigo": "LCL.3.2.1",
+  "texto": "Comprensión oral"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.3",
+  "competencia": "LCL.3",
+  "codigo": "LCL.3.3.1",
+  "texto": "Producción oral"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.3",
+  "competencia": "LCL.3",
+  "codigo": "LCL.3.3.2",
+  "texto": "Interacción oral"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.3",
+  "competencia": "LCL.3",
+  "codigo": "LCL.3.3.3",
+  "texto": "Literatura andaluza"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.3",
+  "competencia": "LCL.4",
+  "codigo": "LCL.3.4.1",
+  "texto": "Lectura silenciosa"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.3",
+  "competencia": "LCL.4",
+  "codigo": "LCL.3.4.2",
+  "texto": "Análisis textos"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.3",
+  "competencia": "LCL.5",
+  "codigo": "LCL.3.5.1",
+  "texto": "Escritura textos"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.3",
+  "competencia": "LCL.6",
+  "codigo": "LCL.3.6.1",
+  "texto": "Búsqueda información"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.3",
+  "competencia": "LCL.6",
+  "codigo": "LCL.3.6.2",
+  "texto": "Presentar investigación"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.3",
+  "competencia": "LCL.6",
+  "codigo": "LCL.3.6.3",
+  "texto": "Uso tecnológico"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.3",
+  "competencia": "LCL.7",
+  "codigo": "LCL.3.7.1",
+  "texto": "Lectura autónoma"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.3",
+  "competencia": "LCL.7",
+  "codigo": "LCL.3.7.2",
+  "texto": "Compartir lectura"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.3",
+  "competencia": "LCL.8",
+  "codigo": "LCL.3.8.1",
+  "texto": "Leer literatura"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.3",
+  "competencia": "LCL.8",
+  "codigo": "LCL.3.8.2",
+  "texto": "Crear textos"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.3",
+  "competencia": "LCL.8",
+  "codigo": "LCL.3.8.3",
+  "texto": "Textos andaluces"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.3",
+  "competencia": "LCL.9",
+  "codigo": "LCL.3.9.1",
+  "texto": "Gramática"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.3",
+  "competencia": "LCL.9",
+  "codigo": "LCL.3.9.2",
+  "texto": "Ortografía"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.3",
+  "competencia": "LCL.10",
+  "codigo": "LCL.3.10.1",
+  "texto": "Rechazar discriminación"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Lengua Castellana y Literatura",
+  "areaRef": "LCL.3",
+  "competencia": "LCL.10",
+  "codigo": "LCL.3.10.2",
+  "texto": "Comunicación efectiva"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Educación Física",
+  "areaRef": "EFI.3",
+  "competencia": "EFI.1",
+  "codigo": "EFI.3.1.1",
+  "texto": "Ocio saludable"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Educación Física",
+  "areaRef": "EFI.3",
+  "competencia": "EFI.1",
+  "codigo": "EFI.3.1.2",
+  "texto": "Postura y hábitos"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Educación Física",
+  "areaRef": "EFI.3",
+  "competencia": "EFI.1",
+  "codigo": "EFI.3.1.3",
+  "texto": "Prevención y seguridad"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Educación Física",
+  "areaRef": "EFI.3",
+  "competencia": "EFI.1",
+  "codigo": "EFI.3.1.4",
+  "texto": "Respeto corporal"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Educación Física",
+  "areaRef": "EFI.3",
+  "competencia": "EFI.2",
+  "codigo": "EFI.3.2.1",
+  "texto": "Metas y estrategias"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Educación Física",
+  "areaRef": "EFI.3",
+  "competencia": "EFI.2",
+  "codigo": "EFI.3.2.2",
+  "texto": "Análisis resultados"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Educación Física",
+  "areaRef": "EFI.3",
+  "competencia": "EFI.2",
+  "codigo": "EFI.3.2.3",
+  "texto": "Proyectos motrices"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Educación Física",
+  "areaRef": "EFI.3",
+  "competencia": "EFI.3",
+  "codigo": "EFI.3.3.1",
+  "texto": "Control emocional"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Educación Física",
+  "areaRef": "EFI.3",
+  "competencia": "EFI.3",
+  "codigo": "EFI.3.3.2",
+  "texto": "Deportividad activa"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Educación Física",
+  "areaRef": "EFI.3",
+  "competencia": "EFI.3",
+  "codigo": "EFI.3.3.3",
+  "texto": "Habilidades sociales"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Educación Física",
+  "areaRef": "EFI.3",
+  "competencia": "EFI.4",
+  "codigo": "EFI.3.4.1",
+  "texto": "Cultura andaluza"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Educación Física",
+  "areaRef": "EFI.3",
+  "competencia": "EFI.4",
+  "codigo": "EFI.3.4.2",
+  "texto": "Deportes mixtos"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Educación Física",
+  "areaRef": "EFI.3",
+  "competencia": "EFI.4",
+  "codigo": "EFI.3.4.3",
+  "texto": "Expresión corporal"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Educación Física",
+  "areaRef": "EFI.3",
+  "competencia": "EFI.5",
+  "codigo": "EFI.3.5.1",
+  "texto": "Conservación ambiental"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Lengua Extranjera",
+  "areaRef": "ING.3",
+  "competencia": "ING.1",
+  "codigo": "ING.3.1.1",
+  "texto": "Reconocer global"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Lengua Extranjera",
+  "areaRef": "ING.3",
+  "competencia": "ING.1",
+  "codigo": "ING.3.1.2",
+  "texto": "Estrategias comunicación"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Lengua Extranjera",
+  "areaRef": "ING.3",
+  "competencia": "ING.2",
+  "codigo": "ING.3.2.1",
+  "texto": "Participar conversación"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Lengua Extranjera",
+  "areaRef": "ING.3",
+  "competencia": "ING.2",
+  "codigo": "ING.3.2.2",
+  "texto": "Redactar frases"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Lengua Extranjera",
+  "areaRef": "ING.3",
+  "competencia": "ING.2",
+  "codigo": "ING.3.2.3",
+  "texto": "Producir mensajes"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Lengua Extranjera",
+  "areaRef": "ING.3",
+  "competencia": "ING.3",
+  "codigo": "ING.3.3.1",
+  "texto": "Diálogos empatía"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Lengua Extranjera",
+  "areaRef": "ING.3",
+  "competencia": "ING.3",
+  "codigo": "ING.3.3.2",
+  "texto": "Iniciar conversación"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Lengua Extranjera",
+  "areaRef": "ING.3",
+  "competencia": "ING.4",
+  "codigo": "ING.3.4.1",
+  "texto": "Transmitir información"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Lengua Extranjera",
+  "areaRef": "ING.3",
+  "competencia": "ING.4",
+  "codigo": "ING.3.4.2",
+  "texto": "Estrategias comprensión"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Lengua Extranjera",
+  "areaRef": "ING.3",
+  "competencia": "ING.5",
+  "codigo": "ING.3.5.1",
+  "texto": "Facilitar comprensión"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Lengua Extranjera",
+  "areaRef": "ING.3",
+  "competencia": "ING.5",
+  "codigo": "ING.3.5.2",
+  "texto": "Comparar lenguas"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Lengua Extranjera",
+  "areaRef": "ING.3",
+  "competencia": "ING.5",
+  "codigo": "ING.3.5.3",
+  "texto": "Mejorar aprendizaje"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Lengua Extranjera",
+  "areaRef": "ING.3",
+  "competencia": "ING.6",
+  "codigo": "ING.3.6.1",
+  "texto": "Registrar progreso"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Lengua Extranjera",
+  "areaRef": "ING.3",
+  "competencia": "ING.6",
+  "codigo": "ING.3.6.2",
+  "texto": "Respeto intercultural"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Lengua Extranjera",
+  "areaRef": "ING.3",
+  "competencia": "ING.6",
+  "codigo": "ING.3.6.3",
+  "texto": "Diversidad cultural"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.3",
+  "competencia": "CMN.1",
+  "codigo": "CMN.3.1.1",
+  "texto": "Uso seguro digital"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.3",
+  "competencia": "CMN.2",
+  "codigo": "CMN.3.2.1",
+  "texto": "Curiosidad entorno"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.3",
+  "competencia": "CMN.2",
+  "codigo": "CMN.3.2.2",
+  "texto": "Selección información"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.3",
+  "competencia": "CMN.2",
+  "codigo": "CMN.3.2.3",
+  "texto": "Experimentación guiada"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.3",
+  "competencia": "CMN.2",
+  "codigo": "CMN.3.2.4",
+  "texto": "Interpretar resultados"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.3",
+  "competencia": "CMN.2",
+  "codigo": "CMN.3.2.5",
+  "texto": "Comunicar investigaciones"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.3",
+  "competencia": "CMN.3",
+  "codigo": "CMN.3.3.1",
+  "texto": "Diseñar prototipos"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.3",
+  "competencia": "CMN.3",
+  "codigo": "CMN.3.3.2",
+  "texto": "Presentar proyectos"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.3",
+  "competencia": "CMN.3",
+  "codigo": "CMN.3.3.3",
+  "texto": "Programación básica"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.3",
+  "competencia": "CMN.4",
+  "codigo": "CMN.3.4.1",
+  "texto": "Bienestar emocional"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.3",
+  "competencia": "CMN.4",
+  "codigo": "CMN.3.4.2",
+  "texto": "Hábitos saludables"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.3",
+  "competencia": "CMN.5",
+  "codigo": "CMN.3.5.1",
+  "texto": "Explorar entorno"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.3",
+  "competencia": "CMN.5",
+  "codigo": "CMN.3.5.2",
+  "texto": "Conexiones adaptativas"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.3",
+  "competencia": "CMN.5",
+  "codigo": "CMN.3.5.3",
+  "texto": "Proteger patrimonio"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.3",
+  "competencia": "CMN.6",
+  "codigo": "CMN.3.6.1",
+  "texto": "Soluciones sostenibles"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.3",
+  "competencia": "CMN.7",
+  "codigo": "CMN.3.7.1",
+  "texto": "Contextualizar historia"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.3",
+  "competencia": "CMN.7",
+  "codigo": "CMN.3.7.2",
+  "texto": "Perspectiva género"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.3",
+  "competencia": "CMN.8",
+  "codigo": "CMN.3.8.1",
+  "texto": "Fomentar diversidad"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.3",
+  "competencia": "CMN.8",
+  "codigo": "CMN.3.8.2",
+  "texto": "Igualdad género"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.3",
+  "competencia": "CMN.9",
+  "codigo": "CMN.3.9.1",
+  "texto": "Participación constructiva"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.3",
+  "competencia": "CMN.9",
+  "codigo": "CMN.3.9.2",
+  "texto": "Conocer instituciones"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Conocimiento del Medio",
+  "areaRef": "CMN.3",
+  "competencia": "CMN.9",
+  "codigo": "CMN.3.9.3",
+  "texto": "Movilidad sostenible"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Matemáticas",
+  "areaRef": "MAT.3",
+  "competencia": "MAT.1",
+  "codigo": "MAT.3.1.1",
+  "texto": "Reconocer problemas"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Matemáticas",
+  "areaRef": "MAT.3",
+  "competencia": "MAT.1",
+  "codigo": "MAT.3.1.2",
+  "texto": "Representaciones gráficas"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Matemáticas",
+  "areaRef": "MAT.3",
+  "competencia": "MAT.2",
+  "codigo": "MAT.3.2.1",
+  "texto": "Comparar estrategias"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Matemáticas",
+  "areaRef": "MAT.3",
+  "competencia": "MAT.2",
+  "codigo": "MAT.3.2.2",
+  "texto": "Soluciones tanteadas"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Matemáticas",
+  "areaRef": "MAT.3",
+  "competencia": "MAT.3",
+  "codigo": "MAT.3.3.1",
+  "texto": "Analizar conjeturas"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Matemáticas",
+  "areaRef": "MAT.3",
+  "competencia": "MAT.3",
+  "codigo": "MAT.3.3.2",
+  "texto": "Ejemplificar problemas"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Matemáticas",
+  "areaRef": "MAT.3",
+  "competencia": "MAT.4",
+  "codigo": "MAT.3.4.1",
+  "texto": "Automatizar rutinas"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Matemáticas",
+  "areaRef": "MAT.3",
+  "competencia": "MAT.4",
+  "codigo": "MAT.3.4.2",
+  "texto": "Herramientas digitales"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Matemáticas",
+  "areaRef": "MAT.3",
+  "competencia": "MAT.5",
+  "codigo": "MAT.3.5.1",
+  "texto": "Conexiones conceptos"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Matemáticas",
+  "areaRef": "MAT.3",
+  "competencia": "MAT.5",
+  "codigo": "MAT.3.5.2",
+  "texto": "Matemáticas aplicadas"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Matemáticas",
+  "areaRef": "MAT.3",
+  "competencia": "MAT.6",
+  "codigo": "MAT.3.6.1",
+  "texto": "Lenguaje matemático"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Matemáticas",
+  "areaRef": "MAT.3",
+  "competencia": "MAT.6",
+  "codigo": "MAT.3.6.2",
+  "texto": "Explicar procesos"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Matemáticas",
+  "areaRef": "MAT.3",
+  "competencia": "MAT.7",
+  "codigo": "MAT.3.7.1",
+  "texto": "Reconocer emociones"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Matemáticas",
+  "areaRef": "MAT.3",
+  "competencia": "MAT.7",
+  "codigo": "MAT.3.7.2",
+  "texto": "Actitudes positivas"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Matemáticas",
+  "areaRef": "MAT.3",
+  "competencia": "MAT.8",
+  "codigo": "MAT.3.8.1",
+  "texto": "Colaboración respetuosa"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Matemáticas",
+  "areaRef": "MAT.3",
+  "competencia": "MAT.8",
+  "codigo": "MAT.3.8.2",
+  "texto": "Roles responsables"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Educación Artística",
+  "areaRef": "EAR.3",
+  "competencia": "EAR.1",
+  "codigo": "EAR.3.1.1",
+  "texto": "Identificación artística"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Educación Artística",
+  "areaRef": "EAR.3",
+  "competencia": "EAR.1",
+  "codigo": "EAR.3.1.2",
+  "texto": "Exploración cultural"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Educación Artística",
+  "areaRef": "EAR.3",
+  "competencia": "EAR.2",
+  "codigo": "EAR.3.2.1",
+  "texto": "Búsqueda informativa"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Educación Artística",
+  "areaRef": "EAR.3",
+  "competencia": "EAR.2",
+  "codigo": "EAR.3.2.2",
+  "texto": "Reconocimiento patrimonial"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Educación Artística",
+  "areaRef": "EAR.3",
+  "competencia": "EAR.3",
+  "codigo": "EAR.3.3.1",
+  "texto": "Producción creativa"
+ },
+ {
+  "curso": "3º Primaria",
+  "area": "Educación Artística",
+  "areaRef": "EAR.3",
+  "competencia": "EAR.3",
+  "codigo": "EAR.3.3.2",
+  "texto": "Expresión emocional"
+ }
+]

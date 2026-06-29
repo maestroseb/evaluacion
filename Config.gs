@@ -2,15 +2,19 @@
  * Configuración global de la aplicación.
  *
  * IMPORTANTE: este es el ÚNICO sitio donde hay que tocar valores al desplegar.
- * Rellena MAPA_CURRICULAR_ID con el ID de tu hoja central "Mapa Curricular"
- * (la parte larga de su URL: .../spreadsheets/d/ESTE_ID/edit).
  */
 var CONFIG = {
   // Nombre del cuaderno personal que se crea en el Drive de cada profe.
   NOMBRE_CUADERNO: 'Evaluación por Criterios — Cuaderno',
 
-  // ID de la hoja central con el mapa curricular (todas las áreas/cursos).
-  // Se comparte en SOLO LECTURA con todo el dominio g.educaand.es.
+  // Mapa curricular servido como JSON público desde GitHub. Es la fuente
+  // principal: no requiere permisos de Drive y se sirve igual a toda la
+  // comunidad. El repositorio debe ser público (o el JSON accesible por URL).
+  MAPA_JSON_URL: 'https://raw.githubusercontent.com/maestroseb/evaluacion/' +
+    'claude/sheets-evaluation-criteria-3qsyay/data/mapa-curricular.json',
+
+  // Alternativa/legado: hoja de cálculo central con el mapa. Solo se usa si
+  // MAPA_JSON_URL está vacío. Se compartiría en solo lectura con el dominio.
   MAPA_CURRICULAR_ID: '1raqUsR_J2iTBJQV5OevluUTy5R7eKS4WWI0IF6Bpip0',
 
   // Versión del esquema de datos del cuaderno. Permite migraciones futuras.

@@ -4,20 +4,44 @@ El mapa curricular es la **única fuente de verdad** de competencias y criterios
 Lo mantienes tú; los profes solo lo leen. Al estar centralizado, cualquier
 corrección llega a todos sin que ellos hagan nada.
 
-La app admite **dos formatos** y detecta solo cuál usar:
+## Fuente actual: JSON público en GitHub
 
-- **Formato A (largo):** una fila por criterio (ver "Cómo crearlo").
-- **Formato B (Mapa Curricular Primaria):** las tablas apiladas que ya usas
-  (áreas + criterios con MATERIA / CURSO / COMP. ESPECÍFICA / REF COMPLETA /
-  DESCRIPTOR / DESCRIPCIÓN). El programa une la MATERIA (p. ej. `LCL.2`) con la
-  tabla de áreas para obtener el nombre del área, y usa el **DESCRIPTOR** como
-  texto corto del criterio. **Es el que está conectado ahora.**
+El mapa se sirve como **JSON público** desde este repositorio
+(`data/mapa-curricular.json`), que es lo que lee la app vía `MAPA_JSON_URL`.
 
-> Configuración actual: `MAPA_CURRICULAR_ID` apunta a la hoja
-> **"Mapa Curricular Primaria"** (formato B). Para añadir cursos/áreas basta con
-> completar sus filas en esa hoja; la app los ofrecerá solos.
+Ventajas para distribuirlo a toda la comunidad educativa:
 
-## Cómo crearlo (formato A, alternativa)
+- **Sin permisos de Drive**: nadie necesita acceso a una hoja tuya.
+- **Igual para todos** y muy rápido (se cachea).
+- **Versionado** en Git: cada cambio queda registrado.
+
+> Requisito: el repositorio (o el JSON) debe ser **público** para que la URL
+> `raw.githubusercontent.com/...` sea accesible sin autenticación.
+
+Formato del JSON (array de objetos):
+
+```json
+[
+  { "curso": "2º Primaria", "area": "Lengua Castellana y Literatura",
+    "competencia": "LCL.1", "codigo": "LCL.2.1.1", "texto": "Respeto lenguas" }
+]
+```
+
+El JSON se generó a partir de la hoja **"Mapa Curricular Primaria"**, uniendo la
+columna MATERIA (`LCL.2`) con la tabla de áreas para resolver el nombre del área
+y usando el **DESCRIPTOR** como texto corto del criterio.
+
+Para ampliar/corregir: edita el JSON (o regénéralo desde la hoja) y, tras
+desplegar, ejecuta `refrescarMapa` en el editor para vaciar la caché.
+
+---
+
+## Alternativa: leer de una hoja (`MAPA_CURRICULAR_ID`)
+
+Si dejas `MAPA_JSON_URL` vacío, la app lee de una hoja. Admite dos formatos:
+el **largo** (abajo) o el de **"Mapa Curricular Primaria"** (tablas apiladas).
+
+### Formato largo
 
 1. Crea una hoja de cálculo nueva llamada **`Mapa Curricular`**.
 2. Crea dentro una pestaña llamada exactamente **`Mapa`**.
