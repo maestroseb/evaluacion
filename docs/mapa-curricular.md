@@ -4,7 +4,20 @@ El mapa curricular es la **única fuente de verdad** de competencias y criterios
 Lo mantienes tú; los profes solo lo leen. Al estar centralizado, cualquier
 corrección llega a todos sin que ellos hagan nada.
 
-## Cómo crearlo
+La app admite **dos formatos** y detecta solo cuál usar:
+
+- **Formato A (largo):** una fila por criterio (ver "Cómo crearlo").
+- **Formato B (Mapa Curricular Primaria):** las tablas apiladas que ya usas
+  (áreas + criterios con MATERIA / CURSO / COMP. ESPECÍFICA / REF COMPLETA /
+  DESCRIPTOR / DESCRIPCIÓN). El programa une la MATERIA (p. ej. `LCL.2`) con la
+  tabla de áreas para obtener el nombre del área, y usa el **DESCRIPTOR** como
+  texto corto del criterio. **Es el que está conectado ahora.**
+
+> Configuración actual: `MAPA_CURRICULAR_ID` apunta a la hoja
+> **"Mapa Curricular Primaria"** (formato B). Para añadir cursos/áreas basta con
+> completar sus filas en esa hoja; la app los ofrecerá solos.
+
+## Cómo crearlo (formato A, alternativa)
 
 1. Crea una hoja de cálculo nueva llamada **`Mapa Curricular`**.
 2. Crea dentro una pestaña llamada exactamente **`Mapa`**.
