@@ -116,6 +116,16 @@ var Curriculo = (function () {
     return algo;
   }
 
+  /** ¿La fila está totalmente vacía? */
+  function esVacia_(fila) {
+    return fila.every(function (c) { return !txt_(c); });
+  }
+
+  /** Límite entre tablas: fila vacía (hoja real) o separadora (markdown). */
+  function esLimite_(fila) {
+    return esVacia_(fila) || esSeparador_(fila);
+  }
+
   function leerDesdeHoja_() {
     var ss = abrirMapa_();
     var sh = ss.getSheetByName('Mapa') || ss.getSheets()[0];
@@ -194,12 +204,15 @@ var Curriculo = (function () {
       var col = {};
       datos[i].forEach(function (c, j) { col[txt_(c).toUpperCase()] = j; });
       var inicio = i + 1;
-      // Saltamos una posible fila separadora justo bajo la cabecera.
+      // Saltamos una posible fila separadora (markdown) justo bajo la cabecera.
       if (inicio < datos.length && esSeparador_(datos[inicio])) inicio++;
-      // El fin es la siguiente cabecera (fila seguida de separador).
+      // El fin es el primer límite de tabla: fila vacía (hoja real) o la
+      // siguiente cabecera (fila seguida de separador, en markdown).
       var fin = datos.length;
-      for (var k = inicio; k < datos.length - 1; k++) {
-        if (esSeparador_(datos[k + 1])) { fin = k; break; }
+      for (var k = inicio; k < datos.length; k++) {
+        if (esVacia_(datos[k]) || (k < datos.length - 1 && esSeparador_(datos[k + 1]))) {
+          fin = k; break;
+        }
       }
       return { col: col, inicio: inicio, fin: fin };
     }
@@ -230,7 +243,8 @@ var Curriculo = (function () {
   return {
     listarAreasCursos: listarAreasCursos,
     criteriosDe: criteriosDe,
-    refrescar: refrescar
+    refrescar: refrescar,
+    desdeHoja: leerDesdeHoja_  // lee SIEMPRE de la hoja (para exportar el JSON)
   };
 })();
 

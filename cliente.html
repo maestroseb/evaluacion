@@ -68,9 +68,11 @@ var App = (function () {
   }
 
   function opcionesAreas(curso) {
+    var ph = '<option value="" selected>— Seleccionar área —</option>';
+    if (!curso) return ph;
     var areas = areasDe(curso);
-    if (!areas.length) return '<option value="">(sin áreas)</option>';
-    return areas.map(function (a) {
+    if (!areas.length) return ph;
+    return ph + areas.map(function (a) {
       return '<option value="' + esc(a) + '">' + esc(a) + '</option>';
     }).join('');
   }
@@ -85,9 +87,10 @@ var App = (function () {
     if (!cursos.length) {
       return aviso('El Mapa Curricular está vacío o sin configurar.');
     }
-    var optCursos = cursos.map(function (c) {
-      return '<option value="' + esc(c) + '">' + esc(c) + '</option>';
-    }).join('');
+    var optCursos = '<option value="" selected>— Seleccionar curso —</option>' +
+      cursos.map(function (c) {
+        return '<option value="' + esc(c) + '">' + esc(c) + '</option>';
+      }).join('');
 
     abrirModal('Nuevo grupo',
       '<label>Nombre del grupo' +
@@ -95,7 +98,7 @@ var App = (function () {
       '<label>Curso' +
       '<select id="f-curso" onchange="App.cursoCambiado()">' + optCursos + '</select></label>' +
       '<label>Área' +
-      '<select id="f-area">' + opcionesAreas(cursos[0]) + '</select></label>' +
+      '<select id="f-area">' + opcionesAreas('') + '</select></label>' +
       '<label>Alumnado (uno por línea)' +
       '<textarea id="f-alumnos" rows="8" placeholder="Apellidos, Nombre"></textarea>' +
       '</label>' +
