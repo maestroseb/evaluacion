@@ -172,10 +172,16 @@
 
   /* ---------- Acciones de unidad ---------- */
   .acciones-unidad { display: flex; align-items: center; gap: 12px; }
-  .grupo-btn { display: inline-flex; align-items: center; gap: 4px; }
-  .btn-info { border: none; background: transparent; color: var(--texto-3); cursor: pointer;
-    font-size: 15px; line-height: 1; padding: 4px; border-radius: 6px; }
-  .btn-info:hover { color: var(--acento); background: var(--acento-suave); }
+  .grupo-btn { position: relative; display: inline-flex; }
+  .btn-info {
+    position: absolute; top: -7px; right: -7px; z-index: 1;
+    width: 18px; height: 18px; padding: 0; border-radius: 50%;
+    border: 1px solid var(--borde-fuerte); background: var(--surface); color: var(--texto-2);
+    cursor: pointer; font-size: 11px; line-height: 1; display: inline-flex;
+    align-items: center; justify-content: center; box-shadow: var(--sombra-1);
+    transition: background .12s, color .12s, border-color .12s;
+  }
+  .btn-info:hover { background: var(--acento); color: #fff; border-color: var(--acento); }
   .pasos { margin: 4px 0 10px; padding-left: 20px; font-size: 14px; color: var(--texto); line-height: 1.6; }
   .enlace-ext { color: var(--acento-fuerte); font-weight: 600; font-size: 14px; text-decoration: none; }
   .enlace-ext:hover { text-decoration: underline; }
