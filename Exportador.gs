@@ -1,31 +1,39 @@
 /**
- * Generador del JSON del mapa curricular A PARTIR de la hoja central completa.
+ * Generador del mapa curricular A PARTIR de la hoja central completa.
  *
  * Apps Script sí lee la hoja entera (sin truncar), así que esta es la forma
  * fiable de regenerar data/mapa-curricular.json cuando amplías el mapa
  * (p. ej. al cargar 4º-6º de Primaria).
  *
  * USO:
- *   1. En el editor de Apps Script, selecciona la función "exportarMapaJson".
+ *   1. En el editor de Apps Script, selecciona "exportarMapaJson".
  *   2. Pulsa ▶ Ejecutar (autoriza permisos si los pide).
- *   3. En el registro (Ver → Registro) verás la URL y el ID de un archivo
- *      .json creado en tu Drive con el mapa dentro. Pásame ese ID (o reemplaza
- *      tú mismo data/mapa-curricular.json en el repositorio con su contenido).
+ *   3. En el registro (Ver → Registro) verás el ID de una hoja nueva
+ *      ("mapa-export ...") con el mapa en columnas. Pásame ese ID.
  *
- * Lee de CONFIG.MAPA_CURRICULAR_ID (la hoja), no del JSON. Usa DriveApp
- * (scope drive.file), así no requiere permisos adicionales.
+ * Usa solo SpreadsheetApp (scope ya autorizado): vuelca el mapa normalizado en
+ * una hoja compacta (curso | area | competencia | codigo | texto), que es fácil
+ * de leer y no se trunca.
  */
 function exportarMapaJson() {
   var filas = Curriculo.desdeHoja(); // [{curso, area, competencia, codigo, texto}]
-  var json = JSON.stringify(filas, null, 1);
 
-  var archivo = DriveApp.createFile('mapa-curricular.json', json, 'application/json');
+  var ss = SpreadsheetApp.create('mapa-export ' + new Date().toISOString());
+  var sh = ss.getSheets()[0];
+  sh.getRange(1, 1, 1, 5)
+    .setValues([['curso', 'area', 'competencia', 'codigo', 'texto']]);
+  if (filas.length) {
+    var matriz = filas.map(function (f) {
+      return [f.curso, f.area, f.competencia, f.codigo, f.texto];
+    });
+    sh.getRange(2, 1, matriz.length, 5).setValues(matriz);
+  }
 
   Logger.log('Criterios exportados: ' + filas.length);
   Logger.log('Cursos: ' + JSON.stringify(cursosDistintos_(filas)));
-  Logger.log('Archivo ID: ' + archivo.getId());
-  Logger.log('Archivo URL: ' + archivo.getUrl());
-  return archivo.getId();
+  Logger.log('Hoja ID: ' + ss.getId());
+  Logger.log('Hoja URL: ' + ss.getUrl());
+  return ss.getId();
 }
 
 function cursosDistintos_(filas) {
