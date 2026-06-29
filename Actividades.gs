@@ -207,8 +207,25 @@ var Actividades = (function () {
       alumnos: ev.clase.alumnos,
       actividades: actividades,
       criteriosInfo: criteriosInfo,
-      items: items
+      items: items,
+      // Criterios ya asignados a alguna actividad en CUALQUIER unidad de la clase
+      // (cobertura; no depende de que tengan nota).
+      asignados: criteriosAsignadosEval_(ss, unidad.evalId)
     };
+  }
+
+  /** Conjunto de criterios asignados a alguna actividad en toda la evaluación. */
+  function criteriosAsignadosEval_(ss, evalId) {
+    var setU = {};
+    Unidades.listar_(ss, evalId).forEach(function (u) { setU[u.unidadId] = true; });
+    var datos = hojaA_(ss).getDataRange().getValues();
+    var set = {};
+    for (var i = 1; i < datos.length; i++) {
+      if (setU[datos[i][1]]) {
+        parseLista_(datos[i][3]).forEach(function (c) { set[c] = true; });
+      }
+    }
+    return Object.keys(set);
   }
 
   function parseLista_(json) {
