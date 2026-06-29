@@ -44,10 +44,52 @@ var Curriculo = (function () {
   // la caché vieja se ignora automáticamente.
   function claveCache_() { return 'mapa_filas_' + CONFIG.MAPA_CURRICULAR_ID; }
 
-  function leerFilas_() {
+  // CacheService limita cada valor a ~100 KB; el mapa completo no cabe en uno.
+  // Lo troceamos en varias entradas (clave..._0, _1, ...) con un índice que
+  // guarda cuántos trozos hay.
+  var CACHE_SEG = 90000; // bytes por trozo, con margen bajo el límite de 100 KB
+
+  function getCache_() {
     var cache = CacheService.getScriptCache();
-    var hit = cache.get(claveCache_());
-    if (hit) return JSON.parse(hit);
+    var n = cache.get(claveCache_() + '_n');
+    if (!n) return null;
+    n = Number(n);
+    var claves = [];
+    for (var i = 0; i < n; i++) claves.push(claveCache_() + '_' + i);
+    var trozos = cache.getAll(claves);
+    var s = '';
+    for (var j = 0; j < n; j++) {
+      var t = trozos[claveCache_() + '_' + j];
+      if (t == null) return null; // algún trozo expiró: cache inválida
+      s += t;
+    }
+    try { return JSON.parse(s); } catch (e) { return null; }
+  }
+
+  function putCache_(filas) {
+    var cache = CacheService.getScriptCache();
+    var s = JSON.stringify(filas);
+    var obj = {};
+    var n = 0;
+    for (var i = 0; i < s.length; i += CACHE_SEG) {
+      obj[claveCache_() + '_' + n] = s.substring(i, i + CACHE_SEG);
+      n++;
+    }
+    obj[claveCache_() + '_n'] = String(n);
+    try { cache.putAll(obj, 21600); } catch (e) { /* sin caché si no cabe */ }
+  }
+
+  function borrarCache_() {
+    var cache = CacheService.getScriptCache();
+    var n = Number(cache.get(claveCache_() + '_n') || 0);
+    var claves = [claveCache_() + '_n'];
+    for (var i = 0; i < n; i++) claves.push(claveCache_() + '_' + i);
+    cache.removeAll(claves);
+  }
+
+  function leerFilas_() {
+    var hit = getCache_();
+    if (hit) return hit;
 
     var ss = abrirMapa_();
     var sh = ss.getSheetByName('Mapa') || ss.getSheets()[0];
@@ -58,13 +100,13 @@ var Curriculo = (function () {
       ? parsearMapaPrimaria_(datos)
       : parsearFormatoLargo_(datos);
 
-    cache.put(claveCache_(), JSON.stringify(filas), 21600);
+    putCache_(filas);
     return filas;
   }
 
   /** Vacía la caché del mapa. Útil tras editar la hoja central. */
   function refrescar() {
-    CacheService.getScriptCache().remove(claveCache_());
+    borrarCache_();
     return leerFilas_().length;
   }
 
