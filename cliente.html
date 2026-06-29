@@ -13,6 +13,7 @@ var App = (function () {
 
   // ---------- arranque ----------
   function iniciar() {
+    setupModalNoScroll();
     llamar('getEstadoInicial', [], function (e) {
       estado = e;
       document.getElementById('usuario').textContent = e.usuario;
@@ -816,12 +817,23 @@ var App = (function () {
     accionModal = onAceptar;
     b.onclick = function () { if (accionModal) accionModal(); };
     document.getElementById('modal-fondo').hidden = false;
+  }
 
-    // En la lista de criterios, evita el "salto" por auto-scroll al enfocar la
-    // casilla: prevenimos el foco con el ratón (el clic sigue marcándola).
-    var lc = document.querySelector('#modal-cuerpo .lista-crit');
-    if (lc) lc.addEventListener('mousedown', function (e) {
-      if (e.target.closest('label.crit')) e.preventDefault();
+  /**
+   * Evita el "salto" por auto-scroll cuando, al hacer clic, un control del modal
+   * recibe el foco (casillas de criterio, botones, swatches). Prevenimos el foco
+   * con ratón —el clic sigue funcionando—; los campos de texto se dejan intactos.
+   * Se engancha una sola vez al contenedor del modal.
+   */
+  function setupModalNoScroll() {
+    var m = document.querySelector('.modal');
+    if (!m) return;
+    m.addEventListener('mousedown', function (e) {
+      var t = e.target;
+      if (t.closest('label.crit') || t.closest('button') ||
+          (t.classList && t.classList.contains('swatch'))) {
+        e.preventDefault();
+      }
     });
   }
 
