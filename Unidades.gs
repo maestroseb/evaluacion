@@ -18,6 +18,11 @@ function eliminarUnidad(unidadId) {
   return Unidades.eliminar_(abrirCuaderno_(), unidadId);
 }
 
+/** Clona una unidad con sus actividades (sin notas). Devuelve la nueva unidad. */
+function clonarUnidad(unidadId) {
+  return Unidades.clonar_(abrirCuaderno_(), unidadId);
+}
+
 
 var Unidades = (function () {
 
@@ -66,6 +71,19 @@ var Unidades = (function () {
     return { ok: true };
   }
 
+  function clonar_(ss, unidadId) {
+    var orig = obtener_(ss, unidadId);
+    if (!orig) throw new Error('Unidad no encontrada.');
+    var nueva = crear_(ss, orig.evalId, orig.nombre + ' (copia)');
+    // Copia las actividades (sin ítems).
+    Actividades.listar_(ss, unidadId).forEach(function (a) {
+      Actividades.crear_(ss, nueva.unidadId, {
+        nombre: a.nombre, criterios: a.criterios, numItems: a.numItems
+      });
+    });
+    return nueva;
+  }
+
   /** Devuelve {unidadId, evalId, nombre} o null. */
   function obtener_(ss, unidadId) {
     var sh = hoja_(ss);
@@ -77,6 +95,6 @@ var Unidades = (function () {
 
   return {
     listar_: listar_, crear_: crear_, renombrar_: renombrar_,
-    eliminar_: eliminar_, obtener_: obtener_
+    eliminar_: eliminar_, obtener_: obtener_, clonar_: clonar_
   };
 })();

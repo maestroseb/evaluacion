@@ -140,6 +140,12 @@
   }
   .toast.error { background: var(--peligro); }
 
+  /* Spinner de carga */
+  .spinner-wrap { display: flex; justify-content: center; padding: 48px; }
+  .spinner { width: 28px; height: 28px; border: 3px solid var(--borde-fuerte);
+    border-top-color: var(--acento); border-radius: 50%; animation: girar .7s linear infinite; }
+  @keyframes girar { to { transform: rotate(360deg); } }
+
   /* ---------- Acciones de unidad ---------- */
   .acciones-unidad { display: flex; align-items: center; gap: 12px; }
   .check { font-size: 13px; color: var(--texto-2); cursor: pointer; user-select: none;
@@ -197,8 +203,12 @@
     box-shadow: 0 0 0 2px var(--acento-suave); }
 
   table.rejilla .num { font-variant-numeric: tabular-nums; color: var(--texto-2); min-width: 48px; }
-  table.rejilla .crit-col { color: var(--texto-3); font-weight: 600; font-size: 11px; }
+  table.rejilla .crit-col { color: var(--texto-2); font-weight: 600; font-size: 11px; }
   table.rejilla td.nota, table.rejilla th.nota { font-weight: 700; color: var(--acento-fuerte); }
+  /* Separador visual antes de la columna Nota */
+  table.rejilla .sep { border-left: 2px solid var(--borde-fuerte); }
+  /* Notas suspensas en rojo */
+  table.rejilla td.suspenso { color: var(--peligro); }
 
   /* Zebra respetando columnas fijas */
   table.rejilla tbody tr:nth-child(odd) td { background: #fafbfc; }

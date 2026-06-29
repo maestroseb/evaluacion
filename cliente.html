@@ -92,8 +92,24 @@ var App = (function () {
       opcionesAreas(clase ? clase.curso : '');
   }
 
+  var evalCache = {}; // evalId -> evaluación (con clase y alumnos)
+
   function abrirEvaluacion(evalId) {
-    llamar('obtenerEvaluacion', [evalId], abrirEvaluacionCargada);
+    if (evalCache[evalId]) {
+      abrirEvaluacionCargada(evalCache[evalId]);     // instantáneo desde caché
+    } else {
+      mostrar('vista-evaluacion');
+      document.getElementById('eval-titulo').textContent = '';
+      document.getElementById('eval-meta').textContent = '';
+      document.getElementById('lista-unidades').innerHTML = spinner();
+    }
+    llamar('obtenerEvaluacion', [evalId], function (ev) {
+      // Conserva las unidades ya cargadas para no parpadear.
+      var prev = evalCache[evalId];
+      if (prev && prev.unidades) ev.unidades = prev.unidades;
+      evalCache[evalId] = ev;
+      abrirEvaluacionCargada(ev);
+    });
   }
   function abrirEvaluacionCargada(ev) {
     evalActual = ev;
@@ -105,6 +121,8 @@ var App = (function () {
   }
 
   function cargarUnidades() {
+    if (!evalActual.unidades) document.getElementById('lista-unidades').innerHTML = spinner();
+    else pintarUnidades();
     llamar('listarUnidades', [evalActual.evalId], function (uds) {
       evalActual.unidades = uds;
       pintarUnidades();
@@ -152,31 +170,61 @@ var App = (function () {
   }
 
   // ---------- unidad: rejilla de evaluación ----------
-  var rejilla = null; // {unidad, alumnos, actividades, criteriosInfo, items}
+  var rejilla = null;       // {unidad, alumnos, actividades, criteriosInfo, items}
+  var rejillaCache = {};    // unidadId -> rejilla (carga instantánea al volver)
+  var inputs2d = [];        // matriz [fila][colActividad] -> <input>
 
   function abrirUnidad(unidadId) {
+    mostrar('vista-unidad');
+    document.getElementById('volver-unidad').onclick = function () {
+      abrirEvaluacionCargada(evalActual);
+    };
+    var u = (evalActual.unidades || []).filter(function (x) { return x.unidadId === unidadId; })[0];
+    document.getElementById('unidad-titulo').textContent = u ? u.nombre : '';
+
+    if (rejillaCache[unidadId]) {            // pinta al instante desde caché
+      rejilla = rejillaCache[unidadId];
+      pintarUnidadActual();
+    } else {
+      document.getElementById('unidad-meta').textContent = '';
+      document.getElementById('rejilla-cont').innerHTML = spinner();
+    }
+    // Refresca siempre desde el servidor en segundo plano.
     llamar('getRejilla', [unidadId], function (r) {
+      rejillaCache[unidadId] = r;
       rejilla = r;
-      mostrar('vista-unidad');
-      document.getElementById('unidad-titulo').textContent = r.unidad.nombre;
-      document.getElementById('unidad-meta').textContent =
-        evalActual.area + ' · ' + r.alumnos.length + ' alumnos/as · ' +
-        r.actividades.length + ' actividades';
-      document.getElementById('volver-unidad').onclick = function () {
-        abrirEvaluacionCargada(evalActual);
-      };
-      pintarRejilla();
+      pintarUnidadActual();
     });
+  }
+
+  function pintarUnidadActual() {
+    document.getElementById('unidad-titulo').textContent = rejilla.unidad.nombre;
+    document.getElementById('unidad-meta').textContent =
+      evalActual.area + ' · ' + rejilla.alumnos.length + ' alumnos/as · ' +
+      rejilla.actividades.length + ' actividades';
+    pintarRejilla();
   }
 
   function eliminarUnidadActual() {
     confirmar('Eliminar unidad',
       'Se eliminarán la unidad "' + rejilla.unidad.nombre + '", sus actividades y notas. ¿Continuar?',
       'Eliminar', function () {
-        llamar('eliminarUnidad', [rejilla.unidad.unidadId], function () {
-          abrirEvaluacionCargada(evalActual);
-        });
+        var id = rejilla.unidad.unidadId;
+        delete rejillaCache[id];
+        llamar('eliminarUnidad', [id], function () {});
+        evalActual.unidades = (evalActual.unidades || []).filter(function (u) { return u.unidadId !== id; });
+        abrirEvaluacionCargada(evalActual);
       });
+  }
+
+  function clonarUnidadActual() {
+    var id = rejilla.unidad.unidadId;
+    aviso('Duplicando unidad…');
+    llamar('clonarUnidad', [id], function (u) {
+      (evalActual.unidades = evalActual.unidades || []).push(u);
+      ocultarToast();
+      abrirUnidad(u.unidadId);
+    });
   }
 
   function nuevaActividad() { modalActividad(null); }
@@ -247,7 +295,10 @@ var App = (function () {
       });
   }
 
-  /** Pinta la tabla alumnos × actividades (+ notas por criterio si procede). */
+  /**
+   * Pinta la tabla alumnos × actividades. Orden de columnas:
+   * # | Alumno | actividades… | Nota (global) | criterios (resumen, a la derecha).
+   */
   function pintarRejilla() {
     var cont = document.getElementById('rejilla-cont');
     if (!rejilla.actividades.length) {
@@ -267,41 +318,123 @@ var App = (function () {
         '<span class="act-nom">' + esc(a.nombre) + '</span>' +
         '<small>/' + a.numItems + ' · ' + esc(a.criterios.join(', ')) + '</small></th>';
     });
+    h += '<th class="nota sep">Nota</th>';
     crits.forEach(function (cod) {
       h += '<th class="crit-col" title="' + esc(infoCrit(cod).completo) + '">' + esc(cod) + '</th>';
     });
-    h += '<th class="nota">Nota</th></tr></thead><tbody>';
+    h += '</tr></thead><tbody>';
 
     rejilla.alumnos.forEach(function (al, i) {
       h += '<tr><td class="idx">' + (i + 1) + '</td>' +
         '<td class="esq">' + esc(al.nombre) + '</td>';
-      rejilla.actividades.forEach(function (a) {
+      rejilla.actividades.forEach(function (a, c) {
         var v = valorItem(a.actividadId, al.id);
-        h += '<td class="celda"><input type="number" min="0" max="' + a.numItems + '" step="0.5" ' +
-          'value="' + (v == null ? '' : v) + '" ' +
-          'onchange="App.cambiarItem(\'' + a.actividadId + '\',\'' + al.id + '\',this.value)"></td>';
+        h += '<td class="celda"><input type="text" inputmode="decimal" ' +
+          'data-r="' + i + '" data-c="' + c + '" data-act="' + a.actividadId + '" data-al="' + al.id + '" ' +
+          'value="' + (v == null ? '' : fmt(v)) + '"></td>';
       });
+      h += celdaNota('nota-' + al.id, notaUnidad(al.id), ' sep');
       crits.forEach(function (cod) {
-        h += '<td class="num">' + fmt(notaCriterio(al.id, cod)) + '</td>';
+        h += celdaNota('crit-' + al.id + '-' + cod, notaCriterio(al.id, cod), ' crit-col');
       });
-      h += '<td class="num nota">' + fmt(notaUnidad(al.id)) + '</td></tr>';
+      h += '</tr>';
     });
     h += '</tbody></table>';
     cont.innerHTML = h;
+    wireRejilla();
   }
 
-  function cambiarItem(actividadId, alumnoId, valor) {
-    var act = actDe(actividadId);
-    var v = valor === '' ? '' : Number(valor);
-    if (v !== '' && act && v > act.numItems) { v = act.numItems; }
-    // Actualiza estado local y repinta notas al vuelo.
+  /** Celda de nota calculada: formatea y marca en rojo si < 5. */
+  function celdaNota(id, n, extra) {
+    var sus = (n != null && n < 5) ? ' suspenso' : '';
+    return '<td class="num' + (extra || '') + sus + '" id="' + id + '">' + fmt(n) + '</td>';
+  }
+
+  /** Engancha la matriz de inputs y sus eventos (teclado, dictado, pegar). */
+  function wireRejilla() {
+    inputs2d = [];
+    var inputs = document.querySelectorAll('#rejilla-cont .celda input');
+    [].forEach.call(inputs, function (inp) {
+      var r = +inp.dataset.r, c = +inp.dataset.c;
+      (inputs2d[r] || (inputs2d[r] = []))[c] = inp;
+      inp.addEventListener('change', function () { commitInput(inp); });
+      inp.addEventListener('keydown', onTeclaRejilla);
+      inp.addEventListener('input', onDictado);
+      inp.addEventListener('paste', onPegar);
+    });
+  }
+
+  /** Guarda el valor de un input: clamp, estado local, persistencia y notas. */
+  function commitInput(inp) {
+    var actId = inp.dataset.act, alId = inp.dataset.al;
+    var act = actDe(actId);
+    var v = inp.value === '' ? '' : Number(String(inp.value).replace(',', '.'));
+    if (v !== '' && (isNaN(v))) return;
+    if (v !== '' && act && v > act.numItems) { v = act.numItems; inp.value = v; }
     if (v === '') {
-      if (rejilla.items[actividadId]) delete rejilla.items[actividadId][alumnoId];
+      if (rejilla.items[actId]) delete rejilla.items[actId][alId];
     } else {
-      (rejilla.items[actividadId] || (rejilla.items[actividadId] = {}))[alumnoId] = v;
+      (rejilla.items[actId] || (rejilla.items[actId] = {}))[alId] = v;
     }
-    pintarRejilla();
-    llamar('guardarItem', [actividadId, alumnoId, v === '' ? '' : v], function () {});
+    actualizarNotasFila(alId);
+    llamar('guardarItem', [actId, alId, v === '' ? '' : v], function () {});
+  }
+
+  /** Recalcula y actualiza solo las celdas de nota de una fila (sin repintar). */
+  function actualizarNotasFila(alId) {
+    var verCrit = document.getElementById('ver-criterios').checked;
+    pintarCeldaNota(document.getElementById('nota-' + alId), notaUnidad(alId));
+    if (verCrit) criteriosUsados().forEach(function (cod) {
+      pintarCeldaNota(document.getElementById('crit-' + alId + '-' + cod), notaCriterio(alId, cod));
+    });
+  }
+  function pintarCeldaNota(td, n) {
+    if (!td) return;
+    td.textContent = fmt(n);
+    td.classList.toggle('suspenso', n != null && n < 5);
+  }
+
+  // --- navegación con teclado ---
+  function onTeclaRejilla(e) {
+    var inp = e.target, r = +inp.dataset.r, c = +inp.dataset.c;
+    var k = e.key;
+    if (k === 'ArrowUp') { focusCelda(r - 1, c); e.preventDefault(); }
+    else if (k === 'ArrowDown' || k === 'Enter') { focusCelda(r + 1, c); e.preventDefault(); }
+    else if (k === 'ArrowRight' && inp.selectionStart === inp.value.length) { focusCelda(r, c + 1); e.preventDefault(); }
+    else if (k === 'ArrowLeft' && inp.selectionStart === 0) { focusCelda(r, c - 1); e.preventDefault(); }
+  }
+  function focusCelda(r, c) {
+    var fila = inputs2d[r];
+    if (fila && fila[c]) { fila[c].focus(); fila[c].select(); }
+  }
+
+  // --- dictado (Mac): un número seguido de espacio salta a la celda contigua ---
+  function onDictado(e) {
+    var inp = e.target;
+    if (/\s/.test(inp.value)) {
+      var num = inp.value.trim().split(/\s+/)[0];
+      inp.value = num;
+      commitInput(inp);
+      focusCelda(+inp.dataset.r, +inp.dataset.c + 1);
+    }
+  }
+
+  // --- pegar desde una tabla/hoja (TSV): rellena desde la celda actual ---
+  function onPegar(e) {
+    var texto = (e.clipboardData || window.clipboardData).getData('text');
+    if (!texto || (texto.indexOf('\t') < 0 && texto.indexOf('\n') < 0)) return; // valor único
+    e.preventDefault();
+    var inp = e.target, r0 = +inp.dataset.r, c0 = +inp.dataset.c;
+    var lineas = texto.replace(/\r/g, '').replace(/\n+$/, '').split('\n');
+    lineas.forEach(function (linea, ri) {
+      linea.split('\t').forEach(function (cel, ci) {
+        var destino = inputs2d[r0 + ri] && inputs2d[r0 + ri][c0 + ci];
+        if (!destino) return;
+        var val = String(cel).trim();
+        destino.value = val === '' ? '' : val.replace(',', '.');
+        commitInput(destino);
+      });
+    });
   }
 
   // --- cálculo en vivo (espejo de Calc.gs) ---
@@ -333,7 +466,7 @@ var App = (function () {
     rejilla.actividades.forEach(function (a) {
       a.criterios.forEach(function (c) { if (!set[c]) { set[c] = true; out.push(c); } });
     });
-    out.sort();
+    out.sort(cmpCodigo);
     return out;
   }
   function media(arr) {
@@ -558,6 +691,11 @@ var App = (function () {
     clearTimeout(toastTimer);
     toastTimer = setTimeout(function () { t.hidden = true; }, 4000);
   }
+  function ocultarToast() {
+    clearTimeout(toastTimer);
+    document.getElementById('toast').hidden = true;
+  }
+  function spinner() { return '<div class="spinner-wrap"><div class="spinner"></div></div>'; }
   function esc(s) {
     return String(s == null ? '' : s)
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -569,9 +707,10 @@ var App = (function () {
     nuevaEvaluacion: nuevaEvaluacion, claseCambiada: claseCambiada,
     abrirEvaluacion: abrirEvaluacion, eliminarEvaluacionActual: eliminarEvaluacionActual,
     nuevaUnidad: nuevaUnidad, abrirUnidad: abrirUnidad,
-    eliminarUnidadActual: eliminarUnidadActual, nuevaActividad: nuevaActividad,
+    eliminarUnidadActual: eliminarUnidadActual, clonarUnidadActual: clonarUnidadActual,
+    nuevaActividad: nuevaActividad,
     editarActividadUI: editarActividadUI, eliminarActividadUI: eliminarActividadUI,
-    pintarRejilla: pintarRejilla, cambiarItem: cambiarItem,
+    pintarRejilla: pintarRejilla,
     nuevaClase: nuevaClase, copiarDeClase: copiarDeClase,
     abrirClase: abrirClase, editarAlumnos: editarAlumnos,
     eliminarClaseActual: eliminarClaseActual,
