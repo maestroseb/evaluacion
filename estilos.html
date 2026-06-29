@@ -36,7 +36,7 @@
   .barra {
     display: flex; align-items: center; justify-content: space-between;
     background: var(--surface); border-bottom: 1px solid var(--borde);
-    padding: 0 24px; height: 56px; position: sticky; top: 0; z-index: 20;
+    padding: 0 22px; height: 52px; position: sticky; top: 0; z-index: 20;
   }
   .logo { font-weight: 600; font-size: 15px; letter-spacing: -.01em; color: var(--texto); }
   .nav { display: flex; align-items: center; gap: 4px; }
@@ -48,14 +48,17 @@
   .nav a.activo { background: var(--acento-suave); color: var(--acento-fuerte); }
   .usuario { font-size: 13px; color: var(--texto-3); margin-left: 12px; }
 
-  main { max-width: 1140px; margin: 0 auto; padding: 32px 24px 64px; }
+  main { max-width: none; margin: 0; padding: 16px 22px 40px; }
   .aviso { padding: 56px; text-align: center; color: var(--texto-3); font-size: 14px; }
 
   .cabecera-seccion {
     display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 20px; gap: 16px;
+    margin-bottom: 12px; gap: 16px;
   }
-  h1 { font-size: 24px; font-weight: 650; letter-spacing: -.02em; margin: 0; }
+  h1 { font-size: 22px; font-weight: 650; letter-spacing: -.02em; margin: 0; }
+  /* Línea de meta bajo el título: compacta */
+  main section > p.meta { margin: 2px 0 12px; }
+  .volver { margin-bottom: 8px; }
   h2 { font-size: 16px; font-weight: 600; letter-spacing: -.01em; margin: 0; }
 
   /* ---------- Tarjetas ---------- */
@@ -195,7 +198,7 @@
   /* ---------- Rejilla ---------- */
   .rejilla-cont { overflow: auto; border: 1px solid var(--borde); border-radius: 12px;
     background: var(--surface); box-shadow: var(--sombra-1);
-    max-height: calc(100vh - 200px); }
+    max-height: calc(100vh - 168px); }
   table.rejilla { border-collapse: separate; border-spacing: 0; width: auto; font-size: 13px; }
   table.rejilla th, table.rejilla td {
     border-bottom: 1px solid var(--borde); border-right: 1px solid var(--borde);
