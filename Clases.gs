@@ -96,7 +96,7 @@ var Clases = (function () {
 
   function eliminar_(ss, claseId) {
     if (Evaluaciones.usaClase_(ss, claseId)) {
-      throw new Error('Esta clase tiene evaluaciones asociadas. Elimínalas antes.');
+      throw new Error('Este grupo tiene clases asociadas. Elimínalas antes.');
     }
     var sh = hoja_(ss);
     var fila = Datos.filaDeId_(sh, claseId);

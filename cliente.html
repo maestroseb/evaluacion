@@ -37,12 +37,14 @@ var App = (function () {
   function pintarEvaluaciones() {
     var cont = document.getElementById('lista-evaluaciones');
     if (!estado.evaluaciones.length) {
-      cont.innerHTML = '<div class="vacio">Aún no tienes evaluaciones. ' +
-        'Crea una eligiendo una clase y un área.</div>';
+      cont.innerHTML = '<div class="vacio">Aún no tienes clases. ' +
+        'Crea una eligiendo un grupo y un área.</div>';
       return;
     }
     cont.innerHTML = estado.evaluaciones.map(function (ev) {
-      return '<div class="tarjeta" onclick="App.abrirEvaluacion(\'' + ev.evalId + '\')">' +
+      var col = ev.color || 'transparent';
+      return '<div class="tarjeta tarjeta-color" style="border-left-color:' + col + '" ' +
+        'onclick="App.abrirEvaluacion(\'' + ev.evalId + '\')">' +
         '<h3>' + esc(ev.area) + '</h3>' +
         '<div class="meta">' + esc(ev.claseNombre) + ' · ' + esc(ev.curso) + '</div>' +
         '<div class="meta">' + ev.numAlumnos + ' alumnos/as</div>' +
@@ -50,31 +52,50 @@ var App = (function () {
     }).join('');
   }
 
+  // Paleta de colores predefinidos para las clases (por área).
+  var COLORES = ['#5b5bd6', '#2e7d57', '#d1453b', '#e08e0b', '#0e7490',
+    '#9333ea', '#db2777', '#475569'];
+  function swatchesHtml(sel) {
+    return '<div class="swatches">' + COLORES.map(function (c) {
+      return '<span class="swatch' + (c === sel ? ' sel' : '') + '" data-color="' + c + '" ' +
+        'style="background:' + c + '" onclick="App.elegirColor(this)"></span>';
+    }).join('') + '</div>';
+  }
+  function elegirColor(el) {
+    [].forEach.call(document.querySelectorAll('.swatch'), function (s) { s.classList.remove('sel'); });
+    el.classList.add('sel');
+  }
+  function colorElegido() {
+    var s = document.querySelector('.swatch.sel');
+    return s ? s.dataset.color : '';
+  }
+
   function nuevaEvaluacion() {
     if (!estado.clases.length) {
-      confirmar('Sin clases', 'Primero necesitas una clase. ¿Crear una clase ahora?',
-        'Crear clase', nuevaClase);
+      confirmar('Sin grupos', 'Primero necesitas un grupo de alumnado. ¿Crear un grupo ahora?',
+        'Crear grupo', nuevaClase);
       return;
     }
     var optClases = estado.clases.map(function (c) {
       return '<option value="' + c.claseId + '">' + esc(c.nombre + ' · ' + c.curso) + '</option>';
     }).join('');
 
-    abrirModal('Nueva evaluación',
-      '<label>Clase' +
+    abrirModal('Nueva clase',
+      '<label>Grupo' +
       '<select id="f-clase" onchange="App.claseCambiada()">' + optClases + '</select></label>' +
       '<label>Área' +
       '<select id="f-area"></select></label>' +
-      '<p class="ayuda">El curso lo aporta la clase; aquí eliges el área a evaluar.</p>',
-      'Crear evaluación',
+      '<div class="campo-crit"><span class="etq">Color</span>' + swatchesHtml(COLORES[0]) + '</div>' +
+      '<p class="ayuda">El curso lo aporta el grupo; aquí eliges el área a evaluar.</p>',
+      'Crear clase',
       function () {
         var claseId = val('f-clase');
         var area = val('f-area');
-        if (!claseId || !area) return aviso('Elige clase y área.');
+        if (!claseId || !area) return aviso('Elige grupo y área.');
         botonModalCargando('Creando…');
-        llamar('crearEvaluacion', [{ claseId: claseId, area: area }], function (ev) {
+        llamar('crearEvaluacion', [{ claseId: claseId, area: area, color: colorElegido() }], function (ev) {
           estado.evaluaciones.push({
-            evalId: ev.evalId, claseId: ev.clase.claseId, area: ev.area,
+            evalId: ev.evalId, claseId: ev.clase.claseId, area: ev.area, color: ev.color,
             claseNombre: ev.clase.nombre, curso: ev.curso,
             numAlumnos: ev.clase.alumnos.length, creado: ev.creado
           });
@@ -82,7 +103,7 @@ var App = (function () {
           abrirEvaluacionCargada(ev);
         });
       });
-    claseCambiada(); // rellena áreas para la primera clase
+    claseCambiada(); // rellena áreas para el primer grupo
   }
 
   /** Al cambiar la clase, recargamos las áreas de su curso. */
@@ -114,7 +135,10 @@ var App = (function () {
   function abrirEvaluacionCargada(ev) {
     evalActual = ev;
     mostrar('vista-evaluacion');
-    document.getElementById('eval-titulo').textContent = ev.area;
+    var t = document.getElementById('eval-titulo');
+    t.textContent = ev.area;
+    t.style.borderLeft = ev.color ? ('5px solid ' + ev.color) : 'none';
+    t.style.paddingLeft = ev.color ? '12px' : '0';
     document.getElementById('eval-meta').textContent =
       ev.clase.nombre + ' · ' + ev.curso + ' · ' + ev.clase.alumnos.length + ' alumnos/as';
     cargarUnidades();
@@ -187,8 +211,8 @@ var App = (function () {
       });
   }
   function eliminarEvaluacionActual() {
-    confirmar('Eliminar evaluación',
-      '¿Eliminar esta evaluación? La clase y su alumnado se conservan.',
+    confirmar('Eliminar clase',
+      '¿Eliminar esta clase? El grupo y su alumnado se conservan.',
       'Eliminar', function () {
         var id = evalActual.evalId;
         llamar('eliminarEvaluacion', [id], function () {
@@ -341,7 +365,7 @@ var App = (function () {
           'data-r="' + i + '" data-c="' + c + '" data-act="' + a.actividadId + '" data-al="' + al.id + '" ' +
           'value="' + (v == null ? '' : fmt(v)) + '"></td>';
       });
-      h += celdaNota('nota-' + al.id, notaUnidad(al.id), ' sep');
+      h += celdaNota('nota-' + al.id, notaUnidad(al.id), ' nota sep');
       crits.forEach(function (cod) {
         h += celdaNota('crit-' + al.id + '-' + cod, notaCriterio(al.id, cod), ' crit-col');
       });
@@ -509,8 +533,8 @@ var App = (function () {
   function pintarClases() {
     var cont = document.getElementById('lista-clases');
     if (!estado.clases.length) {
-      cont.innerHTML = '<div class="vacio">Aún no tienes clases. ' +
-        'Una clase es una lista de alumnado que luego reutilizas en varias áreas.</div>';
+      cont.innerHTML = '<div class="vacio">Aún no tienes grupos. ' +
+        'Un grupo es una lista de alumnado que luego reutilizas en varias áreas.</div>';
       return;
     }
     cont.innerHTML = estado.clases.map(function (c) {
@@ -532,21 +556,21 @@ var App = (function () {
         return '<option value="' + c.claseId + '">' + esc(c.nombre + ' · ' + c.curso) + '</option>';
       }).join('');
 
-    abrirModal('Nueva clase',
-      '<label>Nombre de la clase' +
+    abrirModal('Nuevo grupo',
+      '<label>Nombre del grupo' +
       '<input id="f-nombre" type="text" placeholder="Ej.: 3º A"></label>' +
       '<label>Curso' +
       '<select id="f-curso">' + optCursos + '</select></label>' +
-      '<label>Copiar alumnado de otra clase (opcional)' +
+      '<label>Copiar alumnado de otro grupo (opcional)' +
       '<select id="f-copiar" onchange="App.copiarDeClase()">' + optCopiar + '</select></label>' +
       '<label>Alumnado (uno por línea)' +
       '<textarea id="f-alumnos" rows="8" placeholder="Apellidos, Nombre"></textarea></label>' +
-      '<p class="ayuda">Pega la lista desde Séneca o cópiala de otra clase tuya.</p>',
-      'Crear clase',
+      '<p class="ayuda">Pega la lista desde Séneca o cópiala de otro grupo tuyo.</p>',
+      'Crear grupo',
       function () {
         var nombre = val('f-nombre').trim();
         var curso = val('f-curso');
-        if (!nombre) return aviso('Pon un nombre a la clase.');
+        if (!nombre) return aviso('Pon un nombre al grupo.');
         if (!curso) return aviso('Elige el curso.');
         var alumnos = parsearLista(val('f-alumnos'));
         botonModalCargando('Creando…');
@@ -605,7 +629,7 @@ var App = (function () {
       });
   }
   function eliminarClaseActual() {
-    confirmar('Eliminar clase', '¿Eliminar la clase "' + claseActual.nombre + '"?',
+    confirmar('Eliminar grupo', '¿Eliminar el grupo "' + claseActual.nombre + '"?',
       'Eliminar', function () {
         var id = claseActual.claseId;
         llamar('eliminarClase', [id], function () {
@@ -712,7 +736,7 @@ var App = (function () {
   return {
     iniciar: iniciar,
     irAEvaluaciones: irAEvaluaciones, irAClases: irAClases,
-    nuevaEvaluacion: nuevaEvaluacion, claseCambiada: claseCambiada,
+    nuevaEvaluacion: nuevaEvaluacion, claseCambiada: claseCambiada, elegirColor: elegirColor,
     abrirEvaluacion: abrirEvaluacion, eliminarEvaluacionActual: eliminarEvaluacionActual,
     nuevaUnidad: nuevaUnidad, abrirUnidad: abrirUnidad,
     clonarUnidad: clonarUnidad, eliminarUnidad: eliminarUnidad,

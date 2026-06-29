@@ -8,8 +8,8 @@
   <header class="barra">
     <span class="logo" onclick="App.irAEvaluaciones()" style="cursor:pointer">📊 Evaluación por Criterios</span>
     <nav class="nav">
-      <a id="nav-eval" onclick="App.irAEvaluaciones()">Evaluaciones</a>
-      <a id="nav-clases" onclick="App.irAClases()">Clases</a>
+      <a id="nav-eval" onclick="App.irAEvaluaciones()">Clases</a>
+      <a id="nav-clases" onclick="App.irAClases()">Grupos</a>
       <span id="usuario" class="usuario">…</span>
     </nav>
   </header>
@@ -17,30 +17,30 @@
   <main id="app">
     <div id="cargando" class="aviso">Cargando tu cuaderno…</div>
 
-    <!-- EVALUACIONES -->
+    <!-- CLASES (clase = grupo aplicado a un área) -->
     <section id="vista-evaluaciones" hidden>
       <div class="cabecera-seccion">
-        <h1>Mis evaluaciones</h1>
-        <button class="btn primario" onclick="App.nuevaEvaluacion()">+ Nueva evaluación</button>
+        <h1>Mis clases</h1>
+        <button class="btn primario" onclick="App.nuevaEvaluacion()">+ Nueva clase</button>
       </div>
       <div id="lista-evaluaciones" class="tarjetas"></div>
     </section>
 
-    <!-- CLASES -->
+    <!-- GRUPOS (lista de alumnado reutilizable) -->
     <section id="vista-clases" hidden>
       <div class="cabecera-seccion">
-        <h1>Mis clases</h1>
-        <button class="btn primario" onclick="App.nuevaClase()">+ Nueva clase</button>
+        <h1>Mis grupos</h1>
+        <button class="btn primario" onclick="App.nuevaClase()">+ Nuevo grupo</button>
       </div>
       <div id="lista-clases" class="tarjetas"></div>
     </section>
 
-    <!-- DETALLE CLASE -->
+    <!-- DETALLE GRUPO -->
     <section id="vista-clase" hidden>
-      <a class="volver" onclick="App.irAClases()">← Mis clases</a>
+      <a class="volver" onclick="App.irAClases()">← Mis grupos</a>
       <div class="cabecera-seccion">
         <h1 id="clase-titulo"></h1>
-        <button class="btn peligro" onclick="App.eliminarClaseActual()">Eliminar clase</button>
+        <button class="btn peligro" onclick="App.eliminarClaseActual()">Eliminar grupo</button>
       </div>
       <p id="clase-meta" class="meta"></p>
       <div class="cabecera-seccion">
@@ -52,10 +52,10 @@
 
     <!-- DETALLE EVALUACIÓN: lista de unidades -->
     <section id="vista-evaluacion" hidden>
-      <a class="volver" onclick="App.irAEvaluaciones()">← Mis evaluaciones</a>
+      <a class="volver" onclick="App.irAEvaluaciones()">← Mis clases</a>
       <div class="cabecera-seccion">
         <h1 id="eval-titulo"></h1>
-        <button class="btn peligro" onclick="App.eliminarEvaluacionActual()">Eliminar evaluación</button>
+        <button class="btn peligro" onclick="App.eliminarEvaluacionActual()">Eliminar clase</button>
       </div>
       <p id="eval-meta" class="meta"></p>
       <div class="cabecera-seccion">
