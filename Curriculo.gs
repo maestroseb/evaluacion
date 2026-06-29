@@ -25,8 +25,11 @@ var Curriculo = (function () {
     var hit = cache.get('mapa_filas');
     if (hit) return JSON.parse(hit);
 
-    var sh = abrirMapa_().getSheetByName('Mapa');
-    if (!sh) throw new Error('La hoja central no tiene una pestaña "Mapa".');
+    // Preferimos una pestaña llamada "Mapa"; si no existe (p. ej. al importar
+    // un CSV, donde la pestaña hereda otro nombre), usamos la primera.
+    var ss = abrirMapa_();
+    var sh = ss.getSheetByName('Mapa') || ss.getSheets()[0];
+    if (!sh) throw new Error('La hoja central de mapa curricular está vacía.');
     var datos = sh.getDataRange().getValues();
     var filas = [];
     for (var i = 1; i < datos.length; i++) {

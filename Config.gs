@@ -11,7 +11,7 @@ var CONFIG = {
 
   // ID de la hoja central con el mapa curricular (todas las áreas/cursos).
   // Se comparte en SOLO LECTURA con todo el dominio g.educaand.es.
-  MAPA_CURRICULAR_ID: 'PEGA_AQUI_EL_ID_DE_TU_MAPA_CURRICULAR',
+  MAPA_CURRICULAR_ID: '1-mVNwIHQeXYU14TDwnq4VdVZOVI2YIl9tvZbnVJgTmI',
 
   // Versión del esquema de datos del cuaderno. Permite migraciones futuras.
   ESQUEMA_VERSION: 1
