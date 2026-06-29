@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <?!= include('estilos') ?>
+</head>
+<body>
+  <header class="barra">
+    <span class="logo" onclick="App.irAGrupos()" style="cursor:pointer">📊 Evaluación por Criterios</span>
+    <span id="usuario" class="usuario">…</span>
+  </header>
+
+  <main id="app">
+    <div id="cargando" class="aviso">Cargando tu cuaderno…</div>
+
+    <!-- LISTA DE GRUPOS -->
+    <section id="vista-grupos" hidden>
+      <div class="cabecera-seccion">
+        <h1>Mis grupos</h1>
+        <button class="btn primario" onclick="App.nuevoGrupo()">+ Nuevo grupo</button>
+      </div>
+      <div id="lista-grupos" class="tarjetas"></div>
+    </section>
+
+    <!-- DETALLE DE UN GRUPO -->
+    <section id="vista-grupo" hidden>
+      <a class="volver" onclick="App.irAGrupos()">← Mis grupos</a>
+      <div class="cabecera-seccion">
+        <h1 id="grupo-titulo"></h1>
+        <button class="btn peligro" onclick="App.eliminarGrupoActual()">Eliminar grupo</button>
+      </div>
+      <p id="grupo-meta" class="meta"></p>
+
+      <div class="cabecera-seccion">
+        <h2>Alumnado <span id="num-alumnos" class="contador"></span></h2>
+        <button class="btn" onclick="App.editarAlumnos()">Editar lista</button>
+      </div>
+      <ol id="lista-alumnos" class="alumnos"></ol>
+
+      <p class="nota-fase">Las unidades y la rejilla de evaluación llegan en la Fase 3.</p>
+    </section>
+  </main>
+
+  <!-- MODAL -->
+  <div id="modal-fondo" class="modal-fondo" hidden onclick="App.cerrarModalFuera(event)">
+    <div class="modal">
+      <h2 id="modal-titulo"></h2>
+      <div id="modal-cuerpo"></div>
+      <div class="modal-acciones">
+        <button class="btn" onclick="App.cerrarModal()">Cancelar</button>
+        <button class="btn primario" id="modal-aceptar"></button>
+      </div>
+    </div>
+  </div>
+
+  <?!= include('cliente') ?>
+</body>
+</html>

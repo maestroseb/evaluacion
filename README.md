@@ -40,29 +40,29 @@ nota_final     = media de las notas de criterio en las unidades elegidas
 ## Estructura del repositorio
 
 ```
-src/
-  appsscript.json   Manifiesto (web app + scopes)
-  Config.gs         Único sitio a configurar (ID del mapa, nombres)
-  Code.gs           Entrada de la Web App (doGet) y estado inicial
-  Curriculo.gs      Lectura del Mapa Curricular central
-  Datos.gs          Cuaderno personal de cada profe (CRUD)
-  Calc.gs           Motor de cálculo de notas
-  ui.html           Interfaz
-  estilos.html      CSS
-  cliente.html      JS de cliente
+appsscript.json   Manifiesto (web app + scopes)
+Config.gs         Único sitio a configurar (ID del mapa, nombres)
+Code.gs           Entrada de la Web App (doGet) y estado inicial
+Curriculo.gs      Lectura del Mapa Curricular central
+Datos.gs          Cuaderno personal de cada profe (CRUD)
+Grupos.gs         Grupos y alumnado (crear, editar, eliminar)
+Calc.gs           Motor de cálculo de notas
+ui.html           Interfaz
+estilos.html      CSS
+cliente.html      JS de cliente
 docs/
   mapa-curricular.md  Cómo montar el mapa central (Fase 0)
   despliegue.md       Sincronización con GitHub Assistant y despliegue
 ```
 
 > Sincronización: se usa **Google Apps Script GitHub Assistant** (no clasp).
-> El editor de Apps Script hace *Pull* de este repo (carpeta `src`).
+> El editor de Apps Script hace *Pull* de este repo (archivos en la raíz).
 
 ## Estado / hoja de ruta
 
 - [x] **Fase 0** — Estructura del Mapa Curricular central (`docs/mapa-curricular.md`)
 - [x] **Fase 1** — Esqueleto: Web App, login de dominio, creación del cuaderno
-- [ ] **Fase 2** — Gestión de grupos y alumnado (manual / pegar lista)
+- [x] **Fase 2** — Gestión de grupos y alumnado (manual / pegar lista)
 - [ ] **Fase 3** — Unidades + actividades + rejilla de ítems + cálculo en vivo
 - [ ] **Fase 4** — Resumen de unidad + resumen global + nota final
 - [ ] **Fase 5** — Pulido visual tipo iDoceo y despliegue
@@ -70,5 +70,5 @@ docs/
 ## Puesta en marcha
 
 Ver **`docs/despliegue.md`**. Resumen: con **GitHub Assistant**, hacer *Pull*
-de la carpeta `src` al proyecto de Apps Script, crear el Mapa y pegar su ID en
-`Config.gs`, y desplegar como Web App para el dominio.
+de los archivos de la raíz al proyecto de Apps Script, crear el Mapa y pegar su
+ID en `Config.gs`, y desplegar como Web App para el dominio.

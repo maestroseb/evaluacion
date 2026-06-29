@@ -23,7 +23,7 @@ corrección llega a todos sin que ellos hagan nada.
 4. **Comparte** la hoja en **solo lectura** con todo el dominio
    (`Cualquier usuario de g.educaand.es con el enlace → Lector`).
 5. Copia su **ID** (la parte larga de la URL) y pégalo en
-   `src/Config.gs` → `MAPA_CURRICULAR_ID`.
+   `Config.gs` → `MAPA_CURRICULAR_ID`.
 
 ## Migrar tu hoja actual
 

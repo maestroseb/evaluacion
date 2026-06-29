@@ -16,13 +16,13 @@ directamente, sin `clasp`.
 2. En la barra del Assistant, selecciona:
    - **Repository**: `maestroseb/evaluacion`
    - **Branch**: `claude/sheets-evaluation-criteria-3qsyay`
-   - **Directory / Path**: `src`  ← donde viven los `.gs`/`.html` y el manifiesto
-     (si prefieres tenerlo en la raíz del repo, pídelo y muevo los archivos).
+   - **Directory / Path**: raíz del repo (`/`) ← donde viven los `.gs`/`.html`
+     y el manifiesto `appsscript.json`.
 3. Pulsa **Pull** para traer todos los archivos del repo al proyecto.
 4. Activa "Mostrar manifiesto appsscript.json" en la configuración del editor
    de Apps Script para que se sincronice también `appsscript.json`.
 5. Crea el **Mapa Curricular** siguiendo `docs/mapa-curricular.md` y pega su ID
-   en `src/Config.gs` → `MAPA_CURRICULAR_ID`.
+   en `Config.gs` → `MAPA_CURRICULAR_ID`.
 6. Despliega como Web App: **Implementar → Nueva implementación →
    Aplicación web**
    - *Ejecutar como*: **Usuario que accede a la aplicación web**

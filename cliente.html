@@ -1,0 +1,225 @@
+<script>
+/**
+ * Lógica de cliente. Habla con el backend Apps Script vía google.script.run.
+ *
+ * Fase 1: carga el estado inicial y pinta la lista de grupos.
+ * Fase 2: crear grupo (área+curso del mapa + alumnado pegado), ver y editar
+ *         alumnado, renombrar y eliminar grupo.
+ */
+var App = (function () {
+  var estado = null;      // {usuario, areas:[{curso,area}], grupos:[...]}
+  var grupoActual = null; // grupo abierto en la vista de detalle
+
+  // ---------- arranque ----------
+  function iniciar() {
+    llamar('getEstadoInicial', [], function (e) {
+      estado = e;
+      document.getElementById('usuario').textContent = e.usuario;
+      document.getElementById('cargando').hidden = true;
+      irAGrupos();
+    });
+  }
+
+  // ---------- navegación ----------
+  function mostrar(idSeccion) {
+    ['vista-grupos', 'vista-grupo'].forEach(function (id) {
+      document.getElementById(id).hidden = (id !== idSeccion);
+    });
+  }
+
+  function irAGrupos() {
+    grupoActual = null;
+    mostrar('vista-grupos');
+    pintarGrupos();
+  }
+
+  // ---------- lista de grupos ----------
+  function pintarGrupos() {
+    var cont = document.getElementById('lista-grupos');
+    if (!estado.grupos.length) {
+      cont.innerHTML = '<div class="vacio">Aún no tienes grupos. ' +
+        'Crea el primero para empezar a evaluar.</div>';
+      return;
+    }
+    cont.innerHTML = estado.grupos.map(function (g) {
+      return '<div class="tarjeta" onclick="App.abrirGrupo(\'' + g.grupoId + '\')">' +
+        '<h3>' + esc(g.nombre) + '</h3>' +
+        '<div class="meta">' + esc(g.area) + '</div>' +
+        '<div class="meta">' + esc(g.curso) + '</div>' +
+        '<div class="meta">' + g.numAlumnos + ' alumnos/as</div>' +
+        '</div>';
+    }).join('');
+  }
+
+  // ---------- crear grupo ----------
+  function nuevoGrupo() {
+    var opciones = estado.areas.map(function (a, i) {
+      return '<option value="' + i + '">' + esc(a.curso + ' · ' + a.area) + '</option>';
+    }).join('');
+    if (!opciones) {
+      opciones = '<option value="">(El Mapa Curricular está vacío o sin configurar)</option>';
+    }
+
+    abrirModal('Nuevo grupo',
+      '<label>Nombre del grupo' +
+      '<input id="f-nombre" type="text" placeholder="Ej.: 2º A"></label>' +
+      '<label>Área y curso' +
+      '<select id="f-area">' + opciones + '</select></label>' +
+      '<label>Alumnado (uno por línea)' +
+      '<textarea id="f-alumnos" rows="8" placeholder="Apellidos, Nombre"></textarea>' +
+      '</label>' +
+      '<p class="ayuda">Puedes pegar la lista directamente desde Séneca o una hoja.</p>',
+      'Crear grupo',
+      function () {
+        var nombre = val('f-nombre').trim();
+        var sel = document.getElementById('f-area').value;
+        if (!nombre) return aviso('Pon un nombre al grupo.');
+        if (sel === '') return aviso('Configura el Mapa Curricular primero.');
+        var area = estado.areas[Number(sel)];
+        var alumnos = parsearLista(val('f-alumnos'));
+
+        botonModalCargando('Creando…');
+        llamar('crearGrupo',
+          [{ nombre: nombre, area: area.area, curso: area.curso, alumnos: alumnos }],
+          function (g) {
+            estado.grupos.push({
+              grupoId: g.grupoId, nombre: g.nombre, area: g.area,
+              curso: g.curso, creado: g.creado, numAlumnos: g.alumnos.length
+            });
+            cerrarModal();
+            abrirGrupoCargado(g);
+          });
+      });
+  }
+
+  // ---------- detalle de grupo ----------
+  function abrirGrupo(grupoId) {
+    llamar('obtenerGrupo', [grupoId], abrirGrupoCargado);
+  }
+
+  function abrirGrupoCargado(g) {
+    grupoActual = g;
+    mostrar('vista-grupo');
+    document.getElementById('grupo-titulo').textContent = g.nombre;
+    document.getElementById('grupo-meta').textContent = g.area + ' · ' + g.curso;
+    pintarAlumnos();
+  }
+
+  function pintarAlumnos() {
+    var lista = grupoActual.alumnos || [];
+    document.getElementById('num-alumnos').textContent = '(' + lista.length + ')';
+    var ol = document.getElementById('lista-alumnos');
+    ol.innerHTML = lista.length
+      ? lista.map(function (a) { return '<li>' + esc(a.nombre) + '</li>'; }).join('')
+      : '<div class="vacio">Sin alumnado. Pulsa "Editar lista" para añadirlo.</div>';
+  }
+
+  function editarAlumnos() {
+    var texto = (grupoActual.alumnos || [])
+      .map(function (a) { return a.nombre; }).join('\n');
+    abrirModal('Editar alumnado',
+      '<label>Un alumno/a por línea' +
+      '<textarea id="f-alumnos" rows="12">' + esc(texto) + '</textarea></label>' +
+      '<p class="ayuda">Se conservan las notas del alumnado que no cambie de nombre.</p>',
+      'Guardar',
+      function () {
+        var nuevos = fusionarAlumnos(grupoActual.alumnos || [], parsearLista(val('f-alumnos')));
+        botonModalCargando('Guardando…');
+        llamar('actualizarAlumnos', [grupoActual.grupoId, nuevos], function (g) {
+          actualizarContadorEnLista(g.grupoId, g.alumnos.length);
+          cerrarModal();
+          abrirGrupoCargado(g);
+        });
+      });
+  }
+
+  function eliminarGrupoActual() {
+    if (!confirm('¿Eliminar el grupo "' + grupoActual.nombre + '" y todos sus datos?')) return;
+    var id = grupoActual.grupoId;
+    llamar('eliminarGrupo', [id], function () {
+      estado.grupos = estado.grupos.filter(function (g) { return g.grupoId !== id; });
+      irAGrupos();
+    });
+  }
+
+  // ---------- alumnos: parseo y fusión ----------
+  /** Convierte texto pegado en [{nombre}], una línea por alumno. */
+  function parsearLista(texto) {
+    return String(texto || '')
+      .split('\n')
+      .map(function (l) { return l.replace(/\s+/g, ' ').trim(); })
+      .filter(function (l) { return l.length; })
+      .map(function (nombre) { return { nombre: nombre }; });
+  }
+
+  /** Conserva el id (y por tanto las notas) del alumnado cuyo nombre no cambia. */
+  function fusionarAlumnos(previos, nuevos) {
+    var porNombre = {};
+    previos.forEach(function (a) { porNombre[a.nombre] = a.id; });
+    return nuevos.map(function (a) {
+      return porNombre[a.nombre] ? { id: porNombre[a.nombre], nombre: a.nombre }
+                                 : { nombre: a.nombre };
+    });
+  }
+
+  function actualizarContadorEnLista(grupoId, n) {
+    var g = estado.grupos.filter(function (x) { return x.grupoId === grupoId; })[0];
+    if (g) g.numAlumnos = n;
+  }
+
+  // ---------- modal ----------
+  var accionModal = null;
+  function abrirModal(titulo, cuerpoHtml, textoAceptar, onAceptar) {
+    document.getElementById('modal-titulo').textContent = titulo;
+    document.getElementById('modal-cuerpo').innerHTML = cuerpoHtml;
+    var b = document.getElementById('modal-aceptar');
+    b.textContent = textoAceptar;
+    b.disabled = false;
+    accionModal = onAceptar;
+    b.onclick = function () { if (accionModal) accionModal(); };
+    document.getElementById('modal-fondo').hidden = false;
+  }
+  function botonModalCargando(txt) {
+    var b = document.getElementById('modal-aceptar');
+    b.disabled = true; b.textContent = txt;
+  }
+  function cerrarModal() {
+    document.getElementById('modal-fondo').hidden = true;
+    accionModal = null;
+  }
+  function cerrarModalFuera(ev) {
+    if (ev.target === document.getElementById('modal-fondo')) cerrarModal();
+  }
+
+  // ---------- utilidades ----------
+  function llamar(fn, args, ok) {
+    google.script.run
+      .withSuccessHandler(ok)
+      .withFailureHandler(function (err) { aviso(err.message); })
+      [fn].apply(google.script.run, args || []);
+  }
+  function val(id) { return document.getElementById(id).value; }
+  function aviso(msg) {
+    var b = document.getElementById('modal-aceptar');
+    if (b) { b.disabled = false; }
+    alert(msg);
+  }
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  return {
+    iniciar: iniciar,
+    irAGrupos: irAGrupos,
+    nuevoGrupo: nuevoGrupo,
+    abrirGrupo: abrirGrupo,
+    editarAlumnos: editarAlumnos,
+    eliminarGrupoActual: eliminarGrupoActual,
+    cerrarModal: cerrarModal,
+    cerrarModalFuera: cerrarModalFuera
+  };
+})();
+
+window.addEventListener('load', App.iniciar);
+</script>
