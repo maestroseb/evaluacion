@@ -816,6 +816,13 @@ var App = (function () {
     accionModal = onAceptar;
     b.onclick = function () { if (accionModal) accionModal(); };
     document.getElementById('modal-fondo').hidden = false;
+
+    // En la lista de criterios, evita el "salto" por auto-scroll al enfocar la
+    // casilla: prevenimos el foco con el ratón (el clic sigue marcándola).
+    var lc = document.querySelector('#modal-cuerpo .lista-crit');
+    if (lc) lc.addEventListener('mousedown', function (e) {
+      if (e.target.closest('label.crit')) e.preventDefault();
+    });
   }
 
   /** Diálogo de confirmación propio (sustituye al confirm() nativo). */
