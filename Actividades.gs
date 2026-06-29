@@ -16,6 +16,14 @@ function crearActividad(unidadId, payload) {
   return Actividades.crear_(abrirCuaderno_(), unidadId, payload);
 }
 
+/** Crea varias actividades de una vez. lista: [{nombre, criterios, numItems}] */
+function crearActividades(unidadId, lista) {
+  var ss = abrirCuaderno_();
+  return (lista || []).map(function (p) {
+    return Actividades.crear_(ss, unidadId, p);
+  });
+}
+
 function editarActividad(actividadId, payload) {
   return Actividades.editar_(abrirCuaderno_(), actividadId, payload);
 }

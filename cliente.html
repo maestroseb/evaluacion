@@ -384,6 +384,61 @@ var App = (function () {
       });
   }
 
+  // ---------- crear varias actividades de golpe ----------
+  function variasActividades() {
+    var info = rejilla.criteriosInfo;
+    var checks = Object.keys(info).sort(cmpCodigo).map(function (cod) {
+      var c = infoCrit(cod);
+      return '<label class="crit" title="' + esc(c.completo) + '">' +
+        '<input type="checkbox" value="' + esc(cod) + '">' +
+        '<span class="crit-txt"><b>' + esc(cod) + '</b> ' + esc(c.texto) + '</span></label>';
+    }).join('');
+
+    abrirModal('Crear varias actividades',
+      '<div class="campo-crit"><span class="etq">Criterios (se aplican a todas)</span>' +
+      '<div class="lista-crit">' + (checks || '<i>No hay criterios.</i>') + '</div></div>' +
+      '<span class="etq">Actividades</span>' +
+      '<div id="filas-act">' + filaActHtml() + filaActHtml() + filaActHtml() + '</div>' +
+      '<button type="button" class="link" onclick="App.anadirFilaAct()">+ Añadir fila</button>' +
+      '<p class="ayuda">Deja en blanco las filas que no uses. Puedes asignar criterios distintos editando cada actividad después.</p>',
+      'Crear todas',
+      function () {
+        var criterios = [].slice.call(document.querySelectorAll('.lista-crit input:checked'))
+          .map(function (c) { return c.value; });
+        if (!criterios.length) return aviso('Marca al menos un criterio.');
+        var lista = [], error = false;
+        [].slice.call(document.querySelectorAll('#filas-act .fila-act')).forEach(function (f) {
+          var nombre = f.querySelector('.fa-nombre').value.trim();
+          var items = Number(f.querySelector('.fa-items').value);
+          if (!nombre && !f.querySelector('.fa-items').value) return; // fila vacía
+          if (!nombre) { error = 'Falta el nombre en alguna actividad.'; return; }
+          if (!(items > 0)) { error = 'El nº de ítems debe ser mayor que 0 en "' + nombre + '".'; return; }
+          lista.push({ nombre: nombre, criterios: criterios, numItems: items });
+        });
+        if (error) return aviso(error);
+        if (!lista.length) return aviso('Añade al menos una actividad (nombre y nº de ítems).');
+        botonModalCargando('Creando ' + lista.length + '…');
+        llamar('crearActividades', [rejilla.unidad.unidadId, lista], function (nuevas) {
+          nuevas.forEach(function (a) { rejilla.actividades.push(a); });
+          cerrarModal(); pintarRejilla();
+        });
+      });
+  }
+  function filaActHtml() {
+    return '<div class="fila-act">' +
+      '<input class="fa-nombre" type="text" placeholder="Nombre de la actividad">' +
+      '<input class="fa-items" type="number" min="1" step="0.5" placeholder="Ítems">' +
+      '<button type="button" class="icono peligro" title="Quitar" onclick="App.quitarFilaAct(this)">✕</button>' +
+      '</div>';
+  }
+  function anadirFilaAct() {
+    document.getElementById('filas-act').insertAdjacentHTML('beforeend', filaActHtml());
+  }
+  function quitarFilaAct(btn) {
+    var f = btn.parentNode;
+    if (f && f.parentNode.children.length > 1) f.parentNode.removeChild(f);
+  }
+
   /**
    * Pinta la tabla alumnos × actividades. Orden de columnas:
    * # | Alumno | actividades… | Nota (global) | criterios (resumen, a la derecha).
@@ -819,7 +874,8 @@ var App = (function () {
     clonarUnidad: clonarUnidad, eliminarUnidad: eliminarUnidad, copiarSeneca: copiarSeneca,
     nuevaActividad: nuevaActividad,
     editarActividadUI: editarActividadUI, eliminarActividadUI: eliminarActividadUI,
-    duplicarActividadUI: duplicarActividadUI,
+    duplicarActividadUI: duplicarActividadUI, variasActividades: variasActividades,
+    anadirFilaAct: anadirFilaAct, quitarFilaAct: quitarFilaAct,
     pintarRejilla: pintarRejilla,
     nuevaClase: nuevaClase, copiarDeClase: copiarDeClase,
     abrirClase: abrirClase, editarAlumnos: editarAlumnos,
