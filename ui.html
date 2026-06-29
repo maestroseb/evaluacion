@@ -6,37 +6,59 @@
 </head>
 <body>
   <header class="barra">
-    <span class="logo" onclick="App.irAGrupos()" style="cursor:pointer">📊 Evaluación por Criterios</span>
-    <span id="usuario" class="usuario">…</span>
+    <span class="logo" onclick="App.irAEvaluaciones()" style="cursor:pointer">📊 Evaluación por Criterios</span>
+    <nav class="nav">
+      <a id="nav-eval" onclick="App.irAEvaluaciones()">Evaluaciones</a>
+      <a id="nav-clases" onclick="App.irAClases()">Clases</a>
+      <span id="usuario" class="usuario">…</span>
+    </nav>
   </header>
 
   <main id="app">
     <div id="cargando" class="aviso">Cargando tu cuaderno…</div>
 
-    <!-- LISTA DE GRUPOS -->
-    <section id="vista-grupos" hidden>
+    <!-- EVALUACIONES -->
+    <section id="vista-evaluaciones" hidden>
       <div class="cabecera-seccion">
-        <h1>Mis grupos</h1>
-        <button class="btn primario" onclick="App.nuevoGrupo()">+ Nuevo grupo</button>
+        <h1>Mis evaluaciones</h1>
+        <button class="btn primario" onclick="App.nuevaEvaluacion()">+ Nueva evaluación</button>
       </div>
-      <div id="lista-grupos" class="tarjetas"></div>
+      <div id="lista-evaluaciones" class="tarjetas"></div>
     </section>
 
-    <!-- DETALLE DE UN GRUPO -->
-    <section id="vista-grupo" hidden>
-      <a class="volver" onclick="App.irAGrupos()">← Mis grupos</a>
+    <!-- CLASES -->
+    <section id="vista-clases" hidden>
       <div class="cabecera-seccion">
-        <h1 id="grupo-titulo"></h1>
-        <button class="btn peligro" onclick="App.eliminarGrupoActual()">Eliminar grupo</button>
+        <h1>Mis clases</h1>
+        <button class="btn primario" onclick="App.nuevaClase()">+ Nueva clase</button>
       </div>
-      <p id="grupo-meta" class="meta"></p>
+      <div id="lista-clases" class="tarjetas"></div>
+    </section>
 
+    <!-- DETALLE CLASE -->
+    <section id="vista-clase" hidden>
+      <a class="volver" onclick="App.irAClases()">← Mis clases</a>
+      <div class="cabecera-seccion">
+        <h1 id="clase-titulo"></h1>
+        <button class="btn peligro" onclick="App.eliminarClaseActual()">Eliminar clase</button>
+      </div>
+      <p id="clase-meta" class="meta"></p>
       <div class="cabecera-seccion">
         <h2>Alumnado <span id="num-alumnos" class="contador"></span></h2>
         <button class="btn" onclick="App.editarAlumnos()">Editar lista</button>
       </div>
       <ol id="lista-alumnos" class="alumnos"></ol>
+    </section>
 
+    <!-- DETALLE EVALUACIÓN (Fase 3) -->
+    <section id="vista-evaluacion" hidden>
+      <a class="volver" onclick="App.irAEvaluaciones()">← Mis evaluaciones</a>
+      <div class="cabecera-seccion">
+        <h1 id="eval-titulo"></h1>
+        <button class="btn peligro" onclick="App.eliminarEvaluacionActual()">Eliminar evaluación</button>
+      </div>
+      <p id="eval-meta" class="meta"></p>
+      <ol id="eval-alumnos" class="alumnos"></ol>
       <p class="nota-fase">Las unidades y la rejilla de evaluación llegan en la Fase 3.</p>
     </section>
   </main>

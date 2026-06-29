@@ -2,13 +2,14 @@
 /**
  * Lógica de cliente. Habla con el backend Apps Script vía google.script.run.
  *
- * Fase 1: carga el estado inicial y pinta la lista de grupos.
- * Fase 2: crear grupo (área+curso del mapa + alumnado pegado), ver y editar
- *         alumnado, renombrar y eliminar grupo.
+ * Modelo:
+ *   - Clase = lista de alumnado + curso (reutilizable).
+ *   - Evaluación = una clase aplicada a un área.
  */
 var App = (function () {
-  var estado = null;      // {usuario, areas:[{curso,area}], grupos:[...]}
-  var grupoActual = null; // grupo abierto en la vista de detalle
+  var estado = null;        // {usuario, areas, clases, evaluaciones}
+  var claseActual = null;
+  var evalActual = null;
 
   // ---------- arranque ----------
   function iniciar() {
@@ -16,43 +17,210 @@ var App = (function () {
       estado = e;
       document.getElementById('usuario').textContent = e.usuario;
       document.getElementById('cargando').hidden = true;
-      irAGrupos();
+      irAEvaluaciones();
     });
   }
 
   // ---------- navegación ----------
-  function mostrar(idSeccion) {
-    ['vista-grupos', 'vista-grupo'].forEach(function (id) {
-      document.getElementById(id).hidden = (id !== idSeccion);
-    });
+  var SECCIONES = ['vista-evaluaciones', 'vista-clases', 'vista-clase', 'vista-evaluacion'];
+  function mostrar(id) {
+    SECCIONES.forEach(function (s) { document.getElementById(s).hidden = (s !== id); });
+    document.getElementById('nav-eval').classList.toggle('activo', id === 'vista-evaluaciones');
+    document.getElementById('nav-clases').classList.toggle('activo',
+      id === 'vista-clases' || id === 'vista-clase');
   }
+  function irAEvaluaciones() { evalActual = null; mostrar('vista-evaluaciones'); pintarEvaluaciones(); }
+  function irAClases() { claseActual = null; mostrar('vista-clases'); pintarClases(); }
 
-  function irAGrupos() {
-    grupoActual = null;
-    mostrar('vista-grupos');
-    pintarGrupos();
-  }
-
-  // ---------- lista de grupos ----------
-  function pintarGrupos() {
-    var cont = document.getElementById('lista-grupos');
-    if (!estado.grupos.length) {
-      cont.innerHTML = '<div class="vacio">Aún no tienes grupos. ' +
-        'Crea el primero para empezar a evaluar.</div>';
+  // ---------- evaluaciones ----------
+  function pintarEvaluaciones() {
+    var cont = document.getElementById('lista-evaluaciones');
+    if (!estado.evaluaciones.length) {
+      cont.innerHTML = '<div class="vacio">Aún no tienes evaluaciones. ' +
+        'Crea una eligiendo una clase y un área.</div>';
       return;
     }
-    cont.innerHTML = estado.grupos.map(function (g) {
-      return '<div class="tarjeta" onclick="App.abrirGrupo(\'' + g.grupoId + '\')">' +
-        '<h3>' + esc(g.nombre) + '</h3>' +
-        '<div class="meta">' + esc(g.area) + '</div>' +
-        '<div class="meta">' + esc(g.curso) + '</div>' +
-        '<div class="meta">' + g.numAlumnos + ' alumnos/as</div>' +
+    cont.innerHTML = estado.evaluaciones.map(function (ev) {
+      return '<div class="tarjeta" onclick="App.abrirEvaluacion(\'' + ev.evalId + '\')">' +
+        '<h3>' + esc(ev.area) + '</h3>' +
+        '<div class="meta">' + esc(ev.claseNombre) + ' · ' + esc(ev.curso) + '</div>' +
+        '<div class="meta">' + ev.numAlumnos + ' alumnos/as</div>' +
         '</div>';
     }).join('');
   }
 
-  // ---------- crear grupo ----------
-  /** Cursos distintos del mapa, en el orden en que aparecen. */
+  function nuevaEvaluacion() {
+    if (!estado.clases.length) {
+      if (confirm('Primero necesitas una clase. ¿Crear una clase ahora?')) nuevaClase();
+      return;
+    }
+    var optClases = estado.clases.map(function (c) {
+      return '<option value="' + c.claseId + '">' + esc(c.nombre + ' · ' + c.curso) + '</option>';
+    }).join('');
+
+    abrirModal('Nueva evaluación',
+      '<label>Clase' +
+      '<select id="f-clase" onchange="App.claseCambiada()">' + optClases + '</select></label>' +
+      '<label>Área' +
+      '<select id="f-area"></select></label>' +
+      '<p class="ayuda">El curso lo aporta la clase; aquí eliges el área a evaluar.</p>',
+      'Crear evaluación',
+      function () {
+        var claseId = val('f-clase');
+        var area = val('f-area');
+        if (!claseId || !area) return aviso('Elige clase y área.');
+        botonModalCargando('Creando…');
+        llamar('crearEvaluacion', [{ claseId: claseId, area: area }], function (ev) {
+          estado.evaluaciones.push({
+            evalId: ev.evalId, claseId: ev.clase.claseId, area: ev.area,
+            claseNombre: ev.clase.nombre, curso: ev.curso,
+            numAlumnos: ev.clase.alumnos.length, creado: ev.creado
+          });
+          cerrarModal();
+          abrirEvaluacionCargada(ev);
+        });
+      });
+    claseCambiada(); // rellena áreas para la primera clase
+  }
+
+  /** Al cambiar la clase, recargamos las áreas de su curso. */
+  function claseCambiada() {
+    var clase = claseDe(val('f-clase'));
+    document.getElementById('f-area').innerHTML =
+      opcionesAreas(clase ? clase.curso : '');
+  }
+
+  function abrirEvaluacion(evalId) {
+    llamar('obtenerEvaluacion', [evalId], abrirEvaluacionCargada);
+  }
+  function abrirEvaluacionCargada(ev) {
+    evalActual = ev;
+    mostrar('vista-evaluacion');
+    document.getElementById('eval-titulo').textContent = ev.area;
+    document.getElementById('eval-meta').textContent =
+      ev.clase.nombre + ' · ' + ev.curso + ' · ' + ev.clase.alumnos.length + ' alumnos/as';
+    var ol = document.getElementById('eval-alumnos');
+    ol.innerHTML = (ev.clase.alumnos || [])
+      .map(function (a) { return '<li>' + esc(a.nombre) + '</li>'; }).join('');
+  }
+  function eliminarEvaluacionActual() {
+    if (!confirm('¿Eliminar esta evaluación? (La clase y su alumnado se conservan.)')) return;
+    var id = evalActual.evalId;
+    llamar('eliminarEvaluacion', [id], function () {
+      estado.evaluaciones = estado.evaluaciones.filter(function (e) { return e.evalId !== id; });
+      irAEvaluaciones();
+    });
+  }
+
+  // ---------- clases ----------
+  function pintarClases() {
+    var cont = document.getElementById('lista-clases');
+    if (!estado.clases.length) {
+      cont.innerHTML = '<div class="vacio">Aún no tienes clases. ' +
+        'Una clase es una lista de alumnado que luego reutilizas en varias áreas.</div>';
+      return;
+    }
+    cont.innerHTML = estado.clases.map(function (c) {
+      return '<div class="tarjeta" onclick="App.abrirClase(\'' + c.claseId + '\')">' +
+        '<h3>' + esc(c.nombre) + '</h3>' +
+        '<div class="meta">' + esc(c.curso) + '</div>' +
+        '<div class="meta">' + c.numAlumnos + ' alumnos/as</div>' +
+        '</div>';
+    }).join('');
+  }
+
+  function nuevaClase() {
+    var cursos = cursosDisponibles();
+    if (!cursos.length) return aviso('El Mapa Curricular está vacío o sin configurar.');
+    var optCursos = '<option value="" selected>— Seleccionar curso —</option>' +
+      cursos.map(function (c) { return '<option value="' + esc(c) + '">' + esc(c) + '</option>'; }).join('');
+    var optCopiar = '<option value="">— No copiar —</option>' +
+      estado.clases.map(function (c) {
+        return '<option value="' + c.claseId + '">' + esc(c.nombre + ' · ' + c.curso) + '</option>';
+      }).join('');
+
+    abrirModal('Nueva clase',
+      '<label>Nombre de la clase' +
+      '<input id="f-nombre" type="text" placeholder="Ej.: 3º A"></label>' +
+      '<label>Curso' +
+      '<select id="f-curso">' + optCursos + '</select></label>' +
+      '<label>Copiar alumnado de otra clase (opcional)' +
+      '<select id="f-copiar" onchange="App.copiarDeClase()">' + optCopiar + '</select></label>' +
+      '<label>Alumnado (uno por línea)' +
+      '<textarea id="f-alumnos" rows="8" placeholder="Apellidos, Nombre"></textarea></label>' +
+      '<p class="ayuda">Pega la lista desde Séneca o cópiala de otra clase tuya.</p>',
+      'Crear clase',
+      function () {
+        var nombre = val('f-nombre').trim();
+        var curso = val('f-curso');
+        if (!nombre) return aviso('Pon un nombre a la clase.');
+        if (!curso) return aviso('Elige el curso.');
+        var alumnos = parsearLista(val('f-alumnos'));
+        botonModalCargando('Creando…');
+        llamar('crearClase', [{ nombre: nombre, curso: curso, alumnos: alumnos }], function (cl) {
+          estado.clases.push({
+            claseId: cl.claseId, nombre: cl.nombre, curso: cl.curso,
+            numAlumnos: cl.alumnos.length, creado: cl.creado
+          });
+          cerrarModal();
+          abrirClaseCargada(cl);
+        });
+      });
+  }
+
+  /** Rellena el textarea con el alumnado de la clase elegida para copiar. */
+  function copiarDeClase() {
+    var id = val('f-copiar');
+    if (!id) return;
+    llamar('obtenerClase', [id], function (cl) {
+      document.getElementById('f-alumnos').value =
+        (cl.alumnos || []).map(function (a) { return a.nombre; }).join('\n');
+    });
+  }
+
+  function abrirClase(claseId) { llamar('obtenerClase', [claseId], abrirClaseCargada); }
+  function abrirClaseCargada(cl) {
+    claseActual = cl;
+    mostrar('vista-clase');
+    document.getElementById('clase-titulo').textContent = cl.nombre;
+    document.getElementById('clase-meta').textContent = cl.curso;
+    pintarAlumnos();
+  }
+  function pintarAlumnos() {
+    var lista = claseActual.alumnos || [];
+    document.getElementById('num-alumnos').textContent = '(' + lista.length + ')';
+    var ol = document.getElementById('lista-alumnos');
+    ol.innerHTML = lista.length
+      ? lista.map(function (a) { return '<li>' + esc(a.nombre) + '</li>'; }).join('')
+      : '<div class="vacio">Sin alumnado. Pulsa "Editar lista" para añadirlo.</div>';
+  }
+  function editarAlumnos() {
+    var texto = (claseActual.alumnos || []).map(function (a) { return a.nombre; }).join('\n');
+    abrirModal('Editar alumnado',
+      '<label>Un alumno/a por línea' +
+      '<textarea id="f-alumnos" rows="12">' + esc(texto) + '</textarea></label>' +
+      '<p class="ayuda">Se conservan las notas del alumnado que no cambie de nombre.</p>',
+      'Guardar',
+      function () {
+        var nuevos = fusionarAlumnos(claseActual.alumnos || [], parsearLista(val('f-alumnos')));
+        botonModalCargando('Guardando…');
+        llamar('actualizarAlumnosClase', [claseActual.claseId, nuevos], function (cl) {
+          var c = claseDe(cl.claseId); if (c) c.numAlumnos = cl.alumnos.length;
+          cerrarModal();
+          abrirClaseCargada(cl);
+        });
+      });
+  }
+  function eliminarClaseActual() {
+    if (!confirm('¿Eliminar la clase "' + claseActual.nombre + '"?')) return;
+    var id = claseActual.claseId;
+    llamar('eliminarClase', [id], function () {
+      estado.clases = estado.clases.filter(function (c) { return c.claseId !== id; });
+      irAClases();
+    });
+  }
+
+  // ---------- mapa: cursos y áreas ----------
   function cursosDisponibles() {
     var vistos = {}, out = [];
     (estado.areas || []).forEach(function (a) {
@@ -60,13 +228,10 @@ var App = (function () {
     });
     return out;
   }
-
-  /** Áreas de un curso concreto. */
   function areasDe(curso) {
     return (estado.areas || []).filter(function (a) { return a.curso === curso; })
       .map(function (a) { return a.area; });
   }
-
   function opcionesAreas(curso) {
     var ph = '<option value="" selected>— Seleccionar área —</option>';
     if (!curso) return ph;
@@ -76,117 +241,17 @@ var App = (function () {
       return '<option value="' + esc(a) + '">' + esc(a) + '</option>';
     }).join('');
   }
-
-  /** El usuario cambió el curso: recargamos el desplegable de áreas. */
-  function cursoCambiado() {
-    document.getElementById('f-area').innerHTML = opcionesAreas(val('f-curso'));
-  }
-
-  function nuevoGrupo() {
-    var cursos = cursosDisponibles();
-    if (!cursos.length) {
-      return aviso('El Mapa Curricular está vacío o sin configurar.');
-    }
-    var optCursos = '<option value="" selected>— Seleccionar curso —</option>' +
-      cursos.map(function (c) {
-        return '<option value="' + esc(c) + '">' + esc(c) + '</option>';
-      }).join('');
-
-    abrirModal('Nuevo grupo',
-      '<label>Nombre del grupo' +
-      '<input id="f-nombre" type="text" placeholder="Ej.: 2º A"></label>' +
-      '<label>Curso' +
-      '<select id="f-curso" onchange="App.cursoCambiado()">' + optCursos + '</select></label>' +
-      '<label>Área' +
-      '<select id="f-area">' + opcionesAreas('') + '</select></label>' +
-      '<label>Alumnado (uno por línea)' +
-      '<textarea id="f-alumnos" rows="8" placeholder="Apellidos, Nombre"></textarea>' +
-      '</label>' +
-      '<p class="ayuda">Puedes pegar la lista directamente desde Séneca o una hoja.</p>',
-      'Crear grupo',
-      function () {
-        var nombre = val('f-nombre').trim();
-        var curso = val('f-curso');
-        var area = val('f-area');
-        if (!nombre) return aviso('Pon un nombre al grupo.');
-        if (!curso || !area) return aviso('Elige curso y área.');
-        var alumnos = parsearLista(val('f-alumnos'));
-
-        botonModalCargando('Creando…');
-        llamar('crearGrupo',
-          [{ nombre: nombre, area: area, curso: curso, alumnos: alumnos }],
-          function (g) {
-            estado.grupos.push({
-              grupoId: g.grupoId, nombre: g.nombre, area: g.area,
-              curso: g.curso, creado: g.creado, numAlumnos: g.alumnos.length
-            });
-            cerrarModal();
-            abrirGrupoCargado(g);
-          });
-      });
-  }
-
-  // ---------- detalle de grupo ----------
-  function abrirGrupo(grupoId) {
-    llamar('obtenerGrupo', [grupoId], abrirGrupoCargado);
-  }
-
-  function abrirGrupoCargado(g) {
-    grupoActual = g;
-    mostrar('vista-grupo');
-    document.getElementById('grupo-titulo').textContent = g.nombre;
-    document.getElementById('grupo-meta').textContent = g.area + ' · ' + g.curso;
-    pintarAlumnos();
-  }
-
-  function pintarAlumnos() {
-    var lista = grupoActual.alumnos || [];
-    document.getElementById('num-alumnos').textContent = '(' + lista.length + ')';
-    var ol = document.getElementById('lista-alumnos');
-    ol.innerHTML = lista.length
-      ? lista.map(function (a) { return '<li>' + esc(a.nombre) + '</li>'; }).join('')
-      : '<div class="vacio">Sin alumnado. Pulsa "Editar lista" para añadirlo.</div>';
-  }
-
-  function editarAlumnos() {
-    var texto = (grupoActual.alumnos || [])
-      .map(function (a) { return a.nombre; }).join('\n');
-    abrirModal('Editar alumnado',
-      '<label>Un alumno/a por línea' +
-      '<textarea id="f-alumnos" rows="12">' + esc(texto) + '</textarea></label>' +
-      '<p class="ayuda">Se conservan las notas del alumnado que no cambie de nombre.</p>',
-      'Guardar',
-      function () {
-        var nuevos = fusionarAlumnos(grupoActual.alumnos || [], parsearLista(val('f-alumnos')));
-        botonModalCargando('Guardando…');
-        llamar('actualizarAlumnos', [grupoActual.grupoId, nuevos], function (g) {
-          actualizarContadorEnLista(g.grupoId, g.alumnos.length);
-          cerrarModal();
-          abrirGrupoCargado(g);
-        });
-      });
-  }
-
-  function eliminarGrupoActual() {
-    if (!confirm('¿Eliminar el grupo "' + grupoActual.nombre + '" y todos sus datos?')) return;
-    var id = grupoActual.grupoId;
-    llamar('eliminarGrupo', [id], function () {
-      estado.grupos = estado.grupos.filter(function (g) { return g.grupoId !== id; });
-      irAGrupos();
-    });
+  function claseDe(id) {
+    return (estado.clases || []).filter(function (c) { return c.claseId === id; })[0] || null;
   }
 
   // ---------- alumnos: parseo y fusión ----------
-  /** Convierte texto pegado en [{nombre}], una línea por alumno. */
   function parsearLista(texto) {
-    return String(texto || '')
-      .split('\n')
+    return String(texto || '').split('\n')
       .map(function (l) { return l.replace(/\s+/g, ' ').trim(); })
       .filter(function (l) { return l.length; })
       .map(function (nombre) { return { nombre: nombre }; });
   }
-
-  /** Conserva el id (y por tanto las notas) del alumnado cuyo nombre no cambia. */
   function fusionarAlumnos(previos, nuevos) {
     var porNombre = {};
     previos.forEach(function (a) { porNombre[a.nombre] = a.id; });
@@ -196,46 +261,34 @@ var App = (function () {
     });
   }
 
-  function actualizarContadorEnLista(grupoId, n) {
-    var g = estado.grupos.filter(function (x) { return x.grupoId === grupoId; })[0];
-    if (g) g.numAlumnos = n;
-  }
-
   // ---------- modal ----------
   var accionModal = null;
   function abrirModal(titulo, cuerpoHtml, textoAceptar, onAceptar) {
     document.getElementById('modal-titulo').textContent = titulo;
     document.getElementById('modal-cuerpo').innerHTML = cuerpoHtml;
     var b = document.getElementById('modal-aceptar');
-    b.textContent = textoAceptar;
-    b.disabled = false;
+    b.textContent = textoAceptar; b.disabled = false;
     accionModal = onAceptar;
     b.onclick = function () { if (accionModal) accionModal(); };
     document.getElementById('modal-fondo').hidden = false;
   }
   function botonModalCargando(txt) {
-    var b = document.getElementById('modal-aceptar');
-    b.disabled = true; b.textContent = txt;
+    var b = document.getElementById('modal-aceptar'); b.disabled = true; b.textContent = txt;
   }
-  function cerrarModal() {
-    document.getElementById('modal-fondo').hidden = true;
-    accionModal = null;
-  }
+  function cerrarModal() { document.getElementById('modal-fondo').hidden = true; accionModal = null; }
   function cerrarModalFuera(ev) {
     if (ev.target === document.getElementById('modal-fondo')) cerrarModal();
   }
 
   // ---------- utilidades ----------
   function llamar(fn, args, ok) {
-    google.script.run
-      .withSuccessHandler(ok)
+    google.script.run.withSuccessHandler(ok)
       .withFailureHandler(function (err) { aviso(err.message); })
       [fn].apply(google.script.run, args || []);
   }
   function val(id) { return document.getElementById(id).value; }
   function aviso(msg) {
-    var b = document.getElementById('modal-aceptar');
-    if (b) { b.disabled = false; }
+    var b = document.getElementById('modal-aceptar'); if (b) b.disabled = false;
     alert(msg);
   }
   function esc(s) {
@@ -245,14 +298,13 @@ var App = (function () {
 
   return {
     iniciar: iniciar,
-    irAGrupos: irAGrupos,
-    nuevoGrupo: nuevoGrupo,
-    cursoCambiado: cursoCambiado,
-    abrirGrupo: abrirGrupo,
-    editarAlumnos: editarAlumnos,
-    eliminarGrupoActual: eliminarGrupoActual,
-    cerrarModal: cerrarModal,
-    cerrarModalFuera: cerrarModalFuera
+    irAEvaluaciones: irAEvaluaciones, irAClases: irAClases,
+    nuevaEvaluacion: nuevaEvaluacion, claseCambiada: claseCambiada,
+    abrirEvaluacion: abrirEvaluacion, eliminarEvaluacionActual: eliminarEvaluacionActual,
+    nuevaClase: nuevaClase, copiarDeClase: copiarDeClase,
+    abrirClase: abrirClase, editarAlumnos: editarAlumnos,
+    eliminarClaseActual: eliminarClaseActual,
+    cerrarModal: cerrarModal, cerrarModalFuera: cerrarModalFuera
   };
 })();
 

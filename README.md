@@ -23,7 +23,7 @@ PROYECTO CENTRAL (tu cuenta)
 
 DATOS DE CADA PROFE (en su Drive)
   • Un "cuaderno" creado automáticamente la 1ª vez
-  • Guarda sus grupos, alumnado, unidades, actividades e ítems
+  • Guarda sus clases, evaluaciones, unidades, actividades e ítems
   • Privado y aislado; el profe nunca lo abre a mano
 ```
 
@@ -44,8 +44,10 @@ appsscript.json   Manifiesto (web app + scopes)
 Config.gs         Único sitio a configurar (ID del mapa, nombres)
 Code.gs           Entrada de la Web App (doGet) y estado inicial
 Curriculo.gs      Lectura del Mapa Curricular central
-Datos.gs          Cuaderno personal de cada profe (CRUD)
-Grupos.gs         Grupos y alumnado (crear, editar, eliminar)
+Datos.gs          Cuaderno personal de cada profe (esquema + utilidades)
+Clases.gs         Clases: alumnado + curso (reutilizable)
+Evaluaciones.gs   Evaluaciones: una clase aplicada a un área
+Exportador.gs     Regenera data/mapa-curricular.json desde la hoja completa
 Calc.gs           Motor de cálculo de notas
 ui.html           Interfaz
 estilos.html      CSS
@@ -62,7 +64,8 @@ docs/
 
 - [x] **Fase 0** — Estructura del Mapa Curricular central (`docs/mapa-curricular.md`)
 - [x] **Fase 1** — Esqueleto: Web App, login de dominio, creación del cuaderno
-- [x] **Fase 2** — Gestión de grupos y alumnado (manual / pegar lista)
+- [x] **Fase 2** — Clases (alumnado reutilizable) y evaluaciones (clase + área),
+  con importación pegando lista o copiando de otra clase
 - [ ] **Fase 3** — Unidades + actividades + rejilla de ítems + cálculo en vivo
 - [ ] **Fase 4** — Resumen de unidad + resumen global + nota final
 - [ ] **Fase 5** — Pulido visual tipo iDoceo y despliegue

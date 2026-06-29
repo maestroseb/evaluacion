@@ -32,15 +32,16 @@ function getUsuario() {
 }
 
 /**
- * Estado inicial que pide el frontend al cargar:
- * usuario, áreas/cursos disponibles en el mapa central y sus grupos.
+ * Estado inicial que pide el frontend al cargar: usuario, áreas/cursos del mapa
+ * central, las clases del profe y sus evaluaciones (clase + área).
  */
 function getEstadoInicial() {
-  var cuaderno = abrirCuaderno_();
+  var ss = abrirCuaderno_();
   return {
     usuario: Session.getActiveUser().getEmail(),
     esquemaVersion: CONFIG.ESQUEMA_VERSION,
     areas: Curriculo.listarAreasCursos(),
-    grupos: Datos.listarGrupos(cuaderno)
+    clases: Clases.listar_(ss),
+    evaluaciones: Evaluaciones.listar_(ss)
   };
 }

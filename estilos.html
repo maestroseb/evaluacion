@@ -19,7 +19,11 @@
     padding: 12px 20px;
   }
   .logo { font-weight: 600; }
-  .usuario { font-size: 13px; opacity: .9; }
+  .nav { display: flex; align-items: center; gap: 18px; }
+  .nav a { color: #fff; opacity: .8; cursor: pointer; font-size: 14px; padding: 4px 2px; }
+  .nav a:hover { opacity: 1; }
+  .nav a.activo { opacity: 1; border-bottom: 2px solid #fff; }
+  .usuario { font-size: 13px; opacity: .9; margin-left: 6px; }
   main { max-width: 1100px; margin: 0 auto; padding: 20px; }
   .aviso { padding: 40px; text-align: center; color: #666; }
   .cabecera-seccion {

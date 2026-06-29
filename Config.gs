@@ -26,9 +26,10 @@ var CONFIG = {
  * El profe nunca las abre a mano: son solo el almacén de datos.
  */
 var HOJAS = {
-  META: '_meta',         // versión de esquema, fecha de creación, dueño
-  GRUPOS: '_grupos',     // grupos/clases y su alumnado
-  UNIDADES: '_unidades', // unidades de cada grupo
+  META: '_meta',          // versión de esquema, fecha de creación, dueño
+  CLASES: '_clases',      // clases: lista de alumnado + curso (reutilizable)
+  EVALUACIONES: '_evaluaciones', // clase + área concreta a evaluar
+  UNIDADES: '_unidades',  // unidades de cada evaluación
   ACTIVIDADES: '_actividades', // actividades de cada unidad y sus criterios
-  ITEMS: '_items'        // ítems conseguidos por alumno y actividad
+  ITEMS: '_items'         // ítems conseguidos por alumno y actividad
 };
