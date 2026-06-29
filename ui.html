@@ -50,7 +50,7 @@
       <ol id="lista-alumnos" class="alumnos"></ol>
     </section>
 
-    <!-- DETALLE EVALUACIÓN (Fase 3) -->
+    <!-- DETALLE EVALUACIÓN: lista de unidades -->
     <section id="vista-evaluacion" hidden>
       <a class="volver" onclick="App.irAEvaluaciones()">← Mis evaluaciones</a>
       <div class="cabecera-seccion">
@@ -58,8 +58,26 @@
         <button class="btn peligro" onclick="App.eliminarEvaluacionActual()">Eliminar evaluación</button>
       </div>
       <p id="eval-meta" class="meta"></p>
-      <ol id="eval-alumnos" class="alumnos"></ol>
-      <p class="nota-fase">Las unidades y la rejilla de evaluación llegan en la Fase 3.</p>
+      <div class="cabecera-seccion">
+        <h2>Unidades</h2>
+        <button class="btn primario" onclick="App.nuevaUnidad()">+ Nueva unidad</button>
+      </div>
+      <div id="lista-unidades" class="tarjetas"></div>
+    </section>
+
+    <!-- REJILLA DE UNA UNIDAD -->
+    <section id="vista-unidad" hidden>
+      <a class="volver" id="volver-unidad">← Unidades</a>
+      <div class="cabecera-seccion">
+        <h1 id="unidad-titulo"></h1>
+        <div class="acciones-unidad">
+          <label class="check"><input type="checkbox" id="ver-criterios" onchange="App.pintarRejilla()"> Notas por criterio</label>
+          <button class="btn" onclick="App.nuevaActividad()">+ Nueva actividad</button>
+          <button class="btn peligro" onclick="App.eliminarUnidadActual()">Eliminar unidad</button>
+        </div>
+      </div>
+      <p id="unidad-meta" class="meta"></p>
+      <div id="rejilla-cont" class="rejilla-cont"></div>
     </section>
   </main>
 

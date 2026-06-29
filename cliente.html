@@ -22,7 +22,8 @@ var App = (function () {
   }
 
   // ---------- navegación ----------
-  var SECCIONES = ['vista-evaluaciones', 'vista-clases', 'vista-clase', 'vista-evaluacion'];
+  var SECCIONES = ['vista-evaluaciones', 'vista-clases', 'vista-clase',
+    'vista-evaluacion', 'vista-unidad'];
   function mostrar(id) {
     SECCIONES.forEach(function (s) { document.getElementById(s).hidden = (s !== id); });
     document.getElementById('nav-eval').classList.toggle('activo', id === 'vista-evaluaciones');
@@ -100,9 +101,43 @@ var App = (function () {
     document.getElementById('eval-titulo').textContent = ev.area;
     document.getElementById('eval-meta').textContent =
       ev.clase.nombre + ' · ' + ev.curso + ' · ' + ev.clase.alumnos.length + ' alumnos/as';
-    var ol = document.getElementById('eval-alumnos');
-    ol.innerHTML = (ev.clase.alumnos || [])
-      .map(function (a) { return '<li>' + esc(a.nombre) + '</li>'; }).join('');
+    cargarUnidades();
+  }
+
+  function cargarUnidades() {
+    llamar('listarUnidades', [evalActual.evalId], function (uds) {
+      evalActual.unidades = uds;
+      pintarUnidades();
+    });
+  }
+  function pintarUnidades() {
+    var cont = document.getElementById('lista-unidades');
+    var uds = evalActual.unidades || [];
+    if (!uds.length) {
+      cont.innerHTML = '<div class="vacio">Aún no hay unidades. ' +
+        'Crea la primera para empezar a evaluar actividades.</div>';
+      return;
+    }
+    cont.innerHTML = uds.map(function (u) {
+      return '<div class="tarjeta" onclick="App.abrirUnidad(\'' + u.unidadId + '\')">' +
+        '<h3>' + esc(u.nombre) + '</h3></div>';
+    }).join('');
+  }
+  function nuevaUnidad() {
+    abrirModal('Nueva unidad',
+      '<label>Nombre de la unidad' +
+      '<input id="f-unidad" type="text" placeholder="Ej.: Unidad 1"></label>',
+      'Crear unidad',
+      function () {
+        var nombre = val('f-unidad').trim();
+        if (!nombre) return aviso('Pon un nombre a la unidad.');
+        botonModalCargando('Creando…');
+        llamar('crearUnidad', [evalActual.evalId, nombre], function (u) {
+          (evalActual.unidades = evalActual.unidades || []).push(u);
+          cerrarModal();
+          abrirUnidad(u.unidadId);
+        });
+      });
   }
   function eliminarEvaluacionActual() {
     confirmar('Eliminar evaluación',
@@ -114,6 +149,166 @@ var App = (function () {
           irAEvaluaciones();
         });
       });
+  }
+
+  // ---------- unidad: rejilla de evaluación ----------
+  var rejilla = null; // {unidad, alumnos, actividades, criteriosInfo, items}
+
+  function abrirUnidad(unidadId) {
+    llamar('getRejilla', [unidadId], function (r) {
+      rejilla = r;
+      mostrar('vista-unidad');
+      document.getElementById('unidad-titulo').textContent = r.unidad.nombre;
+      document.getElementById('unidad-meta').textContent =
+        evalActual.area + ' · ' + r.alumnos.length + ' alumnos/as · ' +
+        r.actividades.length + ' actividades';
+      document.getElementById('volver-unidad').onclick = function () {
+        abrirEvaluacionCargada(evalActual);
+      };
+      pintarRejilla();
+    });
+  }
+
+  function eliminarUnidadActual() {
+    confirmar('Eliminar unidad',
+      'Se eliminarán la unidad "' + rejilla.unidad.nombre + '", sus actividades y notas. ¿Continuar?',
+      'Eliminar', function () {
+        llamar('eliminarUnidad', [rejilla.unidad.unidadId], function () {
+          abrirEvaluacionCargada(evalActual);
+        });
+      });
+  }
+
+  function nuevaActividad() {
+    // Criterios disponibles del área (código -> texto), como casillas.
+    var info = rejilla.criteriosInfo;
+    var checks = Object.keys(info).map(function (cod) {
+      return '<label class="crit"><input type="checkbox" value="' + esc(cod) + '"> ' +
+        '<b>' + esc(cod) + '</b> ' + esc(info[cod]) + '</label>';
+    }).join('');
+
+    abrirModal('Nueva actividad',
+      '<label>Nombre de la actividad' +
+      '<input id="f-act-nombre" type="text" placeholder="Ej.: Dictado 1"></label>' +
+      '<label>Nº de ítems a evaluar' +
+      '<input id="f-act-items" type="number" min="1" step="0.5" placeholder="Ej.: 10"></label>' +
+      '<div class="campo-crit"><span class="etq">Criterios asociados</span>' +
+      '<div class="lista-crit">' + (checks || '<i>No hay criterios para esta área.</i>') + '</div></div>',
+      'Crear actividad',
+      function () {
+        var nombre = val('f-act-nombre').trim();
+        var numItems = Number(val('f-act-items'));
+        var criterios = [].slice.call(
+          document.querySelectorAll('.lista-crit input:checked')
+        ).map(function (c) { return c.value; });
+        if (!nombre) return aviso('Pon nombre a la actividad.');
+        if (!(numItems > 0)) return aviso('El nº de ítems debe ser mayor que 0.');
+        if (!criterios.length) return aviso('Marca al menos un criterio.');
+        botonModalCargando('Creando…');
+        llamar('crearActividad',
+          [rejilla.unidad.unidadId, { nombre: nombre, criterios: criterios, numItems: numItems }],
+          function (act) {
+            rejilla.actividades.push(act);
+            cerrarModal();
+            pintarRejilla();
+          });
+      });
+  }
+
+  /** Pinta la tabla alumnos × actividades (+ notas por criterio si procede). */
+  function pintarRejilla() {
+    var cont = document.getElementById('rejilla-cont');
+    if (!rejilla.actividades.length) {
+      cont.innerHTML = '<div class="vacio">Sin actividades. ' +
+        'Crea una actividad, asóciale criterios y nº de ítems para empezar.</div>';
+      return;
+    }
+    var verCrit = document.getElementById('ver-criterios').checked;
+    var crits = verCrit ? criteriosUsados() : [];
+
+    var h = '<table class="rejilla"><thead><tr>' +
+      '<th class="esq">Alumno/a</th>';
+    rejilla.actividades.forEach(function (a) {
+      h += '<th class="act" title="' + esc(a.criterios.join(', ')) + '">' +
+        esc(a.nombre) + '<small>/' + a.numItems + ' · ' +
+        esc(a.criterios.join(', ')) + '</small></th>';
+    });
+    crits.forEach(function (cod) {
+      h += '<th class="crit-col" title="' + esc(rejilla.criteriosInfo[cod] || '') + '">' + esc(cod) + '</th>';
+    });
+    h += '<th class="nota">Nota</th></tr></thead><tbody>';
+
+    rejilla.alumnos.forEach(function (al) {
+      h += '<tr><td class="esq">' + esc(al.nombre) + '</td>';
+      rejilla.actividades.forEach(function (a) {
+        var v = valorItem(a.actividadId, al.id);
+        h += '<td><input type="number" min="0" max="' + a.numItems + '" step="0.5" ' +
+          'value="' + (v == null ? '' : v) + '" ' +
+          'onchange="App.cambiarItem(\'' + a.actividadId + '\',\'' + al.id + '\',this.value)"></td>';
+      });
+      crits.forEach(function (cod) {
+        h += '<td class="num">' + fmt(notaCriterio(al.id, cod)) + '</td>';
+      });
+      h += '<td class="num nota">' + fmt(notaUnidad(al.id)) + '</td></tr>';
+    });
+    h += '</tbody></table>';
+    cont.innerHTML = h;
+  }
+
+  function cambiarItem(actividadId, alumnoId, valor) {
+    var act = actDe(actividadId);
+    var v = valor === '' ? '' : Number(valor);
+    if (v !== '' && act && v > act.numItems) { v = act.numItems; }
+    // Actualiza estado local y repinta notas al vuelo.
+    if (v === '') {
+      if (rejilla.items[actividadId]) delete rejilla.items[actividadId][alumnoId];
+    } else {
+      (rejilla.items[actividadId] || (rejilla.items[actividadId] = {}))[alumnoId] = v;
+    }
+    pintarRejilla();
+    llamar('guardarItem', [actividadId, alumnoId, v === '' ? '' : v], function () {});
+  }
+
+  // --- cálculo en vivo (espejo de Calc.gs) ---
+  function valorItem(actividadId, alumnoId) {
+    var m = rejilla.items[actividadId];
+    return m && m[alumnoId] != null ? m[alumnoId] : null;
+  }
+  function notaActividad(act, alumnoId) {
+    var c = valorItem(act.actividadId, alumnoId);
+    if (c == null || !(act.numItems > 0)) return null;
+    return Math.max(0, Math.min(10, c / act.numItems * 10));
+  }
+  function notaCriterio(alumnoId, cod) {
+    var notas = [];
+    rejilla.actividades.forEach(function (a) {
+      if (a.criterios.indexOf(cod) < 0) return;
+      var n = notaActividad(a, alumnoId);
+      if (n != null) notas.push(n);
+    });
+    return media(notas);
+  }
+  function notaUnidad(alumnoId) {
+    var notas = criteriosUsados().map(function (cod) { return notaCriterio(alumnoId, cod); })
+      .filter(function (n) { return n != null; });
+    return media(notas);
+  }
+  function criteriosUsados() {
+    var set = {}, out = [];
+    rejilla.actividades.forEach(function (a) {
+      a.criterios.forEach(function (c) { if (!set[c]) { set[c] = true; out.push(c); } });
+    });
+    out.sort();
+    return out;
+  }
+  function media(arr) {
+    if (!arr.length) return null;
+    var s = arr.reduce(function (a, b) { return a + b; }, 0);
+    return s / arr.length;
+  }
+  function fmt(n) { return n == null ? '' : (Math.round(n * 100) / 100).toString().replace('.', ','); }
+  function actDe(id) {
+    return rejilla.actividades.filter(function (a) { return a.actividadId === id; })[0];
   }
 
   // ---------- clases ----------
@@ -320,6 +515,9 @@ var App = (function () {
     irAEvaluaciones: irAEvaluaciones, irAClases: irAClases,
     nuevaEvaluacion: nuevaEvaluacion, claseCambiada: claseCambiada,
     abrirEvaluacion: abrirEvaluacion, eliminarEvaluacionActual: eliminarEvaluacionActual,
+    nuevaUnidad: nuevaUnidad, abrirUnidad: abrirUnidad,
+    eliminarUnidadActual: eliminarUnidadActual, nuevaActividad: nuevaActividad,
+    pintarRejilla: pintarRejilla, cambiarItem: cambiarItem,
     nuevaClase: nuevaClase, copiarDeClase: copiarDeClase,
     abrirClase: abrirClase, editarAlumnos: editarAlumnos,
     eliminarClaseActual: eliminarClaseActual,

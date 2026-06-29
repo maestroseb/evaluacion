@@ -47,8 +47,10 @@ Curriculo.gs      Lectura del Mapa Curricular central
 Datos.gs          Cuaderno personal de cada profe (esquema + utilidades)
 Clases.gs         Clases: alumnado + curso (reutilizable)
 Evaluaciones.gs   Evaluaciones: una clase aplicada a un área
+Unidades.gs       Unidades de cada evaluación
+Actividades.gs    Actividades, ítems y datos de la rejilla
 Exportador.gs     Regenera data/mapa-curricular.json desde la hoja completa
-Calc.gs           Motor de cálculo de notas
+Calc.gs           Motor de cálculo de notas (referencia; en vivo en cliente)
 ui.html           Interfaz
 estilos.html      CSS
 cliente.html      JS de cliente
@@ -66,7 +68,8 @@ docs/
 - [x] **Fase 1** — Esqueleto: Web App, login de dominio, creación del cuaderno
 - [x] **Fase 2** — Clases (alumnado reutilizable) y evaluaciones (clase + área),
   con importación pegando lista o copiando de otra clase
-- [ ] **Fase 3** — Unidades + actividades + rejilla de ítems + cálculo en vivo
+- [x] **Fase 3** — Unidades + actividades (criterios + nº ítems) + rejilla
+  alumnos × actividades + notas por criterio y de unidad en vivo
 - [ ] **Fase 4** — Resumen de unidad + resumen global + nota final
 - [ ] **Fase 5** — Pulido visual tipo iDoceo y despliegue
 

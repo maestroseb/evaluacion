@@ -1,0 +1,168 @@
+/**
+ * Actividades de una unidad, ítems conseguidos por alumno y datos de la rejilla.
+ *
+ * Cada actividad se asocia a uno o varios criterios y define un nº de ítems.
+ * La nota de un alumno en una actividad = ítems_conseguidos / nº_ítems * 10,
+ * y esa nota cuenta para cada criterio asociado. (Cálculo en Calc.gs y, en vivo,
+ * en el cliente.)
+ */
+
+function listarActividades(unidadId) {
+  return Actividades.listar_(abrirCuaderno_(), unidadId);
+}
+
+/** payload: {nombre, criterios:[codigos], numItems} */
+function crearActividad(unidadId, payload) {
+  return Actividades.crear_(abrirCuaderno_(), unidadId, payload);
+}
+
+function editarActividad(actividadId, payload) {
+  return Actividades.editar_(abrirCuaderno_(), actividadId, payload);
+}
+
+function eliminarActividad(actividadId) {
+  return Actividades.eliminar_(abrirCuaderno_(), actividadId);
+}
+
+/** Guarda los ítems conseguidos de un alumno en una actividad. */
+function guardarItem(actividadId, alumnoId, conseguidos) {
+  return Actividades.guardarItem_(abrirCuaderno_(), actividadId, alumnoId, conseguidos);
+}
+
+/**
+ * Todo lo necesario para pintar la rejilla de una unidad:
+ * unidad, alumnado, actividades, textos de criterios e ítems guardados.
+ */
+function getRejilla(unidadId) {
+  return Actividades.rejilla_(abrirCuaderno_(), unidadId);
+}
+
+
+var Actividades = (function () {
+
+  function hojaA_(ss) { return ss.getSheetByName(HOJAS.ACTIVIDADES); }
+  function hojaI_(ss) { return ss.getSheetByName(HOJAS.ITEMS); }
+
+  function listar_(ss, unidadId) {
+    var datos = hojaA_(ss).getDataRange().getValues();
+    var out = [];
+    for (var i = 1; i < datos.length; i++) {
+      var f = datos[i];
+      if (f[0] && f[1] === unidadId) {
+        out.push({
+          actividadId: f[0], unidadId: f[1], nombre: f[2],
+          criterios: parseLista_(f[3]), numItems: Number(f[4]) || 0, orden: f[5]
+        });
+      }
+    }
+    out.sort(function (a, b) { return (a.orden || 0) - (b.orden || 0); });
+    return out;
+  }
+
+  function crear_(ss, unidadId, p) {
+    validarActividad_(p);
+    var id = Datos.nuevoId_('act');
+    var orden = listar_(ss, unidadId).length + 1;
+    hojaA_(ss).appendRow([
+      id, unidadId, p.nombre.trim(), JSON.stringify(p.criterios),
+      Number(p.numItems), orden
+    ]);
+    return { actividadId: id, unidadId: unidadId, nombre: p.nombre.trim(),
+      criterios: p.criterios, numItems: Number(p.numItems), orden: orden };
+  }
+
+  function editar_(ss, actividadId, p) {
+    validarActividad_(p);
+    var sh = hojaA_(ss);
+    var fila = Datos.filaDeId_(sh, actividadId);
+    if (fila < 0) throw new Error('Actividad no encontrada.');
+    sh.getRange(fila, 3, 1, 3).setValues([[
+      p.nombre.trim(), JSON.stringify(p.criterios), Number(p.numItems)
+    ]]);
+    return { ok: true };
+  }
+
+  function eliminar_(ss, actividadId) {
+    // Borra los ítems de la actividad y luego la actividad.
+    borrarItemsDe_(ss, actividadId);
+    var sh = hojaA_(ss);
+    var fila = Datos.filaDeId_(sh, actividadId);
+    if (fila >= 0) sh.deleteRow(fila);
+    return { ok: true };
+  }
+
+  function validarActividad_(p) {
+    if (!p || !p.nombre || !p.nombre.trim()) throw new Error('Falta el nombre de la actividad.');
+    if (!p.criterios || !p.criterios.length) throw new Error('Asocia al menos un criterio.');
+    if (!(Number(p.numItems) > 0)) throw new Error('El nº de ítems debe ser mayor que 0.');
+  }
+
+  // ---------- ítems ----------
+  function guardarItem_(ss, actividadId, alumnoId, conseguidos) {
+    var sh = hojaI_(ss);
+    var datos = sh.getDataRange().getValues();
+    var v = conseguidos === '' || conseguidos == null ? '' : Number(conseguidos);
+    for (var i = 1; i < datos.length; i++) {
+      if (datos[i][0] === actividadId && datos[i][1] === alumnoId) {
+        if (v === '') { sh.deleteRow(i + 1); return { ok: true }; }
+        sh.getRange(i + 1, 3).setValue(v);
+        return { ok: true };
+      }
+    }
+    if (v !== '') sh.appendRow([actividadId, alumnoId, v]);
+    return { ok: true };
+  }
+
+  function borrarItemsDe_(ss, actividadId) {
+    var sh = hojaI_(ss);
+    var datos = sh.getDataRange().getValues();
+    for (var i = datos.length - 1; i >= 1; i--) {
+      if (datos[i][0] === actividadId) sh.deleteRow(i + 1);
+    }
+  }
+
+  // ---------- rejilla ----------
+  function rejilla_(ss, unidadId) {
+    var unidad = Unidades.obtener_(ss, unidadId);
+    if (!unidad) throw new Error('Unidad no encontrada.');
+    var ev = Evaluaciones.obtener_(ss, unidad.evalId);
+    var actividades = listar_(ss, unidadId);
+
+    // Textos de los criterios del área (código -> texto corto).
+    var criteriosInfo = {};
+    Curriculo.criteriosDe(ev.curso, ev.area).forEach(function (c) {
+      criteriosInfo[c.codigo] = c.texto;
+    });
+
+    // Ítems guardados de las actividades de esta unidad.
+    var idsAct = {};
+    actividades.forEach(function (a) { idsAct[a.actividadId] = true; });
+    var items = {};
+    var datosI = hojaI_(ss).getDataRange().getValues();
+    for (var i = 1; i < datosI.length; i++) {
+      var f = datosI[i];
+      if (idsAct[f[0]]) {
+        (items[f[0]] || (items[f[0]] = {}))[f[1]] = Number(f[2]);
+      }
+    }
+
+    return {
+      unidad: unidad,
+      area: ev.area, curso: ev.curso,
+      alumnos: ev.clase.alumnos,
+      actividades: actividades,
+      criteriosInfo: criteriosInfo,
+      items: items
+    };
+  }
+
+  function parseLista_(json) {
+    if (!json) return [];
+    try { return JSON.parse(json); } catch (e) { return []; }
+  }
+
+  return {
+    listar_: listar_, crear_: crear_, editar_: editar_, eliminar_: eliminar_,
+    guardarItem_: guardarItem_, rejilla_: rejilla_
+  };
+})();
