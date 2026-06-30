@@ -58,6 +58,8 @@ cliente.html      JS de cliente
 docs/
   mapa-curricular.md  Cómo montar el mapa central (Fase 0)
   despliegue.md       Sincronización con GitHub Assistant y despliegue
+  guia-compañeros.md  Guía de uso para el profesorado (g.educaand.es)
+  autohospedaje.md    Montar una instancia propia (otros dominios)
 ```
 
 > Sincronización: se usa **Google Apps Script GitHub Assistant** (no clasp).
@@ -73,10 +75,21 @@ docs/
   alumnos × actividades + notas por criterio y de unidad en vivo
 - [x] **Fase 4** — Resumen global de la clase: nota de cada criterio agregando
   todas las unidades, nota por unidad y nota final; copiable para Séneca
-- [ ] **Fase 5** — Pulido visual tipo iDoceo y despliegue
+- [~] **Fase 5** — Pulido visual (hecho) + despliegue y reparto (en curso)
 
-## Puesta en marcha
+## Cómo se reparte (importante)
 
-Ver **`docs/despliegue.md`**. Resumen: con **GitHub Assistant**, hacer *Pull*
-de los archivos de la raíz al proyecto de Apps Script, crear el Mapa y pegar su
-ID en `Config.gs`, y desplegar como Web App para el dominio.
+Es una **única Web App**: tú la despliegas una vez con acceso de dominio y el
+profesorado solo abre **una URL**. No hay copias ni plantillas por profe → cuando
+actualizas el código y re-despliegas, **todos usan la versión nueva**. Los datos
+de cada profe viven en **su propio Drive** (privados).
+
+- **Profesorado de `g.educaand.es`**: usa tu URL. Ver **`docs/guia-compañeros.md`**.
+- **Otros dominios/centros** que quieran instancia propia: **`docs/autohospedaje.md`**.
+
+## Puesta en marcha (administrador)
+
+Ver **`docs/despliegue.md`**: con **GitHub Assistant**, *Pull* de los archivos de
+la raíz al proyecto de Apps Script y desplegar como Web App para el dominio. El
+mapa se sirve como JSON público desde este repo (`MAPA_JSON_URL`), no hace falta
+crear hoja.
