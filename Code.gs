@@ -37,6 +37,7 @@ function getUsuario() {
  */
 function getEstadoInicial() {
   var ss = abrirCuaderno_();
+  Respaldo.siToca_(ss); // copia de seguridad automática (máx. 1/día), no bloquea
   return {
     usuario: Session.getActiveUser().getEmail(),
     esquemaVersion: CONFIG.ESQUEMA_VERSION,
