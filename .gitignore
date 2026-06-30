@@ -1,0 +1,6 @@
+# clasp: contiene el scriptId real, propio de cada despliegue
+.clasp.json
+.clasprc.json
+
+node_modules/
+.DS_Store

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <?!= include('estilos') ?>
+</head>
+<body>
+  <header class="barra">
+    <span class="logo" onclick="App.irAEvaluaciones()" style="cursor:pointer">📊 Evaluación por Criterios</span>
+    <nav class="nav">
+      <a id="nav-eval" onclick="App.irAEvaluaciones()">Clases</a>
+      <a id="nav-clases" onclick="App.irAClases()">Grupos</a>
+      <div class="menu">
+        <button class="btn-menu" title="Más" onclick="App.toggleMenu(event)">⋯</button>
+        <div id="menu-mas" class="menu-pop" hidden>
+          <a id="nav-papelera" onclick="App.irAPapelera()">🗑 Papelera</a>
+          <a onclick="App.abrirCopia()">💾 Copia de seguridad</a>
+        </div>
+      </div>
+      <span id="usuario" class="usuario">…</span>
+    </nav>
+  </header>
+
+  <main id="app">
+    <div id="cargando" class="aviso">Cargando tu cuaderno…</div>
+
+    <!-- CLASES (clase = grupo aplicado a un área) -->
+    <section id="vista-evaluaciones" hidden>
+      <div class="cabecera-seccion">
+        <h1>Mis clases</h1>
+        <button class="btn primario" onclick="App.nuevaEvaluacion()">+ Nueva clase</button>
+      </div>
+      <div id="lista-evaluaciones" class="tarjetas"></div>
+    </section>
+
+    <!-- GRUPOS (lista de alumnado reutilizable) -->
+    <section id="vista-clases" hidden>
+      <div class="cabecera-seccion">
+        <h1>Mis grupos</h1>
+        <button class="btn primario" onclick="App.nuevaClase()">+ Nuevo grupo</button>
+      </div>
+      <div id="lista-clases" class="tarjetas"></div>
+    </section>
+
+    <!-- DETALLE GRUPO -->
+    <section id="vista-clase" hidden>
+      <a class="volver" onclick="App.irAClases()">← Mis grupos</a>
+      <div class="cabecera-seccion">
+        <h1 id="clase-titulo"></h1>
+        <button class="btn peligro" onclick="App.eliminarClaseActual()">Eliminar grupo</button>
+      </div>
+      <p id="clase-meta" class="meta"></p>
+      <div class="cabecera-seccion">
+        <h2>Alumnado <span id="num-alumnos" class="contador"></span></h2>
+        <button class="btn" onclick="App.editarAlumnos()">Editar lista</button>
+      </div>
+      <ol id="lista-alumnos" class="alumnos"></ol>
+    </section>
+
+    <!-- DETALLE EVALUACIÓN: lista de unidades -->
+    <section id="vista-evaluacion" hidden>
+      <a class="volver" onclick="App.irAEvaluaciones()">← Mis clases</a>
+      <div class="cabecera-seccion">
+        <h1 id="eval-titulo"></h1>
+        <div class="acciones-unidad">
+          <button class="btn" onclick="App.verResumen()">📊 Resumen</button>
+          <button class="btn peligro" onclick="App.eliminarEvaluacionActual()">Eliminar clase</button>
+        </div>
+      </div>
+      <p id="eval-meta" class="meta"></p>
+      <div class="cabecera-seccion">
+        <h2>Unidades</h2>
+        <button class="btn primario" onclick="App.nuevaUnidad()">+ Nueva unidad</button>
+      </div>
+      <div id="lista-unidades" class="tarjetas"></div>
+    </section>
+
+    <!-- REJILLA DE UNA UNIDAD -->
+    <section id="vista-unidad" hidden>
+      <a class="volver" id="volver-unidad">← Unidades</a>
+      <div class="cabecera-seccion">
+        <h1 id="unidad-titulo"></h1>
+        <div class="acciones-unidad">
+          <label class="check"><input type="checkbox" id="ver-criterios" checked onchange="App.pintarRejilla()"> Notas por criterio</label>
+          <span class="grupo-btn">
+            <button class="btn" onclick="App.copiarSeneca()">📋 Copiar para Séneca</button>
+            <button class="btn-info" title="¿Cómo funciona?" onclick="App.infoSeneca()">ⓘ</button>
+          </span>
+          <button class="btn" onclick="App.variasActividades()">+ Varias</button>
+          <button class="btn primario" onclick="App.nuevaActividad()">+ Nueva actividad</button>
+        </div>
+      </div>
+      <p id="unidad-meta" class="meta"></p>
+      <div id="rejilla-cont" class="rejilla-cont"></div>
+    </section>
+
+    <!-- RESUMEN GLOBAL DE LA CLASE -->
+    <section id="vista-resumen" hidden>
+      <a class="volver" id="volver-resumen">← Unidades</a>
+      <div class="cabecera-seccion">
+        <h1 id="resumen-titulo"></h1>
+        <div class="acciones-unidad">
+          <label class="check"><input type="checkbox" id="ver-unidades-resumen" checked onchange="App.pintarResumen()"> Columnas por unidad</label>
+          <button class="btn" onclick="App.copiarResumenSeneca()">📋 Copiar para Séneca</button>
+        </div>
+      </div>
+      <p id="resumen-meta" class="meta"></p>
+      <div id="resumen-cont" class="rejilla-cont"></div>
+    </section>
+
+    <!-- PAPELERA -->
+    <section id="vista-papelera" hidden>
+      <div class="cabecera-seccion">
+        <h1>Papelera</h1>
+        <button class="btn peligro" onclick="App.vaciarPapeleraUI()">Vaciar papelera</button>
+      </div>
+      <p class="meta">Lo que borres (grupos, clases, unidades, actividades) se guarda aquí 30 días. Puedes restaurarlo.</p>
+      <div id="lista-papelera" class="tarjetas"></div>
+    </section>
+  </main>
+
+  <!-- MODAL -->
+  <div id="modal-fondo" class="modal-fondo" hidden onclick="App.cerrarModalFuera(event)">
+    <div class="modal">
+      <h2 id="modal-titulo"></h2>
+      <div id="modal-cuerpo"></div>
+      <div class="modal-acciones">
+        <button class="btn" onclick="App.cerrarModal()">Cancelar</button>
+        <button class="btn primario" id="modal-aceptar"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST (avisos) -->
+  <div id="toast" class="toast" hidden></div>
+
+  <?!= include('cliente') ?>
+</body>
+</html>

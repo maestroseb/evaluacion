@@ -1,0 +1,1139 @@
+<script>
+/**
+ * Lógica de cliente. Habla con el backend Apps Script vía google.script.run.
+ *
+ * Modelo:
+ *   - Clase = lista de alumnado + curso (reutilizable).
+ *   - Evaluación = una clase aplicada a un área.
+ */
+var App = (function () {
+  var estado = null;        // {usuario, areas, clases, evaluaciones}
+  var claseActual = null;
+  var evalActual = null;
+
+  // ---------- arranque ----------
+  function iniciar() {
+    setupModalNoScroll();
+    document.addEventListener('click', cerrarMenu); // cierra el menú ⋯ al hacer clic fuera
+    llamar('getEstadoInicial', [], function (e) {
+      estado = e;
+      document.getElementById('usuario').textContent = e.usuario;
+      document.getElementById('cargando').hidden = true;
+      irAEvaluaciones();
+    });
+  }
+
+  // ---------- navegación ----------
+  var SECCIONES = ['vista-evaluaciones', 'vista-clases', 'vista-clase',
+    'vista-evaluacion', 'vista-unidad', 'vista-resumen', 'vista-papelera'];
+  function mostrar(id) {
+    SECCIONES.forEach(function (s) { document.getElementById(s).hidden = (s !== id); });
+    document.getElementById('nav-eval').classList.toggle('activo', id === 'vista-evaluaciones');
+    document.getElementById('nav-clases').classList.toggle('activo',
+      id === 'vista-clases' || id === 'vista-clase');
+    document.getElementById('nav-papelera').classList.toggle('activo', id === 'vista-papelera');
+  }
+  function irAEvaluaciones() { evalActual = null; mostrar('vista-evaluaciones'); pintarEvaluaciones(); }
+  function irAClases() { claseActual = null; mostrar('vista-clases'); pintarClases(); }
+
+  function invalidarCaches() { evalCache = {}; rejillaCache = {}; }
+
+  // ---------- menú "⋯" ----------
+  function toggleMenu(e) {
+    e.stopPropagation();
+    var m = document.getElementById('menu-mas');
+    m.hidden = !m.hidden;
+  }
+  function cerrarMenu() { document.getElementById('menu-mas').hidden = true; }
+
+  // ---------- papelera ----------
+  function irAPapelera() {
+    mostrar('vista-papelera');
+    document.getElementById('lista-papelera').innerHTML = spinner();
+    llamar('listarPapelera', [], pintarPapelera);
+  }
+  function pintarPapelera(items) {
+    var cont = document.getElementById('lista-papelera');
+    if (!items.length) { cont.innerHTML = '<div class="vacio">La papelera está vacía.</div>'; return; }
+    cont.innerHTML = items.map(function (it) {
+      return '<div class="tarjeta tarjeta-color" style="border-left-color:var(--texto-3)">' +
+        '<h3>' + esc(it.etiqueta) + '</h3>' +
+        '<div class="meta">Borrado: ' + esc(fechaCorta(it.fecha)) + '</div>' +
+        '<div style="margin-top:10px"><button class="btn" ' +
+        'onclick="App.restaurarItem(\'' + it.papeleraId + '\')">Restaurar</button></div>' +
+        '</div>';
+    }).join('');
+  }
+  function restaurarItem(id) {
+    llamar('restaurarPapelera', [id], function () {
+      invalidarCaches();
+      llamar('getEstadoInicial', [], function (e) { estado = e; });
+      avisoOk('Restaurado.');
+      irAPapelera();
+    });
+  }
+  function vaciarPapeleraUI() {
+    confirmar('Vaciar papelera',
+      'Se eliminarán definitivamente los elementos de la papelera. ¿Continuar?',
+      'Vaciar', function () { llamar('vaciarPapelera', [], function () { irAPapelera(); }); });
+  }
+  function fechaCorta(iso) {
+    try { return new Date(iso).toLocaleString('es-ES'); } catch (e) { return iso; }
+  }
+
+  // ---------- copia de seguridad (exportar / importar) ----------
+  function abrirCopia() {
+    abrirModal('Copia de seguridad',
+      '<p class="mensaje">La app guarda una <b>copia automática</b> de tus datos a diario en tu Drive ' +
+      '(las últimas 7). Además puedes descargar una copia o restaurarla:</p>' +
+      '<div class="acciones-modal">' +
+      '<button type="button" class="btn" onclick="App.exportarDatos()">⬇ Descargar copia (JSON)</button>' +
+      '<button type="button" class="btn" onclick="App.pedirImportar()">⬆ Restaurar desde archivo</button>' +
+      '</div>',
+      'Cerrar', cerrarModal);
+  }
+  function exportarDatos() {
+    llamar('getExportacion', [], function (d) {
+      var blob = new Blob([JSON.stringify(d, null, 1)], { type: 'application/json' });
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'evaluacion-copia-' + String(d.fecha || '').slice(0, 10) + '.json';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      avisoOk('Copia descargada.');
+    });
+  }
+  function pedirImportar() {
+    var inp = document.createElement('input');
+    inp.type = 'file'; inp.accept = '.json,application/json';
+    inp.onchange = function () {
+      var f = inp.files[0]; if (!f) return;
+      var rd = new FileReader();
+      rd.onload = function () {
+        var datos;
+        try { datos = JSON.parse(rd.result); } catch (e) { return aviso('Archivo no válido.'); }
+        confirmar('Restaurar copia',
+          'Esto SUSTITUIRÁ todos tus datos actuales por los del archivo. Se hace una copia de seguridad antes. ¿Continuar?',
+          'Restaurar', function () {
+            llamar('importarDatos', [datos], function () {
+              invalidarCaches();
+              llamar('getEstadoInicial', [], function (e) {
+                estado = e; cerrarModal(); irAEvaluaciones(); avisoOk('Datos restaurados.');
+              });
+            });
+          });
+      };
+      rd.readAsText(f);
+    };
+    inp.click();
+  }
+
+  // ---------- evaluaciones ----------
+  function pintarEvaluaciones() {
+    var cont = document.getElementById('lista-evaluaciones');
+    if (!estado.evaluaciones.length) {
+      cont.innerHTML = '<div class="vacio">Aún no tienes clases. ' +
+        'Crea una eligiendo un grupo y un área.</div>';
+      return;
+    }
+    cont.innerHTML = estado.evaluaciones.map(function (ev) {
+      var col = ev.color || 'transparent';
+      return '<div class="tarjeta tarjeta-color" style="border-left-color:' + col + '" ' +
+        'onclick="App.abrirEvaluacion(\'' + ev.evalId + '\')">' +
+        '<h3>' + esc(ev.area) + '</h3>' +
+        '<div class="meta">' + esc(ev.claseNombre) + ' · ' + esc(ev.curso) + '</div>' +
+        '<div class="meta">' + ev.numAlumnos + ' alumnos/as</div>' +
+        '</div>';
+    }).join('');
+  }
+
+  // Paleta de colores predefinidos para las clases (por área).
+  var COLORES = ['#5b5bd6', '#2e7d57', '#d1453b', '#e08e0b', '#0e7490',
+    '#9333ea', '#db2777', '#475569'];
+  function swatchesHtml(sel) {
+    return '<div class="swatches">' + COLORES.map(function (c) {
+      return '<span class="swatch' + (c === sel ? ' sel' : '') + '" data-color="' + c + '" ' +
+        'style="background:' + c + '" onclick="App.elegirColor(this)"></span>';
+    }).join('') + '</div>';
+  }
+  function elegirColor(el) {
+    [].forEach.call(document.querySelectorAll('.swatch'), function (s) { s.classList.remove('sel'); });
+    el.classList.add('sel');
+  }
+  function colorElegido() {
+    var s = document.querySelector('.swatch.sel');
+    return s ? s.dataset.color : '';
+  }
+
+  function nuevaEvaluacion() {
+    if (!estado.clases.length) {
+      confirmar('Sin grupos', 'Primero necesitas un grupo de alumnado. ¿Crear un grupo ahora?',
+        'Crear grupo', nuevaClase);
+      return;
+    }
+    var optClases = estado.clases.map(function (c) {
+      return '<option value="' + c.claseId + '">' + esc(c.nombre + ' · ' + c.curso) + '</option>';
+    }).join('');
+
+    abrirModal('Nueva clase',
+      '<label>Grupo' +
+      '<select id="f-clase" onchange="App.claseCambiada()">' + optClases + '</select></label>' +
+      '<label>Área' +
+      '<select id="f-area"></select></label>' +
+      '<div class="campo-crit"><span class="etq">Color</span>' + swatchesHtml(COLORES[0]) + '</div>' +
+      '<p class="ayuda">El curso lo aporta el grupo; aquí eliges el área a evaluar.</p>',
+      'Crear clase',
+      function () {
+        var claseId = val('f-clase');
+        var area = val('f-area');
+        if (!claseId || !area) return aviso('Elige grupo y área.');
+        botonModalCargando('Creando…');
+        llamar('crearEvaluacion', [{ claseId: claseId, area: area, color: colorElegido() }], function (ev) {
+          estado.evaluaciones.push({
+            evalId: ev.evalId, claseId: ev.clase.claseId, area: ev.area, color: ev.color,
+            claseNombre: ev.clase.nombre, curso: ev.curso,
+            numAlumnos: ev.clase.alumnos.length, creado: ev.creado
+          });
+          cerrarModal();
+          abrirEvaluacionCargada(ev);
+        });
+      });
+    claseCambiada(); // rellena áreas para el primer grupo
+  }
+
+  /** Al cambiar la clase, recargamos las áreas de su curso. */
+  function claseCambiada() {
+    var clase = claseDe(val('f-clase'));
+    document.getElementById('f-area').innerHTML =
+      opcionesAreas(clase ? clase.curso : '');
+  }
+
+  var evalCache = {}; // evalId -> evaluación (con clase y alumnos)
+
+  function abrirEvaluacion(evalId) {
+    if (evalCache[evalId]) {
+      abrirEvaluacionCargada(evalCache[evalId]);     // instantáneo desde caché
+    } else {
+      mostrar('vista-evaluacion');
+      document.getElementById('eval-titulo').textContent = '';
+      document.getElementById('eval-meta').textContent = '';
+      document.getElementById('lista-unidades').innerHTML = spinner();
+    }
+    llamar('obtenerEvaluacion', [evalId], function (ev) {
+      // Conserva las unidades ya cargadas para no parpadear.
+      var prev = evalCache[evalId];
+      if (prev && prev.unidades) ev.unidades = prev.unidades;
+      evalCache[evalId] = ev;
+      abrirEvaluacionCargada(ev);
+    });
+  }
+  function abrirEvaluacionCargada(ev) {
+    evalActual = ev;
+    mostrar('vista-evaluacion');
+    var t = document.getElementById('eval-titulo');
+    t.textContent = ev.area;
+    t.style.borderLeft = ev.color ? ('5px solid ' + ev.color) : 'none';
+    t.style.paddingLeft = ev.color ? '12px' : '0';
+    document.getElementById('eval-meta').textContent =
+      ev.clase.nombre + ' · ' + ev.curso + ' · ' + ev.clase.alumnos.length + ' alumnos/as';
+    cargarUnidades();
+  }
+
+  function cargarUnidades() {
+    if (!evalActual.unidades) document.getElementById('lista-unidades').innerHTML = spinner();
+    else pintarUnidades();
+    llamar('listarUnidades', [evalActual.evalId], function (uds) {
+      evalActual.unidades = uds;
+      pintarUnidades();
+    });
+  }
+  function pintarUnidades() {
+    var cont = document.getElementById('lista-unidades');
+    var uds = evalActual.unidades || [];
+    if (!uds.length) {
+      cont.innerHTML = '<div class="vacio">Aún no hay unidades. ' +
+        'Crea la primera para empezar a evaluar actividades.</div>';
+      return;
+    }
+    cont.innerHTML = uds.map(function (u) {
+      return '<div class="tarjeta tarjeta-unidad" onclick="App.abrirUnidad(\'' + u.unidadId + '\')">' +
+        '<h3>' + esc(u.nombre) + '</h3>' +
+        '<div class="acciones-tarjeta">' +
+        '<button class="icono" title="Duplicar unidad" ' +
+        'onclick="event.stopPropagation();App.clonarUnidad(\'' + u.unidadId + '\')">⧉</button>' +
+        '<button class="icono peligro" title="Eliminar unidad" ' +
+        'onclick="event.stopPropagation();App.eliminarUnidad(\'' + u.unidadId + '\')">🗑</button>' +
+        '</div></div>';
+    }).join('');
+  }
+
+  /** Duplicar desde la tarjeta del listado. */
+  function clonarUnidad(unidadId) {
+    aviso('Duplicando unidad…');
+    llamar('clonarUnidad', [unidadId], function (u) {
+      (evalActual.unidades = evalActual.unidades || []).push(u);
+      ocultarToast();
+      pintarUnidades();
+    });
+  }
+
+  /** Eliminar desde la tarjeta del listado. */
+  function eliminarUnidad(unidadId) {
+    var u = (evalActual.unidades || []).filter(function (x) { return x.unidadId === unidadId; })[0];
+    confirmar('Eliminar unidad',
+      'Se eliminarán la unidad "' + (u ? u.nombre : '') + '", sus actividades y notas. ¿Continuar?',
+      'Eliminar', function () {
+        delete rejillaCache[unidadId];
+        llamar('eliminarUnidad', [unidadId], function () {});
+        evalActual.unidades = (evalActual.unidades || []).filter(function (x) { return x.unidadId !== unidadId; });
+        pintarUnidades();
+      });
+  }
+  function nuevaUnidad() {
+    abrirModal('Nueva unidad',
+      '<label>Nombre de la unidad' +
+      '<input id="f-unidad" type="text" placeholder="Ej.: Unidad 1"></label>',
+      'Crear unidad',
+      function () {
+        var nombre = val('f-unidad').trim();
+        if (!nombre) return aviso('Pon un nombre a la unidad.');
+        botonModalCargando('Creando…');
+        llamar('crearUnidad', [evalActual.evalId, nombre], function (u) {
+          (evalActual.unidades = evalActual.unidades || []).push(u);
+          cerrarModal();
+          abrirUnidad(u.unidadId);
+        });
+      });
+  }
+  function eliminarEvaluacionActual() {
+    confirmar('Eliminar clase',
+      '¿Eliminar esta clase? El grupo y su alumnado se conservan.',
+      'Eliminar', function () {
+        var id = evalActual.evalId;
+        llamar('eliminarEvaluacion', [id], function () {
+          estado.evaluaciones = estado.evaluaciones.filter(function (e) { return e.evalId !== id; });
+          irAEvaluaciones();
+        });
+      });
+  }
+
+  // ---------- resumen global de la clase ----------
+  var resumenData = null;
+
+  function verResumen() {
+    mostrar('vista-resumen');
+    document.getElementById('volver-resumen').onclick = function () {
+      abrirEvaluacionCargada(evalActual);
+    };
+    document.getElementById('resumen-titulo').textContent = 'Resumen — ' + evalActual.area;
+    document.getElementById('resumen-meta').textContent = '';
+    document.getElementById('resumen-cont').innerHTML = spinner();
+    llamar('getResumen', [evalActual.evalId], function (r) {
+      resumenData = r;
+      document.getElementById('resumen-meta').textContent =
+        r.claseNombre + ' · ' + r.curso + ' · ' + r.alumnos.length + ' alumnos/as · ' +
+        r.unidades.length + ' unidades';
+      pintarResumen();
+    });
+  }
+
+  function pintarResumen() {
+    var cont = document.getElementById('resumen-cont');
+    var R = resumenData;
+    if (!R.criterios.length && !R.unidades.length) {
+      cont.innerHTML = '<div class="vacio">Aún no hay datos. Crea unidades y evalúa actividades.</div>';
+      return;
+    }
+    var verUds = document.getElementById('ver-unidades-resumen').checked;
+    var uds = verUds ? R.unidades : [];
+
+    var h = '<table class="rejilla"><thead><tr>' +
+      '<th class="idx">#</th><th class="esq">Alumno/a</th>';
+    uds.forEach(function (u) {
+      h += '<th class="act" title="Nota de la unidad">' +
+        '<span class="act-nom">' + esc(u.nombre) + '</span></th>';
+    });
+    h += '<th class="nota sep">FINAL</th>';
+    R.criterios.forEach(function (cod) {
+      h += '<th class="crit-col" title="' + esc(infoCritR(cod).completo) + '">' + esc(cod) + '</th>';
+    });
+    h += '</tr></thead><tbody>';
+
+    R.alumnos.forEach(function (al, i) {
+      h += '<tr><td class="idx">' + (i + 1) + '</td><td class="esq">' + esc(al.nombre) + '</td>';
+      uds.forEach(function (u) {
+        h += celdaNum((R.unidadNota[al.id] || {})[u.unidadId]);
+      });
+      h += celdaNum(R.final[al.id], ' nota sep');
+      R.criterios.forEach(function (cod) {
+        h += celdaNum((R.critGlobal[al.id] || {})[cod], ' crit-col');
+      });
+      h += '</tr>';
+    });
+    h += '</tbody></table>';
+    cont.innerHTML = h;
+  }
+
+  function celdaNum(n, extra) {
+    var sus = (n != null && n < 5) ? ' suspenso' : '';
+    return '<td class="num' + (extra || '') + sus + '">' + fmt(n) + '</td>';
+  }
+  function infoCritR(cod) {
+    var v = (resumenData.criteriosInfo || {})[cod] || {};
+    var completo = v.descripcion ? (cod + '. ' + v.descripcion) : (cod + '. ' + (v.texto || ''));
+    return { completo: completo };
+  }
+
+  /** Copia el resumen (alumno + nota global de cada criterio) para Séneca. */
+  function copiarResumenSeneca() {
+    var R = resumenData;
+    if (!R || !R.criterios.length) return aviso('No hay criterios evaluados todavía.');
+    var lineas = [['Alumno'].concat(R.criterios).join('\t')];
+    R.alumnos.forEach(function (al) {
+      var fila = [al.nombre];
+      R.criterios.forEach(function (cod) {
+        var n = (R.critGlobal[al.id] || {})[cod];
+        fila.push(n == null ? '' : n.toFixed(2).replace('.', ','));
+      });
+      lineas.push(fila.join('\t'));
+    });
+    copiarAlPortapapeles(lineas.join('\n'),
+      'Resumen copiado: ' + R.alumnos.length + ' alumnos/as y ' + R.criterios.length + ' criterios.');
+  }
+
+  // ---------- unidad: rejilla de evaluación ----------
+  var rejilla = null;       // {unidad, alumnos, actividades, criteriosInfo, items}
+  var rejillaCache = {};    // unidadId -> rejilla (carga instantánea al volver)
+  var inputs2d = [];        // matriz [fila][colActividad] -> <input>
+
+  function abrirUnidad(unidadId) {
+    mostrar('vista-unidad');
+    document.getElementById('volver-unidad').onclick = function () {
+      abrirEvaluacionCargada(evalActual);
+    };
+    var u = (evalActual.unidades || []).filter(function (x) { return x.unidadId === unidadId; })[0];
+    document.getElementById('unidad-titulo').textContent = u ? u.nombre : '';
+
+    if (rejillaCache[unidadId]) {            // pinta al instante desde caché
+      rejilla = rejillaCache[unidadId];
+      pintarUnidadActual();
+    } else {
+      document.getElementById('unidad-meta').textContent = '';
+      document.getElementById('rejilla-cont').innerHTML = spinner();
+    }
+    // Refresca siempre desde el servidor en segundo plano.
+    llamar('getRejilla', [unidadId], function (r) {
+      rejillaCache[unidadId] = r;
+      rejilla = r;
+      pintarUnidadActual();
+    });
+  }
+
+  function pintarUnidadActual() {
+    document.getElementById('unidad-titulo').textContent = rejilla.unidad.nombre;
+    document.getElementById('unidad-meta').textContent =
+      evalActual.area + ' · ' + rejilla.alumnos.length + ' alumnos/as · ' +
+      rejilla.actividades.length + ' actividades';
+    pintarRejilla();
+  }
+
+  /**
+   * Copia al portapapeles (TSV) el alumnado y la nota de cada criterio de la
+   * unidad, listo para pegar en Séneca (Autonotas) o en una hoja de cálculo.
+   * Formato: Alumno <tab> LCL.x.y.z <tab> ... con 2 decimales y coma.
+   */
+  function copiarSeneca() {
+    if (!rejilla || !rejilla.actividades.length) {
+      return aviso('Esta unidad no tiene actividades evaluadas.');
+    }
+    var crits = criteriosUsados();
+    var lineas = [['Alumno'].concat(crits).join('\t')];
+    rejilla.alumnos.forEach(function (al) {
+      var fila = [al.nombre];
+      crits.forEach(function (cod) {
+        var n = notaCriterio(al.id, cod);
+        fila.push(n == null ? '' : n.toFixed(2).replace('.', ','));
+      });
+      lineas.push(fila.join('\t'));
+    });
+    copiarAlPortapapeles(lineas.join('\n'),
+      'Copiado para Séneca: ' + rejilla.alumnos.length + ' alumnos/as y ' + crits.length + ' criterios.');
+  }
+
+  /** Explica el botón "Copiar para Séneca" y enlaza la extensión Autonotas. */
+  function infoSeneca() {
+    var url = 'https://chromewebstore.google.com/detail/autonotas-séneca/fgghhpmbkdhdgnnboeckhhnnjiknnkak?hl=es';
+    abrirModal('Copiar para Séneca',
+      '<p class="mensaje">El botón <b>📋 Copiar para Séneca</b> copia al portapapeles, en columnas, ' +
+      'el <b>nombre del alumnado</b> y la <b>nota de cada criterio</b> de esta unidad ' +
+      '(2 decimales con coma).</p>' +
+      '<p class="mensaje">Está pensado para usarse con la extensión de Chrome ' +
+      '<b>Autonotas Séneca</b>, de <b>Dani García</b> ' +
+      '(<a class="enlace-ext" href="https://elprofedelabata.es/sobre-mi/" target="_blank" rel="noopener">@elprofedelabata ↗</a>), ' +
+      'que pega esas notas directamente en una actividad evaluable por criterios en Séneca.</p>' +
+      '<ol class="pasos">' +
+      '<li>Instala la extensión <b>Autonotas Séneca</b>.</li>' +
+      '<li>Aquí, pulsa <b>📋 Copiar para Séneca</b>.</li>' +
+      '<li>En Séneca, abre la actividad criterial y usa Autonotas para pegar.</li>' +
+      '</ol>' +
+      '<p><a class="enlace-ext" href="' + url + '" target="_blank" rel="noopener">' +
+      'Abrir Autonotas Séneca en Chrome Web Store ↗</a></p>',
+      'Entendido', cerrarModal);
+  }
+
+  function copiarAlPortapapeles(texto, mensajeOk) {
+    var ta = document.createElement('textarea');
+    ta.value = texto;
+    ta.style.position = 'fixed'; ta.style.top = '-1000px'; ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+    document.body.removeChild(ta);
+    if (ok) avisoOk(mensajeOk);
+    else copiarManual(texto);
+  }
+
+  /** Si el navegador bloquea la copia automática, mostramos el texto para copiar. */
+  function copiarManual(texto) {
+    abrirModal('Copiar para Séneca',
+      '<p class="ayuda">Selecciona todo (Ctrl/Cmd+A) y copia (Ctrl/Cmd+C):</p>' +
+      '<textarea id="f-copia" rows="12" readonly></textarea>',
+      'Hecho', cerrarModal);
+    var t = document.getElementById('f-copia');
+    t.value = texto; t.focus(); t.select();
+  }
+
+
+  function nuevaActividad() { modalActividad(null); }
+  function editarActividadUI(id) { modalActividad(actDe(id)); }
+
+  /**
+   * Construye la lista de criterios con casillas. Marca los que aún NO están
+   * asignados a ninguna actividad de ninguna unidad de la clase ("sin asignar").
+   */
+  function listaCriteriosHtml(sel) {
+    sel = sel || [];
+    var info = rejilla.criteriosInfo;
+    var asignados = rejilla.asignados || [];
+    var pendientes = 0;
+    var html = Object.keys(info).sort(cmpCodigo).map(function (cod) {
+      var c = infoCrit(cod);
+      var marcado = sel.indexOf(cod) >= 0 ? ' checked' : '';
+      var noAsig = asignados.indexOf(cod) < 0;
+      if (noAsig) pendientes++;
+      return '<label class="crit' + (noAsig ? ' pendiente' : '') + '" title="' + esc(c.completo) + '">' +
+        '<input type="checkbox" value="' + esc(cod) + '"' + marcado + '>' +
+        '<span class="crit-txt"><b>' + esc(cod) + '</b> ' + esc(c.texto) +
+        (noAsig ? ' <span class="tag-pend">sin asignar</span>' : '') + '</span></label>';
+    }).join('');
+    return { html: html || '<i>No hay criterios para esta área.</i>', pendientes: pendientes };
+  }
+
+  /** Une criterios al conjunto de asignados de la clase (en memoria). */
+  function marcarAsignados(criterios) {
+    rejilla.asignados = rejilla.asignados || [];
+    (criterios || []).forEach(function (c) {
+      if (rejilla.asignados.indexOf(c) < 0) rejilla.asignados.push(c);
+    });
+  }
+
+  function notaPendientes(p) {
+    return p > 0
+      ? '<p class="ayuda">Quedan <b>' + p + '</b> criterios sin asignar en la clase (marcados como «sin asignar»).</p>'
+      : '<p class="ayuda">✓ Todos los criterios de la clase están ya asignados a alguna actividad.</p>';
+  }
+
+  /** Modal compartido para crear o editar una actividad. act=null → crear. */
+  function modalActividad(act) {
+    var sel = act ? act.criterios : [];
+    var lista = listaCriteriosHtml(sel);
+
+    var borrar = act
+      ? '<div class="acciones-modal">' +
+        '<button type="button" class="link" onclick="App.duplicarActividadUI(\'' + act.actividadId + '\')">Duplicar</button>' +
+        '<button type="button" class="link-peligro" onclick="App.eliminarActividadUI(\'' + act.actividadId + '\')">Eliminar actividad</button>' +
+        '</div>'
+      : '';
+
+    abrirModal(act ? 'Editar actividad' : 'Nueva actividad',
+      '<label>Nombre de la actividad' +
+      '<input id="f-act-nombre" type="text" placeholder="Ej.: Dictado 1" value="' +
+        (act ? esc(act.nombre) : '') + '"></label>' +
+      '<label>Nº de ítems a evaluar' +
+      '<input id="f-act-items" type="number" min="1" step="0.5" placeholder="Ej.: 10" value="' +
+        (act ? act.numItems : '') + '"></label>' +
+      '<div class="campo-crit"><span class="etq">Criterios asociados</span>' +
+      notaPendientes(lista.pendientes) +
+      '<div class="lista-crit">' + lista.html + '</div></div>' +
+      borrar,
+      act ? 'Guardar cambios' : 'Crear actividad',
+      function () {
+        var nombre = val('f-act-nombre').trim();
+        var numItems = Number(val('f-act-items'));
+        var criterios = [].slice.call(
+          document.querySelectorAll('.lista-crit input:checked')
+        ).map(function (c) { return c.value; });
+        if (!nombre) return aviso('Pon nombre a la actividad.');
+        if (!(numItems > 0)) return aviso('El nº de ítems debe ser mayor que 0.');
+        if (!criterios.length) return aviso('Marca al menos un criterio.');
+        var payload = { nombre: nombre, criterios: criterios, numItems: numItems };
+        botonModalCargando('Guardando…');
+        if (act) {
+          llamar('editarActividad', [act.actividadId, payload], function () {
+            act.nombre = nombre; act.criterios = criterios; act.numItems = numItems;
+            marcarAsignados(criterios);
+            cerrarModal(); pintarRejilla();
+          });
+        } else {
+          llamar('crearActividad', [rejilla.unidad.unidadId, payload], function (nueva) {
+            rejilla.actividades.push(nueva);
+            marcarAsignados(nueva.criterios);
+            cerrarModal(); pintarRejilla();
+          });
+        }
+      });
+  }
+
+  function duplicarActividadUI(id) {
+    botonModalCargando('Duplicando…');
+    llamar('duplicarActividad', [id], function (nueva) {
+      rejilla.actividades.push(nueva);
+      marcarAsignados(nueva.criterios);
+      cerrarModal(); pintarRejilla();
+    });
+  }
+
+  function eliminarActividadUI(id) {
+    var act = actDe(id);
+    confirmar('Eliminar actividad',
+      'Se eliminará "' + act.nombre + '" y sus notas. ¿Continuar?', 'Eliminar',
+      function () {
+        llamar('eliminarActividad', [id], function () {
+          rejilla.actividades = rejilla.actividades.filter(function (a) { return a.actividadId !== id; });
+          delete rejilla.items[id];
+          cerrarModal(); pintarRejilla();
+        });
+      });
+  }
+
+  // ---------- crear varias actividades de golpe ----------
+  function variasActividades() {
+    var lista = listaCriteriosHtml([]);
+
+    abrirModal('Crear varias actividades',
+      '<div class="campo-crit"><span class="etq">Criterios (se aplican a todas)</span>' +
+      notaPendientes(lista.pendientes) +
+      '<div class="lista-crit">' + lista.html + '</div></div>' +
+      '<span class="etq">Actividades</span>' +
+      '<div id="filas-act">' + filaActHtml() + filaActHtml() + filaActHtml() + '</div>' +
+      '<button type="button" class="link" onclick="App.anadirFilaAct()">+ Añadir fila</button>' +
+      '<p class="ayuda">Deja en blanco las filas que no uses. Puedes asignar criterios distintos editando cada actividad después.</p>',
+      'Crear todas',
+      function () {
+        var criterios = [].slice.call(document.querySelectorAll('.lista-crit input:checked'))
+          .map(function (c) { return c.value; });
+        if (!criterios.length) return aviso('Marca al menos un criterio.');
+        var lista = [], error = false;
+        [].slice.call(document.querySelectorAll('#filas-act .fila-act')).forEach(function (f) {
+          var nombre = f.querySelector('.fa-nombre').value.trim();
+          var items = Number(f.querySelector('.fa-items').value);
+          if (!nombre && !f.querySelector('.fa-items').value) return; // fila vacía
+          if (!nombre) { error = 'Falta el nombre en alguna actividad.'; return; }
+          if (!(items > 0)) { error = 'El nº de ítems debe ser mayor que 0 en "' + nombre + '".'; return; }
+          lista.push({ nombre: nombre, criterios: criterios, numItems: items });
+        });
+        if (error) return aviso(error);
+        if (!lista.length) return aviso('Añade al menos una actividad (nombre y nº de ítems).');
+        botonModalCargando('Creando ' + lista.length + '…');
+        llamar('crearActividades', [rejilla.unidad.unidadId, lista], function (nuevas) {
+          nuevas.forEach(function (a) { rejilla.actividades.push(a); });
+          marcarAsignados(criterios);
+          cerrarModal(); pintarRejilla();
+        });
+      });
+  }
+  function filaActHtml() {
+    return '<div class="fila-act">' +
+      '<input class="fa-nombre" type="text" placeholder="Nombre de la actividad">' +
+      '<input class="fa-items" type="number" min="1" step="0.5" placeholder="Ítems">' +
+      '<button type="button" class="icono peligro" title="Quitar" onclick="App.quitarFilaAct(this)">✕</button>' +
+      '</div>';
+  }
+  function anadirFilaAct() {
+    document.getElementById('filas-act').insertAdjacentHTML('beforeend', filaActHtml());
+  }
+  function quitarFilaAct(btn) {
+    var f = btn.parentNode;
+    if (f && f.parentNode.children.length > 1) f.parentNode.removeChild(f);
+  }
+
+  /**
+   * Pinta la tabla alumnos × actividades. Orden de columnas:
+   * # | Alumno | actividades… | Nota (global) | criterios (resumen, a la derecha).
+   */
+  function pintarRejilla() {
+    var cont = document.getElementById('rejilla-cont');
+    if (!rejilla.actividades.length) {
+      cont.innerHTML = '<div class="vacio">Sin actividades. ' +
+        'Crea una actividad, asóciale criterios y nº de ítems para empezar.</div>';
+      return;
+    }
+    var verCrit = document.getElementById('ver-criterios').checked;
+    var crits = verCrit ? criteriosUsados() : [];
+
+    var h = '<table class="rejilla"><thead><tr>' +
+      '<th class="idx">#</th><th class="esq">Alumno/a</th>';
+    rejilla.actividades.forEach(function (a) {
+      h += '<th class="act" title="' + esc(a.criterios.join(', ')) + '">' +
+        '<button class="edit-act" title="Editar actividad" ' +
+        'onclick="App.editarActividadUI(\'' + a.actividadId + '\')">✎</button>' +
+        '<span class="act-nom">' + esc(a.nombre) + '</span>' +
+        '<small>/' + a.numItems + ' · ' + esc(a.criterios.join(', ')) + '</small></th>';
+    });
+    h += '<th class="nota sep">NOTA</th>';
+    crits.forEach(function (cod) {
+      h += '<th class="crit-col" title="' + esc(infoCrit(cod).completo) + '">' + esc(cod) + '</th>';
+    });
+    h += '</tr></thead><tbody>';
+
+    rejilla.alumnos.forEach(function (al, i) {
+      h += '<tr><td class="idx">' + (i + 1) + '</td>' +
+        '<td class="esq">' + esc(al.nombre) + '</td>';
+      rejilla.actividades.forEach(function (a, c) {
+        var v = valorItem(a.actividadId, al.id);
+        h += '<td class="celda"><input type="text" inputmode="decimal" ' +
+          'data-r="' + i + '" data-c="' + c + '" data-act="' + a.actividadId + '" data-al="' + al.id + '" ' +
+          'value="' + (v == null ? '' : fmt(v)) + '"></td>';
+      });
+      h += celdaNota('nota-' + al.id, notaUnidad(al.id), ' nota sep');
+      crits.forEach(function (cod) {
+        h += celdaNota('crit-' + al.id + '-' + cod, notaCriterio(al.id, cod), ' crit-col');
+      });
+      h += '</tr>';
+    });
+    h += '</tbody></table>';
+    cont.innerHTML = h;
+    wireRejilla();
+  }
+
+  /** Celda de nota calculada: formatea y marca en rojo si < 5. */
+  function celdaNota(id, n, extra) {
+    var sus = (n != null && n < 5) ? ' suspenso' : '';
+    return '<td class="num' + (extra || '') + sus + '" id="' + id + '">' + fmt(n) + '</td>';
+  }
+
+  /** Engancha la matriz de inputs y sus eventos (teclado, dictado, pegar). */
+  function wireRejilla() {
+    inputs2d = [];
+    var inputs = document.querySelectorAll('#rejilla-cont .celda input');
+    [].forEach.call(inputs, function (inp) {
+      var r = +inp.dataset.r, c = +inp.dataset.c;
+      (inputs2d[r] || (inputs2d[r] = []))[c] = inp;
+      inp.addEventListener('change', function () { commitInput(inp); });
+      inp.addEventListener('keydown', onTeclaRejilla);
+      inp.addEventListener('input', onDictado);
+      inp.addEventListener('paste', onPegar);
+    });
+  }
+
+  /** Aplica el valor de un input al estado local (clamp). Devuelve el cambio o null. */
+  function aplicarValor(inp) {
+    var actId = inp.dataset.act, alId = inp.dataset.al, act = actDe(actId);
+    var v = inp.value === '' ? '' : Number(String(inp.value).replace(',', '.'));
+    if (v !== '' && isNaN(v)) return null;
+    if (v !== '' && act && v > act.numItems) { v = act.numItems; inp.value = fmt(v); }
+    if (v === '') {
+      if (rejilla.items[actId]) delete rejilla.items[actId][alId];
+    } else {
+      (rejilla.items[actId] || (rejilla.items[actId] = {}))[alId] = v;
+    }
+    return { actividadId: actId, alumnoId: alId, conseguidos: v === '' ? '' : v };
+  }
+
+  /** Guarda el valor de un input (una celda): estado local, notas y persistencia. */
+  function commitInput(inp) {
+    var ch = aplicarValor(inp);
+    if (!ch) return;
+    actualizarNotasFila(ch.alumnoId);
+    llamar('guardarItem', [ch.actividadId, ch.alumnoId, ch.conseguidos], function () {});
+  }
+
+  /** Recalcula y actualiza solo las celdas de nota de una fila (sin repintar). */
+  function actualizarNotasFila(alId) {
+    var verCrit = document.getElementById('ver-criterios').checked;
+    pintarCeldaNota(document.getElementById('nota-' + alId), notaUnidad(alId));
+    if (verCrit) criteriosUsados().forEach(function (cod) {
+      pintarCeldaNota(document.getElementById('crit-' + alId + '-' + cod), notaCriterio(alId, cod));
+    });
+  }
+  function pintarCeldaNota(td, n) {
+    if (!td) return;
+    td.textContent = fmt(n);
+    td.classList.toggle('suspenso', n != null && n < 5);
+  }
+
+  // --- navegación con teclado ---
+  function onTeclaRejilla(e) {
+    var inp = e.target, r = +inp.dataset.r, c = +inp.dataset.c;
+    var k = e.key;
+    if (k === 'ArrowUp') { focusCelda(r - 1, c); e.preventDefault(); }
+    else if (k === 'ArrowDown' || k === 'Enter') { focusCelda(r + 1, c); e.preventDefault(); }
+    else if (k === 'ArrowRight' && inp.selectionStart === inp.value.length) { focusCelda(r, c + 1); e.preventDefault(); }
+    else if (k === 'ArrowLeft' && inp.selectionStart === 0) { focusCelda(r, c - 1); e.preventDefault(); }
+  }
+  function focusCelda(r, c) {
+    var fila = inputs2d[r];
+    if (fila && fila[c]) { fila[c].focus(); fila[c].select(); }
+  }
+
+  // --- dictado (Mac): un número seguido de espacio salta a la celda contigua ---
+  function onDictado(e) {
+    var inp = e.target;
+    if (/\s/.test(inp.value)) {
+      var num = inp.value.trim().split(/\s+/)[0];
+      inp.value = num;
+      commitInput(inp);
+      focusCelda(+inp.dataset.r, +inp.dataset.c + 1);
+    }
+  }
+
+  // --- pegar desde una tabla/hoja (TSV): rellena desde la celda actual ---
+  function onPegar(e) {
+    var texto = (e.clipboardData || window.clipboardData).getData('text');
+    if (!texto || (texto.indexOf('\t') < 0 && texto.indexOf('\n') < 0)) return; // valor único
+    e.preventDefault();
+    var inp = e.target, r0 = +inp.dataset.r, c0 = +inp.dataset.c;
+    var lineas = texto.replace(/\r/g, '').replace(/\n+$/, '').split('\n');
+    var cambios = [], filas = {};
+    lineas.forEach(function (linea, ri) {
+      linea.split('\t').forEach(function (cel, ci) {
+        var destino = inputs2d[r0 + ri] && inputs2d[r0 + ri][c0 + ci];
+        if (!destino) return;
+        var val = String(cel).trim();
+        destino.value = val === '' ? '' : val.replace(',', '.');
+        var ch = aplicarValor(destino);
+        if (ch) { cambios.push(ch); filas[ch.alumnoId] = true; }
+      });
+    });
+    Object.keys(filas).forEach(actualizarNotasFila);   // recalcula notas en pantalla
+    if (cambios.length) {                              // UNA sola llamada al servidor
+      llamar('guardarItems', [cambios], function () {
+        avisoOk('Pegadas ' + cambios.length + ' notas.');
+      });
+    }
+  }
+
+  // --- cálculo en vivo (espejo de Calc.gs) ---
+  function valorItem(actividadId, alumnoId) {
+    var m = rejilla.items[actividadId];
+    return m && m[alumnoId] != null ? m[alumnoId] : null;
+  }
+  function notaActividad(act, alumnoId) {
+    var c = valorItem(act.actividadId, alumnoId);
+    if (c == null || !(act.numItems > 0)) return null;
+    return Math.max(0, Math.min(10, c / act.numItems * 10));
+  }
+  function notaCriterio(alumnoId, cod) {
+    var notas = [];
+    rejilla.actividades.forEach(function (a) {
+      if (a.criterios.indexOf(cod) < 0) return;
+      var n = notaActividad(a, alumnoId);
+      if (n != null) notas.push(n);
+    });
+    return media(notas);
+  }
+  function notaUnidad(alumnoId) {
+    var notas = criteriosUsados().map(function (cod) { return notaCriterio(alumnoId, cod); })
+      .filter(function (n) { return n != null; });
+    return media(notas);
+  }
+  function criteriosUsados() {
+    var set = {}, out = [];
+    rejilla.actividades.forEach(function (a) {
+      a.criterios.forEach(function (c) { if (!set[c]) { set[c] = true; out.push(c); } });
+    });
+    out.sort(cmpCodigo);
+    return out;
+  }
+  function media(arr) {
+    if (!arr.length) return null;
+    var s = arr.reduce(function (a, b) { return a + b; }, 0);
+    return s / arr.length;
+  }
+  function fmt(n) { return n == null ? '' : (Math.round(n * 100) / 100).toString().replace('.', ','); }
+  function actDe(id) {
+    return rejilla.actividades.filter(function (a) { return a.actividadId === id; })[0];
+  }
+  /** Normaliza criteriosInfo[cod] (objeto {texto,descripcion} o texto suelto). */
+  function infoCrit(cod) {
+    var v = rejilla.criteriosInfo[cod] || {};
+    if (typeof v === 'string') v = { texto: v, descripcion: '' };
+    var completo = v.descripcion ? (cod + '. ' + v.descripcion) : (cod + '. ' + (v.texto || ''));
+    return { texto: v.texto || '', descripcion: v.descripcion || '', completo: completo };
+  }
+  /** Orden natural de códigos tipo "LCL.4.8.3" (de menor a mayor). */
+  function cmpCodigo(a, b) {
+    var pa = a.split('.'), pb = b.split('.');
+    for (var i = 0; i < Math.max(pa.length, pb.length); i++) {
+      var na = parseInt(pa[i], 10), nb = parseInt(pb[i], 10);
+      if (isNaN(na) || isNaN(nb)) {
+        if ((pa[i] || '') !== (pb[i] || '')) return (pa[i] || '') < (pb[i] || '') ? -1 : 1;
+      } else if (na !== nb) return na - nb;
+    }
+    return 0;
+  }
+
+  // ---------- clases ----------
+  function pintarClases() {
+    var cont = document.getElementById('lista-clases');
+    if (!estado.clases.length) {
+      cont.innerHTML = '<div class="vacio">Aún no tienes grupos. ' +
+        'Un grupo es una lista de alumnado que luego reutilizas en varias áreas.</div>';
+      return;
+    }
+    cont.innerHTML = estado.clases.map(function (c) {
+      return '<div class="tarjeta" onclick="App.abrirClase(\'' + c.claseId + '\')">' +
+        '<h3>' + esc(c.nombre) + '</h3>' +
+        '<div class="meta">' + esc(c.curso) + '</div>' +
+        '<div class="meta">' + c.numAlumnos + ' alumnos/as</div>' +
+        '</div>';
+    }).join('');
+  }
+
+  function nuevaClase() {
+    var cursos = cursosDisponibles();
+    if (!cursos.length) return aviso('El Mapa Curricular está vacío o sin configurar.');
+    var optCursos = '<option value="" selected>— Seleccionar curso —</option>' +
+      cursos.map(function (c) { return '<option value="' + esc(c) + '">' + esc(c) + '</option>'; }).join('');
+    var optCopiar = '<option value="">— No copiar —</option>' +
+      estado.clases.map(function (c) {
+        return '<option value="' + c.claseId + '">' + esc(c.nombre + ' · ' + c.curso) + '</option>';
+      }).join('');
+
+    abrirModal('Nuevo grupo',
+      '<label>Nombre del grupo' +
+      '<input id="f-nombre" type="text" placeholder="Ej.: 3º A"></label>' +
+      '<label>Curso' +
+      '<select id="f-curso">' + optCursos + '</select></label>' +
+      '<label>Copiar alumnado de otro grupo (opcional)' +
+      '<select id="f-copiar" onchange="App.copiarDeClase()">' + optCopiar + '</select></label>' +
+      '<label>Alumnado (uno por línea)' +
+      '<textarea id="f-alumnos" rows="8" placeholder="Apellidos, Nombre"></textarea></label>' +
+      '<p class="ayuda">Pega la lista desde Séneca o cópiala de otro grupo tuyo.</p>',
+      'Crear grupo',
+      function () {
+        var nombre = val('f-nombre').trim();
+        var curso = val('f-curso');
+        if (!nombre) return aviso('Pon un nombre al grupo.');
+        if (!curso) return aviso('Elige el curso.');
+        var alumnos = parsearLista(val('f-alumnos'));
+        botonModalCargando('Creando…');
+        llamar('crearClase', [{ nombre: nombre, curso: curso, alumnos: alumnos }], function (cl) {
+          estado.clases.push({
+            claseId: cl.claseId, nombre: cl.nombre, curso: cl.curso,
+            numAlumnos: cl.alumnos.length, creado: cl.creado
+          });
+          cerrarModal();
+          abrirClaseCargada(cl);
+        });
+      });
+  }
+
+  /** Rellena el textarea con el alumnado de la clase elegida para copiar. */
+  function copiarDeClase() {
+    var id = val('f-copiar');
+    if (!id) return;
+    llamar('obtenerClase', [id], function (cl) {
+      document.getElementById('f-alumnos').value =
+        (cl.alumnos || []).map(function (a) { return a.nombre; }).join('\n');
+    });
+  }
+
+  function abrirClase(claseId) { llamar('obtenerClase', [claseId], abrirClaseCargada); }
+  function abrirClaseCargada(cl) {
+    claseActual = cl;
+    mostrar('vista-clase');
+    document.getElementById('clase-titulo').textContent = cl.nombre;
+    document.getElementById('clase-meta').textContent = cl.curso;
+    pintarAlumnos();
+  }
+  function pintarAlumnos() {
+    var lista = claseActual.alumnos || [];
+    document.getElementById('num-alumnos').textContent = '(' + lista.length + ')';
+    var ol = document.getElementById('lista-alumnos');
+    ol.innerHTML = lista.length
+      ? lista.map(function (a) { return '<li>' + esc(a.nombre) + '</li>'; }).join('')
+      : '<div class="vacio">Sin alumnado. Pulsa "Editar lista" para añadirlo.</div>';
+  }
+  function editarAlumnos() {
+    var texto = (claseActual.alumnos || []).map(function (a) { return a.nombre; }).join('\n');
+    abrirModal('Editar alumnado',
+      '<label>Un alumno/a por línea' +
+      '<textarea id="f-alumnos" rows="12">' + esc(texto) + '</textarea></label>' +
+      '<p class="ayuda">Se conservan las notas del alumnado que no cambie de nombre.</p>',
+      'Guardar',
+      function () {
+        var nuevos = fusionarAlumnos(claseActual.alumnos || [], parsearLista(val('f-alumnos')));
+        botonModalCargando('Guardando…');
+        llamar('actualizarAlumnosClase', [claseActual.claseId, nuevos], function (cl) {
+          var c = claseDe(cl.claseId); if (c) c.numAlumnos = cl.alumnos.length;
+          cerrarModal();
+          abrirClaseCargada(cl);
+        });
+      });
+  }
+  function eliminarClaseActual() {
+    confirmar('Eliminar grupo', '¿Eliminar el grupo "' + claseActual.nombre + '"?',
+      'Eliminar', function () {
+        var id = claseActual.claseId;
+        llamar('eliminarClase', [id], function () {
+          estado.clases = estado.clases.filter(function (c) { return c.claseId !== id; });
+          irAClases();
+        });
+      });
+  }
+
+  // ---------- mapa: cursos y áreas ----------
+  function cursosDisponibles() {
+    var vistos = {}, out = [];
+    (estado.areas || []).forEach(function (a) {
+      if (!vistos[a.curso]) { vistos[a.curso] = true; out.push(a.curso); }
+    });
+    return out;
+  }
+  function areasDe(curso) {
+    return (estado.areas || []).filter(function (a) { return a.curso === curso; })
+      .map(function (a) { return a.area; });
+  }
+  function opcionesAreas(curso) {
+    var ph = '<option value="" selected>— Seleccionar área —</option>';
+    if (!curso) return ph;
+    var areas = areasDe(curso);
+    if (!areas.length) return ph;
+    return ph + areas.map(function (a) {
+      return '<option value="' + esc(a) + '">' + esc(a) + '</option>';
+    }).join('');
+  }
+  function claseDe(id) {
+    return (estado.clases || []).filter(function (c) { return c.claseId === id; })[0] || null;
+  }
+
+  // ---------- alumnos: parseo y fusión ----------
+  function parsearLista(texto) {
+    return String(texto || '').split('\n')
+      .map(function (l) { return l.replace(/\s+/g, ' ').trim(); })
+      .filter(function (l) { return l.length; })
+      .map(function (nombre) { return { nombre: nombre }; });
+  }
+  function fusionarAlumnos(previos, nuevos) {
+    var porNombre = {};
+    previos.forEach(function (a) { porNombre[a.nombre] = a.id; });
+    return nuevos.map(function (a) {
+      return porNombre[a.nombre] ? { id: porNombre[a.nombre], nombre: a.nombre }
+                                 : { nombre: a.nombre };
+    });
+  }
+
+  // ---------- modal ----------
+  var accionModal = null;
+  function abrirModal(titulo, cuerpoHtml, textoAceptar, onAceptar) {
+    document.getElementById('modal-titulo').textContent = titulo;
+    document.getElementById('modal-cuerpo').innerHTML = cuerpoHtml;
+    var b = document.getElementById('modal-aceptar');
+    b.textContent = textoAceptar; b.disabled = false;
+    accionModal = onAceptar;
+    b.onclick = function () { if (accionModal) accionModal(); };
+    document.getElementById('modal-fondo').hidden = false;
+  }
+
+  /**
+   * Evita el "salto" por auto-scroll cuando, al hacer clic, un control del modal
+   * recibe el foco (casillas de criterio, botones, swatches). Prevenimos el foco
+   * con ratón —el clic sigue funcionando—; los campos de texto se dejan intactos.
+   * Se engancha una sola vez al contenedor del modal.
+   */
+  function setupModalNoScroll() {
+    var m = document.querySelector('.modal');
+    if (!m) return;
+    m.addEventListener('mousedown', function (e) {
+      var t = e.target;
+      if (t.closest('label.crit') || t.closest('button') ||
+          (t.classList && t.classList.contains('swatch'))) {
+        e.preventDefault();
+      }
+    });
+  }
+
+  /** Diálogo de confirmación propio (sustituye al confirm() nativo). */
+  function confirmar(titulo, mensaje, textoAceptar, onSi) {
+    abrirModal(titulo, '<p class="mensaje">' + esc(mensaje) + '</p>',
+      textoAceptar, function () { cerrarModal(); onSi(); });
+  }
+  function botonModalCargando(txt) {
+    var b = document.getElementById('modal-aceptar'); b.disabled = true; b.textContent = txt;
+  }
+  function cerrarModal() { document.getElementById('modal-fondo').hidden = true; accionModal = null; }
+  function cerrarModalFuera(ev) {
+    if (ev.target === document.getElementById('modal-fondo')) cerrarModal();
+  }
+
+  // ---------- utilidades ----------
+  function llamar(fn, args, ok) {
+    google.script.run.withSuccessHandler(ok)
+      .withFailureHandler(function (err) { aviso(err.message); })
+      [fn].apply(google.script.run, args || []);
+  }
+  function val(id) { return document.getElementById(id).value; }
+
+  var toastTimer = null;
+  function aviso(msg) {
+    var b = document.getElementById('modal-aceptar'); if (b) b.disabled = false;
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast error';
+    t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.hidden = true; }, 4000);
+  }
+  function avisoOk(msg) {
+    var t = document.getElementById('toast');
+    t.textContent = msg; t.className = 'toast'; t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.hidden = true; }, 4000);
+  }
+  function ocultarToast() {
+    clearTimeout(toastTimer);
+    document.getElementById('toast').hidden = true;
+  }
+  function spinner() { return '<div class="spinner-wrap"><div class="spinner"></div></div>'; }
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  return {
+    iniciar: iniciar,
+    irAEvaluaciones: irAEvaluaciones, irAClases: irAClases,
+    toggleMenu: toggleMenu,
+    irAPapelera: irAPapelera, restaurarItem: restaurarItem, vaciarPapeleraUI: vaciarPapeleraUI,
+    abrirCopia: abrirCopia, exportarDatos: exportarDatos, pedirImportar: pedirImportar,
+    nuevaEvaluacion: nuevaEvaluacion, claseCambiada: claseCambiada, elegirColor: elegirColor,
+    abrirEvaluacion: abrirEvaluacion, eliminarEvaluacionActual: eliminarEvaluacionActual,
+    nuevaUnidad: nuevaUnidad, abrirUnidad: abrirUnidad,
+    clonarUnidad: clonarUnidad, eliminarUnidad: eliminarUnidad,
+    copiarSeneca: copiarSeneca, infoSeneca: infoSeneca,
+    verResumen: verResumen, pintarResumen: pintarResumen, copiarResumenSeneca: copiarResumenSeneca,
+    nuevaActividad: nuevaActividad,
+    editarActividadUI: editarActividadUI, eliminarActividadUI: eliminarActividadUI,
+    duplicarActividadUI: duplicarActividadUI, variasActividades: variasActividades,
+    anadirFilaAct: anadirFilaAct, quitarFilaAct: quitarFilaAct,
+    pintarRejilla: pintarRejilla,
+    nuevaClase: nuevaClase, copiarDeClase: copiarDeClase,
+    abrirClase: abrirClase, editarAlumnos: editarAlumnos,
+    eliminarClaseActual: eliminarClaseActual,
+    cerrarModal: cerrarModal, cerrarModalFuera: cerrarModalFuera
+  };
+})();
+
+window.addEventListener('load', App.iniciar);
+</script>
