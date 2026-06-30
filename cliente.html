@@ -43,8 +43,11 @@ var App = (function () {
     });
     cerrarSidebar(); // en móvil, cierra el panel tras navegar
   }
-  function irAEvaluaciones() { evalActual = null; setTitulo('Mis clases'); mostrar('vista-evaluaciones'); pintarEvaluaciones(); }
-  function irAClases() { claseActual = null; setTitulo('Mis grupos'); mostrar('vista-clases'); pintarClases(); }
+  function irAEvaluaciones() { evalActual = null; setTitulo('Clases'); mostrar('vista-evaluaciones'); pintarEvaluaciones(); }
+  function irAClases() { claseActual = null; setTitulo('Grupos'); mostrar('vista-clases'); pintarClases(); }
+
+  /** Inicial (mayúscula) de un texto, para los iconos de color. */
+  function inicial(s) { return String(s || '?').trim().charAt(0).toUpperCase() || '?'; }
 
   function invalidarCaches() { evalCache = {}; rejillaCache = {}; }
 
@@ -274,12 +277,12 @@ var App = (function () {
   }
   function abrirEvaluacionCargada(ev) {
     evalActual = ev;
-    setTitulo(ev.area);
+    setTitulo('Clases');
     mostrar('vista-evaluacion');
-    var t = document.getElementById('eval-titulo');
-    t.textContent = ev.area;
-    t.style.borderLeft = ev.color ? ('5px solid ' + ev.color) : 'none';
-    t.style.paddingLeft = ev.color ? '12px' : '0';
+    document.getElementById('eval-titulo').textContent = ev.area;
+    var ico = document.getElementById('eval-ico');
+    ico.textContent = inicial(ev.area);
+    ico.style.background = ev.color || '';
     document.getElementById('eval-meta').textContent =
       ev.clase.nombre + ' · ' + ev.curso + ' · ' + ev.clase.alumnos.length + ' alumnos/as';
     cargarUnidades();
@@ -368,7 +371,7 @@ var App = (function () {
   var resumenData = null;
 
   function verResumen() {
-    setTitulo(evalActual.area);
+    setTitulo('Clases');
     mostrar('vista-resumen');
     document.getElementById('volver-resumen').onclick = function () {
       abrirEvaluacionCargada(evalActual);
@@ -490,7 +493,7 @@ var App = (function () {
   var inputs2d = [];        // matriz [fila][colActividad] -> <input>
 
   function abrirUnidad(unidadId) {
-    setTitulo(evalActual ? evalActual.area : 'Unidad');
+    setTitulo('Clases');
     mostrar('vista-unidad');
     document.getElementById('volver-unidad').onclick = function () {
       abrirEvaluacionCargada(evalActual);
@@ -514,7 +517,7 @@ var App = (function () {
   }
 
   function pintarUnidadActual() {
-    setTitulo(evalActual.area);
+    setTitulo('Clases');
     document.getElementById('unidad-titulo').textContent = rejilla.unidad.nombre;
     document.getElementById('unidad-meta').textContent =
       evalActual.area + ' · ' + rejilla.alumnos.length + ' alumnos/as · ' +
@@ -1040,10 +1043,13 @@ var App = (function () {
   function abrirClase(claseId) { llamar('obtenerClase', [claseId], abrirClaseCargada); }
   function abrirClaseCargada(cl) {
     claseActual = cl;
-    setTitulo(cl.nombre);
+    setTitulo('Grupos');
     mostrar('vista-clase');
     document.getElementById('clase-titulo').textContent = cl.nombre;
     document.getElementById('clase-meta').textContent = cl.curso;
+    var ico = document.getElementById('clase-ico');
+    ico.textContent = inicial(cl.nombre);
+    ico.style.background = colorAvatar(cl.nombre);
     pintarAlumnos();
   }
   function pintarAlumnos() {

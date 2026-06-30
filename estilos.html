@@ -289,15 +289,29 @@
     border-top-color: var(--acento); border-radius: 50%; animation: girar .7s linear infinite; }
   @keyframes girar { to { transform: rotate(360deg); } }
 
-  /* ---------- Cabecera compacta de la rejilla (unidad / resumen) ---------- */
-  /* Todo en una fila: icono volver · título+meta apilados · acciones a la dcha. */
-  .cabecera-rejilla {
-    display: flex; align-items: center; gap: 14px; margin-bottom: 12px; flex-wrap: wrap;
+  /* ---------- Cabeceras (rejilla compacta / tarjeta de clase) ----------
+     Una fila: icono volver · [icono color] · título+meta · acciones dcha. */
+  .cabecera-rejilla, .cabecera-clase {
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
   }
-  .cabecera-rejilla .titulo-bloque { flex: 1 1 auto; min-width: 0; }
-  .cabecera-rejilla h1 { font-size: 20px; line-height: 1.15; }
-  .cabecera-rejilla .meta { margin: 1px 0 0; font-size: 13px;
+  .cabecera-rejilla { margin-bottom: 12px; }
+  /* La cabecera de clase/grupo es una tarjeta que agrupa la identidad. */
+  .cabecera-clase {
+    background: var(--surface); border: 1px solid var(--borde);
+    border-radius: var(--radio); box-shadow: var(--sombra-1);
+    padding: 16px 18px; margin-bottom: 18px;
+  }
+  .titulo-bloque { flex: 1 1 auto; min-width: 0; }
+  .cabecera-rejilla h1, .cabecera-clase h1 { font-size: 20px; line-height: 1.15; }
+  .cabecera-rejilla .meta, .cabecera-clase .meta { margin: 2px 0 0; font-size: 13px;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* Icono cuadrado de color con la inicial (identidad de la clase/grupo). */
+  .clase-ico {
+    flex: 0 0 auto; width: 42px; height: 42px; border-radius: 12px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 700; color: #fff; letter-spacing: .01em;
+    background: var(--acento); box-shadow: var(--sombra-1);
+  }
   .volver-icono {
     flex: 0 0 auto; width: 34px; height: 34px; border-radius: 9px;
     display: inline-flex; align-items: center; justify-content: center;
@@ -443,9 +457,9 @@
     .rejilla-cont { max-height: calc(100dvh - var(--topbar-alto) - 168px); }
 
     /* La cabecera compacta apila acciones bajo el título sin apretar */
-    .cabecera-rejilla { gap: 10px 12px; }
-    .cabecera-rejilla h1 { font-size: 19px; }
-    .cabecera-rejilla .meta { white-space: normal; }   /* la meta puede envolver en móvil */
+    .cabecera-rejilla, .cabecera-clase { gap: 10px 12px; }
+    .cabecera-rejilla h1, .cabecera-clase h1 { font-size: 19px; }
+    .cabecera-rejilla .meta, .cabecera-clase .meta { white-space: normal; } /* envuelve en móvil */
     /* Las acciones envuelven a varias líneas en vez de salirse */
     .acciones-unidad { flex-wrap: wrap; width: 100%; }
     .acciones-unidad .btn { flex: 1 1 auto; justify-content: center; }
