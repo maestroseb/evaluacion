@@ -5,24 +5,55 @@
   <?!= include('estilos') ?>
 </head>
 <body>
-  <header class="barra">
-    <span class="logo" onclick="App.irAEvaluaciones()" style="cursor:pointer">📊 Evaluación por Criterios</span>
-    <nav class="nav">
-      <a id="nav-eval" onclick="App.irAEvaluaciones()">Clases</a>
-      <a id="nav-clases" onclick="App.irAClases()">Grupos</a>
-      <div class="menu">
-        <button class="btn-menu" title="Más" onclick="App.toggleMenu(event)">⋯</button>
-        <div id="menu-mas" class="menu-pop" hidden>
-          <a id="nav-papelera" onclick="App.irAPapelera()">🗑 Papelera</a>
-          <a onclick="App.abrirCopia()">💾 Copia de seguridad</a>
+  <div class="app-shell">
+    <!-- BARRA LATERAL (expandible / contraíble) -->
+    <aside id="sidebar" class="sidebar">
+      <div class="sidebar-head">
+        <span class="marca" onclick="App.irAEvaluaciones()" title="Evaluación por Criterios">
+          <span class="marca-icono">📊</span>
+          <span class="marca-txt">Evaluación</span>
+        </span>
+        <button class="colapsar" title="Contraer barra" onclick="App.toggleSidebar()">«</button>
+      </div>
+
+      <div class="perfil" title="Tu cuenta">
+        <span class="avatar" id="perfil-avatar">··</span>
+        <div class="perfil-info">
+          <span class="perfil-nombre" id="usuario">…</span>
+          <span class="perfil-rol">Profesorado</span>
         </div>
       </div>
-      <span id="usuario" class="usuario">…</span>
-    </nav>
-  </header>
 
-  <main id="app">
-    <div id="cargando" class="aviso">Cargando tu cuaderno…</div>
+      <nav class="menu-lat">
+        <a id="nav-eval" class="item-lat" onclick="App.irAEvaluaciones()" title="Clases">
+          <span class="item-ico">🗂️</span><span class="item-txt">Clases</span></a>
+        <a id="nav-clases" class="item-lat" onclick="App.irAClases()" title="Grupos">
+          <span class="item-ico">👥</span><span class="item-txt">Grupos</span></a>
+        <a id="nav-papelera" class="item-lat" onclick="App.irAPapelera()" title="Papelera">
+          <span class="item-ico">🗑️</span><span class="item-txt">Papelera</span></a>
+      </nav>
+
+      <div class="menu-lat menu-lat-pie">
+        <a class="item-lat" onclick="App.abrirCopia()" title="Copia de seguridad">
+          <span class="item-ico">💾</span><span class="item-txt">Copia de seguridad</span></a>
+      </div>
+    </aside>
+    <div id="velo" class="velo" onclick="App.cerrarSidebar()"></div>
+
+    <!-- ÁREA PRINCIPAL: topbar + contenido -->
+    <div class="area-principal">
+      <header class="topbar">
+        <button class="hamburguesa" title="Menú" onclick="App.toggleSidebar()">☰</button>
+        <h2 class="topbar-titulo" id="topbar-titulo">Mis clases</h2>
+        <div class="buscador">
+          <span class="buscador-ico">🔍</span>
+          <input id="buscador" type="text" placeholder="Buscar…" autocomplete="off"
+            oninput="App.filtrar(this.value)">
+        </div>
+      </header>
+
+      <main id="app">
+        <div id="cargando" class="aviso">Cargando tu cuaderno…</div>
 
     <!-- CLASES (clase = grupo aplicado a un área) -->
     <section id="vista-evaluaciones" hidden>
@@ -117,7 +148,9 @@
       <p class="meta">Lo que borres (grupos, clases, unidades, actividades) se guarda aquí 30 días. Puedes restaurarlo.</p>
       <div id="lista-papelera" class="tarjetas"></div>
     </section>
-  </main>
+      </main>
+    </div>
+  </div>
 
   <!-- MODAL -->
   <div id="modal-fondo" class="modal-fondo" hidden onclick="App.cerrarModalFuera(event)">

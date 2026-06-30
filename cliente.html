@@ -14,10 +14,12 @@ var App = (function () {
   // ---------- arranque ----------
   function iniciar() {
     setupModalNoScroll();
-    document.addEventListener('click', cerrarMenu); // cierra el menú ⋯ al hacer clic fuera
+    restaurarSidebar();
     llamar('getEstadoInicial', [], function (e) {
       estado = e;
       document.getElementById('usuario').textContent = e.usuario;
+      document.getElementById('usuario').title = e.usuario;
+      document.getElementById('perfil-avatar').textContent = iniciales(e.usuario);
       document.getElementById('cargando').hidden = true;
       irAEvaluaciones();
     });
@@ -32,22 +34,59 @@ var App = (function () {
     document.getElementById('nav-clases').classList.toggle('activo',
       id === 'vista-clases' || id === 'vista-clase');
     document.getElementById('nav-papelera').classList.toggle('activo', id === 'vista-papelera');
+    cerrarSidebar(); // en móvil, cierra el panel tras navegar
   }
-  function irAEvaluaciones() { evalActual = null; mostrar('vista-evaluaciones'); pintarEvaluaciones(); }
-  function irAClases() { claseActual = null; mostrar('vista-clases'); pintarClases(); }
+  function irAEvaluaciones() { evalActual = null; setTitulo('Mis clases'); mostrar('vista-evaluaciones'); pintarEvaluaciones(); }
+  function irAClases() { claseActual = null; setTitulo('Mis grupos'); mostrar('vista-clases'); pintarClases(); }
 
   function invalidarCaches() { evalCache = {}; rejillaCache = {}; }
 
-  // ---------- menú "⋯" ----------
-  function toggleMenu(e) {
-    e.stopPropagation();
-    var m = document.getElementById('menu-mas');
-    m.hidden = !m.hidden;
+  /** Fija el título de la barra superior y limpia el buscador al cambiar de vista. */
+  function setTitulo(t) {
+    var e = document.getElementById('topbar-titulo');
+    if (e) e.textContent = t;
+    var b = document.getElementById('buscador');
+    if (b) b.value = '';
   }
-  function cerrarMenu() { document.getElementById('menu-mas').hidden = true; }
+
+  // ---------- barra lateral (expandible / contraíble) ----------
+  function esMovil() { return window.matchMedia('(max-width: 820px)').matches; }
+  function toggleSidebar() {
+    var s = document.getElementById('sidebar');
+    if (esMovil()) {
+      var abierta = s.classList.toggle('abierta');
+      document.getElementById('velo').classList.toggle('visible', abierta);
+    } else {
+      var col = s.classList.toggle('colapsada');
+      try { localStorage.setItem('sidebar-colapsada', col ? '1' : '0'); } catch (e) {}
+    }
+  }
+  function cerrarSidebar() {
+    document.getElementById('sidebar').classList.remove('abierta');
+    document.getElementById('velo').classList.remove('visible');
+  }
+  function restaurarSidebar() {
+    try {
+      if (localStorage.getItem('sidebar-colapsada') === '1' && !esMovil()) {
+        document.getElementById('sidebar').classList.add('colapsada');
+      }
+    } catch (e) {}
+  }
+
+  /** Filtra las tarjetas / filas visibles de la sección actual por texto. */
+  function filtrar(q) {
+    q = String(q || '').toLowerCase().trim();
+    var vis = document.querySelector('#app > section:not([hidden])');
+    if (!vis) return;
+    var items = vis.querySelectorAll('.tarjeta, ol.alumnos li, table.rejilla tbody tr');
+    [].forEach.call(items, function (el) {
+      el.style.display = (!q || el.textContent.toLowerCase().indexOf(q) >= 0) ? '' : 'none';
+    });
+  }
 
   // ---------- papelera ----------
   function irAPapelera() {
+    setTitulo('Papelera');
     mostrar('vista-papelera');
     document.getElementById('lista-papelera').innerHTML = spinner();
     llamar('listarPapelera', [], pintarPapelera);
@@ -228,6 +267,7 @@ var App = (function () {
   }
   function abrirEvaluacionCargada(ev) {
     evalActual = ev;
+    setTitulo(ev.area);
     mostrar('vista-evaluacion');
     var t = document.getElementById('eval-titulo');
     t.textContent = ev.area;
@@ -320,6 +360,7 @@ var App = (function () {
   var resumenData = null;
 
   function verResumen() {
+    setTitulo('Resumen — ' + evalActual.area);
     mostrar('vista-resumen');
     document.getElementById('volver-resumen').onclick = function () {
       abrirEvaluacionCargada(evalActual);
@@ -359,7 +400,7 @@ var App = (function () {
     h += '</tr></thead><tbody>';
 
     R.alumnos.forEach(function (al, i) {
-      h += '<tr><td class="idx">' + (i + 1) + '</td><td class="esq">' + esc(al.nombre) + '</td>';
+      h += '<tr><td class="idx">' + (i + 1) + '</td>' + celdaAlumno(al.nombre);
       uds.forEach(function (u) {
         h += celdaNum((R.unidadNota[al.id] || {})[u.unidadId]);
       });
@@ -374,8 +415,42 @@ var App = (function () {
   }
 
   function celdaNum(n, extra) {
-    var sus = (n != null && n < 5) ? ' suspenso' : '';
-    return '<td class="num' + (extra || '') + sus + '">' + fmt(n) + '</td>';
+    var g = claseNota(n);
+    return '<td class="num' + (extra || '') + (g ? ' ' + g : '') + '">' + fmt(n) + '</td>';
+  }
+
+  /**
+   * Devuelve la clase de color (semáforo) según la nota:
+   * top ≥8,5 · alta ≥7 · media ≥6 · baja ≥5 · suspenso <5.
+   */
+  function claseNota(n) {
+    if (n == null) return '';
+    if (n < 5) return 'g-susp';
+    if (n < 6) return 'g-baja';
+    if (n < 7) return 'g-media';
+    if (n < 8.5) return 'g-alta';
+    return 'g-top';
+  }
+
+  /** Iniciales (1-2 letras) a partir de un nombre "Apellidos, Nombre" o email. */
+  function iniciales(nombre) {
+    var s = String(nombre || '').split('@')[0].replace(/[.,_-]+/g, ' ');
+    var p = s.trim().split(/\s+/).filter(Boolean);
+    if (!p.length) return '–';
+    return (p[0].charAt(0) + (p[1] ? p[1].charAt(0) : '')).toUpperCase();
+  }
+
+  /** Color estable (hash → paleta) para el avatar de cada alumno/a. */
+  function colorAvatar(nombre) {
+    var h = 0, s = String(nombre || '');
+    for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+    return COLORES[h % COLORES.length];
+  }
+
+  /** Celda izquierda con avatar de iniciales + nombre (rejilla y resumen). */
+  function celdaAlumno(nombre) {
+    return '<td class="esq"><span class="mini-avatar" style="background:' +
+      colorAvatar(nombre) + '">' + esc(iniciales(nombre)) + '</span>' + esc(nombre) + '</td>';
   }
   function infoCritR(cod) {
     var v = (resumenData.criteriosInfo || {})[cod] || {};
@@ -406,6 +481,7 @@ var App = (function () {
   var inputs2d = [];        // matriz [fila][colActividad] -> <input>
 
   function abrirUnidad(unidadId) {
+    setTitulo('Unidad');
     mostrar('vista-unidad');
     document.getElementById('volver-unidad').onclick = function () {
       abrirEvaluacionCargada(evalActual);
@@ -429,6 +505,7 @@ var App = (function () {
   }
 
   function pintarUnidadActual() {
+    setTitulo(rejilla.unidad.nombre);
     document.getElementById('unidad-titulo').textContent = rejilla.unidad.nombre;
     document.getElementById('unidad-meta').textContent =
       evalActual.area + ' · ' + rejilla.alumnos.length + ' alumnos/as · ' +
@@ -697,8 +774,7 @@ var App = (function () {
     h += '</tr></thead><tbody>';
 
     rejilla.alumnos.forEach(function (al, i) {
-      h += '<tr><td class="idx">' + (i + 1) + '</td>' +
-        '<td class="esq">' + esc(al.nombre) + '</td>';
+      h += '<tr><td class="idx">' + (i + 1) + '</td>' + celdaAlumno(al.nombre);
       rejilla.actividades.forEach(function (a, c) {
         var v = valorItem(a.actividadId, al.id);
         h += '<td class="celda"><input type="text" inputmode="decimal" ' +
@@ -716,10 +792,11 @@ var App = (function () {
     wireRejilla();
   }
 
-  /** Celda de nota calculada: formatea y marca en rojo si < 5. */
+  /** Celda de nota calculada: formatea y la colorea por tramos (semáforo). */
   function celdaNota(id, n, extra) {
-    var sus = (n != null && n < 5) ? ' suspenso' : '';
-    return '<td class="num' + (extra || '') + sus + '" id="' + id + '">' + fmt(n) + '</td>';
+    var g = claseNota(n);
+    return '<td class="num' + (extra || '') + (g ? ' ' + g : '') +
+      '" id="' + id + '">' + fmt(n) + '</td>';
   }
 
   /** Engancha la matriz de inputs y sus eventos (teclado, dictado, pegar). */
@@ -769,7 +846,9 @@ var App = (function () {
   function pintarCeldaNota(td, n) {
     if (!td) return;
     td.textContent = fmt(n);
-    td.classList.toggle('suspenso', n != null && n < 5);
+    td.classList.remove('g-top', 'g-alta', 'g-media', 'g-baja', 'g-susp');
+    var g = claseNota(n);
+    if (g) td.classList.add(g);
   }
 
   // --- navegación con teclado ---
@@ -952,6 +1031,7 @@ var App = (function () {
   function abrirClase(claseId) { llamar('obtenerClase', [claseId], abrirClaseCargada); }
   function abrirClaseCargada(cl) {
     claseActual = cl;
+    setTitulo(cl.nombre);
     mostrar('vista-clase');
     document.getElementById('clase-titulo').textContent = cl.nombre;
     document.getElementById('clase-meta').textContent = cl.curso;
@@ -962,7 +1042,10 @@ var App = (function () {
     document.getElementById('num-alumnos').textContent = '(' + lista.length + ')';
     var ol = document.getElementById('lista-alumnos');
     ol.innerHTML = lista.length
-      ? lista.map(function (a) { return '<li>' + esc(a.nombre) + '</li>'; }).join('')
+      ? lista.map(function (a) {
+          return '<li><span class="mini-avatar" style="background:' + colorAvatar(a.nombre) +
+            '">' + esc(iniciales(a.nombre)) + '</span>' + esc(a.nombre) + '</li>';
+        }).join('')
       : '<div class="vacio">Sin alumnado. Pulsa "Editar lista" para añadirlo.</div>';
   }
   function editarAlumnos() {
@@ -1114,7 +1197,7 @@ var App = (function () {
   return {
     iniciar: iniciar,
     irAEvaluaciones: irAEvaluaciones, irAClases: irAClases,
-    toggleMenu: toggleMenu,
+    toggleSidebar: toggleSidebar, cerrarSidebar: cerrarSidebar, filtrar: filtrar,
     irAPapelera: irAPapelera, restaurarItem: restaurarItem, vaciarPapeleraUI: vaciarPapeleraUI,
     abrirCopia: abrirCopia, exportarDatos: exportarDatos, pedirImportar: pedirImportar,
     nuevaEvaluacion: nuevaEvaluacion, claseCambiada: claseCambiada, elegirColor: elegirColor,
