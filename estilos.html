@@ -125,7 +125,8 @@
     background: rgba(255,255,255,.82); backdrop-filter: saturate(180%) blur(10px);
     border-bottom: 1px solid var(--borde); position: sticky; top: 0; z-index: 30;
   }
-  .hamburguesa { display: none; border: none; background: transparent; cursor: pointer;
+  .hamburguesa { display: inline-flex; align-items: center; justify-content: center;
+    border: none; background: transparent; cursor: pointer;
     font-size: 19px; color: var(--texto-2); padding: 6px 8px; border-radius: 8px; }
   .hamburguesa:hover { background: var(--bg); color: var(--texto); }
   .topbar-titulo { font-size: 17px; font-weight: 650; letter-spacing: -.02em; margin: 0;
@@ -421,7 +422,6 @@
     .sidebar.colapsada .perfil-info,
     .sidebar.colapsada .item-txt { display: inline; }
     .sidebar.colapsada .item-lat { justify-content: flex-start; padding: 9px 11px; }
-    .hamburguesa { display: inline-flex; }
     .velo.visible { display: block; }
     main { padding: 18px 16px 24px; }
   }
