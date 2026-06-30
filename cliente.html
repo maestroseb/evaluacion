@@ -456,8 +456,9 @@ var App = (function () {
 
   /** Celda izquierda con avatar de iniciales + nombre (rejilla y resumen). */
   function celdaAlumno(nombre) {
-    return '<td class="esq"><span class="mini-avatar" style="background:' +
-      colorAvatar(nombre) + '">' + esc(iniciales(nombre)) + '</span>' + esc(nombre) + '</td>';
+    return '<td class="esq" title="' + esc(nombre) + '"><span class="mini-avatar" style="background:' +
+      colorAvatar(nombre) + '">' + esc(iniciales(nombre)) + '</span>' +
+      '<span class="al-nom">' + esc(nombre) + '</span></td>';
   }
   function infoCritR(cod) {
     var v = (resumenData.criteriosInfo || {})[cod] || {};

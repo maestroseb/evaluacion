@@ -442,5 +442,12 @@
     /* Las acciones envuelven a varias líneas en vez de salirse */
     .acciones-unidad { flex-wrap: wrap; width: 100%; }
     .acciones-unidad .btn { flex: 1 1 auto; justify-content: center; }
+
+    /* Columna fija de alumno: solo el avatar (el nombre va en el title).
+       Así se libera espacio horizontal para las columnas de notas. */
+    table.rejilla .esq { text-align: center; }
+    table.rejilla th.esq { font-size: 0; }            /* oculta "Alumno/a", deja la celda mínima */
+    table.rejilla td.esq .al-nom { display: none; }
+    table.rejilla td.esq .mini-avatar { margin-right: 0; }
   }
 </style>
