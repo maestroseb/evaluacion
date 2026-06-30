@@ -278,8 +278,27 @@
     border-top-color: var(--acento); border-radius: 50%; animation: girar .7s linear infinite; }
   @keyframes girar { to { transform: rotate(360deg); } }
 
+  /* ---------- Cabecera compacta de la rejilla (unidad / resumen) ---------- */
+  /* Todo en una fila: icono volver · título+meta apilados · acciones a la dcha. */
+  .cabecera-rejilla {
+    display: flex; align-items: center; gap: 14px; margin-bottom: 12px; flex-wrap: wrap;
+  }
+  .cabecera-rejilla .titulo-bloque { flex: 1 1 auto; min-width: 0; }
+  .cabecera-rejilla h1 { font-size: 20px; line-height: 1.15; }
+  .cabecera-rejilla .meta { margin: 1px 0 0; font-size: 13px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .volver-icono {
+    flex: 0 0 auto; width: 34px; height: 34px; border-radius: 9px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 1px solid var(--borde-fuerte); background: var(--surface);
+    color: var(--texto-2); cursor: pointer; font-size: 18px; line-height: 1;
+    text-decoration: none; box-shadow: var(--sombra-1);
+    transition: background .12s, color .12s, border-color .12s;
+  }
+  .volver-icono:hover { background: var(--bg); color: var(--acento-fuerte); }
+
   /* ---------- Acciones de unidad ---------- */
-  .acciones-unidad { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .acciones-unidad { display: flex; align-items: center; gap: 12px; flex: 0 0 auto; }
   .grupo-btn { position: relative; display: inline-flex; }
   .btn-info {
     position: absolute; top: -7px; right: -7px; z-index: 1;
@@ -323,7 +342,7 @@
 
   /* ---------- Rejilla ---------- */
   .rejilla-cont { overflow: auto; background: var(--surface);
-    max-height: calc(100vh - var(--topbar-alto) - 130px);
+    max-height: calc(100vh - var(--topbar-alto) - 96px);
     border: 1px solid var(--borde); border-radius: var(--radio); box-shadow: var(--sombra-1); }
   table.rejilla { border-collapse: separate; border-spacing: 0; width: auto; font-size: 13px; }
   table.rejilla th, table.rejilla td {

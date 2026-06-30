@@ -360,7 +360,7 @@ var App = (function () {
   var resumenData = null;
 
   function verResumen() {
-    setTitulo('Resumen — ' + evalActual.area);
+    setTitulo(evalActual.area);
     mostrar('vista-resumen');
     document.getElementById('volver-resumen').onclick = function () {
       abrirEvaluacionCargada(evalActual);
@@ -481,7 +481,7 @@ var App = (function () {
   var inputs2d = [];        // matriz [fila][colActividad] -> <input>
 
   function abrirUnidad(unidadId) {
-    setTitulo('Unidad');
+    setTitulo(evalActual ? evalActual.area : 'Unidad');
     mostrar('vista-unidad');
     document.getElementById('volver-unidad').onclick = function () {
       abrirEvaluacionCargada(evalActual);
@@ -505,7 +505,7 @@ var App = (function () {
   }
 
   function pintarUnidadActual() {
-    setTitulo(rejilla.unidad.nombre);
+    setTitulo(evalActual.area);
     document.getElementById('unidad-titulo').textContent = rejilla.unidad.nombre;
     document.getElementById('unidad-meta').textContent =
       evalActual.area + ' · ' + rejilla.alumnos.length + ' alumnos/as · ' +
