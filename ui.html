@@ -2,6 +2,7 @@
 <html>
 <head>
   <base target="_top">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <?!= include('estilos') ?>
 </head>
 <body>
@@ -24,11 +25,11 @@
       </div>
 
       <nav class="menu-lat">
-        <a id="nav-eval" class="item-lat" onclick="App.irAEvaluaciones()" title="Clases">
+        <a id="nav-eval" class="item-lat" data-nav="eval" onclick="App.irAEvaluaciones()" title="Clases">
           <span class="item-ico">🗂️</span><span class="item-txt">Clases</span></a>
-        <a id="nav-clases" class="item-lat" onclick="App.irAClases()" title="Grupos">
+        <a id="nav-clases" class="item-lat" data-nav="clases" onclick="App.irAClases()" title="Grupos">
           <span class="item-ico">👥</span><span class="item-txt">Grupos</span></a>
-        <a id="nav-papelera" class="item-lat" onclick="App.irAPapelera()" title="Papelera">
+        <a id="nav-papelera" class="item-lat" data-nav="papelera" onclick="App.irAPapelera()" title="Papelera">
           <span class="item-ico">🗑️</span><span class="item-txt">Papelera</span></a>
       </nav>
 
@@ -153,6 +154,18 @@
     </section>
       </main>
     </div>
+
+    <!-- BARRA DE PESTAÑAS INFERIOR (solo móvil) -->
+    <nav class="tabbar">
+      <a class="tab" data-nav="eval" onclick="App.irAEvaluaciones()">
+        <span class="tab-ico">🗂️</span><span>Clases</span></a>
+      <a class="tab" data-nav="clases" onclick="App.irAClases()">
+        <span class="tab-ico">👥</span><span>Grupos</span></a>
+      <a class="tab" data-nav="papelera" onclick="App.irAPapelera()">
+        <span class="tab-ico">🗑️</span><span>Papelera</span></a>
+      <a class="tab" onclick="App.abrirCopia()">
+        <span class="tab-ico">💾</span><span>Copia</span></a>
+    </nav>
   </div>
 
   <!-- MODAL -->

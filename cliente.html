@@ -30,10 +30,17 @@ var App = (function () {
     'vista-evaluacion', 'vista-unidad', 'vista-resumen', 'vista-papelera'];
   function mostrar(id) {
     SECCIONES.forEach(function (s) { document.getElementById(s).hidden = (s !== id); });
-    document.getElementById('nav-eval').classList.toggle('activo', id === 'vista-evaluaciones');
-    document.getElementById('nav-clases').classList.toggle('activo',
-      id === 'vista-clases' || id === 'vista-clase');
-    document.getElementById('nav-papelera').classList.toggle('activo', id === 'vista-papelera');
+    // Resalta la sección activa en barra lateral y tab bar (por data-nav).
+    var clave =
+      (id === 'vista-clases' || id === 'vista-clase') ? 'clases' :
+      (id === 'vista-papelera') ? 'papelera' :
+      (id === 'vista-evaluaciones' || id === 'vista-evaluacion' ||
+       id === 'vista-unidad' || id === 'vista-resumen') ? 'eval' : '';
+    ['eval', 'clases', 'papelera'].forEach(function (k) {
+      [].forEach.call(document.querySelectorAll('[data-nav="' + k + '"]'), function (el) {
+        el.classList.toggle('activo', k === clave);
+      });
+    });
     cerrarSidebar(); // en móvil, cierra el panel tras navegar
   }
   function irAEvaluaciones() { evalActual = null; setTitulo('Mis clases'); mostrar('vista-evaluaciones'); pintarEvaluaciones(); }
