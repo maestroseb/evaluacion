@@ -51,6 +51,12 @@ var App = (function () {
 
   // ---------- barra lateral (expandible / contraíble) ----------
   function esMovil() { return window.matchMedia('(max-width: 820px)').matches; }
+  /** Clic en el logo: si está contraída, la expande; si no, va a Clases. */
+  function clickMarca() {
+    var s = document.getElementById('sidebar');
+    if (!esMovil() && s.classList.contains('colapsada')) toggleSidebar();
+    else irAEvaluaciones();
+  }
   function toggleSidebar() {
     var s = document.getElementById('sidebar');
     if (esMovil()) {
@@ -1198,6 +1204,7 @@ var App = (function () {
     iniciar: iniciar,
     irAEvaluaciones: irAEvaluaciones, irAClases: irAClases,
     toggleSidebar: toggleSidebar, cerrarSidebar: cerrarSidebar, filtrar: filtrar,
+    clickMarca: clickMarca,
     irAPapelera: irAPapelera, restaurarItem: restaurarItem, vaciarPapeleraUI: vaciarPapeleraUI,
     abrirCopia: abrirCopia, exportarDatos: exportarDatos, pedirImportar: pedirImportar,
     nuevaEvaluacion: nuevaEvaluacion, claseCambiada: claseCambiada, elegirColor: elegirColor,
