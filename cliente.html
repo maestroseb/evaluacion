@@ -303,7 +303,8 @@ var App = (function () {
     }
     cont.innerHTML = uds.map(function (u) {
       return '<div class="tarjeta tarjeta-unidad" onclick="App.abrirUnidad(\'' + u.unidadId + '\')">' +
-        '<h3>' + esc(u.nombre) + '</h3>' +
+        '<span class="u-ico">📘</span>' +
+        '<h3 class="u-nom">' + esc(u.nombre) + '</h3>' +
         '<div class="acciones-tarjeta">' +
         '<button class="icono" title="Duplicar unidad" ' +
         'onclick="event.stopPropagation();App.clonarUnidad(\'' + u.unidadId + '\')">⧉</button>' +

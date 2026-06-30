@@ -156,7 +156,7 @@
 
   .cabecera-seccion {
     display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 16px; gap: 16px;
+    margin-bottom: 16px; gap: 12px 16px; flex-wrap: wrap;
   }
   h1 { font-size: 23px; font-weight: 700; letter-spacing: -.025em; margin: 0; }
   main section > p.meta { margin: 2px 0 16px; }
@@ -179,10 +179,16 @@
     box-shadow: inset 0 0 0 2px #fff, 0 0 0 1px var(--borde); transition: transform .1s; }
   .swatch:hover { transform: scale(1.1); }
   .swatch.sel { box-shadow: inset 0 0 0 2px #fff, 0 0 0 2px var(--texto); }
-  .tarjeta-unidad { position: relative; }
-  .acciones-tarjeta { position: absolute; top: 12px; right: 12px; display: flex; gap: 4px;
-    opacity: 0; transition: opacity .12s; }
-  .tarjeta-unidad:hover .acciones-tarjeta { opacity: 1; }
+  /* Tarjeta de unidad: fila compacta con icono · nombre · acciones (siempre visibles) */
+  .tarjeta-unidad { display: flex; align-items: center; gap: 12px; padding: 14px 16px; }
+  .tarjeta-unidad .u-ico {
+    flex: 0 0 auto; width: 36px; height: 36px; border-radius: 9px;
+    display: inline-flex; align-items: center; justify-content: center; font-size: 18px;
+    background: var(--acento-suave);
+  }
+  .tarjeta-unidad .u-nom { flex: 1 1 auto; min-width: 0; margin: 0; font-size: 15px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .acciones-tarjeta { display: flex; gap: 6px; flex: 0 0 auto; }
   .icono {
     border: 1px solid var(--borde); background: var(--surface); border-radius: 7px;
     width: 28px; height: 28px; cursor: pointer; font-size: 13px; line-height: 1;
@@ -439,6 +445,7 @@
     /* La cabecera compacta apila acciones bajo el título sin apretar */
     .cabecera-rejilla { gap: 10px 12px; }
     .cabecera-rejilla h1 { font-size: 19px; }
+    .cabecera-rejilla .meta { white-space: normal; }   /* la meta puede envolver en móvil */
     /* Las acciones envuelven a varias líneas en vez de salirse */
     .acciones-unidad { flex-wrap: wrap; width: 100%; }
     .acciones-unidad .btn { flex: 1 1 auto; justify-content: center; }
