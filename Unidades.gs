@@ -60,9 +60,10 @@ var Unidades = (function () {
   }
 
   function eliminar_(ss, unidadId) {
+    Papelera.papelearUnidad_(ss, unidadId); // foto completa (unidad+actividades+ítems)
     // Borra en cascada las actividades de la unidad (y sus ítems).
     Actividades.listar_(ss, unidadId).forEach(function (a) {
-      Actividades.eliminar_(ss, a.actividadId);
+      Actividades.eliminar_(ss, a.actividadId, true);
     });
     var sh = hoja_(ss);
     var fila = Datos.filaDeId_(sh, unidadId);

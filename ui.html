@@ -10,6 +10,8 @@
     <nav class="nav">
       <a id="nav-eval" onclick="App.irAEvaluaciones()">Clases</a>
       <a id="nav-clases" onclick="App.irAClases()">Grupos</a>
+      <a id="nav-papelera" onclick="App.irAPapelera()">Papelera</a>
+      <a onclick="App.abrirCopia()">Copia</a>
       <span id="usuario" class="usuario">…</span>
     </nav>
   </header>
@@ -99,6 +101,16 @@
       </div>
       <p id="resumen-meta" class="meta"></p>
       <div id="resumen-cont" class="rejilla-cont"></div>
+    </section>
+
+    <!-- PAPELERA -->
+    <section id="vista-papelera" hidden>
+      <div class="cabecera-seccion">
+        <h1>Papelera</h1>
+        <button class="btn peligro" onclick="App.vaciarPapeleraUI()">Vaciar papelera</button>
+      </div>
+      <p class="meta">Lo que borres (grupos, clases, unidades, actividades) se guarda aquí 30 días. Puedes restaurarlo.</p>
+      <div id="lista-papelera" class="tarjetas"></div>
     </section>
   </main>
 

@@ -18,7 +18,8 @@ var ESQUEMA = {
   _evaluaciones: ['evalId', 'claseId', 'area', 'creado', 'color'],
   _unidades: ['unidadId', 'evalId', 'nombre', 'orden'],
   _actividades: ['actividadId', 'unidadId', 'nombre', 'criterios', 'numItems', 'orden'],
-  _items: ['actividadId', 'alumnoId', 'conseguidos']
+  _items: ['actividadId', 'alumnoId', 'conseguidos'],
+  _papelera: ['papeleraId', 'tipo', 'etiqueta', 'fecha', 'contenido']
 };
 
 /**

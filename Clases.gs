@@ -107,6 +107,7 @@ var Clases = (function () {
     if (Evaluaciones.usaClase_(ss, claseId)) {
       throw new Error('Este grupo tiene clases asociadas. Elimínalas antes.');
     }
+    Papelera.papelearGrupo_(ss, claseId); // a la papelera antes de borrar
     var sh = hoja_(ss);
     var fila = Datos.filaDeId_(sh, claseId);
     if (fila < 0) throw new Error('Clase no encontrada.');

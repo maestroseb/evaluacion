@@ -76,6 +76,7 @@ var Evaluaciones = (function () {
   }
 
   function eliminar_(ss, evalId) {
+    Papelera.papelearClase_(ss, evalId); // a la papelera antes de borrar
     var sh = hoja_(ss);
     var fila = Datos.filaDeId_(sh, evalId);
     if (fila < 0) throw new Error('Evaluación no encontrada.');

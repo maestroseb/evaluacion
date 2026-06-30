@@ -127,7 +127,9 @@ var Actividades = (function () {
     return { ok: true };
   }
 
-  function eliminar_(ss, actividadId) {
+  function eliminar_(ss, actividadId, sinPapelera) {
+    // A la papelera salvo que ya la cubra una foto de unidad (sinPapelera).
+    if (!sinPapelera) Papelera.papelearActividad_(ss, actividadId);
     // Borra los ítems de la actividad y luego la actividad.
     borrarItemsDe_(ss, actividadId);
     var sh = hojaA_(ss);
