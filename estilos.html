@@ -47,8 +47,18 @@
   .nav a:hover { background: var(--bg); color: var(--texto); }
   .nav a.activo { background: var(--acento-suave); color: var(--acento-fuerte); }
   .usuario { font-size: 13px; color: var(--texto-3); margin-left: 12px; }
+  .menu { position: relative; }
+  .btn-menu { border: none; background: transparent; color: var(--texto-2); cursor: pointer;
+    font-size: 18px; line-height: 1; padding: 4px 8px; border-radius: 8px; }
+  .btn-menu:hover { background: var(--bg); color: var(--texto); }
+  .menu-pop { position: absolute; right: 0; top: 36px; background: var(--surface);
+    border: 1px solid var(--borde); border-radius: 10px; box-shadow: var(--sombra-2);
+    padding: 6px; min-width: 180px; z-index: 30; }
+  .menu-pop a { display: block; padding: 9px 12px; border-radius: 7px; font-size: 14px;
+    color: var(--texto); cursor: pointer; }
+  .menu-pop a:hover { background: var(--bg); }
 
-  main { max-width: none; margin: 0; padding: 16px 22px 40px; }
+  main { max-width: none; margin: 0; padding: 16px 22px 16px; }
   .aviso { padding: 56px; text-align: center; color: var(--texto-3); font-size: 14px; }
 
   .cabecera-seccion {
@@ -214,9 +224,9 @@
     vertical-align: middle; }
 
   /* ---------- Rejilla ---------- */
-  .rejilla-cont { overflow: auto; border: 1px solid var(--borde); border-radius: 12px;
-    background: var(--surface); box-shadow: var(--sombra-1);
-    max-height: calc(100vh - 168px); }
+  /* Libre (sin caja): la propia rejilla es el único scroll, ocupa hasta abajo. */
+  .rejilla-cont { overflow: auto; background: var(--surface);
+    max-height: calc(100vh - 150px); border-top: 1px solid var(--borde); }
   table.rejilla { border-collapse: separate; border-spacing: 0; width: auto; font-size: 13px; }
   table.rejilla th, table.rejilla td {
     border-bottom: 1px solid var(--borde); border-right: 1px solid var(--borde);

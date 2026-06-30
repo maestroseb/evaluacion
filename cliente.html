@@ -14,6 +14,7 @@ var App = (function () {
   // ---------- arranque ----------
   function iniciar() {
     setupModalNoScroll();
+    document.addEventListener('click', cerrarMenu); // cierra el menú ⋯ al hacer clic fuera
     llamar('getEstadoInicial', [], function (e) {
       estado = e;
       document.getElementById('usuario').textContent = e.usuario;
@@ -36,6 +37,14 @@ var App = (function () {
   function irAClases() { claseActual = null; mostrar('vista-clases'); pintarClases(); }
 
   function invalidarCaches() { evalCache = {}; rejillaCache = {}; }
+
+  // ---------- menú "⋯" ----------
+  function toggleMenu(e) {
+    e.stopPropagation();
+    var m = document.getElementById('menu-mas');
+    m.hidden = !m.hidden;
+  }
+  function cerrarMenu() { document.getElementById('menu-mas').hidden = true; }
 
   // ---------- papelera ----------
   function irAPapelera() {
@@ -1105,6 +1114,7 @@ var App = (function () {
   return {
     iniciar: iniciar,
     irAEvaluaciones: irAEvaluaciones, irAClases: irAClases,
+    toggleMenu: toggleMenu,
     irAPapelera: irAPapelera, restaurarItem: restaurarItem, vaciarPapeleraUI: vaciarPapeleraUI,
     abrirCopia: abrirCopia, exportarDatos: exportarDatos, pedirImportar: pedirImportar,
     nuevaEvaluacion: nuevaEvaluacion, claseCambiada: claseCambiada, elegirColor: elegirColor,

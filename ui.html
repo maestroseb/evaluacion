@@ -10,8 +10,13 @@
     <nav class="nav">
       <a id="nav-eval" onclick="App.irAEvaluaciones()">Clases</a>
       <a id="nav-clases" onclick="App.irAClases()">Grupos</a>
-      <a id="nav-papelera" onclick="App.irAPapelera()">Papelera</a>
-      <a onclick="App.abrirCopia()">Copia</a>
+      <div class="menu">
+        <button class="btn-menu" title="Más" onclick="App.toggleMenu(event)">⋯</button>
+        <div id="menu-mas" class="menu-pop" hidden>
+          <a id="nav-papelera" onclick="App.irAPapelera()">🗑 Papelera</a>
+          <a onclick="App.abrirCopia()">💾 Copia de seguridad</a>
+        </div>
+      </div>
       <span id="usuario" class="usuario">…</span>
     </nav>
   </header>
