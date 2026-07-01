@@ -11,7 +11,7 @@ var CONFIG = {
   // principal: no requiere permisos de Drive y se sirve igual a toda la
   // comunidad. El repositorio debe ser público (o el JSON accesible por URL).
   MAPA_JSON_URL: 'https://raw.githubusercontent.com/maestroseb/evaluacion/' +
-    'claude/sheets-evaluation-criteria-3qsyay/data/mapa-curricular.json',
+    'main/data/mapa-curricular.json',
 
   // Alternativa/legado: hoja de cálculo central con el mapa. Solo se usa si
   // MAPA_JSON_URL está vacío. Se compartiría en solo lectura con el dominio.
