@@ -369,11 +369,11 @@ var App = (function () {
       var num = (i + 1) < 100 ? ('0' + (i + 1)).slice(-2) : String(i + 1);
       return '<div class="tarjeta tarjeta-unidad" data-id="' + u.unidadId + '" ' +
         'onclick="App.abrirUnidad(\'' + u.unidadId + '\')">' +
-        '<div class="u-top">' +
         '<span class="u-grip" title="Arrastra para reordenar" ' +
         'onpointerdown="App.gripDown(event,\'' + u.unidadId + '\')" ' +
         'onclick="event.stopPropagation()">⠿</span>' +
-        '<span class="u-ico u-num">' + num + '</span>' +
+        '<span class="u-num">' + num + '</span>' +
+        '<h3 class="u-nom">' + esc(u.nombre) + '</h3>' +
         '<div class="acciones-tarjeta">' +
         '<button class="icono" title="Editar unidad" ' +
         'onclick="event.stopPropagation();App.editarUnidadUI(\'' + u.unidadId + '\')">✎</button>' +
@@ -382,8 +382,6 @@ var App = (function () {
         '<button class="icono peligro" title="Eliminar unidad" ' +
         'onclick="event.stopPropagation();App.eliminarUnidad(\'' + u.unidadId + '\')">🗑</button>' +
         '</div>' +
-        '</div>' +
-        '<h3 class="u-nom">' + esc(u.nombre) + '</h3>' +
         '</div>';
     }).join('');
   }

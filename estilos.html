@@ -1,5 +1,7 @@
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+  /* DSEG7: display de 7 segmentos tipo LCD Casio (para los números de unidad). */
+  @import url('https://cdn.jsdelivr.net/npm/dseg@0.46.0/css/dseg.css');
 
   :root {
     --acento: #5b5bd6;        /* índigo Linear-ish */
@@ -179,30 +181,35 @@
     box-shadow: inset 0 0 0 2px #fff, 0 0 0 1px var(--borde); transition: transform .1s; }
   .swatch:hover { transform: scale(1.1); }
   .swatch.sel { box-shadow: inset 0 0 0 2px #fff, 0 0 0 2px var(--texto); }
-  /* Tarjeta de unidad: baldosa en rejilla con fila superior (asa · nº · acciones)
-     y el nombre debajo (a línea completa, puede envolver). Se reordena arrastrando. */
-  .tarjeta-unidad { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px;
+  /* Tarjeta de unidad: baldosa en rejilla, todo en una fila alineada:
+     asa ⠿ · número LCD · título · acciones. Se reordena arrastrando por el asa. */
+  .tarjeta-unidad { display: flex; align-items: center; gap: 12px; padding: 15px 16px;
     position: relative; }
   .tarjeta-unidad.arrastrando { opacity: .9; box-shadow: var(--sombra-3); transform: scale(1.02);
     cursor: grabbing; }
-  .u-top { display: flex; align-items: center; gap: 10px; }
-  .u-grip { flex: 0 0 auto; cursor: grab; color: var(--texto-3); font-size: 15px; line-height: 1;
-    padding: 2px 5px; border-radius: 6px; touch-action: none; user-select: none; }
+  .u-grip { flex: 0 0 auto; cursor: grab; color: var(--texto-3); font-size: 14px; line-height: 1;
+    padding: 2px 3px; border-radius: 6px; touch-action: none; user-select: none; }
   .u-grip:hover { background: var(--bg); color: var(--texto-2); }
   .u-grip:active { cursor: grabbing; }
-  .tarjeta-unidad .u-ico {
-    flex: 0 0 auto; width: 34px; height: 34px; border-radius: 9px;
-    display: inline-flex; align-items: center; justify-content: center; font-size: 18px;
-    background: var(--acento-suave);
+  /* Número tipo LCD de 7 segmentos (Casio). Degrada a monospace si no carga. */
+  .u-num {
+    flex: 0 0 auto; min-width: 46px; height: 34px; padding: 0 9px; border-radius: 8px;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: #1f2230; color: #7dd3a8;
+    font-family: 'DSEG7 Classic', ui-monospace, 'Courier New', monospace;
+    font-size: 16px; font-weight: 400; letter-spacing: 1px;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,.35);
   }
-  /* Número de la unidad (01, 02…) como icono. */
-  .tarjeta-unidad .u-num { font-size: 13px; font-weight: 700; color: var(--acento-fuerte);
-    font-variant-numeric: tabular-nums; letter-spacing: .03em; }
-  .tarjeta-unidad .u-nom { margin: 0; font-size: 15px; font-weight: 600; line-height: 1.3; }
-  /* Acciones: a la derecha de la fila superior; aparecen al pasar el ratón,
-     y siempre visibles en dispositivos táctiles. */
-  .acciones-tarjeta { margin-left: auto; display: flex; gap: 6px; flex: 0 0 auto;
-    opacity: 0; transition: opacity .12s; }
+  .u-nom { flex: 1 1 auto; min-width: 0; margin: 0; font-size: 15px; font-weight: 600;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* Acciones a la derecha; aparecen al pasar el ratón (absolutas, no roban ancho
+     al título) y siempre visibles en táctil. */
+  .acciones-tarjeta {
+    position: absolute; top: 50%; right: 12px; transform: translateY(-50%);
+    display: flex; gap: 6px; opacity: 0; transition: opacity .12s;
+    padding-left: 30px;
+    background: linear-gradient(90deg, rgba(255,255,255,0), var(--surface) 42%);
+  }
   .tarjeta-unidad:hover .acciones-tarjeta { opacity: 1; }
   @media (hover: none) { .acciones-tarjeta { opacity: 1; } }
   .icono {
