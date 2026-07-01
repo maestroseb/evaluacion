@@ -395,30 +395,40 @@ var App = (function () {
     e.preventDefault(); e.stopPropagation();
     var el = e.currentTarget.closest('.tarjeta-unidad');
     if (!el) return;
-    arrastre = { el: el, moved: false };
+    var r = el.getBoundingClientRect();
+    arrastre = { el: el, moved: false, offX: e.clientX - r.left, offY: e.clientY - r.top };
     el.classList.add('arrastrando');
+    document.body.classList.add('reordenando');
+    if (el.setPointerCapture) { try { el.setPointerCapture(e.pointerId); } catch (x) {} }
     document.addEventListener('pointermove', gripMove);
     document.addEventListener('pointerup', gripUp, true);
   }
   function gripMove(e) {
     if (!arrastre) return;
     arrastre.moved = true;
-    var cont = document.getElementById('lista-unidades');
-    var destino = tarjetaBajoPunto_(cont, e.clientX, e.clientY, arrastre.el);
-    if (!destino) return;
-    var r = destino.getBoundingClientRect();
-    var despues = e.clientX > (r.left + r.width / 2); // lado sobre el que sueltas
-    var ref = despues ? destino.nextSibling : destino;
-    if (ref !== arrastre.el && ref !== arrastre.el.nextSibling) {
-      cont.insertBefore(arrastre.el, ref);
+    var el = arrastre.el, cont = document.getElementById('lista-unidades');
+    // 1) Reordena según la tarjeta que hay bajo el puntero.
+    var destino = tarjetaBajoPunto_(cont, e.clientX, e.clientY, el);
+    if (destino) {
+      var r = destino.getBoundingClientRect();
+      var despues = e.clientX > (r.left + r.width / 2);
+      var ref = despues ? destino.nextSibling : destino;
+      if (ref !== el && ref !== el.nextSibling) cont.insertBefore(el, ref);
     }
+    // 2) La tarjeta se pega al puntero respecto a su hueco natural actual.
+    el.style.transform = 'none';
+    var nr = el.getBoundingClientRect();
+    el.style.transform = 'translate(' + (e.clientX - arrastre.offX - nr.left) + 'px,' +
+      (e.clientY - arrastre.offY - nr.top) + 'px)';
   }
   function gripUp() {
     document.removeEventListener('pointermove', gripMove);
     document.removeEventListener('pointerup', gripUp, true);
     if (!arrastre) return;
     var el = arrastre.el, moved = arrastre.moved;
+    el.style.transform = '';
     el.classList.remove('arrastrando');
+    document.body.classList.remove('reordenando');
     arrastre = null;
     if (!moved) return;
     // Evita que el "click" posterior al soltar abra la unidad.

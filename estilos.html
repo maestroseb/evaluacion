@@ -185,8 +185,10 @@
      asa ⠿ · número LCD · título · acciones. Se reordena arrastrando por el asa. */
   .tarjeta-unidad { display: flex; align-items: center; gap: 12px; padding: 15px 16px;
     position: relative; }
-  .tarjeta-unidad.arrastrando { opacity: .9; box-shadow: var(--sombra-3); transform: scale(1.02);
-    cursor: grabbing; }
+  .tarjeta-unidad.arrastrando { z-index: 5; opacity: .97; cursor: grabbing;
+    box-shadow: 0 14px 30px rgba(16,18,24,.20); border-color: var(--borde-fuerte);
+    transition: none; }
+  body.reordenando { user-select: none; cursor: grabbing; }
   .u-grip { flex: 0 0 auto; cursor: grab; color: var(--texto-3); font-size: 14px; line-height: 1;
     padding: 2px 3px; border-radius: 6px; touch-action: none; user-select: none; }
   .u-grip:hover { background: var(--bg); color: var(--texto-2); }
