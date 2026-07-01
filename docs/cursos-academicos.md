@@ -20,6 +20,16 @@
 - `Promocion.gs` (`promocionarGrupo`): duplica un grupo en el curso destino con
   sus clases, unidades y actividades pero SIN notas; el alumnado se copia con
   ids nuevos (empieza limpio). Tras promocionar, la UI salta al curso destino.
+  - **Subida de nivel** (p. ej. 4º→5º): al promocionar se elige el nivel
+    destino; si cambia, los criterios de cada actividad se remapean sustituyendo
+    el nivel dentro del código (2º token: `LCL.4.4.1`→`LCL.5.4.1`) y validándolos
+    contra el catálogo del nivel destino (`Curriculo.codigosDeNivel`). Los que no
+    tienen correspondencia quedan sin asignar (LOMLOE no garantiza equivalencia;
+    en los datos actuales el acierto ronda el 99 %). Una actividad puede quedar
+    sin criterios: se permite crearla así (`Actividades.crear_` con flag) para
+    que el profe la revincule, y la UI avisa de cuántos quedaron sin asignar.
+  - Nota de datos: inglés usa prefijo `ING` y francés `FR2` en todos los niveles;
+    el remapeo solo toca el token de nivel, nunca el prefijo de área.
 - Portabilidad (export/import) incluye `cursoAcademico`.
 
 ## Diseño original (referencia)

@@ -245,9 +245,23 @@ var Curriculo = (function () {
       });
   }
 
+  /**
+   * Todos los códigos de criterio de un nivel (de cualquier área), como objeto
+   * { codigo: true } para comprobar pertenencia rápido. Se usa al promocionar
+   * de nivel para validar los criterios remapeados (p. ej. LCL.4.4.1→LCL.5.4.1).
+   */
+  function codigosDeNivel(curso) {
+    var set = {};
+    leerFilas_().forEach(function (f) {
+      if (f.curso === curso && f.codigo) set[f.codigo] = true;
+    });
+    return set;
+  }
+
   return {
     listarAreasCursos: listarAreasCursos,
     criteriosDe: criteriosDe,
+    codigosDeNivel: codigosDeNivel,
     refrescar: refrescar,
     desdeHoja: leerDesdeHoja_  // lee SIEMPRE de la hoja (para exportar el JSON)
   };

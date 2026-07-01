@@ -1535,25 +1535,56 @@ var App = (function () {
       });
   }
 
+  /** Siguiente nivel del alumnado ("4º Primaria" → "5º Primaria"), o el mismo. */
+  function siguienteNivel_(nivel) {
+    var niveles = cursosDisponibles();
+    var m = /^\s*(\d+)/.exec(nivel || '');
+    if (!m) return nivel; // Infantil u otros sin número: sin salto automático
+    var buscado = String(parseInt(m[1], 10) + 1);
+    for (var i = 0; i < niveles.length; i++) {
+      var mm = /^\s*(\d+)/.exec(niveles[i]);
+      if (mm && mm[1] === buscado) return niveles[i];
+    }
+    return nivel; // no hay nivel superior (p. ej. 6º): se queda igual
+  }
+
   /** Duplica el grupo actual en otro curso académico (estructura, sin notas). */
   function promocionarGrupoUI() {
     var cl = claseActual;
     var activo = (estado.cursos && estado.cursos.activo) || '';
-    var sugerido = siguienteCurso_(activo) || '';
+    var sugeridoAcad = siguienteCurso_(activo) || '';
+    var nivelActual = cl.curso || '';
+    var sugeridoNivel = siguienteNivel_(nivelActual);
+    var optNiveles = cursosDisponibles().map(function (n) {
+      return '<option value="' + esc(n) + '"' + (n === sugeridoNivel ? ' selected' : '') +
+        '>' + esc(n) + '</option>';
+    }).join('');
     abrirModal('Promocionar grupo',
       '<p class="ayuda">Crea una copia de «' + esc(cl.nombre) + '» en otro curso académico, ' +
       'con sus clases, unidades y actividades pero <b>sin notas</b>. El alumnado se copia para ' +
       'que ajustes altas y bajas del nuevo curso.</p>' +
       '<label>Curso académico de destino' +
-      '<input id="f-curso-acad" type="text" value="' + esc(sugerido) + '" placeholder="2025-2026"></label>',
+      '<input id="f-curso-acad" type="text" value="' + esc(sugeridoAcad) + '" placeholder="2025-2026"></label>' +
+      '<label>Nivel del alumnado el próximo curso' +
+      '<select id="f-nivel-destino">' + optNiveles + '</select></label>' +
+      '<p class="ayuda">Si el alumnado <b>sube de nivel</b> (p. ej. de ' + esc(nivelActual) +
+      ' al siguiente), los criterios se reasignan al nivel nuevo (LCL.4.4.1 → LCL.5.4.1). ' +
+      'Los que no tengan equivalente quedan <b>sin asignar</b> para que los revises.</p>',
       'Promocionar',
       function () {
         var destino = val('f-curso-acad').trim();
+        var nivel = val('f-nivel-destino');
         if (!/^\d{4}-\d{4}$/.test(destino)) return aviso('Escribe el curso como 2025-2026.');
         botonModalCargando('Promocionando…');
-        llamar('promocionarGrupo', [cl.claseId, destino], function () {
+        llamar('promocionarGrupo', [cl.claseId, destino, nivel], function (r) {
           cerrarModal();
-          avisoOk('Grupo promocionado a ' + destino + '.');
+          var sin = (r && r.criteriosSinAsignar) || 0;
+          if (sin > 0) {
+            avisoOk('Grupo promocionado a ' + destino + '. ' + sin +
+              ' criterio(s) sin equivalente en ' + nivel + ': revísalos.');
+          } else {
+            avisoOk('Grupo promocionado a ' + destino + '.');
+          }
           cambiarCurso(destino); // salta al curso destino para ver el resultado
         });
       });
