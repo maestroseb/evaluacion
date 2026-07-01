@@ -3,14 +3,11 @@
  * pestaña _notas: una fila [unidadId, items] con
  *     items = { actividadId: { alumnoId: valor } }
  *
- * Ventajas frente al antiguo _items (una fila por nota, global):
+ * Ventajas frente al antiguo modelo de una fila por nota (global):
  *   - guardar/leer toca SOLO esa unidad (coste independiente del total del
  *     cuaderno) → escala con los años sin degradarse;
  *   - no se reescribe nada de otras unidades → sin riesgo de corromper todo;
  *   - escritura serializada con LockService → sin condiciones de carrera.
- *
- * _items se conserva como copia de seguridad congelada tras la migración
- * (ver Migracion.gs).
  */
 
 /** Devuelve el bloque de notas de una unidad: { actividadId: { alumnoId: valor } }. */

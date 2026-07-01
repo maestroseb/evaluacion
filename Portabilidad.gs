@@ -28,8 +28,7 @@ function getExportacion() {
     evaluaciones: filas(HOJAS.EVALUACIONES),
     unidades: filas(HOJAS.UNIDADES),
     actividades: filas(HOJAS.ACTIVIDADES),
-    notas: filas(HOJAS.NOTAS),
-    items: filas(HOJAS.ITEMS) // legado (copia congelada); se conserva por compatibilidad
+    notas: filas(HOJAS.NOTAS)
   };
 }
 
@@ -62,6 +61,6 @@ function importarDatos(datos) {
   escribir(HOJAS.UNIDADES, datos.unidades || []);
   escribir(HOJAS.ACTIVIDADES, datos.actividades || []);
   escribir(HOJAS.NOTAS, datos.notas || []);
-  escribir(HOJAS.ITEMS, datos.items || []);
+  // Los backups antiguos podían traer datos.items (_items legado): se ignora.
   return { ok: true };
 }

@@ -38,7 +38,6 @@ function getUsuario() {
 function getEstadoInicial() {
   var ss = abrirCuaderno_();
   Respaldo.siToca_(ss); // copia de seguridad automática (máx. 1/día), no bloquea
-  Migracion.auto_(ss);  // migra _items → _notas la 1ª vez tras actualizar (idempotente)
   Cursos.backfill_(ss); // asigna curso académico a los datos antiguos (idempotente)
   var activo = Cursos.activo_();
   return {
