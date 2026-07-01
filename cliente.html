@@ -365,17 +365,41 @@ var App = (function () {
         'Crea la primera para empezar a evaluar actividades.</div>';
       return;
     }
-    cont.innerHTML = uds.map(function (u) {
+    cont.innerHTML = uds.map(function (u, i) {
+      var num = (i + 1) < 100 ? ('0' + (i + 1)).slice(-2) : String(i + 1);
       return '<div class="tarjeta tarjeta-unidad" onclick="App.abrirUnidad(\'' + u.unidadId + '\')">' +
-        '<span class="u-ico">📘</span>' +
+        '<span class="u-ico u-num">' + num + '</span>' +
         '<h3 class="u-nom">' + esc(u.nombre) + '</h3>' +
         '<div class="acciones-tarjeta">' +
+        '<button class="icono" title="Editar unidad" ' +
+        'onclick="event.stopPropagation();App.editarUnidadUI(\'' + u.unidadId + '\')">✎</button>' +
         '<button class="icono" title="Duplicar unidad" ' +
         'onclick="event.stopPropagation();App.clonarUnidad(\'' + u.unidadId + '\')">⧉</button>' +
         '<button class="icono peligro" title="Eliminar unidad" ' +
         'onclick="event.stopPropagation();App.eliminarUnidad(\'' + u.unidadId + '\')">🗑</button>' +
         '</div></div>';
     }).join('');
+  }
+
+  /** Renombrar una unidad desde su tarjeta. */
+  function editarUnidadUI(unidadId) {
+    var u = (evalActual.unidades || []).filter(function (x) { return x.unidadId === unidadId; })[0];
+    if (!u) return;
+    abrirModal('Editar unidad',
+      '<label>Nombre de la unidad' +
+      '<input id="f-unidad" type="text" value="' + esc(u.nombre) + '"></label>',
+      'Guardar cambios',
+      function () {
+        var nombre = val('f-unidad').trim();
+        if (!nombre) return aviso('Pon un nombre a la unidad.');
+        botonModalCargando('Guardando…');
+        llamar('renombrarUnidad', [unidadId, nombre], function () {
+          u.nombre = nombre;
+          if (rejillaCache[unidadId]) rejillaCache[unidadId].unidad.nombre = nombre;
+          cerrarModal();
+          pintarUnidades();
+        });
+      });
   }
 
   /** Duplicar desde la tarjeta del listado. */
@@ -1308,6 +1332,7 @@ var App = (function () {
     abrirEvaluacion: abrirEvaluacion, editarEvaluacionUI: editarEvaluacionUI,
     eliminarEvaluacionActual: eliminarEvaluacionActual,
     nuevaUnidad: nuevaUnidad, abrirUnidad: abrirUnidad,
+    editarUnidadUI: editarUnidadUI,
     clonarUnidad: clonarUnidad, eliminarUnidad: eliminarUnidad,
     copiarSeneca: copiarSeneca, infoSeneca: infoSeneca,
     verResumen: verResumen, pintarResumen: pintarResumen, copiarResumenSeneca: copiarResumenSeneca,
