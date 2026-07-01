@@ -17,7 +17,8 @@ function getExportacion() {
         return { id: a.id, nombre: Cripto.descifrar(a.nombre) };
       });
     } catch (e) {}
-    return { claseId: r[0], nombre: r[1], curso: r[2], creado: r[3], alumnos: al };
+    return { claseId: r[0], nombre: r[1], curso: r[2], creado: r[3], alumnos: al,
+      color: r[5] || '', icono: r[6] || '' };
   });
   return {
     version: CONFIG.ESQUEMA_VERSION,
@@ -27,7 +28,8 @@ function getExportacion() {
     evaluaciones: filas(HOJAS.EVALUACIONES),
     unidades: filas(HOJAS.UNIDADES),
     actividades: filas(HOJAS.ACTIVIDADES),
-    items: filas(HOJAS.ITEMS)
+    notas: filas(HOJAS.NOTAS),
+    items: filas(HOJAS.ITEMS) // legado (copia congelada); se conserva por compatibilidad
   };
 }
 
@@ -52,12 +54,13 @@ function importarDatos(datos) {
     var al = (c.alumnos || []).map(function (a) {
       return { id: a.id, nombre: Cripto.cifrar(a.nombre) };
     });
-    return [c.claseId, c.nombre, c.curso, c.creado, JSON.stringify(al)];
+    return [c.claseId, c.nombre, c.curso, c.creado, JSON.stringify(al), c.color || '', c.icono || ''];
   });
   escribir(HOJAS.CLASES, clasesRows);
   escribir(HOJAS.EVALUACIONES, datos.evaluaciones || []);
   escribir(HOJAS.UNIDADES, datos.unidades || []);
   escribir(HOJAS.ACTIVIDADES, datos.actividades || []);
+  escribir(HOJAS.NOTAS, datos.notas || []);
   escribir(HOJAS.ITEMS, datos.items || []);
   return { ok: true };
 }

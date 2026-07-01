@@ -21,7 +21,9 @@ var CONFIG = {
   // v2: campo "icono" en las evaluaciones (icono SVG por clase).
   // v3: campo "nombre" en las evaluaciones (título editable, por defecto el área).
   // v4: campos "color" e "icono" en los grupos (_clases).
-  ESQUEMA_VERSION: 4
+  // v5: notas por unidad en _notas (un JSON por unidad); _items pasa a ser
+  //     copia de seguridad congelada tras la migración.
+  ESQUEMA_VERSION: 5
 };
 
 /**
@@ -34,6 +36,7 @@ var HOJAS = {
   EVALUACIONES: '_evaluaciones', // clase + área concreta a evaluar
   UNIDADES: '_unidades',  // unidades de cada evaluación
   ACTIVIDADES: '_actividades', // actividades de cada unidad y sus criterios
-  ITEMS: '_items',        // ítems conseguidos por alumno y actividad
+  ITEMS: '_items',        // (legado) ítems fila-a-fila; copia congelada tras migrar
+  NOTAS: '_notas',        // notas por unidad: un JSON {act:{alumno:valor}} por fila
   PAPELERA: '_papelera'   // elementos borrados, restaurables un tiempo
 };

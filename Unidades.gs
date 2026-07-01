@@ -65,11 +65,12 @@ var Unidades = (function () {
   }
 
   function eliminar_(ss, unidadId) {
-    Papelera.papelearUnidad_(ss, unidadId); // foto completa (unidad+actividades+ítems)
-    // Borra en cascada las actividades de la unidad (y sus ítems).
+    Papelera.papelearUnidad_(ss, unidadId); // foto: unidad + actividades + notas
+    // Borra en cascada las actividades (sin tocar el blob: se elimina entero).
     Actividades.listar_(ss, unidadId).forEach(function (a) {
       Actividades.eliminar_(ss, a.actividadId, true);
     });
+    Notas.borrar_(ss, unidadId); // elimina la fila de _notas de la unidad
     var sh = hoja_(ss);
     var fila = Datos.filaDeId_(sh, unidadId);
     if (fila < 0) throw new Error('Unidad no encontrada.');
