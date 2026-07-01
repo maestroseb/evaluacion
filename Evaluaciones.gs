@@ -12,7 +12,8 @@ function getCriterios(curso, area) {
 
 /** Lista las evaluaciones con datos de su clase (nombre, curso, nº alumnos). */
 function listarEvaluaciones() {
-  return Evaluaciones.listar_(abrirCuaderno_());
+  var ss = abrirCuaderno_();
+  return Cursos.filtrar_(Evaluaciones.listar_(ss), Cursos.activo_());
 }
 
 /** Crea una evaluación. payload: {claseId, area, color, icono, nombre} */
@@ -56,6 +57,7 @@ var Evaluaciones = (function () {
       out.push({
         evalId: f[0], claseId: f[1], area: f[2], creado: f[3],
         color: f[4] || '', icono: f[5] || '', nombre: f[6] || f[2], orden: Number(f[7]) || 0,
+        cursoAcademico: f[8] || '',
         claseNombre: cl.nombre || '(grupo eliminado)',
         curso: cl.curso || '',
         numAlumnos: cl.numAlumnos || 0
@@ -72,8 +74,11 @@ var Evaluaciones = (function () {
     var evalId = Datos.nuevoId_('e');
     var nombre = (payload.nombre && String(payload.nombre).trim()) || payload.area;
     var orden = listar_(ss).length + 1;
+    // La clase hereda el curso académico de su grupo (o el activo si el grupo
+    // aún no lo tuviera asignado).
+    var cursoAcad = clase.cursoAcademico || Cursos.activo_();
     hoja_(ss).appendRow([evalId, clase.claseId, payload.area,
-      new Date().toISOString(), payload.color || '', payload.icono || '', nombre, orden]);
+      new Date().toISOString(), payload.color || '', payload.icono || '', nombre, orden, cursoAcad]);
     return obtener_(ss, evalId);
   }
 

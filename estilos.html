@@ -136,6 +136,16 @@
   .buscador input:focus { outline: none; border-color: var(--acento);
     box-shadow: 0 0 0 3px var(--acento-suave); }
 
+  /* Selector de curso académico en la barra superior */
+  .curso-chip { display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 10px 5px 11px; border: 1px solid var(--borde-fuerte); border-radius: 999px;
+    background: var(--surface); cursor: pointer; transition: border-color .12s, box-shadow .12s; }
+  .curso-chip:focus-within { border-color: var(--acento); box-shadow: 0 0 0 3px var(--acento-suave); }
+  .curso-chip-ico { font-size: 13px; line-height: 1; }
+  .curso-chip select { border: none; background: transparent; font-family: inherit;
+    font-size: 13px; font-weight: 600; color: var(--texto); cursor: pointer;
+    padding: 0 2px; margin: 0; outline: none; }
+
   /* Velo para sidebar en móvil */
   .velo { display: none; position: fixed; inset: 0; background: rgba(20,22,28,.4);
     z-index: 39; }
@@ -530,7 +540,9 @@
 
     .topbar { padding: 0 16px; gap: 10px; }
     .topbar-titulo { font-size: 16px; }
-    .buscador { width: auto; flex: 0 1 160px; }
+    .buscador { width: auto; flex: 0 1 140px; }
+    .curso-chip { padding: 5px 8px; }
+    .curso-chip-ico { display: none; }
 
     main { padding: 16px 16px calc(74px + env(safe-area-inset-bottom, 0px)); }
 

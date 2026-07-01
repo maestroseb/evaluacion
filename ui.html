@@ -45,6 +45,11 @@
       <header class="topbar">
         <button class="hamburguesa" title="Menú" onclick="App.toggleSidebar()">☰</button>
         <h2 class="topbar-titulo" id="topbar-titulo">Mis clases</h2>
+        <label class="curso-chip" title="Curso académico">
+          <span class="curso-chip-ico">📅</span>
+          <select id="curso-activo" aria-label="Curso académico"
+            onchange="App.cambiarCurso(this.value)"></select>
+        </label>
         <div class="buscador">
           <span class="buscador-ico">🔍</span>
           <input id="buscador" type="text" placeholder="Buscar…" autocomplete="off"
@@ -84,6 +89,7 @@
         </div>
         <div class="acciones-unidad">
           <button class="btn" onclick="App.editarClaseUI()">✎ Editar</button>
+          <button class="btn" onclick="App.promocionarGrupoUI()" title="Copiar a otro curso académico">⬆ Promocionar</button>
           <button class="btn peligro" onclick="App.eliminarClaseActual()">Eliminar grupo</button>
         </div>
       </div>

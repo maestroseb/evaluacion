@@ -1,7 +1,28 @@
-# Cursos académicos — plan (Parte B, pendiente)
+# Cursos académicos — Parte B
 
-> Estado: **diseñado, sin implementar.** Se hará sobre base limpia, después de
-> mergear el rediseño y la mejora de notas por unidad (`docs/notas-por-unidad.md`).
+> Estado: **implementado** (esquema v7). Un solo cuaderno guarda todos los
+> cursos; la interfaz filtra por el curso académico activo.
+
+## Qué se ha implementado
+
+- Campo `cursoAcademico` en `_clases` y `_evaluaciones` (col 9, migración no
+  destructiva por `asegurarColumnas_`; `ESQUEMA_VERSION` = 7).
+- Módulo `Cursos` (`Cursos.gs`): `actual_()` (curso natural sep→ago),
+  `activo_()`/`fijar_()` (persistido en `UserProperties.cursoActivo`),
+  `lista_()`, `filtrar_()` y `backfill_()` (asigna el curso natural a los datos
+  antiguos, idempotente, se llama en `getEstadoInicial`).
+- `getEstadoInicial` devuelve `cursos:{activo,actual,lista}` y las listas ya
+  filtradas al curso activo. `cambiarCurso(curso)` cambia el activo y devuelve
+  Clases y Grupos del nuevo curso. `crearClase`/`crearEvaluacion` etiquetan lo
+  nuevo con el curso activo (la clase hereda el del grupo).
+- UI: selector de curso en la barra superior (`#curso-activo`); al cambiarlo se
+  repintan Clases y Grupos. Botón **Promocionar** en el detalle de un grupo.
+- `Promocion.gs` (`promocionarGrupo`): duplica un grupo en el curso destino con
+  sus clases, unidades y actividades pero SIN notas; el alumnado se copia con
+  ids nuevos (empieza limpio). Tras promocionar, la UI salta al curso destino.
+- Portabilidad (export/import) incluye `cursoAcademico`.
+
+## Diseño original (referencia)
 
 ## Decisión: un solo cuaderno + campo `cursoAcademico` (NO hojas separadas)
 

@@ -18,7 +18,7 @@ function getExportacion() {
       });
     } catch (e) {}
     return { claseId: r[0], nombre: r[1], curso: r[2], creado: r[3], alumnos: al,
-      color: r[5] || '', icono: r[6] || '', orden: r[7] || '' };
+      color: r[5] || '', icono: r[6] || '', orden: r[7] || '', cursoAcademico: r[8] || '' };
   });
   return {
     version: CONFIG.ESQUEMA_VERSION,
@@ -55,7 +55,7 @@ function importarDatos(datos) {
       return { id: a.id, nombre: Cripto.cifrar(a.nombre) };
     });
     return [c.claseId, c.nombre, c.curso, c.creado, JSON.stringify(al),
-      c.color || '', c.icono || '', c.orden || ''];
+      c.color || '', c.icono || '', c.orden || '', c.cursoAcademico || ''];
   });
   escribir(HOJAS.CLASES, clasesRows);
   escribir(HOJAS.EVALUACIONES, datos.evaluaciones || []);

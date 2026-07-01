@@ -24,7 +24,9 @@ var CONFIG = {
   // v5: notas por unidad en _notas (un JSON por unidad); _items pasa a ser
   //     copia de seguridad congelada tras la migración.
   // v6: campo "orden" en evaluaciones y grupos (reordenar tarjetas arrastrando).
-  ESQUEMA_VERSION: 6
+  // v7: campo "cursoAcademico" en evaluaciones y grupos (multi-curso en un solo
+  //     cuaderno; la interfaz filtra por el curso académico activo).
+  ESQUEMA_VERSION: 7
 };
 
 /**

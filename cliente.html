@@ -24,6 +24,7 @@ var App = (function () {
       document.getElementById('usuario').title = e.usuario;
       document.getElementById('perfil-avatar').textContent = iniciales(e.usuario);
       document.getElementById('cargando').hidden = true;
+      pintarSelectorCurso();
       irAEvaluaciones();
     });
   }
@@ -49,6 +50,38 @@ var App = (function () {
   }
   function irAEvaluaciones() { evalActual = null; setTitulo('Clases'); mostrar('vista-evaluaciones'); pintarEvaluaciones(); }
   function irAClases() { claseActual = null; setTitulo('Grupos'); mostrar('vista-clases'); pintarClases(); }
+
+  // ---------- curso académico (multi-curso en un solo cuaderno) ----------
+  /** Rellena el selector de curso de la barra superior con los cursos con datos. */
+  function pintarSelectorCurso() {
+    var sel = document.getElementById('curso-activo');
+    if (!sel || !estado.cursos) return;
+    var c = estado.cursos;
+    sel.innerHTML = (c.lista || []).map(function (x) {
+      return '<option value="' + esc(x) + '"' + (x === c.activo ? ' selected' : '') +
+        '>' + esc(x) + '</option>';
+    }).join('');
+  }
+
+  /** Cambia el curso activo: recarga Clases y Grupos ya filtrados del servidor. */
+  function cambiarCurso(curso) {
+    if (!curso || (estado.cursos && curso === estado.cursos.activo)) return;
+    llamar('cambiarCurso', [curso], function (r) {
+      estado.cursos = r.cursos;
+      estado.clases = r.clases;
+      estado.evaluaciones = r.evaluaciones;
+      invalidarCaches();
+      pintarSelectorCurso();
+      irAEvaluaciones(); // vuelve a la lista de clases del curso elegido
+    });
+  }
+
+  /** Siguiente curso académico ("2024-2025" -> "2025-2026"), o '' si no encaja. */
+  function siguienteCurso_(acad) {
+    var m = /^(\d{4})-(\d{4})$/.exec(acad || '');
+    if (!m) return '';
+    return (parseInt(m[1], 10) + 1) + '-' + (parseInt(m[2], 10) + 1);
+  }
 
   /** Inicial (mayúscula) de un texto, para los iconos de color. */
   function inicial(s) { return String(s || '?').trim().charAt(0).toUpperCase() || '?'; }
@@ -1502,6 +1535,30 @@ var App = (function () {
       });
   }
 
+  /** Duplica el grupo actual en otro curso académico (estructura, sin notas). */
+  function promocionarGrupoUI() {
+    var cl = claseActual;
+    var activo = (estado.cursos && estado.cursos.activo) || '';
+    var sugerido = siguienteCurso_(activo) || '';
+    abrirModal('Promocionar grupo',
+      '<p class="ayuda">Crea una copia de «' + esc(cl.nombre) + '» en otro curso académico, ' +
+      'con sus clases, unidades y actividades pero <b>sin notas</b>. El alumnado se copia para ' +
+      'que ajustes altas y bajas del nuevo curso.</p>' +
+      '<label>Curso académico de destino' +
+      '<input id="f-curso-acad" type="text" value="' + esc(sugerido) + '" placeholder="2025-2026"></label>',
+      'Promocionar',
+      function () {
+        var destino = val('f-curso-acad').trim();
+        if (!/^\d{4}-\d{4}$/.test(destino)) return aviso('Escribe el curso como 2025-2026.');
+        botonModalCargando('Promocionando…');
+        llamar('promocionarGrupo', [cl.claseId, destino], function () {
+          cerrarModal();
+          avisoOk('Grupo promocionado a ' + destino + '.');
+          cambiarCurso(destino); // salta al curso destino para ver el resultado
+        });
+      });
+  }
+
   // ---------- mapa: cursos y áreas ----------
   function cursosDisponibles() {
     var vistos = {}, out = [];
@@ -1650,7 +1707,8 @@ var App = (function () {
     prefetchEval: prefetchEval, prefetchClase: prefetchClase, prefetchRejilla: prefetchRejilla,
     nuevaClase: nuevaClase, copiarDeClase: copiarDeClase,
     abrirClase: abrirClase, editarClaseUI: editarClaseUI, editarAlumnos: editarAlumnos,
-    eliminarClaseActual: eliminarClaseActual,
+    eliminarClaseActual: eliminarClaseActual, promocionarGrupoUI: promocionarGrupoUI,
+    cambiarCurso: cambiarCurso,
     cerrarModal: cerrarModal, cerrarModalFuera: cerrarModalFuera
   };
 })();

@@ -9,7 +9,8 @@
  */
 
 function listarClases() {
-  return Clases.listar_(abrirCuaderno_());
+  var ss = abrirCuaderno_();
+  return Cursos.filtrar_(Clases.listar_(ss), Cursos.activo_());
 }
 
 /** Crea una clase. payload: {nombre, curso, alumnos:[{nombre}]} */
@@ -68,7 +69,7 @@ var Clases = (function () {
       out.push({
         claseId: f[0], nombre: f[1], curso: f[2], creado: f[3],
         numAlumnos: contar_(f[4]), color: f[5] || '', icono: f[6] || '',
-        orden: Number(f[7]) || 0
+        orden: Number(f[7]) || 0, cursoAcademico: f[8] || ''
       });
     }
     out.sort(function (a, b) { return a.orden - b.orden; }); // orden guardado (0 = antiguos)
@@ -81,10 +82,12 @@ var Clases = (function () {
     var claseId = Datos.nuevoId_('c');
     var alumnos = normalizarAlumnos_(payload.alumnos || []);
     var orden = listar_(ss).length + 1;
+    var cursoAcad = (payload.cursoAcademico && String(payload.cursoAcademico).trim())
+      || Cursos.activo_();
     hoja_(ss).appendRow([
       claseId, payload.nombre.trim(), payload.curso,
       new Date().toISOString(), serializar_(alumnos),
-      payload.color || '', payload.icono || '', orden
+      payload.color || '', payload.icono || '', orden, cursoAcad
     ]);
     return obtener_(ss, claseId);
   }
@@ -107,10 +110,11 @@ var Clases = (function () {
     var sh = hoja_(ss);
     var fila = Datos.filaDeId_(sh, claseId);
     if (fila < 0) throw new Error('Clase no encontrada.');
-    var f = sh.getRange(fila, 1, 1, 7).getValues()[0];
+    var f = sh.getRange(fila, 1, 1, 9).getValues()[0];
     return {
       claseId: f[0], nombre: f[1], curso: f[2], creado: f[3],
-      alumnos: deserializar_(f[4]), color: f[5] || '', icono: f[6] || ''
+      alumnos: deserializar_(f[4]), color: f[5] || '', icono: f[6] || '',
+      cursoAcademico: f[8] || ''
     };
   }
 
