@@ -191,17 +191,20 @@
     padding: 2px 3px; border-radius: 6px; touch-action: none; user-select: none; }
   .u-grip:hover { background: var(--bg); color: var(--texto-2); }
   .u-grip:active { cursor: grabbing; }
-  /* Número tipo LCD de 7 segmentos (Casio). Degrada a monospace si no carga. */
+  /* Número en display de 7 segmentos (tipo Casio) sobre fondo gris claro; los
+     dígitos toman el color de la clase (por style inline). Degrada a monospace. */
   .u-num {
-    flex: 0 0 auto; min-width: 46px; height: 34px; padding: 0 9px; border-radius: 8px;
+    flex: 0 0 auto; min-width: 44px; height: 32px; padding: 0 9px; border-radius: 8px;
     display: inline-flex; align-items: center; justify-content: center;
-    background: #1f2230; color: #7dd3a8;
+    background: #eef0f4; color: var(--acento);
     font-family: 'DSEG7 Classic', ui-monospace, 'Courier New', monospace;
-    font-size: 16px; font-weight: 400; letter-spacing: 1px;
-    box-shadow: inset 0 1px 2px rgba(0,0,0,.35);
+    font-size: 15px; font-weight: 400; letter-spacing: 1px;
   }
-  .u-nom { flex: 1 1 auto; min-width: 0; margin: 0; font-size: 15px; font-weight: 600;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* Título de la unidad. Se escoge con más especificidad que ".tarjeta h3"
+     (que tenía margin-bottom) para que quede centrado verticalmente. */
+  .tarjeta-unidad .u-nom { flex: 1 1 auto; min-width: 0; margin: 0; font-size: 15px;
+    font-weight: 600; line-height: 1.2; white-space: nowrap; overflow: hidden;
+    text-overflow: ellipsis; }
   /* Acciones a la derecha; aparecen al pasar el ratón (absolutas, no roban ancho
      al título) y siempre visibles en táctil. */
   .acciones-tarjeta {

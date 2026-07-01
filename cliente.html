@@ -365,6 +365,7 @@ var App = (function () {
         'Crea la primera para empezar a evaluar actividades.</div>';
       return;
     }
+    var col = (evalActual && evalActual.color) || '';
     cont.innerHTML = uds.map(function (u, i) {
       var num = (i + 1) < 100 ? ('0' + (i + 1)).slice(-2) : String(i + 1);
       return '<div class="tarjeta tarjeta-unidad" data-id="' + u.unidadId + '" ' +
@@ -372,7 +373,7 @@ var App = (function () {
         '<span class="u-grip" title="Arrastra para reordenar" ' +
         'onpointerdown="App.gripDown(event,\'' + u.unidadId + '\')" ' +
         'onclick="event.stopPropagation()">⠿</span>' +
-        '<span class="u-num">' + num + '</span>' +
+        '<span class="u-num"' + (col ? ' style="color:' + col + '"' : '') + '>' + num + '</span>' +
         '<h3 class="u-nom">' + esc(u.nombre) + '</h3>' +
         '<div class="acciones-tarjeta">' +
         '<button class="icono" title="Editar unidad" ' +
