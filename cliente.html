@@ -239,7 +239,8 @@ var App = (function () {
     ordenador:   '<rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>',
     lupa:        '<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',
     reloj:       '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
-    estrella:    '<polygon points="12 2 15.1 8.6 22 9.5 17 14.4 18.2 21.3 12 18 5.8 21.3 7 14.4 2 9.5 8.9 8.6"/>'
+    estrella:    '<polygon points="12 2 15.1 8.6 22 9.5 17 14.4 18.2 21.3 12 18 5.8 21.3 7 14.4 2 9.5 8.9 8.6"/>',
+    personas:    '<circle cx="9" cy="8" r="3.2"/><path d="M2.6 20a6.4 6.4 0 0 1 12.8 0"/><path d="M16.5 5.3a3.2 3.2 0 0 1 0 5.4"/><path d="M18 13.4A6.4 6.4 0 0 1 21.4 20"/>'
   };
   var ICONO_DEFECTO = 'libro';
 
@@ -1170,10 +1171,18 @@ var App = (function () {
       return;
     }
     cont.innerHTML = estado.clases.map(function (c) {
-      return '<div class="tarjeta" onclick="App.abrirClase(\'' + c.claseId + '\')">' +
-        '<h3>' + esc(c.nombre) + '</h3>' +
-        '<div class="meta">' + esc(c.curso) + '</div>' +
-        '<div class="meta">' + c.numAlumnos + ' alumnos/as</div>' +
+      var col = c.color || colorAvatar(c.nombre);
+      return '<div class="clase-card" style="--c:' + col + '" ' +
+        'onclick="App.abrirClase(\'' + c.claseId + '\')">' +
+        '<div class="clase-card-head">' +
+          '<span class="clase-card-ico">' + iconoSvg(c.icono || 'personas') + '</span>' +
+          '<h3>' + esc(c.nombre) + '</h3>' +
+        '</div>' +
+        '<div class="clase-card-body">' +
+          '<div class="cc-meta"><b>' + c.numAlumnos + '</b> alumnos/as</div>' +
+          '<div class="cc-meta">' + esc(c.curso) + '</div>' +
+        '</div>' +
+        '<button type="button" class="btn cc-btn">Ver detalles</button>' +
         '</div>';
     }).join('');
   }
@@ -1197,6 +1206,8 @@ var App = (function () {
       '<select id="f-copiar" onchange="App.copiarDeClase()">' + optCopiar + '</select></label>' +
       '<label>Alumnado (uno por línea)' +
       '<textarea id="f-alumnos" rows="8" placeholder="Apellidos, Nombre"></textarea></label>' +
+      '<div class="campo-crit"><span class="etq">Color</span>' + swatchesHtml(COLORES[0]) + '</div>' +
+      '<div class="campo-crit"><span class="etq">Icono</span>' + iconosHtml('personas') + '</div>' +
       '<p class="ayuda">Pega la lista desde Séneca o cópiala de otro grupo tuyo.</p>',
       'Crear grupo',
       function () {
@@ -1206,10 +1217,14 @@ var App = (function () {
         if (!curso) return aviso('Elige el curso.');
         var alumnos = parsearLista(val('f-alumnos'));
         botonModalCargando('Creando…');
-        llamar('crearClase', [{ nombre: nombre, curso: curso, alumnos: alumnos }], function (cl) {
+        llamar('crearClase',
+          [{ nombre: nombre, curso: curso, alumnos: alumnos,
+             color: colorElegido(), icono: iconoElegido() }],
+          function (cl) {
           estado.clases.push({
             claseId: cl.claseId, nombre: cl.nombre, curso: cl.curso,
-            numAlumnos: cl.alumnos.length, creado: cl.creado
+            numAlumnos: cl.alumnos.length, creado: cl.creado,
+            color: cl.color, icono: cl.icono
           });
           cerrarModal();
           abrirClaseCargada(cl);
@@ -1236,7 +1251,7 @@ var App = (function () {
     document.getElementById('clase-meta').textContent = cl.curso;
     var ico = document.getElementById('clase-ico');
     ico.textContent = inicial(cl.nombre);
-    ico.style.background = colorAvatar(cl.nombre);
+    ico.style.background = cl.color || colorAvatar(cl.nombre);
     pintarAlumnos();
   }
   function pintarAlumnos() {
@@ -1267,6 +1282,33 @@ var App = (function () {
         });
       });
   }
+  /** Modal para editar el grupo actual: nombre, color e icono. */
+  function editarClaseUI() {
+    var cl = claseActual;
+    abrirModal('Editar grupo',
+      '<label>Nombre del grupo' +
+      '<input id="f-nombre" type="text" value="' + esc(cl.nombre) + '"></label>' +
+      '<div class="campo-crit"><span class="etq">Color</span>' + swatchesHtml(cl.color || COLORES[0]) + '</div>' +
+      '<div class="campo-crit"><span class="etq">Icono</span>' + iconosHtml(cl.icono || 'personas') + '</div>' +
+      '<p class="ayuda">El curso y el alumnado no se cambian aquí.</p>',
+      'Guardar cambios',
+      function () {
+        var nombre = val('f-nombre').trim();
+        if (!nombre) return aviso('Pon un nombre al grupo.');
+        var payload = { nombre: nombre, color: colorElegido(), icono: iconoElegido() };
+        botonModalCargando('Guardando…');
+        llamar('editarClase', [cl.claseId, payload], function (act) {
+          claseActual.nombre = act.nombre; claseActual.color = act.color; claseActual.icono = act.icono;
+          estado.clases.forEach(function (c) {
+            if (c.claseId === cl.claseId) { c.nombre = act.nombre; c.color = act.color; c.icono = act.icono; }
+          });
+          cerrarModal();
+          abrirClaseCargada(claseActual); // repinta la cabecera
+          avisoOk('Grupo actualizado.');
+        });
+      });
+  }
+
   function eliminarClaseActual() {
     confirmar('Eliminar grupo', '¿Eliminar el grupo "' + claseActual.nombre + '"?',
       'Eliminar', function () {
@@ -1417,7 +1459,7 @@ var App = (function () {
     anadirFilaAct: anadirFilaAct, quitarFilaAct: quitarFilaAct,
     pintarRejilla: pintarRejilla,
     nuevaClase: nuevaClase, copiarDeClase: copiarDeClase,
-    abrirClase: abrirClase, editarAlumnos: editarAlumnos,
+    abrirClase: abrirClase, editarClaseUI: editarClaseUI, editarAlumnos: editarAlumnos,
     eliminarClaseActual: eliminarClaseActual,
     cerrarModal: cerrarModal, cerrarModalFuera: cerrarModalFuera
   };
