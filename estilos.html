@@ -1,7 +1,5 @@
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-  /* DSEG7: display de 7 segmentos tipo LCD Casio (para los números de unidad). */
-  @import url('https://cdn.jsdelivr.net/npm/dseg@0.46.0/css/dseg.css');
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@500;700&display=swap');
 
   :root {
     --acento: #5b5bd6;        /* índigo Linear-ish */
@@ -193,14 +191,14 @@
     padding: 2px 3px; border-radius: 6px; touch-action: none; user-select: none; }
   .u-grip:hover { background: var(--bg); color: var(--texto-2); }
   .u-grip:active { cursor: grabbing; }
-  /* Número en display de 7 segmentos (tipo Casio) sobre fondo gris claro; los
-     dígitos toman el color de la clase (por style inline). Degrada a monospace. */
+  /* Número de la unidad en monoespaciado (Roboto Mono) sobre fondo gris claro;
+     los dígitos toman el color de la clase (por style inline). */
   .u-num {
-    flex: 0 0 auto; min-width: 44px; height: 32px; padding: 0 9px; border-radius: 8px;
+    flex: 0 0 auto; min-width: 42px; height: 32px; padding: 0 9px; border-radius: 8px;
     display: inline-flex; align-items: center; justify-content: center;
     background: #eef0f4; color: var(--acento);
-    font-family: 'DSEG7-Classic', ui-monospace, 'Courier New', monospace;
-    font-size: 15px; font-weight: bold; letter-spacing: 1px;
+    font-family: 'Roboto Mono', ui-monospace, 'Courier New', monospace;
+    font-size: 16px; font-weight: 700; letter-spacing: .5px;
   }
   /* Título de la unidad. Se escoge con más especificidad que ".tarjeta h3"
      (que tenía margin-bottom) para que quede centrado verticalmente. */
