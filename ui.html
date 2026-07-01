@@ -2,27 +2,58 @@
 <html>
 <head>
   <base target="_top">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <?!= include('estilos') ?>
 </head>
 <body>
-  <header class="barra">
-    <span class="logo" onclick="App.irAEvaluaciones()" style="cursor:pointer">📊 Evaluación por Criterios</span>
-    <nav class="nav">
-      <a id="nav-eval" onclick="App.irAEvaluaciones()">Clases</a>
-      <a id="nav-clases" onclick="App.irAClases()">Grupos</a>
-      <div class="menu">
-        <button class="btn-menu" title="Más" onclick="App.toggleMenu(event)">⋯</button>
-        <div id="menu-mas" class="menu-pop" hidden>
-          <a id="nav-papelera" onclick="App.irAPapelera()">🗑 Papelera</a>
-          <a onclick="App.abrirCopia()">💾 Copia de seguridad</a>
+  <div class="app-shell">
+    <!-- BARRA LATERAL (expandible / contraíble) -->
+    <aside id="sidebar" class="sidebar">
+      <div class="sidebar-head">
+        <span class="marca" onclick="App.toggleSidebar()" title="Contraer / expandir barra">
+          <span class="marca-icono">📊</span>
+          <span class="marca-txt">Evaluación</span>
+        </span>
+      </div>
+
+      <div class="perfil" title="Tu cuenta">
+        <span class="avatar" id="perfil-avatar">··</span>
+        <div class="perfil-info">
+          <span class="perfil-nombre" id="usuario">…</span>
+          <span class="perfil-rol">Profesorado</span>
         </div>
       </div>
-      <span id="usuario" class="usuario">…</span>
-    </nav>
-  </header>
 
-  <main id="app">
-    <div id="cargando" class="aviso">Cargando tu cuaderno…</div>
+      <nav class="menu-lat">
+        <a id="nav-eval" class="item-lat" data-nav="eval" onclick="App.irAEvaluaciones()" title="Clases">
+          <span class="item-ico">🗂️</span><span class="item-txt">Clases</span></a>
+        <a id="nav-clases" class="item-lat" data-nav="clases" onclick="App.irAClases()" title="Grupos">
+          <span class="item-ico">👥</span><span class="item-txt">Grupos</span></a>
+        <a id="nav-papelera" class="item-lat" data-nav="papelera" onclick="App.irAPapelera()" title="Papelera">
+          <span class="item-ico">🗑️</span><span class="item-txt">Papelera</span></a>
+      </nav>
+
+      <div class="menu-lat menu-lat-pie">
+        <a class="item-lat" onclick="App.abrirCopia()" title="Copia de seguridad">
+          <span class="item-ico">💾</span><span class="item-txt">Copia de seguridad</span></a>
+      </div>
+    </aside>
+    <div id="velo" class="velo" onclick="App.cerrarSidebar()"></div>
+
+    <!-- ÁREA PRINCIPAL: topbar + contenido -->
+    <div class="area-principal">
+      <header class="topbar">
+        <button class="hamburguesa" title="Menú" onclick="App.toggleSidebar()">☰</button>
+        <h2 class="topbar-titulo" id="topbar-titulo">Mis clases</h2>
+        <div class="buscador">
+          <span class="buscador-ico">🔍</span>
+          <input id="buscador" type="text" placeholder="Buscar…" autocomplete="off"
+            oninput="App.filtrar(this.value)">
+        </div>
+      </header>
+
+      <main id="app">
+        <div id="cargando" class="aviso">Cargando tu cuaderno…</div>
 
     <!-- CLASES (clase = grupo aplicado a un área) -->
     <section id="vista-evaluaciones" hidden>
@@ -44,12 +75,18 @@
 
     <!-- DETALLE GRUPO -->
     <section id="vista-clase" hidden>
-      <a class="volver" onclick="App.irAClases()">← Mis grupos</a>
-      <div class="cabecera-seccion">
-        <h1 id="clase-titulo"></h1>
-        <button class="btn peligro" onclick="App.eliminarClaseActual()">Eliminar grupo</button>
+      <div class="cabecera-clase">
+        <a class="volver-icono" onclick="App.irAClases()" title="Volver a mis grupos">←</a>
+        <span class="clase-ico" id="clase-ico"></span>
+        <div class="titulo-bloque">
+          <h1 id="clase-titulo"></h1>
+          <p id="clase-meta" class="meta"></p>
+        </div>
+        <div class="acciones-unidad">
+          <button class="btn" onclick="App.editarClaseUI()">✎ Editar</button>
+          <button class="btn peligro" onclick="App.eliminarClaseActual()">Eliminar grupo</button>
+        </div>
       </div>
-      <p id="clase-meta" class="meta"></p>
       <div class="cabecera-seccion">
         <h2>Alumnado <span id="num-alumnos" class="contador"></span></h2>
         <button class="btn" onclick="App.editarAlumnos()">Editar lista</button>
@@ -59,15 +96,19 @@
 
     <!-- DETALLE EVALUACIÓN: lista de unidades -->
     <section id="vista-evaluacion" hidden>
-      <a class="volver" onclick="App.irAEvaluaciones()">← Mis clases</a>
-      <div class="cabecera-seccion">
-        <h1 id="eval-titulo"></h1>
+      <div class="cabecera-clase">
+        <a class="volver-icono" onclick="App.irAEvaluaciones()" title="Volver a mis clases">←</a>
+        <span class="clase-ico" id="eval-ico"></span>
+        <div class="titulo-bloque">
+          <h1 id="eval-titulo"></h1>
+          <p id="eval-meta" class="meta"></p>
+        </div>
         <div class="acciones-unidad">
+          <button class="btn" onclick="App.editarEvaluacionUI()">✎ Editar</button>
           <button class="btn" onclick="App.verResumen()">📊 Resumen</button>
           <button class="btn peligro" onclick="App.eliminarEvaluacionActual()">Eliminar clase</button>
         </div>
       </div>
-      <p id="eval-meta" class="meta"></p>
       <div class="cabecera-seccion">
         <h2>Unidades</h2>
         <button class="btn primario" onclick="App.nuevaUnidad()">+ Nueva unidad</button>
@@ -77,9 +118,12 @@
 
     <!-- REJILLA DE UNA UNIDAD -->
     <section id="vista-unidad" hidden>
-      <a class="volver" id="volver-unidad">← Unidades</a>
-      <div class="cabecera-seccion">
-        <h1 id="unidad-titulo"></h1>
+      <div class="cabecera-rejilla">
+        <a class="volver-icono" id="volver-unidad" title="Volver a unidades">←</a>
+        <div class="titulo-bloque">
+          <h1 id="unidad-titulo"></h1>
+          <p id="unidad-meta" class="meta"></p>
+        </div>
         <div class="acciones-unidad">
           <label class="check"><input type="checkbox" id="ver-criterios" checked onchange="App.pintarRejilla()"> Notas por criterio</label>
           <span class="grupo-btn">
@@ -90,21 +134,22 @@
           <button class="btn primario" onclick="App.nuevaActividad()">+ Nueva actividad</button>
         </div>
       </div>
-      <p id="unidad-meta" class="meta"></p>
       <div id="rejilla-cont" class="rejilla-cont"></div>
     </section>
 
     <!-- RESUMEN GLOBAL DE LA CLASE -->
     <section id="vista-resumen" hidden>
-      <a class="volver" id="volver-resumen">← Unidades</a>
-      <div class="cabecera-seccion">
-        <h1 id="resumen-titulo"></h1>
+      <div class="cabecera-rejilla">
+        <a class="volver-icono" id="volver-resumen" title="Volver a unidades">←</a>
+        <div class="titulo-bloque">
+          <h1 id="resumen-titulo"></h1>
+          <p id="resumen-meta" class="meta"></p>
+        </div>
         <div class="acciones-unidad">
           <label class="check"><input type="checkbox" id="ver-unidades-resumen" checked onchange="App.pintarResumen()"> Columnas por unidad</label>
           <button class="btn" onclick="App.copiarResumenSeneca()">📋 Copiar para Séneca</button>
         </div>
       </div>
-      <p id="resumen-meta" class="meta"></p>
       <div id="resumen-cont" class="rejilla-cont"></div>
     </section>
 
@@ -117,7 +162,21 @@
       <p class="meta">Lo que borres (grupos, clases, unidades, actividades) se guarda aquí 30 días. Puedes restaurarlo.</p>
       <div id="lista-papelera" class="tarjetas"></div>
     </section>
-  </main>
+      </main>
+    </div>
+
+    <!-- BARRA DE PESTAÑAS INFERIOR (solo móvil) -->
+    <nav class="tabbar">
+      <a class="tab" data-nav="eval" onclick="App.irAEvaluaciones()">
+        <span class="tab-ico">🗂️</span><span>Clases</span></a>
+      <a class="tab" data-nav="clases" onclick="App.irAClases()">
+        <span class="tab-ico">👥</span><span>Grupos</span></a>
+      <a class="tab" data-nav="papelera" onclick="App.irAPapelera()">
+        <span class="tab-ico">🗑️</span><span>Papelera</span></a>
+      <a class="tab" onclick="App.abrirCopia()">
+        <span class="tab-ico">💾</span><span>Copia</span></a>
+    </nav>
+  </div>
 
   <!-- MODAL -->
   <div id="modal-fondo" class="modal-fondo" hidden onclick="App.cerrarModalFuera(event)">

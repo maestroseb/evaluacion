@@ -30,6 +30,11 @@ function renombrarClase(claseId, nombre) {
   return Clases.renombrar_(abrirCuaderno_(), claseId, nombre);
 }
 
+/** Edita nombre, color e icono de un grupo (no toca curso ni alumnado). */
+function editarClase(claseId, payload) {
+  return Clases.editar_(abrirCuaderno_(), claseId, payload);
+}
+
 function eliminarClase(claseId) {
   return Clases.eliminar_(abrirCuaderno_(), claseId);
 }
@@ -57,7 +62,7 @@ var Clases = (function () {
       if (!f[0]) continue;
       out.push({
         claseId: f[0], nombre: f[1], curso: f[2], creado: f[3],
-        numAlumnos: contar_(f[4])
+        numAlumnos: contar_(f[4]), color: f[5] || '', icono: f[6] || ''
       });
     }
     return out;
@@ -70,7 +75,8 @@ var Clases = (function () {
     var alumnos = normalizarAlumnos_(payload.alumnos || []);
     hoja_(ss).appendRow([
       claseId, payload.nombre.trim(), payload.curso,
-      new Date().toISOString(), serializar_(alumnos)
+      new Date().toISOString(), serializar_(alumnos),
+      payload.color || '', payload.icono || ''
     ]);
     return obtener_(ss, claseId);
   }
@@ -79,11 +85,24 @@ var Clases = (function () {
     var sh = hoja_(ss);
     var fila = Datos.filaDeId_(sh, claseId);
     if (fila < 0) throw new Error('Clase no encontrada.');
-    var f = sh.getRange(fila, 1, 1, 5).getValues()[0];
+    var f = sh.getRange(fila, 1, 1, 7).getValues()[0];
     return {
       claseId: f[0], nombre: f[1], curso: f[2], creado: f[3],
-      alumnos: deserializar_(f[4])
+      alumnos: deserializar_(f[4]), color: f[5] || '', icono: f[6] || ''
     };
+  }
+
+  /** Actualiza nombre (col 2), color (col 6) e icono (col 7). */
+  function editar_(ss, claseId, payload) {
+    var sh = hoja_(ss);
+    var fila = Datos.filaDeId_(sh, claseId);
+    if (fila < 0) throw new Error('Clase no encontrada.');
+    if (payload && payload.nombre != null && String(payload.nombre).trim()) {
+      sh.getRange(fila, 2).setValue(String(payload.nombre).trim());
+    }
+    sh.getRange(fila, 6, 1, 2).setValues([[(payload && payload.color) || '',
+      (payload && payload.icono) || '']]);
+    return obtener_(ss, claseId);
   }
 
   function actualizarAlumnos_(ss, claseId, alumnos) {
@@ -179,7 +198,7 @@ var Clases = (function () {
   }
 
   return {
-    listar_: listar_, crear_: crear_, obtener_: obtener_,
+    listar_: listar_, crear_: crear_, obtener_: obtener_, editar_: editar_,
     actualizarAlumnos_: actualizarAlumnos_, renombrar_: renombrar_,
     eliminar_: eliminar_, migrarCifrado_: migrarCifrado_
   };

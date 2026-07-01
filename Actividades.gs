@@ -37,6 +37,11 @@ function duplicarActividad(actividadId) {
   return Actividades.duplicar_(abrirCuaderno_(), actividadId);
 }
 
+/** Reordena las actividades de una unidad según la lista de ids dada. */
+function reordenarActividades(unidadId, idsOrdenados) {
+  return Actividades.reordenar_(abrirCuaderno_(), unidadId, idsOrdenados);
+}
+
 /** Guarda los ítems conseguidos de un alumno en una actividad. */
 function guardarItem(actividadId, alumnoId, conseguidos) {
   return Actividades.guardarItem_(abrirCuaderno_(), actividadId, alumnoId, conseguidos);
@@ -235,8 +240,25 @@ var Actividades = (function () {
     try { return JSON.parse(json); } catch (e) { return []; }
   }
 
+  /** Reescribe la columna 'orden' (col 6) según la posición de cada id. */
+  function reordenar_(ss, unidadId, ids) {
+    if (!ids || !ids.length) return { ok: true };
+    var sh = hojaA_(ss);
+    var datos = sh.getDataRange().getValues();
+    var filaDe = {};
+    for (var i = 1; i < datos.length; i++) {
+      if (datos[i][0] && datos[i][1] === unidadId) filaDe[datos[i][0]] = i + 1;
+    }
+    ids.forEach(function (id, idx) {
+      var fila = filaDe[id];
+      if (fila) sh.getRange(fila, 6).setValue(idx + 1);
+    });
+    return { ok: true };
+  }
+
   return {
     listar_: listar_, crear_: crear_, editar_: editar_, eliminar_: eliminar_,
-    duplicar_: duplicar_, guardarItem_: guardarItem_, rejilla_: rejilla_
+    duplicar_: duplicar_, guardarItem_: guardarItem_, rejilla_: rejilla_,
+    reordenar_: reordenar_
   };
 })();

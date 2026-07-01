@@ -1,11 +1,11 @@
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@500;700&display=swap');
 
   :root {
     --acento: #5b5bd6;        /* índigo Linear-ish */
     --acento-fuerte: #4a4ac4;
     --acento-suave: #eef0ff;
-    --bg: #f7f8fa;
+    --bg: #f6f7fb;
     --surface: #ffffff;
     --borde: #e9eaee;
     --borde-fuerte: #dcdee3;
@@ -15,14 +15,26 @@
     --peligro: #d1453b;
     --peligro-bg: #fdeceb;
     --ok: #2e7d57;
-    --radio: 10px;
+    --radio: 12px;
     --sombra-1: 0 1px 2px rgba(16,18,24,.04), 0 1px 3px rgba(16,18,24,.06);
     --sombra-2: 0 4px 16px rgba(16,18,24,.08);
+    --sombra-3: 0 10px 30px rgba(16,18,24,.10);
+    /* Escala de notas tipo semáforo (como el mockup) */
+    --g-top-bg: #d6f3e3;   --g-top-tx: #14653f;
+    --g-alta-bg: #e3f6dd;  --g-alta-tx: #2e6b1f;
+    --g-media-bg: #fdf4d3; --g-media-tx: #8a6d10;
+    --g-baja-bg: #fde7cf;  --g-baja-tx: #9a5410;
+    --g-susp-bg: #fbdcd6;  --g-susp-tx: #b23227;
+    /* Sidebar */
+    --lat-ancho: 248px;
+    --lat-ancho-min: 72px;
+    --topbar-alto: 60px;
   }
 
   * { box-sizing: border-box; }
   [hidden] { display: none !important; }
 
+  html, body { height: 100%; }
   body {
     margin: 0;
     font-family: 'Inter', -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
@@ -32,54 +44,134 @@
     -webkit-font-smoothing: antialiased;
   }
 
-  /* ---------- Barra superior ---------- */
-  .barra {
-    display: flex; align-items: center; justify-content: space-between;
-    background: var(--surface); border-bottom: 1px solid var(--borde);
-    padding: 0 22px; height: 52px; position: sticky; top: 0; z-index: 20;
-  }
-  .logo { font-weight: 600; font-size: 15px; letter-spacing: -.01em; color: var(--texto); }
-  .nav { display: flex; align-items: center; gap: 4px; }
-  .nav a {
-    color: var(--texto-2); cursor: pointer; font-size: 14px; font-weight: 500;
-    padding: 7px 12px; border-radius: 8px; transition: background .12s, color .12s;
-  }
-  .nav a:hover { background: var(--bg); color: var(--texto); }
-  .nav a.activo { background: var(--acento-suave); color: var(--acento-fuerte); }
-  .usuario { font-size: 13px; color: var(--texto-3); margin-left: 12px; }
-  .menu { position: relative; }
-  .btn-menu { border: none; background: transparent; color: var(--texto-2); cursor: pointer;
-    font-size: 18px; line-height: 1; padding: 4px 8px; border-radius: 8px; }
-  .btn-menu:hover { background: var(--bg); color: var(--texto); }
-  .menu-pop { position: absolute; right: 0; top: 36px; background: var(--surface);
-    border: 1px solid var(--borde); border-radius: 10px; box-shadow: var(--sombra-2);
-    padding: 6px; min-width: 180px; z-index: 30; }
-  .menu-pop a { display: block; padding: 9px 12px; border-radius: 7px; font-size: 14px;
-    color: var(--texto); cursor: pointer; }
-  .menu-pop a:hover { background: var(--bg); }
+  /* ===================================================================
+     SHELL: sidebar + área principal
+     =================================================================== */
+  .app-shell { display: flex; height: 100vh; overflow: hidden; }
 
-  main { max-width: none; margin: 0; padding: 16px 22px 16px; }
+  /* ---------- Sidebar ---------- */
+  .sidebar {
+    width: var(--lat-ancho); flex: 0 0 var(--lat-ancho);
+    background: var(--surface); border-right: 1px solid var(--borde);
+    display: flex; flex-direction: column; gap: 4px;
+    padding: 14px 12px; position: sticky; top: 0; height: 100vh;
+    transition: width .18s ease, flex-basis .18s ease;
+    z-index: 40;
+  }
+  .sidebar.colapsada { width: var(--lat-ancho-min); flex-basis: var(--lat-ancho-min); }
+
+  .sidebar-head { display: flex; align-items: center; justify-content: space-between;
+    padding: 6px 8px 10px; }
+  .marca { display: flex; align-items: center; gap: 10px; cursor: pointer; min-width: 0; }
+  .marca-icono {
+    width: 34px; height: 34px; flex: 0 0 34px; border-radius: 9px;
+    display: inline-flex; align-items: center; justify-content: center; font-size: 18px;
+    background: linear-gradient(135deg, var(--acento), #7a7af0); color: #fff;
+    box-shadow: var(--sombra-1);
+  }
+  .marca-txt { font-weight: 700; font-size: 16px; letter-spacing: -.02em; color: var(--texto);
+    white-space: nowrap; overflow: hidden; }
+
+  .perfil {
+    display: flex; align-items: center; gap: 10px; padding: 8px;
+    margin: 2px 2px 8px; border-radius: 10px; background: var(--bg);
+  }
+  .perfil .avatar {
+    width: 34px; height: 34px; flex: 0 0 34px; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; color: #fff;
+    background: linear-gradient(135deg, var(--acento), #8a8af2);
+  }
+  .perfil-info { display: flex; flex-direction: column; min-width: 0; }
+  .perfil-nombre { font-size: 13px; font-weight: 600; color: var(--texto);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .perfil-rol { font-size: 11px; color: var(--texto-3); }
+
+  .menu-lat { display: flex; flex-direction: column; gap: 3px; }
+  .menu-lat-pie { margin-top: auto; padding-top: 8px; border-top: 1px solid var(--borde); }
+  .item-lat {
+    display: flex; align-items: center; gap: 12px; padding: 9px 11px; border-radius: 9px;
+    color: var(--texto-2); cursor: pointer; font-size: 14px; font-weight: 550;
+    white-space: nowrap; transition: background .12s, color .12s; user-select: none;
+  }
+  .item-lat:hover { background: var(--bg); color: var(--texto); }
+  .item-lat.activo { background: var(--acento-suave); color: var(--acento-fuerte); }
+  .item-lat.activo .item-ico { transform: none; }
+  .item-ico { width: 22px; flex: 0 0 22px; text-align: center; font-size: 17px; line-height: 1; }
+  .item-txt { overflow: hidden; }
+
+  /* Estado colapsado: solo iconos */
+  .sidebar.colapsada .marca-txt,
+  .sidebar.colapsada .perfil-info,
+  .sidebar.colapsada .item-txt { display: none; }
+  .sidebar.colapsada .sidebar-head { justify-content: center; }
+  .sidebar.colapsada .perfil { justify-content: center; }
+  .sidebar.colapsada .item-lat { justify-content: center; padding: 10px; }
+
+  /* ---------- Área principal ---------- */
+  .area-principal { flex: 1 1 auto; min-width: 0; height: 100vh;
+    display: flex; flex-direction: column; }
+
+  .topbar {
+    height: var(--topbar-alto); flex: 0 0 var(--topbar-alto);
+    display: flex; align-items: center; gap: 14px; padding: 0 22px;
+    background: rgba(255,255,255,.82); backdrop-filter: saturate(180%) blur(10px);
+    border-bottom: 1px solid var(--borde); position: sticky; top: 0; z-index: 30;
+  }
+  .hamburguesa { display: none; align-items: center; justify-content: center;
+    border: none; background: transparent; cursor: pointer;
+    font-size: 19px; color: var(--texto-2); padding: 6px 8px; border-radius: 8px; }
+  .hamburguesa:hover { background: var(--bg); color: var(--texto); }
+  .topbar-titulo { font-size: 17px; font-weight: 650; letter-spacing: -.02em; margin: 0;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .buscador { margin-left: auto; position: relative; display: flex; align-items: center;
+    width: min(340px, 42vw); }
+  .buscador-ico { position: absolute; left: 12px; font-size: 13px; color: var(--texto-3);
+    pointer-events: none; }
+  .buscador input {
+    width: 100%; padding: 9px 12px 9px 34px; font-size: 14px; font-family: inherit;
+    border: 1px solid var(--borde-fuerte); border-radius: 10px; background: var(--surface);
+    color: var(--texto); transition: border-color .12s, box-shadow .12s;
+  }
+  .buscador input:focus { outline: none; border-color: var(--acento);
+    box-shadow: 0 0 0 3px var(--acento-suave); }
+
+  /* Velo para sidebar en móvil */
+  .velo { display: none; position: fixed; inset: 0; background: rgba(20,22,28,.4);
+    z-index: 39; }
+
+  /* Barra de pestañas inferior (solo móvil) */
+  .tabbar { display: none; }
+  .tab { display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 3px; flex: 1 1 0; padding: 7px 2px; border-radius: 12px; cursor: pointer;
+    color: var(--texto-3); font-size: 11px; font-weight: 600; text-decoration: none;
+    text-align: center; user-select: none; transition: color .12s, background .12s; }
+  .tab .tab-ico { font-size: 20px; line-height: 1; }
+  .tab.activo { color: var(--acento-fuerte); }
+  .tab.activo .tab-ico { transform: translateY(-1px); }
+  .tab:active { background: var(--bg); }
+
+  main { flex: 1 1 auto; min-height: 0; padding: 22px 24px 28px; overflow: auto; }
   .aviso { padding: 56px; text-align: center; color: var(--texto-3); font-size: 14px; }
 
   .cabecera-seccion {
     display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 12px; gap: 16px;
+    margin-bottom: 16px; gap: 12px 16px; flex-wrap: wrap;
   }
-  h1 { font-size: 22px; font-weight: 650; letter-spacing: -.02em; margin: 0; }
-  /* Línea de meta bajo el título: compacta */
-  main section > p.meta { margin: 2px 0 12px; }
-  .volver { margin-bottom: 8px; }
+  h1 { font-size: 23px; font-weight: 700; letter-spacing: -.025em; margin: 0; }
+  main section > p.meta { margin: 2px 0 16px; }
+  .volver { margin-bottom: 10px; }
   h2 { font-size: 16px; font-weight: 600; letter-spacing: -.01em; margin: 0; }
 
   /* ---------- Tarjetas ---------- */
-  .tarjetas { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(248px, 1fr)); }
+  .tarjetas { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(256px, 1fr)); }
   .tarjeta {
     background: var(--surface); border: 1px solid var(--borde); border-radius: var(--radio);
     padding: 18px; cursor: pointer; box-shadow: var(--sombra-1);
     transition: transform .14s ease, box-shadow .14s ease, border-color .14s;
   }
-  .tarjeta:hover { transform: translateY(-2px); box-shadow: var(--sombra-2); border-color: var(--borde-fuerte); }
-  .tarjeta h3 { margin: 0 0 8px; font-size: 15px; font-weight: 600; letter-spacing: -.01em; }
+  .tarjeta:hover { transform: translateY(-3px); box-shadow: var(--sombra-3); border-color: var(--borde-fuerte); }
+  .tarjeta h3 { margin: 0 0 8px; font-size: 15px; font-weight: 650; letter-spacing: -.01em; }
   .tarjeta .meta { color: var(--texto-2); font-size: 13px; line-height: 1.5; }
   .tarjeta-color { border-left: 4px solid transparent; }
   .swatches { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -87,10 +179,42 @@
     box-shadow: inset 0 0 0 2px #fff, 0 0 0 1px var(--borde); transition: transform .1s; }
   .swatch:hover { transform: scale(1.1); }
   .swatch.sel { box-shadow: inset 0 0 0 2px #fff, 0 0 0 2px var(--texto); }
-  .tarjeta-unidad { position: relative; }
-  .acciones-tarjeta { position: absolute; top: 12px; right: 12px; display: flex; gap: 4px;
-    opacity: 0; transition: opacity .12s; }
+  /* Tarjeta de unidad: baldosa en rejilla, todo en una fila alineada:
+     asa ⠿ · número LCD · título · acciones. Se reordena arrastrando por el asa. */
+  .tarjeta-unidad { display: flex; align-items: center; gap: 12px; padding: 15px 16px;
+    position: relative; }
+  .tarjeta-unidad.arrastrando { z-index: 5; opacity: .97; cursor: grabbing;
+    box-shadow: 0 14px 30px rgba(16,18,24,.20); border-color: var(--borde-fuerte);
+    transition: none; }
+  body.reordenando { user-select: none; cursor: grabbing; }
+  .u-grip { flex: 0 0 auto; cursor: grab; color: var(--texto-3); font-size: 14px; line-height: 1;
+    padding: 2px 3px; border-radius: 6px; touch-action: none; user-select: none; }
+  .u-grip:hover { background: var(--bg); color: var(--texto-2); }
+  .u-grip:active { cursor: grabbing; }
+  /* Número de la unidad en monoespaciado (Roboto Mono) sobre fondo gris claro;
+     los dígitos toman el color de la clase (por style inline). */
+  .u-num {
+    flex: 0 0 auto; min-width: 42px; height: 32px; padding: 0 9px; border-radius: 8px;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: #eef0f4; color: var(--acento);
+    font-family: 'Roboto Mono', ui-monospace, 'Courier New', monospace;
+    font-size: 16px; font-weight: 700; letter-spacing: .5px;
+  }
+  /* Título de la unidad. Se escoge con más especificidad que ".tarjeta h3"
+     (que tenía margin-bottom) para que quede centrado verticalmente. */
+  .tarjeta-unidad .u-nom { flex: 1 1 auto; min-width: 0; margin: 0; font-size: 15px;
+    font-weight: 600; line-height: 1.2; white-space: nowrap; overflow: hidden;
+    text-overflow: ellipsis; }
+  /* Acciones a la derecha; aparecen al pasar el ratón (absolutas, no roban ancho
+     al título) y siempre visibles en táctil. */
+  .acciones-tarjeta {
+    position: absolute; top: 50%; right: 12px; transform: translateY(-50%);
+    display: flex; gap: 6px; opacity: 0; transition: opacity .12s;
+    padding-left: 30px;
+    background: linear-gradient(90deg, rgba(255,255,255,0), var(--surface) 42%);
+  }
   .tarjeta-unidad:hover .acciones-tarjeta { opacity: 1; }
+  @media (hover: none) { .acciones-tarjeta { opacity: 1; } }
   .icono {
     border: 1px solid var(--borde); background: var(--surface); border-radius: 7px;
     width: 28px; height: 28px; cursor: pointer; font-size: 13px; line-height: 1;
@@ -105,16 +229,57 @@
     border-radius: var(--radio);
   }
 
+  /* ---------- Tarjeta de clase (con cabecera de color e icono) ---------- */
+  .clase-card {
+    display: flex; flex-direction: column; overflow: hidden; cursor: pointer;
+    background: var(--surface); border: 1px solid var(--borde); border-radius: var(--radio);
+    box-shadow: var(--sombra-1);
+    transition: transform .14s ease, box-shadow .14s ease, border-color .14s;
+  }
+  .clase-card:hover { transform: translateY(-3px); box-shadow: var(--sombra-3); border-color: var(--borde-fuerte); }
+  .clase-card-head {
+    display: flex; align-items: center; gap: 12px; padding: 15px 16px;
+    background: var(--c, var(--acento)); color: #fff;
+  }
+  .clase-card-ico {
+    flex: 0 0 auto; width: 40px; height: 40px; border-radius: 10px;
+    background: rgba(255,255,255,.22);
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .clase-card-ico svg { width: 23px; height: 23px; stroke: #fff; fill: none; }
+  .clase-card-head h3 { margin: 0; font-size: 15.5px; font-weight: 650; color: #fff;
+    letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .clase-card-body { flex: 1 1 auto; padding: 14px 16px 4px;
+    display: flex; flex-direction: column; gap: 5px; }
+  .cc-meta { font-size: 13px; color: var(--texto-2); }
+  .cc-meta b { color: var(--texto); font-weight: 600; }
+  .cc-btn { margin: 12px 16px 16px; text-align: center; }
+
+  /* ---------- Selector de iconos (modal) ---------- */
+  .iconos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(46px, 1fr));
+    gap: 8px; max-height: 176px; overflow: auto; padding: 2px; }
+  .icono-opt {
+    display: inline-flex; align-items: center; justify-content: center; padding: 9px;
+    border: 1px solid var(--borde-fuerte); border-radius: 10px; background: var(--surface);
+    color: var(--texto-2); cursor: pointer;
+    transition: background .12s, color .12s, border-color .12s, box-shadow .12s;
+  }
+  .icono-opt svg { width: 22px; height: 22px; stroke: currentColor; fill: none; }
+  .icono-opt:hover { background: var(--bg); color: var(--texto); }
+  .icono-opt.sel { border-color: var(--acento); color: var(--acento-fuerte);
+    background: var(--acento-suave); box-shadow: 0 0 0 2px var(--acento-suave); }
+
   /* ---------- Botones ---------- */
   .btn {
-    border: 1px solid var(--borde-fuerte); border-radius: 8px; padding: 8px 14px;
+    border: 1px solid var(--borde-fuerte); border-radius: 9px; padding: 8px 14px;
     font-size: 14px; font-weight: 550; font-family: inherit; cursor: pointer;
     background: var(--surface); color: var(--texto); box-shadow: var(--sombra-1);
     transition: background .12s, border-color .12s, transform .06s;
   }
   .btn:hover { background: var(--bg); border-color: var(--borde-fuerte); }
   .btn:active { transform: translateY(1px); }
-  .btn.primario { background: var(--acento); border-color: var(--acento); color: #fff; }
+  .btn.primario { background: var(--acento); border-color: var(--acento); color: #fff;
+    box-shadow: 0 1px 2px rgba(91,91,214,.25), 0 2px 8px rgba(91,91,214,.18); }
   .btn.primario:hover { background: var(--acento-fuerte); }
   .btn.peligro { background: #fff; border-color: var(--borde-fuerte); color: var(--peligro); }
   .btn.peligro:hover { background: var(--peligro-bg); border-color: #f3c6c2; }
@@ -126,10 +291,26 @@
   .volver:hover { color: var(--acento-fuerte); }
   .contador { color: var(--texto-3); font-weight: 400; font-size: 15px; }
   .meta { color: var(--texto-2); font-size: 14px; }
-  ol.alumnos { margin: 0; padding-left: 26px; }
-  ol.alumnos li { background: var(--surface); border: 1px solid var(--borde);
-    border-radius: 8px; margin: 6px 0; padding: 9px 12px; font-size: 14px; }
+  /* Alumnado: una sola tarjeta con filas separadas por divisores (compacto). */
+  ol.alumnos { margin: 0; padding: 0; list-style: none; counter-reset: al;
+    background: var(--surface); border: 1px solid var(--borde);
+    border-radius: var(--radio); box-shadow: var(--sombra-1); overflow: hidden; }
+  ol.alumnos li { padding: 8px 14px; font-size: 14px; display: flex; align-items: center;
+    gap: 12px; counter-increment: al; border-bottom: 1px solid var(--borde); }
+  ol.alumnos li:last-child { border-bottom: none; }
+  ol.alumnos li:nth-child(even) { background: #fafbfc; }
+  ol.alumnos li:hover { background: #f3f4fd; }
+  ol.alumnos li::before { content: counter(al); color: var(--texto-3);
+    font-variant-numeric: tabular-nums; font-size: 12px; min-width: 22px; text-align: right; }
+  ol.alumnos li .mini-avatar { width: 26px; height: 26px; flex-basis: 26px; font-size: 10px; }
   .nota-fase { margin-top: 24px; color: var(--texto-3); font-size: 13px; }
+
+  /* ---------- Avatares con iniciales ---------- */
+  .mini-avatar {
+    width: 28px; height: 28px; flex: 0 0 28px; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; color: #fff; letter-spacing: .02em;
+  }
 
   /* ---------- Modal ---------- */
   .modal-fondo {
@@ -139,7 +320,7 @@
   }
   .modal-fondo[hidden] { display: none; }
   .modal {
-    background: var(--surface); border-radius: 14px; padding: 24px;
+    background: var(--surface); border-radius: 16px; padding: 24px;
     width: 100%; max-width: 480px; max-height: 90vh; overflow: auto;
     box-shadow: 0 12px 40px rgba(16,18,24,.22); animation: modal-in .16s ease;
   }
@@ -180,8 +361,42 @@
     border-top-color: var(--acento); border-radius: 50%; animation: girar .7s linear infinite; }
   @keyframes girar { to { transform: rotate(360deg); } }
 
+  /* ---------- Cabeceras (rejilla compacta / tarjeta de clase) ----------
+     Una fila: icono volver · [icono color] · título+meta · acciones dcha. */
+  .cabecera-rejilla, .cabecera-clase {
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  }
+  .cabecera-rejilla { margin-bottom: 12px; }
+  /* La cabecera de clase/grupo es una tarjeta que agrupa la identidad. */
+  .cabecera-clase {
+    background: var(--surface); border: 1px solid var(--borde);
+    border-radius: var(--radio); box-shadow: var(--sombra-1);
+    padding: 16px 18px; margin-bottom: 18px;
+  }
+  .titulo-bloque { flex: 1 1 auto; min-width: 0; }
+  .cabecera-rejilla h1, .cabecera-clase h1 { font-size: 20px; line-height: 1.15; }
+  .cabecera-rejilla .meta, .cabecera-clase .meta { margin: 2px 0 0; font-size: 13px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* Icono cuadrado de color con la inicial (identidad de la clase/grupo). */
+  .clase-ico {
+    flex: 0 0 auto; width: 42px; height: 42px; border-radius: 12px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 700; color: #fff; letter-spacing: .01em;
+    background: var(--acento); box-shadow: var(--sombra-1);
+  }
+  .clase-ico svg { width: 23px; height: 23px; stroke: #fff; fill: none; }
+  .volver-icono {
+    flex: 0 0 auto; width: 34px; height: 34px; border-radius: 9px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 1px solid var(--borde-fuerte); background: var(--surface);
+    color: var(--texto-2); cursor: pointer; font-size: 18px; line-height: 1;
+    text-decoration: none; box-shadow: var(--sombra-1);
+    transition: background .12s, color .12s, border-color .12s;
+  }
+  .volver-icono:hover { background: var(--bg); color: var(--acento-fuerte); }
+
   /* ---------- Acciones de unidad ---------- */
-  .acciones-unidad { display: flex; align-items: center; gap: 12px; }
+  .acciones-unidad { display: flex; align-items: center; gap: 12px; flex: 0 0 auto; }
   .grupo-btn { position: relative; display: inline-flex; }
   .btn-info {
     position: absolute; top: -7px; right: -7px; z-index: 1;
@@ -224,9 +439,9 @@
     vertical-align: middle; }
 
   /* ---------- Rejilla ---------- */
-  /* Libre (sin caja): la propia rejilla es el único scroll, ocupa hasta abajo. */
   .rejilla-cont { overflow: auto; background: var(--surface);
-    max-height: calc(100vh - 150px); border-top: 1px solid var(--borde); }
+    max-height: calc(100vh - var(--topbar-alto) - 96px);
+    border: 1px solid var(--borde); border-radius: var(--radio); box-shadow: var(--sombra-1); }
   table.rejilla { border-collapse: separate; border-spacing: 0; width: auto; font-size: 13px; }
   table.rejilla th, table.rejilla td {
     border-bottom: 1px solid var(--borde); border-right: 1px solid var(--borde);
@@ -245,8 +460,16 @@
   table.rejilla .esq { text-align: left; position: sticky; left: 36px; z-index: 1;
     font-weight: 500; color: var(--texto); }
   table.rejilla thead .esq { z-index: 3; }
+  table.rejilla td.esq .mini-avatar { width: 24px; height: 24px; flex-basis: 24px;
+    font-size: 10px; vertical-align: middle; margin-right: 9px; }
 
-  table.rejilla th.act { font-weight: 600; padding: 7px 24px 7px 10px; }
+  table.rejilla th.act { position: relative; cursor: grab; font-weight: 600; padding: 7px 22px; }
+  table.rejilla th.act.arrastrando-col { opacity: .45; }
+  table.rejilla th.act.soltar-antes { box-shadow: inset 3px 0 0 var(--acento); }
+  table.rejilla th.act.soltar-despues { box-shadow: inset -3px 0 0 var(--acento); }
+  table.rejilla .grip-act { position: absolute; top: 3px; left: 4px; color: var(--texto-3);
+    font-size: 11px; line-height: 1; opacity: 0; transition: opacity .12s; pointer-events: none; }
+  table.rejilla th.act:hover .grip-act { opacity: .65; }
   table.rejilla th.act .act-nom { display: block; }
   table.rejilla th.act small { display: block; font-weight: 400; color: var(--texto-3); font-size: 10px; }
   table.rejilla .edit-act { position: absolute; top: 4px; right: 4px; border: none;
@@ -263,20 +486,68 @@
 
   table.rejilla .num { font-variant-numeric: tabular-nums; color: var(--texto-2); min-width: 48px; }
   table.rejilla .crit-col { color: var(--texto-2); font-weight: 600; font-size: 11px; }
-  /* Columna NOTA destacada (fondo + negrita) */
+  /* Columna NOTA destacada */
   table.rejilla th.nota { font-weight: 700; color: var(--acento-fuerte); background: #e6e8fb;
     letter-spacing: .03em; }
-  table.rejilla td.nota { font-weight: 700; color: var(--acento-fuerte); background: var(--acento-suave); }
+  table.rejilla td.nota { font-weight: 700; }
   /* Separador visual antes de la columna Nota */
   table.rejilla .sep { border-left: 2px solid var(--acento); }
-  /* Notas suspensas en rojo (mantienen la negrita de NOTA) */
-  table.rejilla td.suspenso { color: var(--peligro); }
-  table.rejilla tbody tr:hover td.nota { background: #dfe2fb; }
 
-  /* Zebra respetando columnas fijas */
-  table.rejilla tbody tr:nth-child(odd) td { background: #fafbfc; }
-  table.rejilla tbody tr:nth-child(even) td { background: var(--surface); }
-  table.rejilla tbody tr:nth-child(odd) td.nota { background: #ebedfb; }
-  table.rejilla tbody tr:nth-child(even) td.nota { background: var(--acento-suave); }
-  table.rejilla tbody tr:hover td { background: #f3f4fd; }
+  /* Celdas de nota coloreadas tipo semáforo (mockup) */
+  table.rejilla td.g-top  { background: var(--g-top-bg)  !important; color: var(--g-top-tx); }
+  table.rejilla td.g-alta { background: var(--g-alta-bg) !important; color: var(--g-alta-tx); }
+  table.rejilla td.g-media{ background: var(--g-media-bg)!important; color: var(--g-media-tx); }
+  table.rejilla td.g-baja { background: var(--g-baja-bg) !important; color: var(--g-baja-tx); }
+  table.rejilla td.g-susp { background: var(--g-susp-bg) !important; color: var(--g-susp-tx); }
+  table.rejilla td.nota.g-top,
+  table.rejilla td.nota.g-alta,
+  table.rejilla td.nota.g-media,
+  table.rejilla td.nota.g-baja,
+  table.rejilla td.nota.g-susp { font-weight: 700; }
+
+  /* Zebra solo en celdas sin color de nota */
+  table.rejilla tbody tr:nth-child(odd) td:not([class*="g-"]) { background: #fafbfc; }
+  table.rejilla tbody tr:nth-child(even) td:not([class*="g-"]) { background: var(--surface); }
+  table.rejilla tbody tr:hover td:not([class*="g-"]) { background: #f3f4fd; }
+
+  /* ===================================================================
+     RESPONSIVE
+     =================================================================== */
+  @media (max-width: 820px) {
+    /* En móvil: fuera la barra lateral y la hamburguesa; manda la tab bar. */
+    .sidebar, .velo, .hamburguesa { display: none !important; }
+    .area-principal { height: 100dvh; }
+
+    .topbar { padding: 0 16px; gap: 10px; }
+    .topbar-titulo { font-size: 16px; }
+    .buscador { width: auto; flex: 0 1 160px; }
+
+    main { padding: 16px 16px calc(74px + env(safe-area-inset-bottom, 0px)); }
+
+    /* Tab bar inferior fija */
+    .tabbar {
+      display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 45;
+      gap: 2px; padding: 5px 6px calc(5px + env(safe-area-inset-bottom, 0px));
+      background: rgba(255,255,255,.94); backdrop-filter: saturate(180%) blur(10px);
+      border-top: 1px solid var(--borde); box-shadow: 0 -2px 14px rgba(16,18,24,.07);
+    }
+
+    /* La rejilla deja hueco para la tab bar */
+    .rejilla-cont { max-height: calc(100dvh - var(--topbar-alto) - 168px); }
+
+    /* La cabecera compacta apila acciones bajo el título sin apretar */
+    .cabecera-rejilla, .cabecera-clase { gap: 10px 12px; }
+    .cabecera-rejilla h1, .cabecera-clase h1 { font-size: 19px; }
+    .cabecera-rejilla .meta, .cabecera-clase .meta { white-space: normal; } /* envuelve en móvil */
+    /* Las acciones envuelven a varias líneas en vez de salirse */
+    .acciones-unidad { flex-wrap: wrap; width: 100%; }
+    .acciones-unidad .btn { flex: 1 1 auto; justify-content: center; }
+
+    /* Columna fija de alumno: solo el avatar (el nombre va en el title).
+       Así se libera espacio horizontal para las columnas de notas. */
+    table.rejilla .esq { text-align: center; }
+    table.rejilla th.esq { font-size: 0; }            /* oculta "Alumno/a", deja la celda mínima */
+    table.rejilla td.esq .al-nom { display: none; }
+    table.rejilla td.esq .mini-avatar { margin-right: 0; }
+  }
 </style>
