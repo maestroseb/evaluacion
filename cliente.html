@@ -1252,7 +1252,20 @@ var App = (function () {
     });
   }
 
-  function abrirClase(claseId) { llamar('obtenerClase', [claseId], abrirClaseCargada); }
+  function abrirClase(claseId) {
+    claseActual = null;
+    setTitulo('Grupos');
+    mostrar('vista-clase');
+    // Pinta la cabecera al instante con lo que ya tenemos (evita "clic muerto").
+    var r = claseDe(claseId);
+    document.getElementById('clase-titulo').textContent = r ? r.nombre : '';
+    document.getElementById('clase-meta').textContent = r ? r.curso : '';
+    document.getElementById('num-alumnos').textContent = r ? ('(' + (r.numAlumnos || 0) + ')') : '';
+    var ico = document.getElementById('clase-ico');
+    if (r) { ico.textContent = inicial(r.nombre); ico.style.background = r.color || colorAvatar(r.nombre); }
+    document.getElementById('lista-alumnos').innerHTML = spinner(); // feedback de carga
+    llamar('obtenerClase', [claseId], abrirClaseCargada);
+  }
   function abrirClaseCargada(cl) {
     claseActual = cl;
     setTitulo('Grupos');

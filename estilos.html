@@ -293,12 +293,18 @@
   .volver:hover { color: var(--acento-fuerte); }
   .contador { color: var(--texto-3); font-weight: 400; font-size: 15px; }
   .meta { color: var(--texto-2); font-size: 14px; }
-  ol.alumnos { margin: 0; padding: 0; list-style: none; counter-reset: al; }
-  ol.alumnos li { background: var(--surface); border: 1px solid var(--borde);
-    border-radius: 10px; margin: 8px 0; padding: 10px 14px; font-size: 14px;
-    display: flex; align-items: center; gap: 12px; counter-increment: al; }
+  /* Alumnado: una sola tarjeta con filas separadas por divisores (compacto). */
+  ol.alumnos { margin: 0; padding: 0; list-style: none; counter-reset: al;
+    background: var(--surface); border: 1px solid var(--borde);
+    border-radius: var(--radio); box-shadow: var(--sombra-1); overflow: hidden; }
+  ol.alumnos li { padding: 8px 14px; font-size: 14px; display: flex; align-items: center;
+    gap: 12px; counter-increment: al; border-bottom: 1px solid var(--borde); }
+  ol.alumnos li:last-child { border-bottom: none; }
+  ol.alumnos li:nth-child(even) { background: #fafbfc; }
+  ol.alumnos li:hover { background: #f3f4fd; }
   ol.alumnos li::before { content: counter(al); color: var(--texto-3);
-    font-variant-numeric: tabular-nums; font-size: 12px; min-width: 18px; }
+    font-variant-numeric: tabular-nums; font-size: 12px; min-width: 22px; text-align: right; }
+  ol.alumnos li .mini-avatar { width: 26px; height: 26px; flex-basis: 26px; font-size: 10px; }
   .nota-fase { margin-top: 24px; color: var(--texto-3); font-size: 13px; }
 
   /* ---------- Avatares con iniciales ---------- */
