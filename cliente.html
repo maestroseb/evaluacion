@@ -702,9 +702,11 @@ var App = (function () {
   // ---------- unidad: rejilla de evaluación ----------
   var rejilla = null;       // {unidad, alumnos, actividades, criteriosInfo, items}
   var rejillaCache = {};    // unidadId -> rejilla (carga instantánea al volver)
+  var unidadActiva = null;  // unidad que se está viendo (descarta respuestas tardías)
   var inputs2d = [];        // matriz [fila][colActividad] -> <input>
 
   function abrirUnidad(unidadId) {
+    unidadActiva = unidadId;   // marca la unidad que se está abriendo
     setTitulo('Clases');
     mostrar('vista-unidad');
     document.getElementById('volver-unidad').onclick = function () {
@@ -724,7 +726,8 @@ var App = (function () {
     // sobrescribir ediciones sin persistir con datos antiguos).
     flushNotas(function () {
       llamar('getRejilla', [unidadId], function (r) {
-        rejillaCache[unidadId] = r;
+        rejillaCache[unidadId] = r;                 // la caché siempre se actualiza
+        if (unidadId !== unidadActiva) return;      // ya abriste otra unidad: descarta
         rejilla = r;
         pintarUnidadActual();
       });
