@@ -19,7 +19,8 @@ var CONFIG = {
 
   // Versión del esquema de datos del cuaderno. Permite migraciones futuras.
   // v2: campo "icono" en las evaluaciones (icono SVG por clase).
-  ESQUEMA_VERSION: 2
+  // v3: campo "nombre" en las evaluaciones (título editable, por defecto el área).
+  ESQUEMA_VERSION: 3
 };
 
 /**

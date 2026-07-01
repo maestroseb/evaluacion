@@ -49,6 +49,9 @@ var App = (function () {
   /** Inicial (mayúscula) de un texto, para los iconos de color. */
   function inicial(s) { return String(s || '?').trim().charAt(0).toUpperCase() || '?'; }
 
+  /** Título visible de una clase: su nombre propio o, si no, el área. */
+  function tituloEval(ev) { return (ev && ev.nombre) ? ev.nombre : (ev ? ev.area : ''); }
+
   function invalidarCaches() { evalCache = {}; rejillaCache = {}; }
 
   /** Fija el título de la barra superior y limpia el buscador al cambiar de vista. */
@@ -190,7 +193,7 @@ var App = (function () {
         'onclick="App.abrirEvaluacion(\'' + ev.evalId + '\')">' +
         '<div class="clase-card-head">' +
           '<span class="clase-card-ico">' + iconoSvg(ev.icono) + '</span>' +
-          '<h3>' + esc(ev.area) + '</h3>' +
+          '<h3>' + esc(tituloEval(ev)) + '</h3>' +
         '</div>' +
         '<div class="clase-card-body">' +
           '<div class="cc-meta"><b>' + ev.numAlumnos + '</b> alumnos/as</div>' +
@@ -279,6 +282,8 @@ var App = (function () {
       '<select id="f-clase" onchange="App.claseCambiada()">' + optClases + '</select></label>' +
       '<label>Área' +
       '<select id="f-area"></select></label>' +
+      '<label>Nombre de la clase' +
+      '<input id="f-eval-nombre" type="text" placeholder="Opcional; por defecto, el área"></label>' +
       '<div class="campo-crit"><span class="etq">Color</span>' + swatchesHtml(COLORES[0]) + '</div>' +
       '<div class="campo-crit"><span class="etq">Icono</span>' + iconosHtml(ICONO_DEFECTO) + '</div>' +
       '<p class="ayuda">El curso lo aporta el grupo; aquí eliges el área a evaluar.</p>',
@@ -289,11 +294,12 @@ var App = (function () {
         if (!claseId || !area) return aviso('Elige grupo y área.');
         botonModalCargando('Creando…');
         llamar('crearEvaluacion',
-          [{ claseId: claseId, area: area, color: colorElegido(), icono: iconoElegido() }],
+          [{ claseId: claseId, area: area, nombre: val('f-eval-nombre'),
+             color: colorElegido(), icono: iconoElegido() }],
           function (ev) {
           estado.evaluaciones.push({
             evalId: ev.evalId, claseId: ev.clase.claseId, area: ev.area,
-            color: ev.color, icono: ev.icono,
+            color: ev.color, icono: ev.icono, nombre: ev.nombre,
             claseNombre: ev.clase.nombre, curso: ev.curso,
             numAlumnos: ev.clase.alumnos.length, creado: ev.creado
           });
@@ -334,7 +340,7 @@ var App = (function () {
     evalActual = ev;
     setTitulo('Clases');
     mostrar('vista-evaluacion');
-    document.getElementById('eval-titulo').textContent = ev.area;
+    document.getElementById('eval-titulo').textContent = tituloEval(ev);
     var ico = document.getElementById('eval-ico');
     ico.innerHTML = iconoSvg(ev.icono);
     ico.style.background = ev.color || '';
@@ -410,6 +416,33 @@ var App = (function () {
         });
       });
   }
+  /** Modal para editar la clase actual: nombre, color e icono. */
+  function editarEvaluacionUI() {
+    var ev = evalActual;
+    abrirModal('Editar clase',
+      '<label>Nombre de la clase' +
+      '<input id="f-eval-nombre" type="text" value="' + esc(tituloEval(ev)) + '"></label>' +
+      '<div class="campo-crit"><span class="etq">Color</span>' + swatchesHtml(ev.color || COLORES[0]) + '</div>' +
+      '<div class="campo-crit"><span class="etq">Icono</span>' + iconosHtml(ev.icono || ICONO_DEFECTO) + '</div>' +
+      '<p class="ayuda">El grupo y el área no se cambian aquí (el área fija los criterios).</p>',
+      'Guardar cambios',
+      function () {
+        var payload = { nombre: val('f-eval-nombre'), color: colorElegido(), icono: iconoElegido() };
+        botonModalCargando('Guardando…');
+        llamar('editarEvaluacion', [ev.evalId, payload], function (act) {
+          evalActual.nombre = act.nombre; evalActual.color = act.color; evalActual.icono = act.icono;
+          estado.evaluaciones.forEach(function (e) {
+            if (e.evalId === ev.evalId) { e.nombre = act.nombre; e.color = act.color; e.icono = act.icono; }
+          });
+          var c = evalCache[ev.evalId];
+          if (c) { c.nombre = act.nombre; c.color = act.color; c.icono = act.icono; }
+          cerrarModal();
+          abrirEvaluacionCargada(evalActual); // repinta la cabecera con los cambios
+          avisoOk('Clase actualizada.');
+        });
+      });
+  }
+
   function eliminarEvaluacionActual() {
     confirmar('Eliminar clase',
       '¿Eliminar esta clase? El grupo y su alumnado se conservan.',
@@ -431,7 +464,7 @@ var App = (function () {
     document.getElementById('volver-resumen').onclick = function () {
       abrirEvaluacionCargada(evalActual);
     };
-    document.getElementById('resumen-titulo').textContent = 'Resumen — ' + evalActual.area;
+    document.getElementById('resumen-titulo').textContent = 'Resumen — ' + tituloEval(evalActual);
     document.getElementById('resumen-meta').textContent = '';
     document.getElementById('resumen-cont').innerHTML = spinner();
     llamar('getResumen', [evalActual.evalId], function (r) {
@@ -1272,7 +1305,8 @@ var App = (function () {
     abrirCopia: abrirCopia, exportarDatos: exportarDatos, pedirImportar: pedirImportar,
     nuevaEvaluacion: nuevaEvaluacion, claseCambiada: claseCambiada,
     elegirColor: elegirColor, elegirIcono: elegirIcono,
-    abrirEvaluacion: abrirEvaluacion, eliminarEvaluacionActual: eliminarEvaluacionActual,
+    abrirEvaluacion: abrirEvaluacion, editarEvaluacionUI: editarEvaluacionUI,
+    eliminarEvaluacionActual: eliminarEvaluacionActual,
     nuevaUnidad: nuevaUnidad, abrirUnidad: abrirUnidad,
     clonarUnidad: clonarUnidad, eliminarUnidad: eliminarUnidad,
     copiarSeneca: copiarSeneca, infoSeneca: infoSeneca,
