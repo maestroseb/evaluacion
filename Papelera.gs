@@ -42,9 +42,20 @@ var Papelera = (function () {
     if (fila < 0) throw new Error('Elemento no encontrado en la papelera.');
     var contenido = {};
     try { contenido = JSON.parse(sh.getRange(fila, 5).getValue()); } catch (e) {}
-    Object.keys(contenido).forEach(function (nombreHoja) {
-      var dest = ss.getSheetByName(nombreHoja);
-      var filas = contenido[nombreHoja] || [];
+    Object.keys(contenido).forEach(function (clave) {
+      // Caso especial: notas de UNA actividad → se funden en el blob de su unidad.
+      if (clave === '_notasAct') {
+        var na = contenido[clave] || {};
+        if (na.unidadId && na.actividadId) {
+          var blob = Notas.leer_(ss, na.unidadId);
+          blob[na.actividadId] = na.grades || {};
+          Notas.guardar_(ss, na.unidadId, blob);
+        }
+        return;
+      }
+      // Resto: reinsertar las filas guardadas en su pestaña (incluye _notas).
+      var dest = ss.getSheetByName(clave);
+      var filas = contenido[clave] || [];
       if (dest && filas.length) {
         dest.getRange(dest.getLastRow() + 1, 1, filas.length, filas[0].length).setValues(filas);
       }
@@ -96,28 +107,29 @@ var Papelera = (function () {
     guardar_(ss, 'clase', 'Clase: ' + row[2], { _evaluaciones: [row] });
   }
 
-  /** Guarda una unidad con sus actividades e ítems antes de borrarla. */
+  /** Guarda una unidad con sus actividades y su bloque de notas antes de borrarla. */
   function papelearUnidad_(ss, unidadId) {
     var shU = ss.getSheetByName(HOJAS.UNIDADES);
     var uRow = filaPorId_(shU, unidadId);
     if (!uRow) return;
     var shA = ss.getSheetByName(HOJAS.ACTIVIDADES);
     var actsRows = filasPorCol_(shA, 1, unidadId);
-    var shI = ss.getSheetByName(HOJAS.ITEMS);
-    var itemsRows = [];
-    actsRows.forEach(function (a) { itemsRows = itemsRows.concat(filasPorCol_(shI, 0, a[0])); });
-    guardar_(ss, 'unidad', 'Unidad: ' + uRow[2],
-      { _unidades: [uRow], _actividades: actsRows, _items: itemsRows });
+    var contenido = { _unidades: [uRow], _actividades: actsRows };
+    var notasRow = Notas.filaCruda_(ss, unidadId); // [unidadId, json] o null
+    if (notasRow) contenido._notas = [notasRow];
+    guardar_(ss, 'unidad', 'Unidad: ' + uRow[2], contenido);
   }
 
-  /** Guarda una actividad con sus ítems antes de borrarla. */
+  /** Guarda una actividad con sus notas (subconjunto del blob) antes de borrarla. */
   function papelearActividad_(ss, actividadId) {
     var shA = ss.getSheetByName(HOJAS.ACTIVIDADES);
     var aRow = filaPorId_(shA, actividadId);
     if (!aRow) return;
-    var shI = ss.getSheetByName(HOJAS.ITEMS);
-    var itemsRows = filasPorCol_(shI, 0, actividadId);
-    guardar_(ss, 'actividad', 'Actividad: ' + aRow[2], { _actividades: [aRow], _items: itemsRows });
+    var unidadId = aRow[1]; // col unidadId
+    var blob = Notas.leer_(ss, unidadId);
+    guardar_(ss, 'actividad', 'Actividad: ' + aRow[2],
+      { _actividades: [aRow],
+        _notasAct: { unidadId: unidadId, actividadId: actividadId, grades: blob[actividadId] || {} } });
   }
 
   return {

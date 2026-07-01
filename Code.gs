@@ -38,6 +38,7 @@ function getUsuario() {
 function getEstadoInicial() {
   var ss = abrirCuaderno_();
   Respaldo.siToca_(ss); // copia de seguridad automática (máx. 1/día), no bloquea
+  Migracion.auto_(ss);  // migra _items → _notas la 1ª vez tras actualizar (idempotente)
   return {
     usuario: Session.getActiveUser().getEmail(),
     esquemaVersion: CONFIG.ESQUEMA_VERSION,

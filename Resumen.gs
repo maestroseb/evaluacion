@@ -26,7 +26,12 @@ var Resumen = (function () {
       criteriosInfo[c.codigo] = { texto: c.texto, descripcion: c.descripcion };
     });
 
-    var items = leerItems_(ss); // map[actividadId][alumnoId] = conseguidos
+    // Notas de todas las unidades de esta evaluación (blobs por unidad).
+    var items = {}; // map[actividadId][alumnoId] = conseguidos
+    unidades.forEach(function (u) {
+      var blob = Notas.leer_(ss, u.unidadId);
+      Object.keys(blob).forEach(function (actId) { items[actId] = blob[actId]; });
+    });
 
     // Estructuras de salida.
     var critGlobal = {};   // alId -> {cod -> nota}
@@ -88,16 +93,6 @@ var Resumen = (function () {
   }
 
   // --- helpers ---
-  function leerItems_(ss) {
-    var datos = ss.getSheetByName(HOJAS.ITEMS).getDataRange().getValues();
-    var m = {};
-    for (var i = 1; i < datos.length; i++) {
-      var f = datos[i];
-      if (!f[0]) continue;
-      (m[f[0]] || (m[f[0]] = {}))[f[1]] = Number(f[2]);
-    }
-    return m;
-  }
   function notaActividad_(items, act, alId) {
     var fila = items[act.actividadId];
     var c = fila && fila[alId] != null ? fila[alId] : null;

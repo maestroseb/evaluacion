@@ -42,43 +42,6 @@ function reordenarActividades(unidadId, idsOrdenados) {
   return Actividades.reordenar_(abrirCuaderno_(), unidadId, idsOrdenados);
 }
 
-/** Guarda los ítems conseguidos de un alumno en una actividad. */
-function guardarItem(actividadId, alumnoId, conseguidos) {
-  return Actividades.guardarItem_(abrirCuaderno_(), actividadId, alumnoId, conseguidos);
-}
-
-/**
- * Guarda muchos ítems de una vez (una sola llamada) de forma eficiente: lee la
- * hoja de ítems una vez, aplica todos los cambios en memoria y la reescribe en
- * bloque. Pensado para pegar grandes cantidades sin timeouts ni llamadas
- * simultáneas. cambios: array de {actividadId, alumnoId, conseguidos}.
- */
-function guardarItems(cambios) {
-  var ss = abrirCuaderno_();
-  var sh = ss.getSheetByName(HOJAS.ITEMS);
-  var datos = sh.getDataRange().getValues(); // incluye cabecera
-
-  // Índice de todos los ítems existentes (de todas las unidades): clave -> valor.
-  var mapa = {};
-  for (var i = 1; i < datos.length; i++) {
-    if (datos[i][0]) mapa[datos[i][0] + '|' + datos[i][1]] = datos[i][2];
-  }
-  // Aplica los cambios (vacío = borrar).
-  (cambios || []).forEach(function (c) {
-    var k = c.actividadId + '|' + c.alumnoId;
-    if (c.conseguidos === '' || c.conseguidos == null) delete mapa[k];
-    else mapa[k] = Number(c.conseguidos);
-  });
-  // Reconstruye y reescribe en bloque.
-  var filas = Object.keys(mapa).map(function (k) {
-    var p = k.split('|');
-    return [p[0], p[1], mapa[k]];
-  });
-  if (sh.getLastRow() > 1) sh.getRange(2, 1, sh.getLastRow() - 1, 3).clearContent();
-  if (filas.length) sh.getRange(2, 1, filas.length, 3).setValues(filas);
-  return { ok: true, n: (cambios || []).length };
-}
-
 /**
  * Todo lo necesario para pintar la rejilla de una unidad:
  * unidad, alumnado, actividades, textos de criterios e ítems guardados.
@@ -91,7 +54,6 @@ function getRejilla(unidadId) {
 var Actividades = (function () {
 
   function hojaA_(ss) { return ss.getSheetByName(HOJAS.ACTIVIDADES); }
-  function hojaI_(ss) { return ss.getSheetByName(HOJAS.ITEMS); }
 
   function listar_(ss, unidadId) {
     var datos = hojaA_(ss).getDataRange().getValues();
@@ -133,13 +95,18 @@ var Actividades = (function () {
   }
 
   function eliminar_(ss, actividadId, sinPapelera) {
-    // A la papelera salvo que ya la cubra una foto de unidad (sinPapelera).
-    if (!sinPapelera) Papelera.papelearActividad_(ss, actividadId);
-    // Borra los ítems de la actividad y luego la actividad.
-    borrarItemsDe_(ss, actividadId);
     var sh = hojaA_(ss);
     var fila = Datos.filaDeId_(sh, actividadId);
-    if (fila >= 0) sh.deleteRow(fila);
+    if (fila < 0) return { ok: true };
+    var unidadId = sh.getRange(fila, 2).getValue(); // col 2 = unidadId
+    // Borrado suelto: a la papelera (con sus notas) y quita sus notas del blob.
+    // En cascada (sinPapelera, al borrar la unidad) no se toca el blob: la
+    // unidad elimina su fila de _notas entera.
+    if (!sinPapelera) {
+      Papelera.papelearActividad_(ss, actividadId);
+      Notas.quitarActividad_(ss, unidadId, actividadId);
+    }
+    sh.deleteRow(fila);
     return { ok: true };
   }
 
@@ -159,30 +126,6 @@ var Actividades = (function () {
     if (!(Number(p.numItems) > 0)) throw new Error('El nº de ítems debe ser mayor que 0.');
   }
 
-  // ---------- ítems ----------
-  function guardarItem_(ss, actividadId, alumnoId, conseguidos) {
-    var sh = hojaI_(ss);
-    var datos = sh.getDataRange().getValues();
-    var v = conseguidos === '' || conseguidos == null ? '' : Number(conseguidos);
-    for (var i = 1; i < datos.length; i++) {
-      if (datos[i][0] === actividadId && datos[i][1] === alumnoId) {
-        if (v === '') { sh.deleteRow(i + 1); return { ok: true }; }
-        sh.getRange(i + 1, 3).setValue(v);
-        return { ok: true };
-      }
-    }
-    if (v !== '') sh.appendRow([actividadId, alumnoId, v]);
-    return { ok: true };
-  }
-
-  function borrarItemsDe_(ss, actividadId) {
-    var sh = hojaI_(ss);
-    var datos = sh.getDataRange().getValues();
-    for (var i = datos.length - 1; i >= 1; i--) {
-      if (datos[i][0] === actividadId) sh.deleteRow(i + 1);
-    }
-  }
-
   // ---------- rejilla ----------
   function rejilla_(ss, unidadId) {
     var unidad = Unidades.obtener_(ss, unidadId);
@@ -196,17 +139,8 @@ var Actividades = (function () {
       criteriosInfo[c.codigo] = { texto: c.texto, descripcion: c.descripcion };
     });
 
-    // Ítems guardados de las actividades de esta unidad.
-    var idsAct = {};
-    actividades.forEach(function (a) { idsAct[a.actividadId] = true; });
-    var items = {};
-    var datosI = hojaI_(ss).getDataRange().getValues();
-    for (var i = 1; i < datosI.length; i++) {
-      var f = datosI[i];
-      if (idsAct[f[0]]) {
-        (items[f[0]] || (items[f[0]] = {}))[f[1]] = Number(f[2]);
-      }
-    }
+    // Notas de la unidad: un único bloque { actividadId: { alumnoId: valor } }.
+    var items = Notas.leer_(ss, unidadId);
 
     return {
       unidad: unidad,
@@ -258,7 +192,6 @@ var Actividades = (function () {
 
   return {
     listar_: listar_, crear_: crear_, editar_: editar_, eliminar_: eliminar_,
-    duplicar_: duplicar_, guardarItem_: guardarItem_, rejilla_: rejilla_,
-    reordenar_: reordenar_
+    duplicar_: duplicar_, rejilla_: rejilla_, reordenar_: reordenar_
   };
 })();

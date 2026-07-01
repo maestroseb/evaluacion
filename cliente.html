@@ -17,6 +17,7 @@ var App = (function () {
   function iniciar() {
     setupModalNoScroll();
     restaurarSidebar();
+    window.addEventListener('beforeunload', function () { flushNotas(); }); // guardado de última hora
     llamar('getEstadoInicial', [], function (e) {
       estado = e;
       document.getElementById('usuario').textContent = e.usuario;
@@ -31,6 +32,7 @@ var App = (function () {
   var SECCIONES = ['vista-evaluaciones', 'vista-clases', 'vista-clase',
     'vista-evaluacion', 'vista-unidad', 'vista-resumen', 'vista-papelera'];
   function mostrar(id) {
+    flushNotas(); // guarda notas pendientes de la unidad al cambiar de vista
     SECCIONES.forEach(function (s) { document.getElementById(s).hidden = (s !== id); });
     // Resalta la sección activa en barra lateral y tab bar (por data-nav).
     var clave =
@@ -586,12 +588,15 @@ var App = (function () {
     document.getElementById('resumen-titulo').textContent = 'Resumen — ' + tituloEval(evalActual);
     document.getElementById('resumen-meta').textContent = '';
     document.getElementById('resumen-cont').innerHTML = spinner();
-    llamar('getResumen', [evalActual.evalId], function (r) {
-      resumenData = r;
-      document.getElementById('resumen-meta').textContent =
-        r.claseNombre + ' · ' + r.curso + ' · ' + r.alumnos.length + ' alumnos/as · ' +
-        r.unidades.length + ' unidades';
-      pintarResumen();
+    // El resumen lee las notas del servidor: primero guardamos lo pendiente.
+    flushNotas(function () {
+      llamar('getResumen', [evalActual.evalId], function (r) {
+        resumenData = r;
+        document.getElementById('resumen-meta').textContent =
+          r.claseNombre + ' · ' + r.curso + ' · ' + r.alumnos.length + ' alumnos/as · ' +
+          r.unidades.length + ' unidades';
+        pintarResumen();
+      });
     });
   }
 
@@ -715,11 +720,14 @@ var App = (function () {
       document.getElementById('unidad-meta').textContent = '';
       document.getElementById('rejilla-cont').innerHTML = spinner();
     }
-    // Refresca siempre desde el servidor en segundo plano.
-    llamar('getRejilla', [unidadId], function (r) {
-      rejillaCache[unidadId] = r;
-      rejilla = r;
-      pintarUnidadActual();
+    // Refresca desde el servidor, pero SOLO tras guardar lo pendiente (para no
+    // sobrescribir ediciones sin persistir con datos antiguos).
+    flushNotas(function () {
+      llamar('getRejilla', [unidadId], function (r) {
+        rejillaCache[unidadId] = r;
+        rejilla = r;
+        pintarUnidadActual();
+      });
     });
   }
 
@@ -1111,12 +1119,46 @@ var App = (function () {
     return { actividadId: actId, alumnoId: alId, conseguidos: v === '' ? '' : v };
   }
 
+  // ---------- guardado de notas por unidad (bloque, con debounce) ----------
+  var notasDirty = false;    // hay cambios sin guardar en la unidad actual
+  var notasTimer = null;     // temporizador del debounce
+  var notasEnCurso = false;  // hay un guardado en vuelo
+  var notasCola = [];        // callbacks a ejecutar cuando el guardado esté a salvo
+
+  /** Marca cambios y programa el guardado del bloque de la unidad. */
+  function programarGuardadoNotas() {
+    notasDirty = true;
+    clearTimeout(notasTimer);
+    notasTimer = setTimeout(function () { flushNotas(); }, 500);
+  }
+
+  /**
+   * Guarda YA el bloque de notas de la unidad si hay cambios, y ejecuta cb
+   * cuando estén persistidas (o de inmediato si no hay nada pendiente). Serializa
+   * guardados solapados para que las lecturas posteriores lean datos frescos.
+   */
+  function flushNotas(cb) {
+    clearTimeout(notasTimer);
+    if (notasEnCurso) { if (cb) notasCola.push(cb); return; }
+    if (!notasDirty || !rejilla || !rejilla.unidad) { if (cb) cb(); return; }
+    notasDirty = false;
+    notasEnCurso = true;
+    if (cb) notasCola.push(cb);
+    var uid = rejilla.unidad.unidadId;
+    llamar('guardarNotasUnidad', [uid, rejilla.items], function () {
+      notasEnCurso = false;
+      var cbs = notasCola; notasCola = [];
+      cbs.forEach(function (f) { f(); });
+      if (notasDirty) flushNotas(); // hubo más ediciones mientras se guardaba
+    });
+  }
+
   /** Guarda el valor de un input (una celda): estado local, notas y persistencia. */
   function commitInput(inp) {
     var ch = aplicarValor(inp);
     if (!ch) return;
     actualizarNotasFila(ch.alumnoId);
-    llamar('guardarItem', [ch.actividadId, ch.alumnoId, ch.conseguidos], function () {});
+    programarGuardadoNotas();
   }
 
   /** Recalcula y actualiza solo las celdas de nota de una fila (sin repintar). */
@@ -1179,10 +1221,9 @@ var App = (function () {
       });
     });
     Object.keys(filas).forEach(actualizarNotasFila);   // recalcula notas en pantalla
-    if (cambios.length) {                              // UNA sola llamada al servidor
-      llamar('guardarItems', [cambios], function () {
-        avisoOk('Pegadas ' + cambios.length + ' notas.');
-      });
+    if (cambios.length) {
+      programarGuardadoNotas();                         // se guarda el bloque de la unidad
+      avisoOk('Pegadas ' + cambios.length + ' notas.');
     }
   }
 
