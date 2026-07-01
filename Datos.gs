@@ -15,7 +15,7 @@
 var ESQUEMA = {
   _meta: ['clave', 'valor'],
   _clases: ['claseId', 'nombre', 'curso', 'creado', 'alumnos'],
-  _evaluaciones: ['evalId', 'claseId', 'area', 'creado', 'color'],
+  _evaluaciones: ['evalId', 'claseId', 'area', 'creado', 'color', 'icono'],
   _unidades: ['unidadId', 'evalId', 'nombre', 'orden'],
   _actividades: ['actividadId', 'unidadId', 'nombre', 'criterios', 'numItems', 'orden'],
   _items: ['actividadId', 'alumnoId', 'conseguidos'],
@@ -85,11 +85,30 @@ var Datos = (function () {
     if (defecto && ESQUEMA[defecto.getName()] === undefined) ss.deleteSheet(defecto);
   }
 
-  /** Crea solo las pestañas que falten (cuadernos creados antes del cambio). */
+  /**
+   * Crea las pestañas que falten y, en las existentes, añade las columnas nuevas
+   * del esquema (migración no destructiva para cuadernos antiguos).
+   */
   function asegurarEsquema_(ss) {
     Object.keys(ESQUEMA).forEach(function (nombre) {
-      if (!ss.getSheetByName(nombre)) crearHoja_(ss, nombre, ESQUEMA[nombre]);
+      var sh = ss.getSheetByName(nombre);
+      if (!sh) { crearHoja_(ss, nombre, ESQUEMA[nombre]); return; }
+      asegurarColumnas_(sh, ESQUEMA[nombre]);
     });
+  }
+
+  /** Añade al final las cabeceras del esquema que aún no estén en la hoja. */
+  function asegurarColumnas_(sh, cabeceras) {
+    if (sh.getLastRow() === 0) {
+      sh.getRange(1, 1, 1, cabeceras.length).setValues([cabeceras]);
+      sh.setFrozenRows(1);
+      return;
+    }
+    var lastCol = sh.getLastColumn();
+    if (lastCol < cabeceras.length) {
+      var faltan = cabeceras.slice(lastCol);
+      sh.getRange(1, lastCol + 1, 1, faltan.length).setValues([faltan]);
+    }
   }
 
   function crearHoja_(ss, nombre, cabeceras) {

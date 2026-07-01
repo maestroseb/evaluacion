@@ -18,7 +18,8 @@ var CONFIG = {
   MAPA_CURRICULAR_ID: '1raqUsR_J2iTBJQV5OevluUTy5R7eKS4WWI0IF6Bpip0',
 
   // Versión del esquema de datos del cuaderno. Permite migraciones futuras.
-  ESQUEMA_VERSION: 1
+  // v2: campo "icono" en las evaluaciones (icono SVG por clase).
+  ESQUEMA_VERSION: 2
 };
 
 /**

@@ -44,7 +44,8 @@ var Evaluaciones = (function () {
       if (!f[0]) continue;
       var cl = clases[f[1]] || {};
       out.push({
-        evalId: f[0], claseId: f[1], area: f[2], creado: f[3], color: f[4] || '',
+        evalId: f[0], claseId: f[1], area: f[2], creado: f[3],
+        color: f[4] || '', icono: f[5] || '',
         claseNombre: cl.nombre || '(grupo eliminado)',
         curso: cl.curso || '',
         numAlumnos: cl.numAlumnos || 0
@@ -59,7 +60,7 @@ var Evaluaciones = (function () {
     var clase = Clases.obtener_(ss, payload.claseId); // valida que existe
     var evalId = Datos.nuevoId_('e');
     hoja_(ss).appendRow([evalId, clase.claseId, payload.area,
-      new Date().toISOString(), payload.color || '']);
+      new Date().toISOString(), payload.color || '', payload.icono || '']);
     return obtener_(ss, evalId);
   }
 
@@ -67,10 +68,10 @@ var Evaluaciones = (function () {
     var sh = hoja_(ss);
     var fila = Datos.filaDeId_(sh, evalId);
     if (fila < 0) throw new Error('Evaluación no encontrada.');
-    var f = sh.getRange(fila, 1, 1, 5).getValues()[0];
+    var f = sh.getRange(fila, 1, 1, 6).getValues()[0];
     var clase = Clases.obtener_(ss, f[1]);
     return {
-      evalId: f[0], area: f[2], creado: f[3], color: f[4] || '',
+      evalId: f[0], area: f[2], creado: f[3], color: f[4] || '', icono: f[5] || '',
       clase: clase, curso: clase.curso
     };
   }
