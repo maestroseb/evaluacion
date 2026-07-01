@@ -136,6 +136,16 @@
   .buscador input:focus { outline: none; border-color: var(--acento);
     box-shadow: 0 0 0 3px var(--acento-suave); }
 
+  /* Selector de curso académico en la barra superior */
+  .curso-chip { display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 10px 5px 11px; border: 1px solid var(--borde-fuerte); border-radius: 999px;
+    background: var(--surface); cursor: pointer; transition: border-color .12s, box-shadow .12s; }
+  .curso-chip:focus-within { border-color: var(--acento); box-shadow: 0 0 0 3px var(--acento-suave); }
+  .curso-chip-ico { font-size: 13px; line-height: 1; }
+  .curso-chip select { border: none; background: transparent; font-family: inherit;
+    font-size: 13px; font-weight: 600; color: var(--texto); cursor: pointer;
+    padding: 0 2px; margin: 0; outline: none; }
+
   /* Velo para sidebar en móvil */
   .velo { display: none; position: fixed; inset: 0; background: rgba(20,22,28,.4);
     z-index: 39; }
@@ -231,12 +241,22 @@
 
   /* ---------- Tarjeta de clase (con cabecera de color e icono) ---------- */
   .clase-card {
+    position: relative;
     display: flex; flex-direction: column; overflow: hidden; cursor: pointer;
     background: var(--surface); border: 1px solid var(--borde); border-radius: var(--radio);
     box-shadow: var(--sombra-1);
     transition: transform .14s ease, box-shadow .14s ease, border-color .14s;
   }
   .clase-card:hover { transform: translateY(-3px); box-shadow: var(--sombra-3); border-color: var(--borde-fuerte); }
+  .clase-card.arrastrando { z-index: 5; opacity: .97; cursor: grabbing;
+    box-shadow: 0 14px 30px rgba(16,18,24,.20); transition: none; }
+  /* Asa de reordenar en la cabecera de color de la tarjeta. */
+  .cc-grip { position: absolute; top: 8px; right: 10px; z-index: 1;
+    color: rgba(255,255,255,.7); cursor: grab; font-size: 13px; line-height: 1;
+    padding: 2px 5px; border-radius: 6px; touch-action: none; user-select: none;
+    transition: color .12s, background .12s; }
+  .cc-grip:hover { color: #fff; background: rgba(255,255,255,.18); }
+  .cc-grip:active { cursor: grabbing; }
   .clase-card-head {
     display: flex; align-items: center; gap: 12px; padding: 15px 16px;
     background: var(--c, var(--acento)); color: #fff;
@@ -520,7 +540,9 @@
 
     .topbar { padding: 0 16px; gap: 10px; }
     .topbar-titulo { font-size: 16px; }
-    .buscador { width: auto; flex: 0 1 160px; }
+    .buscador { width: auto; flex: 0 1 140px; }
+    .curso-chip { padding: 5px 8px; }
+    .curso-chip-ico { display: none; }
 
     main { padding: 16px 16px calc(74px + env(safe-area-inset-bottom, 0px)); }
 

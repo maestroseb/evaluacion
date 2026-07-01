@@ -11,7 +11,7 @@ var CONFIG = {
   // principal: no requiere permisos de Drive y se sirve igual a toda la
   // comunidad. El repositorio debe ser público (o el JSON accesible por URL).
   MAPA_JSON_URL: 'https://raw.githubusercontent.com/maestroseb/evaluacion/' +
-    'claude/sheets-evaluation-criteria-3qsyay/data/mapa-curricular.json',
+    'main/data/mapa-curricular.json',
 
   // Alternativa/legado: hoja de cálculo central con el mapa. Solo se usa si
   // MAPA_JSON_URL está vacío. Se compartiría en solo lectura con el dominio.
@@ -23,7 +23,10 @@ var CONFIG = {
   // v4: campos "color" e "icono" en los grupos (_clases).
   // v5: notas por unidad en _notas (un JSON por unidad); _items pasa a ser
   //     copia de seguridad congelada tras la migración.
-  ESQUEMA_VERSION: 5
+  // v6: campo "orden" en evaluaciones y grupos (reordenar tarjetas arrastrando).
+  // v7: campo "cursoAcademico" en evaluaciones y grupos (multi-curso en un solo
+  //     cuaderno; la interfaz filtra por el curso académico activo).
+  ESQUEMA_VERSION: 7
 };
 
 /**

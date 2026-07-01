@@ -1,7 +1,38 @@
-# Cursos académicos — plan (Parte B, pendiente)
+# Cursos académicos — Parte B
 
-> Estado: **diseñado, sin implementar.** Se hará sobre base limpia, después de
-> mergear el rediseño y la mejora de notas por unidad (`docs/notas-por-unidad.md`).
+> Estado: **implementado** (esquema v7). Un solo cuaderno guarda todos los
+> cursos; la interfaz filtra por el curso académico activo.
+
+## Qué se ha implementado
+
+- Campo `cursoAcademico` en `_clases` y `_evaluaciones` (col 9, migración no
+  destructiva por `asegurarColumnas_`; `ESQUEMA_VERSION` = 7).
+- Módulo `Cursos` (`Cursos.gs`): `actual_()` (curso natural sep→ago),
+  `activo_()`/`fijar_()` (persistido en `UserProperties.cursoActivo`),
+  `lista_()`, `filtrar_()` y `backfill_()` (asigna el curso natural a los datos
+  antiguos, idempotente, se llama en `getEstadoInicial`).
+- `getEstadoInicial` devuelve `cursos:{activo,actual,lista}` y las listas ya
+  filtradas al curso activo. `cambiarCurso(curso)` cambia el activo y devuelve
+  Clases y Grupos del nuevo curso. `crearClase`/`crearEvaluacion` etiquetan lo
+  nuevo con el curso activo (la clase hereda el del grupo).
+- UI: selector de curso en la barra superior (`#curso-activo`); al cambiarlo se
+  repintan Clases y Grupos. Botón **Promocionar** en el detalle de un grupo.
+- `Promocion.gs` (`promocionarGrupo`): duplica un grupo en el curso destino con
+  sus clases, unidades y actividades pero SIN notas; el alumnado se copia con
+  ids nuevos (empieza limpio). Tras promocionar, la UI salta al curso destino.
+  - **Subida de nivel** (p. ej. 4º→5º): al promocionar se elige el nivel
+    destino; si cambia, los criterios de cada actividad se remapean sustituyendo
+    el nivel dentro del código (2º token: `LCL.4.4.1`→`LCL.5.4.1`) y validándolos
+    contra el catálogo del nivel destino (`Curriculo.codigosDeNivel`). Los que no
+    tienen correspondencia quedan sin asignar (LOMLOE no garantiza equivalencia;
+    en los datos actuales el acierto ronda el 99 %). Una actividad puede quedar
+    sin criterios: se permite crearla así (`Actividades.crear_` con flag) para
+    que el profe la revincule, y la UI avisa de cuántos quedaron sin asignar.
+  - Nota de datos: inglés usa prefijo `ING` y francés `FR2` en todos los niveles;
+    el remapeo solo toca el token de nivel, nunca el prefijo de área.
+- Portabilidad (export/import) incluye `cursoAcademico`.
+
+## Diseño original (referencia)
 
 ## Decisión: un solo cuaderno + campo `cursoAcademico` (NO hojas separadas)
 

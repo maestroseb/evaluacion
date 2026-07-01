@@ -39,11 +39,14 @@ function getEstadoInicial() {
   var ss = abrirCuaderno_();
   Respaldo.siToca_(ss); // copia de seguridad automática (máx. 1/día), no bloquea
   Migracion.auto_(ss);  // migra _items → _notas la 1ª vez tras actualizar (idempotente)
+  Cursos.backfill_(ss); // asigna curso académico a los datos antiguos (idempotente)
+  var activo = Cursos.activo_();
   return {
     usuario: Session.getActiveUser().getEmail(),
     esquemaVersion: CONFIG.ESQUEMA_VERSION,
     areas: Curriculo.listarAreasCursos(),
-    clases: Clases.listar_(ss),
-    evaluaciones: Evaluaciones.listar_(ss)
+    cursos: Cursos.info_(ss),
+    clases: Cursos.filtrar_(Clases.listar_(ss), activo),
+    evaluaciones: Cursos.filtrar_(Evaluaciones.listar_(ss), activo)
   };
 }

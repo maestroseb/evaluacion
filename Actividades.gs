@@ -71,8 +71,8 @@ var Actividades = (function () {
     return out;
   }
 
-  function crear_(ss, unidadId, p) {
-    validarActividad_(p);
+  function crear_(ss, unidadId, p, permitirSinCriterios) {
+    validarActividad_(p, permitirSinCriterios);
     var id = Datos.nuevoId_('act');
     var orden = listar_(ss, unidadId).length + 1;
     hojaA_(ss).appendRow([
@@ -120,9 +120,13 @@ var Actividades = (function () {
     });
   }
 
-  function validarActividad_(p) {
+  function validarActividad_(p, permitirSinCriterios) {
     if (!p || !p.nombre || !p.nombre.trim()) throw new Error('Falta el nombre de la actividad.');
-    if (!p.criterios || !p.criterios.length) throw new Error('Asocia al menos un criterio.');
+    // Al promocionar de nivel, una actividad puede quedar sin criterios con
+    // correspondencia; se crea vacía para que el profe la revincule después.
+    if (!permitirSinCriterios && (!p.criterios || !p.criterios.length)) {
+      throw new Error('Asocia al menos un criterio.');
+    }
     if (!(Number(p.numItems) > 0)) throw new Error('El nº de ítems debe ser mayor que 0.');
   }
 

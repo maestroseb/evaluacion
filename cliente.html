@@ -24,6 +24,7 @@ var App = (function () {
       document.getElementById('usuario').title = e.usuario;
       document.getElementById('perfil-avatar').textContent = iniciales(e.usuario);
       document.getElementById('cargando').hidden = true;
+      pintarSelectorCurso();
       irAEvaluaciones();
     });
   }
@@ -49,6 +50,38 @@ var App = (function () {
   }
   function irAEvaluaciones() { evalActual = null; setTitulo('Clases'); mostrar('vista-evaluaciones'); pintarEvaluaciones(); }
   function irAClases() { claseActual = null; setTitulo('Grupos'); mostrar('vista-clases'); pintarClases(); }
+
+  // ---------- curso académico (multi-curso en un solo cuaderno) ----------
+  /** Rellena el selector de curso de la barra superior con los cursos con datos. */
+  function pintarSelectorCurso() {
+    var sel = document.getElementById('curso-activo');
+    if (!sel || !estado.cursos) return;
+    var c = estado.cursos;
+    sel.innerHTML = (c.lista || []).map(function (x) {
+      return '<option value="' + esc(x) + '"' + (x === c.activo ? ' selected' : '') +
+        '>' + esc(x) + '</option>';
+    }).join('');
+  }
+
+  /** Cambia el curso activo: recarga Clases y Grupos ya filtrados del servidor. */
+  function cambiarCurso(curso) {
+    if (!curso || (estado.cursos && curso === estado.cursos.activo)) return;
+    llamar('cambiarCurso', [curso], function (r) {
+      estado.cursos = r.cursos;
+      estado.clases = r.clases;
+      estado.evaluaciones = r.evaluaciones;
+      invalidarCaches();
+      pintarSelectorCurso();
+      irAEvaluaciones(); // vuelve a la lista de clases del curso elegido
+    });
+  }
+
+  /** Siguiente curso académico ("2024-2025" -> "2025-2026"), o '' si no encaja. */
+  function siguienteCurso_(acad) {
+    var m = /^(\d{4})-(\d{4})$/.exec(acad || '');
+    if (!m) return '';
+    return (parseInt(m[1], 10) + 1) + '-' + (parseInt(m[2], 10) + 1);
+  }
 
   /** Inicial (mayúscula) de un texto, para los iconos de color. */
   function inicial(s) { return String(s || '?').trim().charAt(0).toUpperCase() || '?'; }
@@ -208,12 +241,14 @@ var App = (function () {
     }
     cont.innerHTML = estado.evaluaciones.map(function (ev) {
       var col = ev.color || 'var(--acento)';
-      return '<div class="clase-card" style="--c:' + col + '" ' +
+      return '<div class="clase-card" data-id="' + ev.evalId + '" style="--c:' + col + '" ' +
         'onmouseenter="App.prefetchEval(\'' + ev.evalId + '\')" ' +
         'onclick="App.abrirEvaluacion(\'' + ev.evalId + '\')">' +
         '<div class="clase-card-head">' +
           '<span class="clase-card-ico">' + iconoSvg(ev.icono) + '</span>' +
           '<h3>' + esc(tituloEval(ev)) + '</h3>' +
+          '<span class="cc-grip" title="Arrastra para reordenar" ' +
+          'onpointerdown="App.dragEval(event)" onclick="event.stopPropagation()">⠿</span>' +
         '</div>' +
         '<div class="clase-card-body">' +
           '<div class="cc-meta"><b>' + ev.numAlumnos + '</b> alumnos/as</div>' +
@@ -409,73 +444,95 @@ var App = (function () {
     }).join('');
   }
 
-  // ---------- reordenar unidades arrastrando (asa ⠿; ratón y táctil) ----------
-  var arrastre = null; // { el, moved }
+  // ---------- reordenar tarjetas arrastrando (genérico; ratón y táctil) ----------
+  // La tarjeta arrastrada se levanta y sigue al puntero; las demás se apartan.
+  var arrastre = null; // { el, cont, sel, persist, moved, offX, offY }
 
-  function gripDown(e, unidadId) {
+  function dragInicio(e, sel, persist) {
     if (e.button != null && e.button !== 0) return; // solo botón principal
     e.preventDefault(); e.stopPropagation();
-    var el = e.currentTarget.closest('.tarjeta-unidad');
+    var el = e.currentTarget.closest(sel);
     if (!el) return;
     var r = el.getBoundingClientRect();
-    arrastre = { el: el, moved: false, offX: e.clientX - r.left, offY: e.clientY - r.top };
+    arrastre = { el: el, cont: el.parentNode, sel: sel, persist: persist,
+      moved: false, offX: e.clientX - r.left, offY: e.clientY - r.top };
     el.classList.add('arrastrando');
     document.body.classList.add('reordenando');
     if (el.setPointerCapture) { try { el.setPointerCapture(e.pointerId); } catch (x) {} }
-    document.addEventListener('pointermove', gripMove);
-    document.addEventListener('pointerup', gripUp, true);
+    document.addEventListener('pointermove', dragMueve);
+    document.addEventListener('pointerup', dragFin, true);
   }
-  function gripMove(e) {
+  function dragMueve(e) {
     if (!arrastre) return;
     arrastre.moved = true;
-    var el = arrastre.el, cont = document.getElementById('lista-unidades');
-    // 1) Reordena según la tarjeta que hay bajo el puntero.
-    var destino = tarjetaBajoPunto_(cont, e.clientX, e.clientY, el);
+    var el = arrastre.el;
+    var destino = tarjetaBajoPunto_(arrastre.cont, arrastre.sel, e.clientX, e.clientY, el);
     if (destino) {
       var r = destino.getBoundingClientRect();
       var despues = e.clientX > (r.left + r.width / 2);
       var ref = despues ? destino.nextSibling : destino;
-      if (ref !== el && ref !== el.nextSibling) cont.insertBefore(el, ref);
+      if (ref !== el && ref !== el.nextSibling) arrastre.cont.insertBefore(el, ref);
     }
-    // 2) La tarjeta se pega al puntero respecto a su hueco natural actual.
     el.style.transform = 'none';
     var nr = el.getBoundingClientRect();
     el.style.transform = 'translate(' + (e.clientX - arrastre.offX - nr.left) + 'px,' +
       (e.clientY - arrastre.offY - nr.top) + 'px)';
   }
-  function gripUp() {
-    document.removeEventListener('pointermove', gripMove);
-    document.removeEventListener('pointerup', gripUp, true);
+  function dragFin() {
+    document.removeEventListener('pointermove', dragMueve);
+    document.removeEventListener('pointerup', dragFin, true);
     if (!arrastre) return;
-    var el = arrastre.el, moved = arrastre.moved;
-    el.style.transform = '';
-    el.classList.remove('arrastrando');
+    var a = arrastre; arrastre = null;
+    a.el.style.transform = '';
+    a.el.classList.remove('arrastrando');
     document.body.classList.remove('reordenando');
-    arrastre = null;
-    if (!moved) return;
-    // Evita que el "click" posterior al soltar abra la unidad.
+    if (!a.moved) return;
+    // Evita que el "click" posterior al soltar abra la tarjeta.
     var swallow = function (ev) { ev.stopPropagation(); ev.preventDefault(); quitar(); };
     var quitar = function () { document.removeEventListener('click', swallow, true); };
     document.addEventListener('click', swallow, true);
     setTimeout(quitar, 350);
-    // Lee el nuevo orden del DOM, actualiza estado y persiste.
-    var cont = document.getElementById('lista-unidades');
-    var ids = [].map.call(cont.querySelectorAll('.tarjeta-unidad'), function (c) { return c.dataset.id; });
-    var byId = {};
-    (evalActual.unidades || []).forEach(function (u) { byId[u.unidadId] = u; });
-    evalActual.unidades = ids.filter(function (id) { return byId[id]; }).map(function (id) { return byId[id]; });
-    pintarUnidades(); // renumera (01, 02…)
-    llamar('reordenarUnidades', [evalActual.evalId, ids], function () {});
+    var ids = [].map.call(a.cont.querySelectorAll(a.sel), function (c) { return c.dataset.id; });
+    a.persist(ids);
   }
-  /** Tarjeta de unidad cuyo rectángulo contiene el punto (excluyendo una). */
-  function tarjetaBajoPunto_(cont, x, y, excluir) {
-    var cards = cont.querySelectorAll('.tarjeta-unidad');
+  /** Tarjeta (del selector) cuyo rectángulo contiene el punto (excluyendo una). */
+  function tarjetaBajoPunto_(cont, sel, x, y, excluir) {
+    var cards = cont.querySelectorAll(sel);
     for (var i = 0; i < cards.length; i++) {
       if (cards[i] === excluir) continue;
       var r = cards[i].getBoundingClientRect();
       if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return cards[i];
     }
     return null;
+  }
+  /** Reordena arr (en sitio) para seguir el orden de ids (por la clave dada). */
+  function reordenarArray_(arr, ids, clave) {
+    var by = {};
+    arr.forEach(function (x) { by[x[clave]] = x; });
+    var out = ids.map(function (id) { return by[id]; }).filter(Boolean);
+    arr.forEach(function (x) { if (ids.indexOf(x[clave]) < 0) out.push(x); });
+    arr.length = 0; Array.prototype.push.apply(arr, out);
+  }
+
+  // Entradas por tipo de tarjeta (asa ⠿):
+  function gripDown(e) { // unidades
+    dragInicio(e, '.tarjeta-unidad', function (ids) {
+      reordenarArray_(evalActual.unidades = evalActual.unidades || [], ids, 'unidadId');
+      pintarUnidades(); // renumera 01, 02…
+      llamar('reordenarUnidades', [evalActual.evalId, ids], function () {});
+    });
+  }
+  function dragEval(e) { // tarjetas de clase (evaluaciones)
+    dragInicio(e, '.clase-card', function (ids) {
+      reordenarArray_(estado.evaluaciones, ids, 'evalId');
+      llamar('reordenarEvaluaciones', [ids], function () {});
+    });
+  }
+  function dragGrupo(e) { // tarjetas de grupo
+    dragInicio(e, '.clase-card', function (ids) {
+      reordenarArray_(estado.clases, ids, 'claseId');
+      llamar('reordenarClases', [ids], function () {});
+    });
   }
 
   /** Renombrar una unidad desde su tarjeta. */
@@ -1300,12 +1357,14 @@ var App = (function () {
     }
     cont.innerHTML = estado.clases.map(function (c) {
       var col = c.color || colorAvatar(c.nombre);
-      return '<div class="clase-card" style="--c:' + col + '" ' +
+      return '<div class="clase-card" data-id="' + c.claseId + '" style="--c:' + col + '" ' +
         'onmouseenter="App.prefetchClase(\'' + c.claseId + '\')" ' +
         'onclick="App.abrirClase(\'' + c.claseId + '\')">' +
         '<div class="clase-card-head">' +
           '<span class="clase-card-ico">' + iconoSvg(c.icono || 'personas') + '</span>' +
           '<h3>' + esc(c.nombre) + '</h3>' +
+          '<span class="cc-grip" title="Arrastra para reordenar" ' +
+          'onpointerdown="App.dragGrupo(event)" onclick="event.stopPropagation()">⠿</span>' +
         '</div>' +
         '<div class="clase-card-body">' +
           '<div class="cc-meta"><b>' + c.numAlumnos + '</b> alumnos/as</div>' +
@@ -1476,6 +1535,61 @@ var App = (function () {
       });
   }
 
+  /** Siguiente nivel del alumnado ("4º Primaria" → "5º Primaria"), o el mismo. */
+  function siguienteNivel_(nivel) {
+    var niveles = cursosDisponibles();
+    var m = /^\s*(\d+)/.exec(nivel || '');
+    if (!m) return nivel; // Infantil u otros sin número: sin salto automático
+    var buscado = String(parseInt(m[1], 10) + 1);
+    for (var i = 0; i < niveles.length; i++) {
+      var mm = /^\s*(\d+)/.exec(niveles[i]);
+      if (mm && mm[1] === buscado) return niveles[i];
+    }
+    return nivel; // no hay nivel superior (p. ej. 6º): se queda igual
+  }
+
+  /** Duplica el grupo actual en otro curso académico (estructura, sin notas). */
+  function promocionarGrupoUI() {
+    var cl = claseActual;
+    var activo = (estado.cursos && estado.cursos.activo) || '';
+    var sugeridoAcad = siguienteCurso_(activo) || '';
+    var nivelActual = cl.curso || '';
+    var sugeridoNivel = siguienteNivel_(nivelActual);
+    var optNiveles = cursosDisponibles().map(function (n) {
+      return '<option value="' + esc(n) + '"' + (n === sugeridoNivel ? ' selected' : '') +
+        '>' + esc(n) + '</option>';
+    }).join('');
+    abrirModal('Promocionar grupo',
+      '<p class="ayuda">Crea una copia de «' + esc(cl.nombre) + '» en otro curso académico, ' +
+      'con sus clases, unidades y actividades pero <b>sin notas</b>. El alumnado se copia para ' +
+      'que ajustes altas y bajas del nuevo curso.</p>' +
+      '<label>Curso académico de destino' +
+      '<input id="f-curso-acad" type="text" value="' + esc(sugeridoAcad) + '" placeholder="2025-2026"></label>' +
+      '<label>Nivel del alumnado el próximo curso' +
+      '<select id="f-nivel-destino">' + optNiveles + '</select></label>' +
+      '<p class="ayuda">Si el alumnado <b>sube de nivel</b> (p. ej. de ' + esc(nivelActual) +
+      ' al siguiente), los criterios se reasignan al nivel nuevo (LCL.4.4.1 → LCL.5.4.1). ' +
+      'Los que no tengan equivalente quedan <b>sin asignar</b> para que los revises.</p>',
+      'Promocionar',
+      function () {
+        var destino = val('f-curso-acad').trim();
+        var nivel = val('f-nivel-destino');
+        if (!/^\d{4}-\d{4}$/.test(destino)) return aviso('Escribe el curso como 2025-2026.');
+        botonModalCargando('Promocionando…');
+        llamar('promocionarGrupo', [cl.claseId, destino, nivel], function (r) {
+          cerrarModal();
+          var sin = (r && r.criteriosSinAsignar) || 0;
+          if (sin > 0) {
+            avisoOk('Grupo promocionado a ' + destino + '. ' + sin +
+              ' criterio(s) sin equivalente en ' + nivel + ': revísalos.');
+          } else {
+            avisoOk('Grupo promocionado a ' + destino + '.');
+          }
+          cambiarCurso(destino); // salta al curso destino para ver el resultado
+        });
+      });
+  }
+
   // ---------- mapa: cursos y áreas ----------
   function cursosDisponibles() {
     var vistos = {}, out = [];
@@ -1612,6 +1726,7 @@ var App = (function () {
     eliminarEvaluacionActual: eliminarEvaluacionActual,
     nuevaUnidad: nuevaUnidad, abrirUnidad: abrirUnidad,
     editarUnidadUI: editarUnidadUI, gripDown: gripDown,
+    dragEval: dragEval, dragGrupo: dragGrupo,
     clonarUnidad: clonarUnidad, eliminarUnidad: eliminarUnidad,
     copiarSeneca: copiarSeneca, infoSeneca: infoSeneca,
     verResumen: verResumen, pintarResumen: pintarResumen, copiarResumenSeneca: copiarResumenSeneca,
@@ -1623,7 +1738,8 @@ var App = (function () {
     prefetchEval: prefetchEval, prefetchClase: prefetchClase, prefetchRejilla: prefetchRejilla,
     nuevaClase: nuevaClase, copiarDeClase: copiarDeClase,
     abrirClase: abrirClase, editarClaseUI: editarClaseUI, editarAlumnos: editarAlumnos,
-    eliminarClaseActual: eliminarClaseActual,
+    eliminarClaseActual: eliminarClaseActual, promocionarGrupoUI: promocionarGrupoUI,
+    cambiarCurso: cambiarCurso,
     cerrarModal: cerrarModal, cerrarModalFuera: cerrarModalFuera
   };
 })();

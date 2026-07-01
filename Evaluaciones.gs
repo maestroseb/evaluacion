@@ -12,7 +12,8 @@ function getCriterios(curso, area) {
 
 /** Lista las evaluaciones con datos de su clase (nombre, curso, nº alumnos). */
 function listarEvaluaciones() {
-  return Evaluaciones.listar_(abrirCuaderno_());
+  var ss = abrirCuaderno_();
+  return Cursos.filtrar_(Evaluaciones.listar_(ss), Cursos.activo_());
 }
 
 /** Crea una evaluación. payload: {claseId, area, color, icono, nombre} */
@@ -34,6 +35,11 @@ function eliminarEvaluacion(evalId) {
   return Evaluaciones.eliminar_(abrirCuaderno_(), evalId);
 }
 
+/** Reordena las evaluaciones (clases) según el nuevo orden de ids en la rejilla. */
+function reordenarEvaluaciones(ids) {
+  return Evaluaciones.reordenar_(abrirCuaderno_(), ids);
+}
+
 
 var Evaluaciones = (function () {
 
@@ -50,12 +56,14 @@ var Evaluaciones = (function () {
       var cl = clases[f[1]] || {};
       out.push({
         evalId: f[0], claseId: f[1], area: f[2], creado: f[3],
-        color: f[4] || '', icono: f[5] || '', nombre: f[6] || f[2],
+        color: f[4] || '', icono: f[5] || '', nombre: f[6] || f[2], orden: Number(f[7]) || 0,
+        cursoAcademico: f[8] || '',
         claseNombre: cl.nombre || '(grupo eliminado)',
         curso: cl.curso || '',
         numAlumnos: cl.numAlumnos || 0
       });
     }
+    out.sort(function (a, b) { return a.orden - b.orden; }); // orden guardado (0 = antiguos)
     return out;
   }
 
@@ -65,9 +73,27 @@ var Evaluaciones = (function () {
     var clase = Clases.obtener_(ss, payload.claseId); // valida que existe
     var evalId = Datos.nuevoId_('e');
     var nombre = (payload.nombre && String(payload.nombre).trim()) || payload.area;
+    var orden = listar_(ss).length + 1;
+    // La clase hereda el curso académico de su grupo (o el activo si el grupo
+    // aún no lo tuviera asignado).
+    var cursoAcad = clase.cursoAcademico || Cursos.activo_();
     hoja_(ss).appendRow([evalId, clase.claseId, payload.area,
-      new Date().toISOString(), payload.color || '', payload.icono || '', nombre]);
+      new Date().toISOString(), payload.color || '', payload.icono || '', nombre, orden, cursoAcad]);
     return obtener_(ss, evalId);
+  }
+
+  /** Reordena las evaluaciones según la lista de ids (col 8 = orden). */
+  function reordenar_(ss, ids) {
+    if (!ids || !ids.length) return { ok: true };
+    var sh = hoja_(ss);
+    var datos = sh.getDataRange().getValues();
+    var filaDe = {};
+    for (var i = 1; i < datos.length; i++) if (datos[i][0]) filaDe[datos[i][0]] = i + 1;
+    ids.forEach(function (id, idx) {
+      var fila = filaDe[id];
+      if (fila) sh.getRange(fila, 8).setValue(idx + 1);
+    });
+    return { ok: true };
   }
 
   function obtener_(ss, evalId) {
@@ -119,6 +145,6 @@ var Evaluaciones = (function () {
 
   return {
     listar_: listar_, crear_: crear_, obtener_: obtener_, editar_: editar_,
-    eliminar_: eliminar_, usaClase_: usaClase_
+    eliminar_: eliminar_, usaClase_: usaClase_, reordenar_: reordenar_
   };
 })();

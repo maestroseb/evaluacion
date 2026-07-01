@@ -9,7 +9,8 @@
  */
 
 function listarClases() {
-  return Clases.listar_(abrirCuaderno_());
+  var ss = abrirCuaderno_();
+  return Cursos.filtrar_(Clases.listar_(ss), Cursos.activo_());
 }
 
 /** Crea una clase. payload: {nombre, curso, alumnos:[{nombre}]} */
@@ -39,6 +40,11 @@ function eliminarClase(claseId) {
   return Clases.eliminar_(abrirCuaderno_(), claseId);
 }
 
+/** Reordena los grupos según el nuevo orden de ids en la rejilla. */
+function reordenarClases(ids) {
+  return Clases.reordenar_(abrirCuaderno_(), ids);
+}
+
 /**
  * Cifra los nombres de los grupos que aún estén en texto plano (legado).
  * Ejecútala una vez desde el editor de Apps Script tras activar el cifrado.
@@ -62,9 +68,11 @@ var Clases = (function () {
       if (!f[0]) continue;
       out.push({
         claseId: f[0], nombre: f[1], curso: f[2], creado: f[3],
-        numAlumnos: contar_(f[4]), color: f[5] || '', icono: f[6] || ''
+        numAlumnos: contar_(f[4]), color: f[5] || '', icono: f[6] || '',
+        orden: Number(f[7]) || 0, cursoAcademico: f[8] || ''
       });
     }
+    out.sort(function (a, b) { return a.orden - b.orden; }); // orden guardado (0 = antiguos)
     return out;
   }
 
@@ -73,22 +81,40 @@ var Clases = (function () {
     validar_(payload.curso, 'el curso');
     var claseId = Datos.nuevoId_('c');
     var alumnos = normalizarAlumnos_(payload.alumnos || []);
+    var orden = listar_(ss).length + 1;
+    var cursoAcad = (payload.cursoAcademico && String(payload.cursoAcademico).trim())
+      || Cursos.activo_();
     hoja_(ss).appendRow([
       claseId, payload.nombre.trim(), payload.curso,
       new Date().toISOString(), serializar_(alumnos),
-      payload.color || '', payload.icono || ''
+      payload.color || '', payload.icono || '', orden, cursoAcad
     ]);
     return obtener_(ss, claseId);
+  }
+
+  /** Reordena los grupos según la lista de ids (col 8 = orden). */
+  function reordenar_(ss, ids) {
+    if (!ids || !ids.length) return { ok: true };
+    var sh = hoja_(ss);
+    var datos = sh.getDataRange().getValues();
+    var filaDe = {};
+    for (var i = 1; i < datos.length; i++) if (datos[i][0]) filaDe[datos[i][0]] = i + 1;
+    ids.forEach(function (id, idx) {
+      var fila = filaDe[id];
+      if (fila) sh.getRange(fila, 8).setValue(idx + 1);
+    });
+    return { ok: true };
   }
 
   function obtener_(ss, claseId) {
     var sh = hoja_(ss);
     var fila = Datos.filaDeId_(sh, claseId);
     if (fila < 0) throw new Error('Clase no encontrada.');
-    var f = sh.getRange(fila, 1, 1, 7).getValues()[0];
+    var f = sh.getRange(fila, 1, 1, 9).getValues()[0];
     return {
       claseId: f[0], nombre: f[1], curso: f[2], creado: f[3],
-      alumnos: deserializar_(f[4]), color: f[5] || '', icono: f[6] || ''
+      alumnos: deserializar_(f[4]), color: f[5] || '', icono: f[6] || '',
+      cursoAcademico: f[8] || ''
     };
   }
 
@@ -200,6 +226,6 @@ var Clases = (function () {
   return {
     listar_: listar_, crear_: crear_, obtener_: obtener_, editar_: editar_,
     actualizarAlumnos_: actualizarAlumnos_, renombrar_: renombrar_,
-    eliminar_: eliminar_, migrarCifrado_: migrarCifrado_
+    eliminar_: eliminar_, migrarCifrado_: migrarCifrado_, reordenar_: reordenar_
   };
 })();
