@@ -10,6 +10,8 @@ var App = (function () {
   var estado = null;        // {usuario, areas, clases, evaluaciones}
   var claseActual = null;
   var evalActual = null;
+  var claseCache = {};      // claseId -> grupo completo (con alumnado)
+  var enVuelo = {};         // ids con un prefetch en curso (evita duplicados)
 
   // ---------- arranque ----------
   function iniciar() {
@@ -52,7 +54,22 @@ var App = (function () {
   /** Título visible de una clase: su nombre propio o, si no, el área. */
   function tituloEval(ev) { return (ev && ev.nombre) ? ev.nombre : (ev ? ev.area : ''); }
 
-  function invalidarCaches() { evalCache = {}; rejillaCache = {}; }
+  function invalidarCaches() { evalCache = {}; rejillaCache = {}; claseCache = {}; }
+
+  // ---------- prefetch al pasar el ratón (carga anticipada) ----------
+  /** Llamada al backend que ignora errores (para prefetch en 2º plano). */
+  function llamarSilencioso(fn, args, ok) {
+    google.script.run.withSuccessHandler(ok).withFailureHandler(function () {})
+      [fn].apply(google.script.run, args || []);
+  }
+  function prefetch_(id, fn, cache) {
+    if (!id || cache[id] || enVuelo[id]) return;
+    enVuelo[id] = 1;
+    llamarSilencioso(fn, [id], function (r) { cache[id] = r; delete enVuelo[id]; });
+  }
+  function prefetchEval(id) { prefetch_(id, 'obtenerEvaluacion', evalCache); }
+  function prefetchClase(id) { prefetch_(id, 'obtenerClase', claseCache); }
+  function prefetchRejilla(id) { if (!arrastreAct && !arrastre) prefetch_(id, 'getRejilla', rejillaCache); }
 
   /** Fija el título de la barra superior y limpia el buscador al cambiar de vista. */
   function setTitulo(t) {
@@ -190,6 +207,7 @@ var App = (function () {
     cont.innerHTML = estado.evaluaciones.map(function (ev) {
       var col = ev.color || 'var(--acento)';
       return '<div class="clase-card" style="--c:' + col + '" ' +
+        'onmouseenter="App.prefetchEval(\'' + ev.evalId + '\')" ' +
         'onclick="App.abrirEvaluacion(\'' + ev.evalId + '\')">' +
         '<div class="clase-card-head">' +
           '<span class="clase-card-ico">' + iconoSvg(ev.icono) + '</span>' +
@@ -370,6 +388,7 @@ var App = (function () {
     cont.innerHTML = uds.map(function (u, i) {
       var num = (i + 1) < 100 ? ('0' + (i + 1)).slice(-2) : String(i + 1);
       return '<div class="tarjeta tarjeta-unidad" data-id="' + u.unidadId + '" ' +
+        'onmouseenter="App.prefetchRejilla(\'' + u.unidadId + '\')" ' +
         'onclick="App.abrirUnidad(\'' + u.unidadId + '\')">' +
         '<span class="u-grip" title="Arrastra para reordenar" ' +
         'onpointerdown="App.gripDown(event,\'' + u.unidadId + '\')" ' +
@@ -970,8 +989,11 @@ var App = (function () {
     var h = '<table class="rejilla"><thead><tr>' +
       '<th class="idx">#</th><th class="esq">Alumno/a</th>';
     rejilla.actividades.forEach(function (a) {
-      h += '<th class="act" title="' + esc(a.criterios.join(', ')) + '">' +
-        '<button class="edit-act" title="Editar actividad" ' +
+      h += '<th class="act" data-act="' + a.actividadId + '" ' +
+        'title="' + esc(a.criterios.join(', ')) + '" ' +
+        'onpointerdown="App.actDown(event,\'' + a.actividadId + '\')">' +
+        '<span class="grip-act" title="Arrastra para reordenar">⠿</span>' +
+        '<button class="edit-act" title="Editar actividad" onpointerdown="event.stopPropagation()" ' +
         'onclick="App.editarActividadUI(\'' + a.actividadId + '\')">✎</button>' +
         '<span class="act-nom">' + esc(a.nombre) + '</span>' +
         '<small>/' + a.numItems + ' · ' + esc(a.criterios.join(', ')) + '</small></th>';
@@ -1006,6 +1028,59 @@ var App = (function () {
     var g = claseNota(n);
     return '<td class="num' + (extra || '') + (g ? ' ' + g : '') +
       '" id="' + id + '">' + fmt(n) + '</td>';
+  }
+
+  // ---------- reordenar actividades arrastrando su cabecera ----------
+  var arrastreAct = null; // { id, th, moved, targetId, despues }
+
+  function actDown(e, actId) {
+    if (e.button != null && e.button !== 0) return;
+    e.preventDefault(); e.stopPropagation();
+    arrastreAct = { id: actId, th: e.currentTarget, moved: false, targetId: null, despues: false };
+    e.currentTarget.classList.add('arrastrando-col');
+    document.body.classList.add('reordenando');
+    document.addEventListener('pointermove', actMove);
+    document.addEventListener('pointerup', actUp, true);
+  }
+  function actMove(e) {
+    if (!arrastreAct) return;
+    arrastreAct.moved = true;
+    var ths = document.querySelectorAll('#rejilla-cont th.act');
+    var destino = null;
+    [].forEach.call(ths, function (t) {
+      t.classList.remove('soltar-antes', 'soltar-despues');
+      var r = t.getBoundingClientRect();
+      if (e.clientX >= r.left && e.clientX <= r.right) destino = t;
+    });
+    if (!destino || destino === arrastreAct.th) { arrastreAct.targetId = null; return; }
+    var r = destino.getBoundingClientRect();
+    arrastreAct.despues = e.clientX > (r.left + r.width / 2);
+    destino.classList.add(arrastreAct.despues ? 'soltar-despues' : 'soltar-antes');
+    arrastreAct.targetId = destino.dataset.act;
+  }
+  function actUp() {
+    document.removeEventListener('pointermove', actMove);
+    document.removeEventListener('pointerup', actUp, true);
+    var a = arrastreAct; arrastreAct = null;
+    document.body.classList.remove('reordenando');
+    [].forEach.call(document.querySelectorAll('#rejilla-cont th.act'), function (t) {
+      t.classList.remove('arrastrando-col', 'soltar-antes', 'soltar-despues');
+    });
+    if (!a || !a.moved || !a.targetId || a.targetId === a.id) return;
+    var arr = rejilla.actividades;
+    var from = idxAct_(arr, a.id);
+    if (from < 0) return;
+    var item = arr.splice(from, 1)[0];
+    var tIdx = idxAct_(arr, a.targetId);
+    if (a.despues) tIdx += 1;
+    arr.splice(tIdx, 0, item);
+    pintarRejilla();
+    llamar('reordenarActividades',
+      [rejilla.unidad.unidadId, arr.map(function (x) { return x.actividadId; })], function () {});
+  }
+  function idxAct_(arr, id) {
+    for (var i = 0; i < arr.length; i++) if (arr[i].actividadId === id) return i;
+    return -1;
   }
 
   /** Engancha la matriz de inputs y sus eventos (teclado, dictado, pegar). */
@@ -1182,6 +1257,7 @@ var App = (function () {
     cont.innerHTML = estado.clases.map(function (c) {
       var col = c.color || colorAvatar(c.nombre);
       return '<div class="clase-card" style="--c:' + col + '" ' +
+        'onmouseenter="App.prefetchClase(\'' + c.claseId + '\')" ' +
         'onclick="App.abrirClase(\'' + c.claseId + '\')">' +
         '<div class="clase-card-head">' +
           '<span class="clase-card-ico">' + iconoSvg(c.icono || 'personas') + '</span>' +
@@ -1236,6 +1312,7 @@ var App = (function () {
             numAlumnos: cl.alumnos.length, creado: cl.creado,
             color: cl.color, icono: cl.icono
           });
+          claseCache[cl.claseId] = cl;
           cerrarModal();
           abrirClaseCargada(cl);
         });
@@ -1253,18 +1330,26 @@ var App = (function () {
   }
 
   function abrirClase(claseId) {
-    claseActual = null;
     setTitulo('Grupos');
     mostrar('vista-clase');
-    // Pinta la cabecera al instante con lo que ya tenemos (evita "clic muerto").
-    var r = claseDe(claseId);
-    document.getElementById('clase-titulo').textContent = r ? r.nombre : '';
-    document.getElementById('clase-meta').textContent = r ? r.curso : '';
-    document.getElementById('num-alumnos').textContent = r ? ('(' + (r.numAlumnos || 0) + ')') : '';
-    var ico = document.getElementById('clase-ico');
-    if (r) { ico.textContent = inicial(r.nombre); ico.style.background = r.color || colorAvatar(r.nombre); }
-    document.getElementById('lista-alumnos').innerHTML = spinner(); // feedback de carga
-    llamar('obtenerClase', [claseId], abrirClaseCargada);
+    if (claseCache[claseId]) {
+      abrirClaseCargada(claseCache[claseId]); // instantáneo desde caché
+    } else {
+      claseActual = null;
+      // Pinta la cabecera al instante con lo que ya tenemos (evita "clic muerto").
+      var r = claseDe(claseId);
+      document.getElementById('clase-titulo').textContent = r ? r.nombre : '';
+      document.getElementById('clase-meta').textContent = r ? r.curso : '';
+      document.getElementById('num-alumnos').textContent = r ? ('(' + (r.numAlumnos || 0) + ')') : '';
+      var ico = document.getElementById('clase-ico');
+      if (r) { ico.textContent = inicial(r.nombre); ico.style.background = r.color || colorAvatar(r.nombre); }
+      document.getElementById('lista-alumnos').innerHTML = spinner(); // feedback de carga
+    }
+    // Refresca siempre desde el servidor y actualiza la caché.
+    llamar('obtenerClase', [claseId], function (cl) {
+      claseCache[claseId] = cl;
+      abrirClaseCargada(cl);
+    });
   }
   function abrirClaseCargada(cl) {
     claseActual = cl;
@@ -1302,6 +1387,7 @@ var App = (function () {
         botonModalCargando('Guardando…');
         llamar('actualizarAlumnosClase', [claseActual.claseId, nuevos], function (cl) {
           var c = claseDe(cl.claseId); if (c) c.numAlumnos = cl.alumnos.length;
+          claseCache[cl.claseId] = cl;
           cerrarModal();
           abrirClaseCargada(cl);
         });
@@ -1323,12 +1409,12 @@ var App = (function () {
         var payload = { nombre: nombre, color: colorElegido(), icono: iconoElegido() };
         botonModalCargando('Guardando…');
         llamar('editarClase', [cl.claseId, payload], function (act) {
-          claseActual.nombre = act.nombre; claseActual.color = act.color; claseActual.icono = act.icono;
+          claseCache[cl.claseId] = act;
           estado.clases.forEach(function (c) {
             if (c.claseId === cl.claseId) { c.nombre = act.nombre; c.color = act.color; c.icono = act.icono; }
           });
           cerrarModal();
-          abrirClaseCargada(claseActual); // repinta la cabecera
+          abrirClaseCargada(act); // repinta la cabecera
           avisoOk('Grupo actualizado.');
         });
       });
@@ -1339,6 +1425,7 @@ var App = (function () {
       'Eliminar', function () {
         var id = claseActual.claseId;
         llamar('eliminarClase', [id], function () {
+          delete claseCache[id];
           estado.clases = estado.clases.filter(function (c) { return c.claseId !== id; });
           irAClases();
         });
@@ -1488,7 +1575,8 @@ var App = (function () {
     editarActividadUI: editarActividadUI, eliminarActividadUI: eliminarActividadUI,
     duplicarActividadUI: duplicarActividadUI, variasActividades: variasActividades,
     anadirFilaAct: anadirFilaAct, quitarFilaAct: quitarFilaAct,
-    pintarRejilla: pintarRejilla,
+    pintarRejilla: pintarRejilla, actDown: actDown,
+    prefetchEval: prefetchEval, prefetchClase: prefetchClase, prefetchRejilla: prefetchRejilla,
     nuevaClase: nuevaClase, copiarDeClase: copiarDeClase,
     abrirClase: abrirClase, editarClaseUI: editarClaseUI, editarAlumnos: editarAlumnos,
     eliminarClaseActual: eliminarClaseActual,

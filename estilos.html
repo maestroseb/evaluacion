@@ -463,7 +463,13 @@
   table.rejilla td.esq .mini-avatar { width: 24px; height: 24px; flex-basis: 24px;
     font-size: 10px; vertical-align: middle; margin-right: 9px; }
 
-  table.rejilla th.act { font-weight: 600; padding: 7px 24px 7px 10px; }
+  table.rejilla th.act { position: relative; cursor: grab; font-weight: 600; padding: 7px 22px; }
+  table.rejilla th.act.arrastrando-col { opacity: .45; }
+  table.rejilla th.act.soltar-antes { box-shadow: inset 3px 0 0 var(--acento); }
+  table.rejilla th.act.soltar-despues { box-shadow: inset -3px 0 0 var(--acento); }
+  table.rejilla .grip-act { position: absolute; top: 3px; left: 4px; color: var(--texto-3);
+    font-size: 11px; line-height: 1; opacity: 0; transition: opacity .12s; pointer-events: none; }
+  table.rejilla th.act:hover .grip-act { opacity: .65; }
   table.rejilla th.act .act-nom { display: block; }
   table.rejilla th.act small { display: block; font-weight: 400; color: var(--texto-3); font-size: 10px; }
   table.rejilla .edit-act { position: absolute; top: 4px; right: 4px; border: none;
