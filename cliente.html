@@ -368,6 +368,12 @@ var App = (function () {
     cont.innerHTML = uds.map(function (u, i) {
       var num = (i + 1) < 100 ? ('0' + (i + 1)).slice(-2) : String(i + 1);
       return '<div class="tarjeta tarjeta-unidad" onclick="App.abrirUnidad(\'' + u.unidadId + '\')">' +
+        '<div class="u-orden">' +
+        '<button class="u-mini" title="Subir"' + (i === 0 ? ' disabled' : '') +
+        ' onclick="event.stopPropagation();App.moverUnidad(\'' + u.unidadId + '\',-1)">▲</button>' +
+        '<button class="u-mini" title="Bajar"' + (i === uds.length - 1 ? ' disabled' : '') +
+        ' onclick="event.stopPropagation();App.moverUnidad(\'' + u.unidadId + '\',1)">▼</button>' +
+        '</div>' +
         '<span class="u-ico u-num">' + num + '</span>' +
         '<h3 class="u-nom">' + esc(u.nombre) + '</h3>' +
         '<div class="acciones-tarjeta">' +
@@ -379,6 +385,19 @@ var App = (function () {
         'onclick="event.stopPropagation();App.eliminarUnidad(\'' + u.unidadId + '\')">🗑</button>' +
         '</div></div>';
     }).join('');
+  }
+
+  /** Sube (-1) o baja (+1) una unidad en el orden y lo persiste. */
+  function moverUnidad(unidadId, dir) {
+    var uds = evalActual.unidades || [];
+    var i = -1;
+    uds.forEach(function (u, idx) { if (u.unidadId === unidadId) i = idx; });
+    var j = i + dir;
+    if (i < 0 || j < 0 || j >= uds.length) return;
+    var tmp = uds[i]; uds[i] = uds[j]; uds[j] = tmp;
+    pintarUnidades(); // renumera y repinta al instante
+    var ids = uds.map(function (u) { return u.unidadId; });
+    llamar('reordenarUnidades', [evalActual.evalId, ids], function () {});
   }
 
   /** Renombrar una unidad desde su tarjeta. */
@@ -1332,7 +1351,7 @@ var App = (function () {
     abrirEvaluacion: abrirEvaluacion, editarEvaluacionUI: editarEvaluacionUI,
     eliminarEvaluacionActual: eliminarEvaluacionActual,
     nuevaUnidad: nuevaUnidad, abrirUnidad: abrirUnidad,
-    editarUnidadUI: editarUnidadUI,
+    editarUnidadUI: editarUnidadUI, moverUnidad: moverUnidad,
     clonarUnidad: clonarUnidad, eliminarUnidad: eliminarUnidad,
     copiarSeneca: copiarSeneca, infoSeneca: infoSeneca,
     verResumen: verResumen, pintarResumen: pintarResumen, copiarResumenSeneca: copiarResumenSeneca,

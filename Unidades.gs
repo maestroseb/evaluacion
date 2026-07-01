@@ -18,6 +18,11 @@ function eliminarUnidad(unidadId) {
   return Unidades.eliminar_(abrirCuaderno_(), unidadId);
 }
 
+/** Reordena las unidades de una evaluación según la lista de ids dada. */
+function reordenarUnidades(evalId, idsOrdenados) {
+  return Unidades.reordenar_(abrirCuaderno_(), evalId, idsOrdenados);
+}
+
 /** Clona una unidad con sus actividades (sin notas). Devuelve la nueva unidad. */
 function clonarUnidad(unidadId) {
   return Unidades.clonar_(abrirCuaderno_(), unidadId);
@@ -85,6 +90,22 @@ var Unidades = (function () {
     return nueva;
   }
 
+  /** Reescribe la columna 'orden' según la posición de cada id en la lista. */
+  function reordenar_(ss, evalId, ids) {
+    if (!ids || !ids.length) return { ok: true };
+    var sh = hoja_(ss);
+    var datos = sh.getDataRange().getValues();
+    var filaDe = {};
+    for (var i = 1; i < datos.length; i++) {
+      if (datos[i][0] && datos[i][1] === evalId) filaDe[datos[i][0]] = i + 1; // fila 1-based
+    }
+    ids.forEach(function (id, idx) {
+      var fila = filaDe[id];
+      if (fila) sh.getRange(fila, 4).setValue(idx + 1); // col 4 = orden
+    });
+    return { ok: true };
+  }
+
   /** Devuelve {unidadId, evalId, nombre} o null. */
   function obtener_(ss, unidadId) {
     var sh = hoja_(ss);
@@ -96,6 +117,6 @@ var Unidades = (function () {
 
   return {
     listar_: listar_, crear_: crear_, renombrar_: renombrar_,
-    eliminar_: eliminar_, obtener_: obtener_, clonar_: clonar_
+    eliminar_: eliminar_, obtener_: obtener_, clonar_: clonar_, reordenar_: reordenar_
   };
 })();
