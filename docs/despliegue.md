@@ -15,7 +15,7 @@ directamente, sin `clasp`.
 1. Crea un proyecto nuevo en https://script.google.com (tipo: independiente).
 2. En la barra del Assistant, selecciona:
    - **Repository**: `maestroseb/evaluacion`
-   - **Branch**: `claude/sheets-evaluation-criteria-3qsyay`
+   - **Branch**: `main` ← rama de referencia y fuente única del mapa curricular.
    - **Directory / Path**: raíz del repo (`/`) ← donde viven los `.gs`/`.html`
      y el manifiesto `appsscript.json`.
 3. Pulsa **Pull** para traer todos los archivos del repo al proyecto.
