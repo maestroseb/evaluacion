@@ -2,10 +2,9 @@
 
 > **Estado (v8): migración completada y retirada.** La pestaña legado `_items`
 > y las funciones de migración/rollback (`Migracion.gs`) **ya no existen**: las
-> notas viven únicamente en `_notas`. Lo que sigue se conserva como registro
-> histórico del cambio. Para borrar la pestaña `_items` que pudiera quedar en un
-> cuaderno antiguo, ejecuta una vez `eliminarPestanaItemsLegado()`
-> (`Mantenimiento.gs`).
+> notas viven únicamente en `_notas`. La pestaña `_items` sobrante se eliminó de
+> los cuadernos existentes (con la extinta `eliminarPestanaItemsLegado()`). Lo
+> que sigue se conserva como registro histórico del cambio.
 
 Cambio de fondo en el guardado de notas: se pasa de una hoja global fila-a-fila
 (`_items`, una fila por nota) a **un bloque JSON por unidad** en la pestaña
@@ -62,15 +61,12 @@ Como `_items` se conserva, el rollback es seguro:
 Sin ese paso, un rollback perdería solo las notas escritas **después** de la
 migración (mitigado por la copia automática diaria de `Respaldo`).
 
-## Funciones de mantenimiento (editor de Apps Script)
+## Histórico de funciones (retiradas en v8)
 
-| Función | Qué hace |
-|---|---|
-| `eliminarPestanaItemsLegado()` | Borra la pestaña legado `_items` si aún existiera. Segura de repetir. |
-
-> Histórico: las funciones de migración y rollback (`migrarNotasAUnidad()`,
-> `migrarNotasAUnidadForzado()`, `revertirNotasAItems()`) se retiraron en v8 al
-> quedar `_items` obsoleto.
+Al quedar `_items` obsoleto se retiraron sus funciones de mantenimiento:
+`migrarNotasAUnidad()`, `migrarNotasAUnidadForzado()`, `revertirNotasAItems()`
+(migración/rollback) y `eliminarPestanaItemsLegado()` (borrado de la pestaña,
+usada una vez y eliminada).
 
 ## Notas de implementación
 
