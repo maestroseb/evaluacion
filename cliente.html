@@ -664,7 +664,7 @@ var App = (function () {
     if (!R || !R.criterios.length) return aviso('No hay criterios evaluados todavía.');
     var lineas = [['Alumno'].concat(R.criterios).join('\t')];
     R.alumnos.forEach(function (al) {
-      var fila = [al.nombre];
+      var fila = [nombreSeneca(al.nombre)];
       R.criterios.forEach(function (cod) {
         var n = (R.critGlobal[al.id] || {})[cod];
         fila.push(n == null ? '' : n.toFixed(2).replace('.', ','));
@@ -725,7 +725,7 @@ var App = (function () {
     var crits = criteriosUsados();
     var lineas = [['Alumno'].concat(crits).join('\t')];
     rejilla.alumnos.forEach(function (al) {
-      var fila = [al.nombre];
+      var fila = [nombreSeneca(al.nombre)];
       crits.forEach(function (cod) {
         var n = notaCriterio(al.id, cod);
         fila.push(n == null ? '' : n.toFixed(2).replace('.', ','));
@@ -755,6 +755,15 @@ var App = (function () {
       '<p><a class="enlace-ext" href="' + url + '" target="_blank" rel="noopener">' +
       'Abrir Autonotas Séneca en Chrome Web Store ↗</a></p>',
       'Entendido', cerrarModal);
+  }
+
+  /**
+   * Nombre "oficial" para Séneca: quita el pseudónimo entre paréntesis.
+   * "Ye, Xin Yi (Sofía)" -> "Ye, Xin Yi". No altera el nombre guardado ni el
+   * que ve el profe; solo lo que se copia/empareja.
+   */
+  function nombreSeneca(nombre) {
+    return String(nombre || '').replace(/\([^)]*\)/g, '').replace(/\s+/g, ' ').trim();
   }
 
   function copiarAlPortapapeles(texto, mensajeOk) {
@@ -1208,7 +1217,8 @@ var App = (function () {
       '<textarea id="f-alumnos" rows="8" placeholder="Apellidos, Nombre"></textarea></label>' +
       '<div class="campo-crit"><span class="etq">Color</span>' + swatchesHtml(COLORES[0]) + '</div>' +
       '<div class="campo-crit"><span class="etq">Icono</span>' + iconosHtml('personas') + '</div>' +
-      '<p class="ayuda">Pega la lista desde Séneca o cópiala de otro grupo tuyo.</p>',
+      '<p class="ayuda">Pega la lista desde Séneca o cópiala de otro grupo tuyo. ' +
+      'Puedes añadir un pseudónimo entre paréntesis: «Ye, Xin Yi (Sofía)».</p>',
       'Crear grupo',
       function () {
         var nombre = val('f-nombre').trim();
@@ -1270,7 +1280,9 @@ var App = (function () {
     abrirModal('Editar alumnado',
       '<label>Un alumno/a por línea' +
       '<textarea id="f-alumnos" rows="12">' + esc(texto) + '</textarea></label>' +
-      '<p class="ayuda">Se conservan las notas del alumnado que no cambie de nombre.</p>',
+      '<p class="ayuda">Se conservan las notas del alumnado que no cambie de nombre. ' +
+      'Puedes añadir un pseudónimo entre paréntesis, p. ej. «Ye, Xin Yi (Sofía)»; ' +
+      'al copiar para Séneca se ignora.</p>',
       'Guardar',
       function () {
         var nuevos = fusionarAlumnos(claseActual.alumnos || [], parsearLista(val('f-alumnos')));
@@ -1353,11 +1365,17 @@ var App = (function () {
       .map(function (nombre) { return { nombre: nombre }; });
   }
   function fusionarAlumnos(previos, nuevos) {
-    var porNombre = {};
-    previos.forEach(function (a) { porNombre[a.nombre] = a.id; });
+    var porNombre = {}, porBase = {};
+    previos.forEach(function (a) {
+      porNombre[a.nombre] = a.id;
+      var base = nombreSeneca(a.nombre);
+      if (!(base in porBase)) porBase[base] = a.id; // el primero gana
+    });
     return nuevos.map(function (a) {
-      return porNombre[a.nombre] ? { id: porNombre[a.nombre], nombre: a.nombre }
-                                 : { nombre: a.nombre };
+      // Empareja por nombre exacto y, si no, por nombre sin pseudónimo, para
+      // conservar las notas al añadir o quitar el "(alias)".
+      var id = porNombre[a.nombre] || porBase[nombreSeneca(a.nombre)];
+      return id ? { id: id, nombre: a.nombre } : { nombre: a.nombre };
     });
   }
 
