@@ -1,5 +1,12 @@
 # Notas por unidad (`_notas`) — despliegue, verificación y rollback
 
+> **Estado (v8): migración completada y retirada.** La pestaña legado `_items`
+> y las funciones de migración/rollback (`Migracion.gs`) **ya no existen**: las
+> notas viven únicamente en `_notas`. Lo que sigue se conserva como registro
+> histórico del cambio. Para borrar la pestaña `_items` que pudiera quedar en un
+> cuaderno antiguo, ejecuta una vez `eliminarPestanaItemsLegado()`
+> (`Mantenimiento.gs`).
+
 Cambio de fondo en el guardado de notas: se pasa de una hoja global fila-a-fila
 (`_items`, una fila por nota) a **un bloque JSON por unidad** en la pestaña
 `_notas`:
@@ -59,9 +66,11 @@ migración (mitigado por la copia automática diaria de `Respaldo`).
 
 | Función | Qué hace |
 |---|---|
-| `migrarNotasAUnidad()` | Migra `_items → _notas` (con copia previa). No repite si ya migró. |
-| `migrarNotasAUnidadForzado()` | Rehace `_notas` desde `_items`. **Pisa** ediciones posteriores; usar con cuidado. |
-| `revertirNotasAItems()` | Reconstruye `_items` desde `_notas` (rollback). |
+| `eliminarPestanaItemsLegado()` | Borra la pestaña legado `_items` si aún existiera. Segura de repetir. |
+
+> Histórico: las funciones de migración y rollback (`migrarNotasAUnidad()`,
+> `migrarNotasAUnidadForzado()`, `revertirNotasAItems()`) se retiraron en v8 al
+> quedar `_items` obsoleto.
 
 ## Notas de implementación
 

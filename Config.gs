@@ -26,7 +26,9 @@ var CONFIG = {
   // v6: campo "orden" en evaluaciones y grupos (reordenar tarjetas arrastrando).
   // v7: campo "cursoAcademico" en evaluaciones y grupos (multi-curso en un solo
   //     cuaderno; la interfaz filtra por el curso académico activo).
-  ESQUEMA_VERSION: 7
+  // v8: se retira la pestaña legado _items (las notas viven solo en _notas). La
+  //     migración _items→_notas ya no forma parte del código.
+  ESQUEMA_VERSION: 8
 };
 
 /**
@@ -39,7 +41,6 @@ var HOJAS = {
   EVALUACIONES: '_evaluaciones', // clase + área concreta a evaluar
   UNIDADES: '_unidades',  // unidades de cada evaluación
   ACTIVIDADES: '_actividades', // actividades de cada unidad y sus criterios
-  ITEMS: '_items',        // (legado) ítems fila-a-fila; copia congelada tras migrar
   NOTAS: '_notas',        // notas por unidad: un JSON {act:{alumno:valor}} por fila
   PAPELERA: '_papelera'   // elementos borrados, restaurables un tiempo
 };
