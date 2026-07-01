@@ -17,7 +17,13 @@ var App = (function () {
   function iniciar() {
     setupModalNoScroll();
     restaurarSidebar();
-    window.addEventListener('beforeunload', function () { flushNotas(); }); // guardado de última hora
+    // Guardado de última hora: intenta persistir y, si quedan cambios en vuelo,
+    // pide confirmación al navegador para dar tiempo a que la petición llegue.
+    window.addEventListener('beforeunload', function (e) {
+      var pendiente = notasDirty || notasEnCurso;
+      flushNotas();
+      if (pendiente) { e.preventDefault(); e.returnValue = ''; }
+    });
     llamar('getEstadoInicial', [], function (e) {
       estado = e;
       document.getElementById('usuario').textContent = e.usuario;
@@ -26,6 +32,8 @@ var App = (function () {
       document.getElementById('cargando').hidden = true;
       pintarSelectorCurso();
       irAEvaluaciones();
+      // Copia de seguridad automática en 2º plano (no retrasa el arranque).
+      llamarSilencioso('respaldoAutomatico', [], function () {});
     });
   }
 
@@ -66,6 +74,15 @@ var App = (function () {
   /** Cambia el curso activo: recarga Clases y Grupos ya filtrados del servidor. */
   function cambiarCurso(curso) {
     if (!curso || (estado.cursos && curso === estado.cursos.activo)) return;
+    recargarDatosCurso(curso);
+  }
+
+  /**
+   * Recarga siempre del servidor los datos del curso indicado y repinta. A
+   * diferencia de cambiarCurso, no ignora el caso "mismo curso activo" (lo usa
+   * la promoción, que puede crear el grupo dentro del curso ya activo).
+   */
+  function recargarDatosCurso(curso) {
     llamar('cambiarCurso', [curso], function (r) {
       estado.cursos = r.cursos;
       estado.clases = r.clases;
@@ -1170,6 +1187,7 @@ var App = (function () {
     var actId = inp.dataset.act, alId = inp.dataset.al, act = actDe(actId);
     var v = inp.value === '' ? '' : Number(String(inp.value).replace(',', '.'));
     if (v !== '' && isNaN(v)) return null;
+    if (v !== '' && v < 0) { v = 0; inp.value = fmt(v); }
     if (v !== '' && act && v > act.numItems) { v = act.numItems; inp.value = fmt(v); }
     if (v === '') {
       if (rejilla.items[actId]) delete rejilla.items[actId][alId];
@@ -1287,7 +1305,7 @@ var App = (function () {
     }
   }
 
-  // --- cálculo en vivo (espejo de Calc.gs) ---
+  // --- cálculo en vivo (mismo criterio que Resumen.gs en el servidor) ---
   function valorItem(actividadId, alumnoId) {
     var m = rejilla.items[actividadId];
     return m && m[alumnoId] != null ? m[alumnoId] : null;
@@ -1585,7 +1603,7 @@ var App = (function () {
           } else {
             avisoOk('Grupo promocionado a ' + destino + '.');
           }
-          cambiarCurso(destino); // salta al curso destino para ver el resultado
+          recargarDatosCurso(destino); // salta al curso destino (aunque sea el activo) para ver el resultado
         });
       });
   }
@@ -1711,7 +1729,8 @@ var App = (function () {
   function spinner() { return '<div class="spinner-wrap"><div class="spinner"></div></div>'; }
   function esc(s) {
     return String(s == null ? '' : s)
-      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;'); // también en atributos con comillas
   }
 
   return {

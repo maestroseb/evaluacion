@@ -46,11 +46,12 @@ var Unidades = (function () {
     return out;
   }
 
-  function crear_(ss, evalId, nombre) {
+  function crear_(ss, evalId, nombre, ordenDado) {
     if (!evalId) throw new Error('Falta la evaluación.');
     if (!nombre || !nombre.trim()) throw new Error('Falta el nombre de la unidad.');
     var unidadId = Datos.nuevoId_('u');
-    var orden = listar_(ss, evalId).length + 1;
+    // ordenDado evita releer la hoja en bucles (clonar / promocionar): O(n) en vez de O(n²).
+    var orden = ordenDado != null ? ordenDado : Datos.siguienteOrden_(listar_(ss, evalId));
     hoja_(ss).appendRow([unidadId, evalId, nombre.trim(), orden]);
     return { unidadId: unidadId, evalId: evalId, nombre: nombre.trim(), orden: orden };
   }
@@ -66,10 +67,9 @@ var Unidades = (function () {
 
   function eliminar_(ss, unidadId) {
     Papelera.papelearUnidad_(ss, unidadId); // foto: unidad + actividades + notas
-    // Borra en cascada las actividades (sin tocar el blob: se elimina entero).
-    Actividades.listar_(ss, unidadId).forEach(function (a) {
-      Actividades.eliminar_(ss, a.actividadId, true);
-    });
+    // Borra en cascada las actividades (una sola pasada; sin tocar el blob: la
+    // unidad elimina su fila de _notas entera más abajo).
+    Actividades.borrarDeUnidad_(ss, unidadId);
     Notas.borrar_(ss, unidadId); // elimina la fila de _notas de la unidad
     var sh = hoja_(ss);
     var fila = Datos.filaDeId_(sh, unidadId);
@@ -82,28 +82,31 @@ var Unidades = (function () {
     var orig = obtener_(ss, unidadId);
     if (!orig) throw new Error('Unidad no encontrada.');
     var nueva = crear_(ss, orig.evalId, orig.nombre + ' (copia)');
-    // Copia las actividades (sin ítems).
-    Actividades.listar_(ss, unidadId).forEach(function (a) {
+    // Copia las actividades (sin ítems). La unidad nueva está vacía, así que el
+    // orden es el índice de cada actividad (evita releer la hoja en cada crear_).
+    Actividades.listar_(ss, unidadId).forEach(function (a, idx) {
       Actividades.crear_(ss, nueva.unidadId, {
         nombre: a.nombre, criterios: a.criterios, numItems: a.numItems
-      });
+      }, false, idx + 1);
     });
     return nueva;
   }
 
-  /** Reescribe la columna 'orden' según la posición de cada id en la lista. */
+  /** Reescribe la columna 'orden' (col 4) según la posición de cada id, en una escritura. */
   function reordenar_(ss, evalId, ids) {
     if (!ids || !ids.length) return { ok: true };
     var sh = hoja_(ss);
-    var datos = sh.getDataRange().getValues();
-    var filaDe = {};
-    for (var i = 1; i < datos.length; i++) {
-      if (datos[i][0] && datos[i][1] === evalId) filaDe[datos[i][0]] = i + 1; // fila 1-based
+    var n = Math.max(0, sh.getLastRow() - 1);
+    if (!n) return { ok: true };
+    var idCol = sh.getRange(2, 1, n, 1).getValues();
+    var ordenCol = sh.getRange(2, 4, n, 1).getValues();
+    var pos = {};
+    ids.forEach(function (id, idx) { pos[id] = idx + 1; });
+    for (var i = 0; i < n; i++) {
+      var id = idCol[i][0];
+      if (id && pos[id] != null) ordenCol[i][0] = pos[id];
     }
-    ids.forEach(function (id, idx) {
-      var fila = filaDe[id];
-      if (fila) sh.getRange(fila, 4).setValue(idx + 1); // col 4 = orden
-    });
+    sh.getRange(2, 4, n, 1).setValues(ordenCol);
     return { ok: true };
   }
 

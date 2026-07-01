@@ -5,17 +5,6 @@
  * actividades e ítems (Fase 3) colgarán de la evaluación (evalId).
  */
 
-/** Criterios de un área+curso, para mostrarlos al crear/abrir una evaluación. */
-function getCriterios(curso, area) {
-  return Curriculo.criteriosDe(curso, area);
-}
-
-/** Lista las evaluaciones con datos de su clase (nombre, curso, nº alumnos). */
-function listarEvaluaciones() {
-  var ss = abrirCuaderno_();
-  return Cursos.filtrar_(Evaluaciones.listar_(ss), Cursos.activo_());
-}
-
 /** Crea una evaluación. payload: {claseId, area, color, icono, nombre} */
 function crearEvaluacion(payload) {
   return Evaluaciones.crear_(abrirCuaderno_(), payload);
@@ -45,10 +34,10 @@ var Evaluaciones = (function () {
 
   function hoja_(ss) { return ss.getSheetByName(HOJAS.EVALUACIONES); }
 
-  function listar_(ss) {
+  function listar_(ss, clasesLista) {
     var sh = hoja_(ss);
     var datos = sh.getDataRange().getValues();
-    var clases = indexarClases_(ss);
+    var clases = indexarClases_(ss, clasesLista);
     var out = [];
     for (var i = 1; i < datos.length; i++) {
       var f = datos[i];
@@ -73,7 +62,7 @@ var Evaluaciones = (function () {
     var clase = Clases.obtener_(ss, payload.claseId); // valida que existe
     var evalId = Datos.nuevoId_('e');
     var nombre = (payload.nombre && String(payload.nombre).trim()) || payload.area;
-    var orden = listar_(ss).length + 1;
+    var orden = Datos.siguienteOrden_(listar_(ss));
     // La clase hereda el curso académico de su grupo (o el activo si el grupo
     // aún no lo tuviera asignado).
     var cursoAcad = clase.cursoAcademico || Cursos.activo_();
@@ -82,17 +71,21 @@ var Evaluaciones = (function () {
     return obtener_(ss, evalId);
   }
 
-  /** Reordena las evaluaciones según la lista de ids (col 8 = orden). */
+  /** Reordena las evaluaciones según la lista de ids (col 8 = orden), en una escritura. */
   function reordenar_(ss, ids) {
     if (!ids || !ids.length) return { ok: true };
     var sh = hoja_(ss);
-    var datos = sh.getDataRange().getValues();
-    var filaDe = {};
-    for (var i = 1; i < datos.length; i++) if (datos[i][0]) filaDe[datos[i][0]] = i + 1;
-    ids.forEach(function (id, idx) {
-      var fila = filaDe[id];
-      if (fila) sh.getRange(fila, 8).setValue(idx + 1);
-    });
+    var n = Math.max(0, sh.getLastRow() - 1);
+    if (!n) return { ok: true };
+    var idCol = sh.getRange(2, 1, n, 1).getValues();
+    var ordenCol = sh.getRange(2, 8, n, 1).getValues();
+    var pos = {};
+    ids.forEach(function (id, idx) { pos[id] = idx + 1; });
+    for (var i = 0; i < n; i++) {
+      var id = idCol[i][0];
+      if (id && pos[id] != null) ordenCol[i][0] = pos[id];
+    }
+    sh.getRange(2, 8, n, 1).setValues(ordenCol);
     return { ok: true };
   }
 
@@ -137,9 +130,9 @@ var Evaluaciones = (function () {
     return false;
   }
 
-  function indexarClases_(ss) {
+  function indexarClases_(ss, clasesLista) {
     var idx = {};
-    Clases.listar_(ss).forEach(function (c) { idx[c.claseId] = c; });
+    (clasesLista || Clases.listar_(ss)).forEach(function (c) { idx[c.claseId] = c; });
     return idx;
   }
 

@@ -8,11 +8,6 @@
  * Funciones públicas (sin guion bajo) = invocables desde el frontend.
  */
 
-function listarClases() {
-  var ss = abrirCuaderno_();
-  return Cursos.filtrar_(Clases.listar_(ss), Cursos.activo_());
-}
-
 /** Crea una clase. payload: {nombre, curso, alumnos:[{nombre}]} */
 function crearClase(payload) {
   return Clases.crear_(abrirCuaderno_(), payload);
@@ -25,10 +20,6 @@ function obtenerClase(claseId) {
 /** Reemplaza el alumnado de una clase. alumnos: [{id?, nombre}] */
 function actualizarAlumnosClase(claseId, alumnos) {
   return Clases.actualizarAlumnos_(abrirCuaderno_(), claseId, alumnos);
-}
-
-function renombrarClase(claseId, nombre) {
-  return Clases.renombrar_(abrirCuaderno_(), claseId, nombre);
 }
 
 /** Edita nombre, color e icono de un grupo (no toca curso ni alumnado). */
@@ -81,7 +72,7 @@ var Clases = (function () {
     validar_(payload.curso, 'el curso');
     var claseId = Datos.nuevoId_('c');
     var alumnos = normalizarAlumnos_(payload.alumnos || []);
-    var orden = listar_(ss).length + 1;
+    var orden = Datos.siguienteOrden_(listar_(ss));
     var cursoAcad = (payload.cursoAcademico && String(payload.cursoAcademico).trim())
       || Cursos.activo_();
     hoja_(ss).appendRow([
@@ -92,17 +83,21 @@ var Clases = (function () {
     return obtener_(ss, claseId);
   }
 
-  /** Reordena los grupos según la lista de ids (col 8 = orden). */
+  /** Reordena los grupos según la lista de ids (col 8 = orden), en una escritura. */
   function reordenar_(ss, ids) {
     if (!ids || !ids.length) return { ok: true };
     var sh = hoja_(ss);
-    var datos = sh.getDataRange().getValues();
-    var filaDe = {};
-    for (var i = 1; i < datos.length; i++) if (datos[i][0]) filaDe[datos[i][0]] = i + 1;
-    ids.forEach(function (id, idx) {
-      var fila = filaDe[id];
-      if (fila) sh.getRange(fila, 8).setValue(idx + 1);
-    });
+    var n = Math.max(0, sh.getLastRow() - 1);
+    if (!n) return { ok: true };
+    var idCol = sh.getRange(2, 1, n, 1).getValues();
+    var ordenCol = sh.getRange(2, 8, n, 1).getValues();
+    var pos = {};
+    ids.forEach(function (id, idx) { pos[id] = idx + 1; });
+    for (var i = 0; i < n; i++) {
+      var id = idCol[i][0];
+      if (id && pos[id] != null) ordenCol[i][0] = pos[id];
+    }
+    sh.getRange(2, 8, n, 1).setValues(ordenCol);
     return { ok: true };
   }
 
@@ -136,15 +131,6 @@ var Clases = (function () {
     var fila = Datos.filaDeId_(sh, claseId);
     if (fila < 0) throw new Error('Clase no encontrada.');
     sh.getRange(fila, 5).setValue(serializar_(normalizarAlumnos_(alumnos)));
-    return obtener_(ss, claseId);
-  }
-
-  function renombrar_(ss, claseId, nombre) {
-    validar_(nombre, 'el nombre de la clase');
-    var sh = hoja_(ss);
-    var fila = Datos.filaDeId_(sh, claseId);
-    if (fila < 0) throw new Error('Clase no encontrada.');
-    sh.getRange(fila, 2).setValue(nombre.trim());
     return obtener_(ss, claseId);
   }
 
@@ -225,7 +211,7 @@ var Clases = (function () {
 
   return {
     listar_: listar_, crear_: crear_, obtener_: obtener_, editar_: editar_,
-    actualizarAlumnos_: actualizarAlumnos_, renombrar_: renombrar_,
+    actualizarAlumnos_: actualizarAlumnos_,
     eliminar_: eliminar_, migrarCifrado_: migrarCifrado_, reordenar_: reordenar_
   };
 })();

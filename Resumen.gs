@@ -26,10 +26,15 @@ var Resumen = (function () {
       criteriosInfo[c.codigo] = { texto: c.texto, descripcion: c.descripcion };
     });
 
+    // Lectura única de _actividades y _notas (indexadas por unidadId): el coste
+    // ya no crece con el número de unidades (antes: 2 lecturas por unidad).
+    var actsPorUnidad = Actividades.porUnidad_(ss);
+    var notasPorUnidad = Notas.todas_(ss);
+
     // Notas de todas las unidades de esta evaluación (blobs por unidad).
     var items = {}; // map[actividadId][alumnoId] = conseguidos
     unidades.forEach(function (u) {
-      var blob = Notas.leer_(ss, u.unidadId);
+      var blob = notasPorUnidad[u.unidadId] || {};
       Object.keys(blob).forEach(function (actId) { items[actId] = blob[actId]; });
     });
 
@@ -46,7 +51,7 @@ var Resumen = (function () {
     });
 
     unidades.forEach(function (u) {
-      var acts = Actividades.listar_(ss, u.unidadId);
+      var acts = actsPorUnidad[u.unidadId] || [];
       alumnos.forEach(function (al) {
         var porCrit = {}; // cod -> [notas de actividad en esta unidad]
         acts.forEach(function (a) {
