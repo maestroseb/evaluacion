@@ -367,15 +367,13 @@ var App = (function () {
     }
     cont.innerHTML = uds.map(function (u, i) {
       var num = (i + 1) < 100 ? ('0' + (i + 1)).slice(-2) : String(i + 1);
-      return '<div class="tarjeta tarjeta-unidad" onclick="App.abrirUnidad(\'' + u.unidadId + '\')">' +
-        '<div class="u-orden">' +
-        '<button class="u-mini" title="Subir"' + (i === 0 ? ' disabled' : '') +
-        ' onclick="event.stopPropagation();App.moverUnidad(\'' + u.unidadId + '\',-1)">▲</button>' +
-        '<button class="u-mini" title="Bajar"' + (i === uds.length - 1 ? ' disabled' : '') +
-        ' onclick="event.stopPropagation();App.moverUnidad(\'' + u.unidadId + '\',1)">▼</button>' +
-        '</div>' +
+      return '<div class="tarjeta tarjeta-unidad" data-id="' + u.unidadId + '" ' +
+        'onclick="App.abrirUnidad(\'' + u.unidadId + '\')">' +
+        '<div class="u-top">' +
+        '<span class="u-grip" title="Arrastra para reordenar" ' +
+        'onpointerdown="App.gripDown(event,\'' + u.unidadId + '\')" ' +
+        'onclick="event.stopPropagation()">⠿</span>' +
         '<span class="u-ico u-num">' + num + '</span>' +
-        '<h3 class="u-nom">' + esc(u.nombre) + '</h3>' +
         '<div class="acciones-tarjeta">' +
         '<button class="icono" title="Editar unidad" ' +
         'onclick="event.stopPropagation();App.editarUnidadUI(\'' + u.unidadId + '\')">✎</button>' +
@@ -383,21 +381,70 @@ var App = (function () {
         'onclick="event.stopPropagation();App.clonarUnidad(\'' + u.unidadId + '\')">⧉</button>' +
         '<button class="icono peligro" title="Eliminar unidad" ' +
         'onclick="event.stopPropagation();App.eliminarUnidad(\'' + u.unidadId + '\')">🗑</button>' +
-        '</div></div>';
+        '</div>' +
+        '</div>' +
+        '<h3 class="u-nom">' + esc(u.nombre) + '</h3>' +
+        '</div>';
     }).join('');
   }
 
-  /** Sube (-1) o baja (+1) una unidad en el orden y lo persiste. */
-  function moverUnidad(unidadId, dir) {
-    var uds = evalActual.unidades || [];
-    var i = -1;
-    uds.forEach(function (u, idx) { if (u.unidadId === unidadId) i = idx; });
-    var j = i + dir;
-    if (i < 0 || j < 0 || j >= uds.length) return;
-    var tmp = uds[i]; uds[i] = uds[j]; uds[j] = tmp;
-    pintarUnidades(); // renumera y repinta al instante
-    var ids = uds.map(function (u) { return u.unidadId; });
+  // ---------- reordenar unidades arrastrando (asa ⠿; ratón y táctil) ----------
+  var arrastre = null; // { el, moved }
+
+  function gripDown(e, unidadId) {
+    if (e.button != null && e.button !== 0) return; // solo botón principal
+    e.preventDefault(); e.stopPropagation();
+    var el = e.currentTarget.closest('.tarjeta-unidad');
+    if (!el) return;
+    arrastre = { el: el, moved: false };
+    el.classList.add('arrastrando');
+    document.addEventListener('pointermove', gripMove);
+    document.addEventListener('pointerup', gripUp, true);
+  }
+  function gripMove(e) {
+    if (!arrastre) return;
+    arrastre.moved = true;
+    var cont = document.getElementById('lista-unidades');
+    var destino = tarjetaBajoPunto_(cont, e.clientX, e.clientY, arrastre.el);
+    if (!destino) return;
+    var r = destino.getBoundingClientRect();
+    var despues = e.clientX > (r.left + r.width / 2); // lado sobre el que sueltas
+    var ref = despues ? destino.nextSibling : destino;
+    if (ref !== arrastre.el && ref !== arrastre.el.nextSibling) {
+      cont.insertBefore(arrastre.el, ref);
+    }
+  }
+  function gripUp() {
+    document.removeEventListener('pointermove', gripMove);
+    document.removeEventListener('pointerup', gripUp, true);
+    if (!arrastre) return;
+    var el = arrastre.el, moved = arrastre.moved;
+    el.classList.remove('arrastrando');
+    arrastre = null;
+    if (!moved) return;
+    // Evita que el "click" posterior al soltar abra la unidad.
+    var swallow = function (ev) { ev.stopPropagation(); ev.preventDefault(); quitar(); };
+    var quitar = function () { document.removeEventListener('click', swallow, true); };
+    document.addEventListener('click', swallow, true);
+    setTimeout(quitar, 350);
+    // Lee el nuevo orden del DOM, actualiza estado y persiste.
+    var cont = document.getElementById('lista-unidades');
+    var ids = [].map.call(cont.querySelectorAll('.tarjeta-unidad'), function (c) { return c.dataset.id; });
+    var byId = {};
+    (evalActual.unidades || []).forEach(function (u) { byId[u.unidadId] = u; });
+    evalActual.unidades = ids.filter(function (id) { return byId[id]; }).map(function (id) { return byId[id]; });
+    pintarUnidades(); // renumera (01, 02…)
     llamar('reordenarUnidades', [evalActual.evalId, ids], function () {});
+  }
+  /** Tarjeta de unidad cuyo rectángulo contiene el punto (excluyendo una). */
+  function tarjetaBajoPunto_(cont, x, y, excluir) {
+    var cards = cont.querySelectorAll('.tarjeta-unidad');
+    for (var i = 0; i < cards.length; i++) {
+      if (cards[i] === excluir) continue;
+      var r = cards[i].getBoundingClientRect();
+      if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return cards[i];
+    }
+    return null;
   }
 
   /** Renombrar una unidad desde su tarjeta. */
@@ -1351,7 +1398,7 @@ var App = (function () {
     abrirEvaluacion: abrirEvaluacion, editarEvaluacionUI: editarEvaluacionUI,
     eliminarEvaluacionActual: eliminarEvaluacionActual,
     nuevaUnidad: nuevaUnidad, abrirUnidad: abrirUnidad,
-    editarUnidadUI: editarUnidadUI, moverUnidad: moverUnidad,
+    editarUnidadUI: editarUnidadUI, gripDown: gripDown,
     clonarUnidad: clonarUnidad, eliminarUnidad: eliminarUnidad,
     copiarSeneca: copiarSeneca, infoSeneca: infoSeneca,
     verResumen: verResumen, pintarResumen: pintarResumen, copiarResumenSeneca: copiarResumenSeneca,
