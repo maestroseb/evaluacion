@@ -97,8 +97,18 @@ var Cursos = (function () {
     props.setProperty('backfillCursos', '1');
   }
 
+  /**
+   * Invalida el flag del backfill. Hay que llamarla cuando entren filas que
+   * pueden venir sin cursoAcademico (importar una copia antigua, restaurar de
+   * la papelera): el siguiente arranque volverá a estamparlas.
+   */
+  function invalidarBackfill_() {
+    PropertiesService.getUserProperties().deleteProperty('backfillCursos');
+  }
+
   return {
     actual_: actual_, activo_: activo_, fijar_: fijar_,
-    info_: info_, filtrar_: filtrar_, backfill_: backfill_
+    info_: info_, filtrar_: filtrar_, backfill_: backfill_,
+    invalidarBackfill_: invalidarBackfill_
   };
 })();

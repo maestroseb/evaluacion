@@ -92,9 +92,12 @@ var Promocion = (function () {
               sinAsignar += (criterios.length - remap.length);
               criterios = remap;
             }
+            // Copia fiel de la estructura: se permite siempre quedar sin
+            // criterios (la actividad original pudo quedarse sin ellos en una
+            // promoción anterior; si no, la copia fallaría a medias).
             Actividades.crear_(ss, nu.unidadId, {
               nombre: a.nombre, criterios: criterios, numItems: a.numItems
-            }, cambiaNivel, ai + 1); // al subir de nivel se permite quedar sin criterios
+            }, true, ai + 1);
           });
         });
       });

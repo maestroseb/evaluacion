@@ -62,5 +62,7 @@ function importarDatos(datos) {
   escribir(HOJAS.ACTIVIDADES, datos.actividades || []);
   escribir(HOJAS.NOTAS, datos.notas || []);
   // Los backups antiguos podían traer datos.items (_items legado): se ignora.
+  // Una copia antigua puede traer filas sin cursoAcademico: reactivar el backfill.
+  Cursos.invalidarBackfill_();
   return { ok: true };
 }

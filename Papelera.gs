@@ -61,6 +61,9 @@ var Papelera = (function () {
       }
     });
     sh.deleteRow(fila);
+    // Las filas guardadas antes de v7 pueden venir sin cursoAcademico: el
+    // siguiente arranque debe volver a estamparlas.
+    Cursos.invalidarBackfill_();
     return { ok: true };
   }
 
