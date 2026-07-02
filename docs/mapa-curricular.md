@@ -7,7 +7,9 @@ corrección llega a todos sin que ellos hagan nada.
 ## Fuente actual: JSON público en GitHub
 
 El mapa se sirve como **JSON público** desde este repositorio
-(`data/mapa-curricular.json`), que es lo que lee la app vía `MAPA_JSON_URL`.
+(`data/mapa-curricular.json` para Infantil/Primaria y `data/mapa-secundaria.json`
+para ESO, Bachillerato, Diversificación y CFGB), que es lo que lee la app vía
+`MAPA_JSON_URLS` (los descarga y fusiona al cargar).
 
 Ventajas para distribuirlo a toda la comunidad educativa:
 
@@ -38,7 +40,7 @@ desplegar, ejecuta `refrescarMapa` en el editor para vaciar la caché.
 
 ## Alternativa: leer de una hoja (`MAPA_CURRICULAR_ID`)
 
-Si dejas `MAPA_JSON_URL` vacío, la app lee de una hoja. Admite dos formatos:
+Si dejas `MAPA_JSON_URLS` vacío, la app lee de una hoja. Admite dos formatos:
 el **largo** (abajo) o el de **"Mapa Curricular Primaria"** (tablas apiladas).
 
 ### Formato largo

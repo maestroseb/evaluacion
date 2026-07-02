@@ -1486,7 +1486,7 @@ var App = (function () {
     var cursos = cursosDisponibles();
     if (!cursos.length) return aviso('El Mapa Curricular está vacío o sin configurar.');
     var optCursos = '<option value="" selected>— Seleccionar curso —</option>' +
-      cursos.map(function (c) { return '<option value="' + esc(c) + '">' + esc(c) + '</option>'; }).join('');
+      opcionesCursosHtml('');
     var optCopiar = '<option value="">— No copiar —</option>' +
       estado.clases.map(function (c) {
         return '<option value="' + c.claseId + '">' + esc(c.nombre + ' · ' + c.curso) + '</option>';
@@ -1649,17 +1649,50 @@ var App = (function () {
       });
   }
 
-  /** Siguiente nivel del alumnado ("4º Primaria" → "5º Primaria"), o el mismo. */
+  /** Etiqueta de etapa de un nivel: "3º Primaria" → "Primaria"; "Infantil" → "Infantil". */
+  function etapaDe_(nivel) {
+    var e = String(nivel || '').replace(/^\s*\d+\s*º?\s*/, '').trim();
+    return e || String(nivel || '').trim();
+  }
+
+  /**
+   * Siguiente nivel del alumnado ("4º Primaria" → "5º Primaria"), o el mismo.
+   * Solo busca DENTRO de la misma etapa: con varias etapas en el mapa, "3º
+   * Primaria" no debe saltar a "4º ESO" por compartir dígito.
+   */
   function siguienteNivel_(nivel) {
-    var niveles = cursosDisponibles();
     var m = /^\s*(\d+)/.exec(nivel || '');
     if (!m) return nivel; // Infantil u otros sin número: sin salto automático
     var buscado = String(parseInt(m[1], 10) + 1);
+    var etapa = etapaDe_(nivel);
+    var niveles = cursosDisponibles();
     for (var i = 0; i < niveles.length; i++) {
       var mm = /^\s*(\d+)/.exec(niveles[i]);
-      if (mm && mm[1] === buscado) return niveles[i];
+      if (mm && mm[1] === buscado && etapaDe_(niveles[i]) === etapa) return niveles[i];
     }
-    return nivel; // no hay nivel superior (p. ej. 6º): se queda igual
+    return nivel; // no hay nivel superior en la etapa (p. ej. 6º): se queda igual
+  }
+
+  /**
+   * Opciones de un selector de nivel/curso, agrupadas por etapa (optgroup)
+   * cuando el mapa tiene más de una (Infantil/Primaria/ESO/Bachillerato…).
+   */
+  function opcionesCursosHtml(sel) {
+    function opt(c) {
+      return '<option value="' + esc(c) + '"' + (c === sel ? ' selected' : '') +
+        '>' + esc(c) + '</option>';
+    }
+    var cursos = cursosDisponibles();
+    var etapas = [], por = {};
+    cursos.forEach(function (c) {
+      var e = etapaDe_(c);
+      if (!por[e]) { por[e] = []; etapas.push(e); }
+      por[e].push(c);
+    });
+    if (etapas.length < 2) return cursos.map(opt).join('');
+    return etapas.map(function (e) {
+      return '<optgroup label="' + esc(e) + '">' + por[e].map(opt).join('') + '</optgroup>';
+    }).join('');
   }
 
   /** Duplica el grupo actual en otro curso académico (estructura, sin notas). */
@@ -1669,10 +1702,7 @@ var App = (function () {
     var sugeridoAcad = siguienteCurso_(activo) || '';
     var nivelActual = cl.curso || '';
     var sugeridoNivel = siguienteNivel_(nivelActual);
-    var optNiveles = cursosDisponibles().map(function (n) {
-      return '<option value="' + esc(n) + '"' + (n === sugeridoNivel ? ' selected' : '') +
-        '>' + esc(n) + '</option>';
-    }).join('');
+    var optNiveles = opcionesCursosHtml(sugeridoNivel);
     abrirModal('Promocionar grupo',
       '<p class="ayuda">Crea una copia de «' + esc(cl.nombre) + '» en otro curso académico, ' +
       'con sus clases, unidades y actividades pero <b>sin notas</b>. El alumnado se copia para ' +
