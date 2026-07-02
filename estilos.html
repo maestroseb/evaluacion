@@ -385,6 +385,8 @@
   .modal textarea { resize: vertical; }
   .modal p.mensaje { margin: 0 0 4px; font-size: 14px; line-height: 1.5; color: var(--texto); }
   .ayuda { font-size: 12px; color: var(--texto-3); margin: -8px 0 4px; }
+  /* Dos párrafos de ayuda seguidos: el margen negativo del segundo los pegaba. */
+  .ayuda + .ayuda { margin-top: 8px; }
   .acciones-modal { display: flex; gap: 16px; }
   .link, .link-peligro { background: none; border: none; cursor: pointer;
     font-size: 13px; font-weight: 500; padding: 4px 0; }

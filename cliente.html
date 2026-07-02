@@ -1530,14 +1530,14 @@ var App = (function () {
       '<select id="f-copiar" onchange="App.copiarDeClase()">' + optCopiar + '</select></label>' +
       '<label>Alumnado (uno por línea)' +
       '<textarea id="f-alumnos" rows="8" placeholder="Apellidos, Nombre"></textarea></label>' +
-      '<div class="campo-crit"><span class="etq">Color</span>' + swatchesHtml(COLORES[0]) + '</div>' +
-      '<div class="campo-crit"><span class="etq">Icono</span>' + iconosHtml('personas') + '</div>' +
       '<p class="ayuda">Escribe cada línea como <b>Apellidos, Nombre</b>, tal y como aparece en ' +
       'Séneca (lo más cómodo: pegar la lista directamente desde Séneca, o copiarla de otro grupo ' +
       'tuyo). Así, al exportar las notas por criterios, los nombres encajan sin retoques.</p>' +
       '<p class="ayuda">Si quieres, añade un <b>alias entre paréntesis</b>: «Ye, Xin Yi (Sofía)». ' +
       'La app lo usará para mostrar (p. ej. en el móvil se ve el alias en vez del nombre) ' +
-      'y al copiar para Séneca se ignora.</p>',
+      'y al copiar para Séneca se ignora.</p>' +
+      '<div class="campo-crit"><span class="etq">Color</span>' + swatchesHtml(COLORES[0]) + '</div>' +
+      '<div class="campo-crit"><span class="etq">Icono</span>' + iconosHtml('personas') + '</div>',
       'Crear grupo',
       function () {
         var nombre = val('f-nombre').trim();
