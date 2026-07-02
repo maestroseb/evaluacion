@@ -11,9 +11,10 @@
  *
  * Cada valor lleva un "nonce" aleatorio propio, de modo que dos nombres iguales
  * NO producen el mismo cifrado y el flujo de clave nunca se reutiliza entre
- * valores (se evita el problema del "two-time pad"). Formato nuevo:
+ * valores (se evita el problema del "two-time pad"). Formato:
  *     enc:<nonce>:<base64>
- * El formato antiguo (enc:<base64>, sin nonce) se sigue descifrando.
+ * Un valor sin el prefijo "enc:" se trata como texto plano y se devuelve igual
+ * (así los datos importados en claro se muestran bien hasta re-cifrarse).
  *
  * Nota: es seudonimización razonable (protege de la lectura del archivo), no
  * cifrado de extremo a extremo. Si se pierde la clave, los nombres cifrados no
@@ -35,17 +36,12 @@ var Cripto = (function () {
 
   function aSigned_(x) { x = x & 0xff; return x > 127 ? x - 256 : x; }
 
-  /**
-   * Genera n bytes (0..255) de flujo de clave: HMAC(key, nonce:contador).
-   * Con nonce vacío reproduce el flujo del formato antiguo (HMAC(key, contador)),
-   * para poder descifrar los valores cifrados sin nonce.
-   */
+  /** Genera n bytes (0..255) de flujo de clave: HMAC(key, nonce:contador). */
   function flujo_(n, nonce) {
     var key = clave_();
-    var pre = nonce ? (nonce + ':') : '';
     var out = [], contador = 0;
     while (out.length < n) {
-      var bloque = Utilities.computeHmacSha256Signature(pre + contador, key);
+      var bloque = Utilities.computeHmacSha256Signature(nonce + ':' + contador, key);
       for (var i = 0; i < bloque.length && out.length < n; i++) out.push(bloque[i] & 0xff);
       contador++;
     }
@@ -63,23 +59,18 @@ var Cripto = (function () {
     return PREFIJO + nonce + ':' + Utilities.base64Encode(enc);
   }
 
-  /** Descifra. Si no lleva el prefijo, se asume texto plano (legado) y se devuelve igual. */
+  /** Descifra. Si no lleva el prefijo, se asume texto plano y se devuelve igual. */
   function descifrar(dato) {
     if (dato == null || String(dato).indexOf(PREFIJO) !== 0) return dato;
     var cuerpo = String(dato).slice(PREFIJO.length);
     var sep = cuerpo.indexOf(':');
-    var nonce = '', b64 = cuerpo;
-    if (sep >= 0) { nonce = cuerpo.slice(0, sep); b64 = cuerpo.slice(sep + 1); } // formato con nonce
-    var enc = Utilities.base64Decode(b64); // signed
-    var ks = flujo_(enc.length, nonce);
+    if (sep < 0) return dato; // formato irreconocible: se devuelve tal cual
+    var enc = Utilities.base64Decode(cuerpo.slice(sep + 1)); // signed
+    var ks = flujo_(enc.length, cuerpo.slice(0, sep));
     var dec = [];
     for (var i = 0; i < enc.length; i++) dec.push(aSigned_((enc[i] & 0xff) ^ ks[i]));
     return Utilities.newBlob(dec).getDataAsString(); // UTF-8
   }
 
-  function estaCifrado(dato) {
-    return dato != null && String(dato).indexOf(PREFIJO) === 0;
-  }
-
-  return { cifrar: cifrar, descifrar: descifrar, estaCifrado: estaCifrado };
+  return { cifrar: cifrar, descifrar: descifrar };
 })();

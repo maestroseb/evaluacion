@@ -36,15 +36,6 @@ function reordenarClases(ids) {
   return Clases.reordenar_(abrirCuaderno_(), ids);
 }
 
-/**
- * Cifra los nombres de los grupos que aún estén en texto plano (legado).
- * Ejecútala una vez desde el editor de Apps Script tras activar el cifrado.
- * Es segura de repetir: lo ya cifrado se deja igual. No toca ids ni notas.
- */
-function protegerNombres() {
-  return Clases.migrarCifrado_(abrirCuaderno_());
-}
-
 
 var Clases = (function () {
 
@@ -184,34 +175,9 @@ var Clases = (function () {
     if (!v || !String(v).trim()) throw new Error('Falta ' + que + '.');
   }
 
-  /**
-   * Recorre _clases y cifra los nombres que estén en texto plano. Solo reescribe
-   * las filas que lo necesitan (idempotente). Devuelve cuántas migró.
-   */
-  function migrarCifrado_(ss) {
-    var sh = hoja_(ss);
-    var datos = sh.getDataRange().getValues();
-    var migradas = 0;
-    for (var i = 1; i < datos.length; i++) {
-      var json = datos[i][4];
-      if (!json) continue;
-      var arr = parse_(json);
-      var hayPlano = arr.some(function (a) { return !Cripto.estaCifrado(a.nombre); });
-      if (!hayPlano) continue;
-      // Descifra (los ya cifrados) o toma el plano, y reescribe todo cifrado.
-      var alumnos = arr.map(function (a) {
-        return { id: a.id, nombre: Cripto.descifrar(a.nombre) };
-      });
-      sh.getRange(i + 1, 5).setValue(serializar_(alumnos));
-      migradas++;
-    }
-    Logger.log('Grupos migrados a cifrado: ' + migradas);
-    return migradas;
-  }
-
   return {
     listar_: listar_, crear_: crear_, obtener_: obtener_, editar_: editar_,
     actualizarAlumnos_: actualizarAlumnos_,
-    eliminar_: eliminar_, migrarCifrado_: migrarCifrado_, reordenar_: reordenar_
+    eliminar_: eliminar_, reordenar_: reordenar_
   };
 })();

@@ -1222,13 +1222,40 @@ var App = (function () {
     notasDirty = false;
     notasEnCurso = true;
     if (cb) notasCola.push(cb);
-    var uid = rejilla.unidad.unidadId;
-    llamar('guardarNotasUnidad', [uid, rejilla.items], function () {
-      notasEnCurso = false;
-      var cbs = notasCola; notasCola = [];
-      cbs.forEach(function (f) { f(); });
-      if (notasDirty) flushNotas(); // hubo más ediciones mientras se guardaba
-    });
+    guardarBloque_(rejilla.unidad.unidadId, rejilla.items, 0);
+  }
+
+  /**
+   * Envía el bloque de una unidad al servidor. Captura uid+items en cada
+   * intento: si el guardado falla y el profe ya está en otra unidad, el
+   * reintento sigue apuntando al bloque correcto. Ante un fallo definitivo
+   * SIEMPRE se desbloquea la cola (si no, la app quedaría colgada: todas las
+   * vistas esperan a flushNotas antes de leer del servidor).
+   */
+  function guardarBloque_(uid, items, intento) {
+    google.script.run
+      .withSuccessHandler(function () {
+        notasEnCurso = false;
+        var cbs = notasCola; notasCola = [];
+        cbs.forEach(function (f) { f(); });
+        if (notasDirty) flushNotas(); // hubo más ediciones mientras se guardaba
+      })
+      .withFailureHandler(function (err) {
+        if (intento < 2) { // reintenta el MISMO bloque con espera creciente
+          setTimeout(function () { guardarBloque_(uid, items, intento + 1); },
+            2000 * (intento + 1));
+          return;
+        }
+        notasEnCurso = false;
+        // Si seguimos en la misma unidad, re-marca los cambios para que el
+        // siguiente flush los reintente; si no, ya solo cabe avisar.
+        if (rejilla && rejilla.unidad && rejilla.unidad.unidadId === uid) notasDirty = true;
+        var cbs = notasCola; notasCola = [];
+        cbs.forEach(function (f) { f(); });
+        aviso('No se pudieron guardar las notas (' + ((err && err.message) || 'error de red') +
+          '). Comprueba la conexión antes de cerrar.');
+      })
+      .guardarNotasUnidad(uid, items);
   }
 
   /** Guarda el valor de un input (una celda): estado local, notas y persistencia. */
