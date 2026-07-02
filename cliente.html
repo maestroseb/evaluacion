@@ -309,7 +309,7 @@ var App = (function () {
     try { return new Date(iso).toLocaleString('es-ES'); } catch (e) { return iso; }
   }
 
-  // ---------- copia de seguridad (exportar / importar) ----------
+  // ---------- copia de seguridad (exportar / importar) y traspaso ----------
   function abrirCopia() {
     abrirModal('Copia de seguridad',
       '<p class="mensaje">La app guarda una <b>copia automática</b> de tus datos a diario en tu Drive ' +
@@ -317,20 +317,28 @@ var App = (function () {
       '<div class="acciones-modal">' +
       '<button type="button" class="btn" onclick="App.exportarDatos()">' + svgUI('descargar') + ' Descargar copia (JSON)</button>' +
       '<button type="button" class="btn" onclick="App.pedirImportar()">' + svgUI('restaurar') + ' Restaurar desde archivo</button>' +
+      '</div>' +
+      '<p class="mensaje" style="margin-top:14px"><b>Traspaso entre docentes</b>: pasa grupos elegidos ' +
+      '(con sus clases, unidades y notas) a otra persona —p. ej. a quien te sustituya—. ' +
+      'Al recibirlos se <b>añaden</b> a su cuaderno sin tocar los grupos que ya tenga.</p>' +
+      '<div class="acciones-modal">' +
+      '<button type="button" class="btn" onclick="App.compartirGruposUI()">' + svgUI('descargar') + ' Pasar grupos a otra persona</button>' +
+      '<button type="button" class="btn" onclick="App.recibirGruposUI()">' + svgUI('restaurar') + ' Recibir grupos</button>' +
       '</div>',
       'Cerrar', cerrarModal);
   }
-  function exportarDatos() {
-    llamar('getExportacion', [], function (d) {
-      var blob = new Blob([JSON.stringify(d, null, 1)], { type: 'application/json' });
-      var a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'evaluacion-copia-' + String(d.fecha || '').slice(0, 10) + '.json';
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      avisoOk('Copia descargada.');
-    });
+
+  /** Descarga un objeto como archivo JSON. */
+  function descargarJson_(d, nombre) {
+    var blob = new Blob([JSON.stringify(d, null, 1)], { type: 'application/json' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = nombre;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
   }
-  function pedirImportar() {
+
+  /** Pide un archivo .json al usuario y entrega el objeto parseado a cb. */
+  function pedirJson_(cb) {
     var inp = document.createElement('input');
     inp.type = 'file'; inp.accept = '.json,application/json';
     inp.onchange = function () {
@@ -339,20 +347,101 @@ var App = (function () {
       rd.onload = function () {
         var datos;
         try { datos = JSON.parse(rd.result); } catch (e) { return aviso('Archivo no válido.'); }
-        confirmar('Restaurar copia',
-          'Esto SUSTITUIRÁ todos tus datos actuales por los del archivo. Se hace una copia de seguridad antes. ¿Continuar?',
-          'Restaurar', function () {
-            llamar('importarDatos', [datos], function () {
-              invalidarCaches();
-              llamar('getEstadoInicial', [], function (e) {
-                estado = e; cerrarModal(); irAEvaluaciones(); avisoOk('Datos restaurados.');
-              });
-            });
-          });
+        cb(datos);
       };
       rd.readAsText(f);
     };
     inp.click();
+  }
+
+  function exportarDatos() {
+    llamar('getExportacion', [], function (d) {
+      descargarJson_(d, 'evaluacion-copia-' + String(d.fecha || '').slice(0, 10) + '.json');
+      avisoOk('Copia descargada.');
+    });
+  }
+  function pedirImportar() {
+    pedirJson_(function (datos) {
+      if (datos.tipo === 'traspaso') {
+        return aviso('Ese archivo es un traspaso de grupos: usa "Recibir grupos".');
+      }
+      confirmar('Restaurar copia',
+        'Esto SUSTITUIRÁ todos tus datos actuales por los del archivo. Se hace una copia de seguridad antes. ¿Continuar?',
+        'Restaurar', function () {
+          llamar('importarDatos', [datos], function () {
+            invalidarCaches();
+            llamar('getEstadoInicial', [], function (e) {
+              estado = e; cerrarModal(); irAEvaluaciones(); avisoOk('Datos restaurados.');
+            });
+          });
+        });
+    });
+  }
+
+  // ---------- traspaso de grupos entre docentes ----------
+  /** Elegir grupos propios y descargar el archivo de traspaso. */
+  function compartirGruposUI() {
+    if (!estado.clases.length) return aviso('No tienes grupos en el curso activo.');
+    var lista = estado.clases.map(function (c) {
+      return '<label class="crit"><input type="checkbox" value="' + c.claseId + '">' +
+        '<span class="crit-txt"><b>' + esc(c.nombre) + '</b> ' + esc(c.curso) +
+        ' · ' + c.numAlumnos + ' alumnos/as</span></label>';
+    }).join('');
+    abrirModal('Pasar grupos a otra persona',
+      '<p class="mensaje">Elige los grupos a traspasar. Se descargará un archivo con esos grupos ' +
+      'completos (alumnado, clases, unidades, actividades y notas) para que la otra persona lo ' +
+      'reciba desde su app con <b>Copia de seguridad → Recibir grupos</b>. ' +
+      'Tus datos <b>no se modifican</b>.</p>' +
+      '<div class="lista-crit">' + lista + '</div>' +
+      '<p class="ayuda">El archivo lleva los nombres del alumnado en claro: entrégalo por un medio ' +
+      'seguro (en mano, unidad compartida del centro…) y pide a la otra persona que lo borre al recibirlo.</p>',
+      'Descargar traspaso',
+      function () {
+        var ids = [].slice.call(document.querySelectorAll('.lista-crit input:checked'))
+          .map(function (c) { return c.value; });
+        if (!ids.length) return aviso('Marca al menos un grupo.');
+        botonModalCargando('Preparando…');
+        llamar('exportarGrupos', [ids], function (d) {
+          descargarJson_(d, 'traspaso-grupos-' + String(d.fecha || '').slice(0, 10) + '.json');
+          cerrarModal();
+          avisoOk('Traspaso descargado: ' + ids.length + ' grupo(s).');
+        });
+      });
+  }
+
+  /** Recibir un archivo de traspaso: añade sus grupos al cuaderno propio. */
+  function recibirGruposUI() {
+    pedirJson_(function (datos) {
+      if (datos.tipo !== 'traspaso' || !datos.clases || !datos.clases.length) {
+        return aviso('Ese archivo no es un traspaso de grupos. Para una copia completa usa "Restaurar desde archivo".');
+      }
+      var resumen = datos.clases.map(function (c) {
+        return '<li><b>' + esc(c.nombre) + '</b> · ' + esc(c.curso) +
+          ' · ' + (c.alumnos || []).length + ' alumnos/as' +
+          (c.cursoAcademico ? ' · ' + esc(c.cursoAcademico) : '') + '</li>';
+      }).join('');
+      abrirModal('Recibir grupos',
+        '<p class="mensaje">Traspaso de <b>' + esc(datos.de || 'otra persona') + '</b>' +
+        (datos.fecha ? ' (' + esc(fechaCorta(datos.fecha)) + ')' : '') + ' con:</p>' +
+        '<ol class="pasos">' + resumen + '</ol>' +
+        '<p class="mensaje">Se <b>añadirán</b> a tu cuaderno con sus clases, unidades y notas. ' +
+        'Tus grupos actuales no se tocan.</p>',
+        'Recibir grupos',
+        function () {
+          botonModalCargando('Recibiendo…');
+          llamar('importarGrupos', [datos], function (r) {
+            invalidarCaches();
+            llamar('getEstadoInicial', [], function (e) {
+              estado = e; cerrarModal(); irAEvaluaciones();
+              var otroCurso = (r.cursos || []).filter(function (c) {
+                return c && estado.cursos && c !== estado.cursos.activo;
+              });
+              avisoOk('Recibidos ' + r.grupos + ' grupo(s) y ' + r.clases + ' clase(s).' +
+                (otroCurso.length ? ' Ojo: alguno está en el curso ' + otroCurso[0] + '.' : ''));
+            });
+          });
+        });
+    });
   }
 
   // ---------- evaluaciones ----------
@@ -2072,6 +2161,7 @@ var App = (function () {
     toggleSidebar: toggleSidebar, cerrarSidebar: cerrarSidebar, filtrar: filtrar,
     irAPapelera: irAPapelera, restaurarItem: restaurarItem, vaciarPapeleraUI: vaciarPapeleraUI,
     abrirCopia: abrirCopia, exportarDatos: exportarDatos, pedirImportar: pedirImportar,
+    compartirGruposUI: compartirGruposUI, recibirGruposUI: recibirGruposUI,
     nuevaEvaluacion: nuevaEvaluacion, claseCambiada: claseCambiada,
     elegirColor: elegirColor, elegirIcono: elegirIcono,
     abrirEvaluacion: abrirEvaluacion, editarEvaluacionUI: editarEvaluacionUI,
