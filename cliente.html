@@ -1460,8 +1460,12 @@ var App = (function () {
       '<textarea id="f-alumnos" rows="8" placeholder="Apellidos, Nombre"></textarea></label>' +
       '<div class="campo-crit"><span class="etq">Color</span>' + swatchesHtml(COLORES[0]) + '</div>' +
       '<div class="campo-crit"><span class="etq">Icono</span>' + iconosHtml('personas') + '</div>' +
-      '<p class="ayuda">Pega la lista desde Séneca o cópiala de otro grupo tuyo. ' +
-      'Puedes añadir un pseudónimo entre paréntesis: «Ye, Xin Yi (Sofía)».</p>',
+      '<p class="ayuda">Escribe cada línea como <b>Apellidos, Nombre</b>, tal y como aparece en ' +
+      'Séneca (lo más cómodo: pegar la lista directamente desde Séneca, o copiarla de otro grupo ' +
+      'tuyo). Así, al exportar las notas por criterios, los nombres encajan sin retoques.</p>' +
+      '<p class="ayuda">Si quieres, añade un <b>alias entre paréntesis</b>: «Ye, Xin Yi (Sofía)». ' +
+      'La app lo usará para mostrar (p. ej. en el móvil se ve el alias en vez del nombre) ' +
+      'y al copiar para Séneca se ignora.</p>',
       'Crear grupo',
       function () {
         var nombre = val('f-nombre').trim();
@@ -1546,8 +1550,11 @@ var App = (function () {
       '<label>Un alumno/a por línea' +
       '<textarea id="f-alumnos" rows="12">' + esc(texto) + '</textarea></label>' +
       '<p class="ayuda">Se conservan las notas del alumnado que no cambie de nombre. ' +
-      'Puedes añadir un pseudónimo entre paréntesis, p. ej. «Ye, Xin Yi (Sofía)»; ' +
-      'al copiar para Séneca se ignora.</p>',
+      'Escribe cada línea como <b>Apellidos, Nombre</b>, igual que en Séneca, para que la ' +
+      'exportación de notas por criterios encaje sin retoques.</p>' +
+      '<p class="ayuda"><b>Alias opcional</b> entre paréntesis: «Ye, Xin Yi (Sofía)». La app lo ' +
+      'usa para mostrar (en el móvil se ve el alias) y al copiar para Séneca se ignora, así que ' +
+      'añadirlo o quitarlo no afecta a las notas.</p>',
       'Guardar',
       function () {
         var nuevos = fusionarAlumnos(claseActual.alumnos || [], parsearLista(val('f-alumnos')));

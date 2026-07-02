@@ -595,6 +595,11 @@
     table.rejilla .al-corto { display: table-cell; text-align: left;
       font-weight: 500; color: var(--texto);
       max-width: 96px; overflow: hidden; text-overflow: ellipsis; }
+    /* Sombra suave en el borde de la columna fija: al hacer scroll, el nombre
+       se desliza "por debajo" del avatar en vez de cortarse en seco. */
+    table.rejilla td.esq, table.rejilla th.esq {
+      box-shadow: 6px 0 8px -6px rgba(16,18,24,.20);
+    }
   }
 
   /* "Copiar para Séneca" solo existe en escritorio (la extensión Autonotas es
