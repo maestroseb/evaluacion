@@ -9,12 +9,16 @@ var CONFIG = {
 
   // Mapa curricular servido como JSON público desde GitHub. Es la fuente
   // principal: no requiere permisos de Drive y se sirve igual a toda la
-  // comunidad. El repositorio debe ser público (o el JSON accesible por URL).
-  MAPA_JSON_URL: 'https://raw.githubusercontent.com/maestroseb/evaluacion/' +
-    'main/data/mapa-curricular.json',
+  // comunidad. El repositorio debe ser público (o los JSON accesibles por URL).
+  // Cada etapa vive en su propio fichero (se regeneran de hojas distintas) y
+  // la app los descarga y fusiona: un único despliegue sirve a todas.
+  MAPA_JSON_URLS: [
+    'https://raw.githubusercontent.com/maestroseb/evaluacion/main/data/mapa-curricular.json',
+    'https://raw.githubusercontent.com/maestroseb/evaluacion/main/data/mapa-secundaria.json'
+  ],
 
   // Alternativa/legado: hoja de cálculo central con el mapa. Solo se usa si
-  // MAPA_JSON_URL está vacío. Se compartiría en solo lectura con el dominio.
+  // MAPA_JSON_URLS está vacío. Se compartiría en solo lectura con el dominio.
   MAPA_CURRICULAR_ID: '1raqUsR_J2iTBJQV5OevluUTy5R7eKS4WWI0IF6Bpip0',
 
   // Versión del esquema de datos del cuaderno. Permite migraciones futuras.

@@ -90,5 +90,5 @@ de cada profe viven en **su propio Drive** (privados).
 
 Ver **`docs/despliegue.md`**: con **GitHub Assistant**, *Pull* de los archivos de
 la raíz al proyecto de Apps Script y desplegar como Web App para el dominio. El
-mapa se sirve como JSON público desde este repo (`MAPA_JSON_URL`), no hace falta
+mapa se sirve como JSON público desde este repo (`MAPA_JSON_URLS`), no hace falta
 crear hoja.

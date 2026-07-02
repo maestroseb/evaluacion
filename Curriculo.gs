@@ -1,11 +1,11 @@
 /**
  * Acceso de SOLO LECTURA al Mapa Curricular central.
  *
- * Fuente principal: un JSON público en GitHub (CONFIG.MAPA_JSON_URL), un array
- * de objetos { curso, area, competencia, codigo, texto, areaRef? }. Al ser una
- * URL pública no requiere permisos de Drive y se sirve igual a toda la
- * comunidad. Si MAPA_JSON_URL está vacío, se lee de la hoja de cálculo
- * (CONFIG.MAPA_CURRICULAR_ID) como alternativa.
+ * Fuente principal: JSON públicos en GitHub (CONFIG.MAPA_JSON_URLS, uno por
+ * etapa; se fusionan al cargar), arrays de objetos { curso, area, competencia,
+ * codigo, texto, areaRef? }. Al ser URLs públicas no requieren permisos de
+ * Drive y se sirven igual a toda la comunidad. Si MAPA_JSON_URLS está vacío,
+ * se lee de la hoja de cálculo (CONFIG.MAPA_CURRICULAR_ID) como alternativa.
  *
  * La hoja admite dos formatos (detectados solos):
  *  A) Largo: curso | area | competencia | criterio_codigo | criterio_texto
@@ -18,9 +18,10 @@ var Curriculo = (function () {
   function txt_(v) { return String(v == null ? '' : v).trim(); }
 
   // ---------- caché (troceada: CacheService limita ~100 KB por valor) ----------
-  // La clave depende de la fuente: si cambias de URL/hoja, la caché se invalida.
+  // La clave depende de la fuente: si cambias de URLs/hoja, la caché se invalida.
+  function urlsMapa_() { return CONFIG.MAPA_JSON_URLS || []; }
   function claveCache_() {
-    return 'mapa_' + (CONFIG.MAPA_JSON_URL || CONFIG.MAPA_CURRICULAR_ID || '');
+    return 'mapa_' + (urlsMapa_().join('|') || CONFIG.MAPA_CURRICULAR_ID || '');
   }
   var CACHE_SEG = 90000;
 
@@ -66,26 +67,36 @@ var Curriculo = (function () {
     var hit = getCache_();
     if (hit) return hit;
 
-    var filas = CONFIG.MAPA_JSON_URL ? leerDesdeJson_() : leerDesdeHoja_();
+    var filas = urlsMapa_().length ? leerDesdeJson_() : leerDesdeHoja_();
     putCache_(filas);
     return filas;
   }
 
-  /** Descarga el JSON público del mapa desde GitHub. */
+  /**
+   * Descarga y fusiona los JSON públicos del mapa (uno por etapa) desde GitHub.
+   * fetchAll los pide en paralelo: añadir etapas no encarece la carga.
+   */
   function leerDesdeJson_() {
-    var resp = UrlFetchApp.fetch(CONFIG.MAPA_JSON_URL, { muteHttpExceptions: true });
-    if (resp.getResponseCode() !== 200) {
-      throw new Error('No se pudo descargar el mapa curricular (HTTP ' +
-        resp.getResponseCode() + '). Revisa MAPA_JSON_URL y que el repo sea público.');
-    }
-    var arr = JSON.parse(resp.getContentText());
-    return arr.map(function (o) {
-      return {
-        curso: txt_(o.curso), area: txt_(o.area),
-        competencia: txt_(o.competencia), codigo: txt_(o.codigo),
-        texto: txt_(o.texto), descripcion: txt_(o.descripcion)
-      };
+    var urls = urlsMapa_();
+    var resps = UrlFetchApp.fetchAll(urls.map(function (u) {
+      return { url: u, muteHttpExceptions: true };
+    }));
+    var filas = [];
+    resps.forEach(function (resp, i) {
+      if (resp.getResponseCode() !== 200) {
+        throw new Error('No se pudo descargar el mapa curricular (HTTP ' +
+          resp.getResponseCode() + ' en ' + urls[i] +
+          '). Revisa MAPA_JSON_URLS y que el repo sea público.');
+      }
+      JSON.parse(resp.getContentText()).forEach(function (o) {
+        filas.push({
+          curso: txt_(o.curso), area: txt_(o.area),
+          competencia: txt_(o.competencia), codigo: txt_(o.codigo),
+          texto: txt_(o.texto), descripcion: txt_(o.descripcion)
+        });
+      });
     });
+    return filas;
   }
 
   /** Vacía la caché del mapa. Útil tras actualizar el JSON o la hoja. */
@@ -97,7 +108,7 @@ var Curriculo = (function () {
   // ---------- lectura desde hoja (alternativa) ----------
   function abrirMapa_() {
     if (!CONFIG.MAPA_CURRICULAR_ID) {
-      throw new Error('No hay fuente de mapa: configura MAPA_JSON_URL o MAPA_CURRICULAR_ID.');
+      throw new Error('No hay fuente de mapa: configura MAPA_JSON_URLS o MAPA_CURRICULAR_ID.');
     }
     return SpreadsheetApp.openById(CONFIG.MAPA_CURRICULAR_ID);
   }

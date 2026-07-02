@@ -21,10 +21,11 @@ datos de cada profe en su propio Drive.
 2. Con el **GitHub Assistant**, haz **Pull** de este repositorio
    (`maestroseb/evaluacion`, rama indicada) con los archivos en la **raíz**.
    Activa la sincronización del manifiesto `appsscript.json`.
-3. **Mapa curricular**: por defecto, `Config.gs` → `MAPA_JSON_URL` apunta al
-   JSON público de este repo, así que **no necesitas crear tu propio mapa**.
-   - Si quieres mantener tu propio mapa, haz un *fork* del repo, edita
-     `data/mapa-curricular.json` y apunta `MAPA_JSON_URL` a tu fork (público).
+3. **Mapa curricular**: por defecto, `Config.gs` → `MAPA_JSON_URLS` apunta a
+   los JSON públicos de este repo (Infantil/Primaria y Secundaria), así que
+   **no necesitas crear tu propio mapa**.
+   - Si quieres mantener tu propio mapa, haz un *fork* del repo, edita los
+     ficheros de `data/` y apunta `MAPA_JSON_URLS` a tu fork (público).
 4. **Despliega** como Web App (*Implementar → Nueva implementación → Aplicación
    web*):
    - *Ejecutar como*: **Usuario que accede a la aplicación web**.
