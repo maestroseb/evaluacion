@@ -170,7 +170,6 @@
   }
   h1 { font-size: 23px; font-weight: 700; letter-spacing: -.025em; margin: 0; }
   main section > p.meta { margin: 2px 0 16px; }
-  .volver { margin-bottom: 10px; }
   h2 { font-size: 16px; font-weight: 600; letter-spacing: -.01em; margin: 0; }
 
   /* ---------- Tarjetas ---------- */
@@ -269,11 +268,10 @@
   .clase-card-ico svg { width: 23px; height: 23px; stroke: #fff; fill: none; }
   .clase-card-head h3 { margin: 0; font-size: 15.5px; font-weight: 650; color: #fff;
     letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .clase-card-body { flex: 1 1 auto; padding: 14px 16px 4px;
+  .clase-card-body { flex: 1 1 auto; padding: 14px 16px 16px;
     display: flex; flex-direction: column; gap: 5px; }
   .cc-meta { font-size: 13px; color: var(--texto-2); }
   .cc-meta b { color: var(--texto); font-weight: 600; }
-  .cc-btn { margin: 12px 16px 16px; text-align: center; }
 
   /* ---------- Selector de iconos (modal) ---------- */
   .iconos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(46px, 1fr));
@@ -288,6 +286,24 @@
   .icono-opt:hover { background: var(--bg); color: var(--texto); }
   .icono-opt.sel { border-color: var(--acento); color: var(--acento-fuerte);
     background: var(--acento-suave); box-shadow: 0 0 0 2px var(--acento-suave); }
+
+  /* ---------- Iconos SVG de interfaz (sustituyen a los emojis) ----------
+     El trazo y el tamaño base van aquí para que el marcado sea compacto;
+     cada contexto ajusta solo el tamaño. */
+  .svg-ico {
+    width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2;
+    stroke-linecap: round; stroke-linejoin: round;
+    vertical-align: -2.5px; flex: 0 0 auto;
+  }
+  .marca-icono .svg-ico { width: 18px; height: 18px; }
+  .item-ico .svg-ico { width: 17px; height: 17px; vertical-align: middle; }
+  .tab-ico .svg-ico { width: 20px; height: 20px; }
+  .hamburguesa .svg-ico { width: 19px; height: 19px; }
+  .buscador-ico .svg-ico, .curso-chip-ico .svg-ico { width: 14px; height: 14px; display: block; }
+  .volver-icono .svg-ico { width: 17px; height: 17px; }
+  .icono .svg-ico { width: 14px; height: 14px; }
+  .btn-info .svg-ico { width: 11px; height: 11px; }
+  .edit-act .svg-ico { width: 11px; height: 11px; display: block; }
 
   /* ---------- Botones ---------- */
   .btn {
@@ -305,10 +321,22 @@
   .btn.peligro:hover { background: var(--peligro-bg); border-color: #f3c6c2; }
   .btn:disabled { opacity: .55; cursor: default; }
 
+  /* Botón cuadrado de solo icono (p. ej. la papelera roja de las cabeceras). */
+  .btn-icono { padding: 8px 10px; line-height: 0; }
+  .btn-icono .svg-ico { width: 16px; height: 16px; vertical-align: 0; }
+
+  /* Botón partido: acción principal + segmento con icono para la variante
+     (p. ej. "+ Nueva actividad" | crear varias). Se ven como un solo botón. */
+  .btn-split { display: inline-flex; align-items: stretch; }
+  .btn-split .btn:first-child { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+  .btn-split .btn-split-extra {
+    border-top-left-radius: 0; border-bottom-left-radius: 0;
+    padding: 8px 11px; display: inline-flex; align-items: center;
+  }
+  .btn-split .btn.primario.btn-split-extra { border-left: 1px solid rgba(255,255,255,.4); }
+  .btn-split .btn-split-extra svg { width: 17px; height: 17px; display: block; }
+
   /* ---------- Detalle ---------- */
-  .volver { display: inline-flex; align-items: center; gap: 4px; margin-bottom: 12px;
-    color: var(--texto-2); cursor: pointer; font-size: 13px; font-weight: 500; }
-  .volver:hover { color: var(--acento-fuerte); }
   .contador { color: var(--texto-3); font-weight: 400; font-size: 15px; }
   .meta { color: var(--texto-2); font-size: 14px; }
   /* Alumnado: una sola tarjeta con filas separadas por divisores (compacto). */
@@ -323,7 +351,6 @@
   ol.alumnos li::before { content: counter(al); color: var(--texto-3);
     font-variant-numeric: tabular-nums; font-size: 12px; min-width: 22px; text-align: right; }
   ol.alumnos li .mini-avatar { width: 26px; height: 26px; flex-basis: 26px; font-size: 10px; }
-  .nota-fase { margin-top: 24px; color: var(--texto-3); font-size: 13px; }
 
   /* ---------- Avatares con iniciales ---------- */
   .mini-avatar {
@@ -393,7 +420,10 @@
     border-radius: var(--radio); box-shadow: var(--sombra-1);
     padding: 16px 18px; margin-bottom: 18px;
   }
-  .titulo-bloque { flex: 1 1 auto; min-width: 0; }
+  /* flex-basis 0 (no auto): con base "auto", un subtítulo largo hacía saltar el
+     bloque a la línea siguiente en pantallas estrechas; con base 0 el título se
+     queda SIEMPRE en la misma fila que la flecha de volver y encoge/envuelve. */
+  .titulo-bloque { flex: 1 1 0; min-width: 0; }
   .cabecera-rejilla h1, .cabecera-clase h1 { font-size: 20px; line-height: 1.15; }
   .cabecera-rejilla .meta, .cabecera-clase .meta { margin: 2px 0 0; font-size: 13px;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -480,14 +510,20 @@
   table.rejilla .esq { text-align: left; position: sticky; left: 36px; z-index: 1;
     font-weight: 500; color: var(--texto); }
   table.rejilla thead .esq { z-index: 3; }
+  /* Columna del nombre corto: solo existe en móvil (ver bloque responsive). */
+  table.rejilla .al-corto { display: none; }
   table.rejilla td.esq .mini-avatar { width: 24px; height: 24px; flex-basis: 24px;
     font-size: 10px; vertical-align: middle; margin-right: 9px; }
 
-  table.rejilla th.act { position: relative; cursor: grab; font-weight: 600; padding: 7px 22px; }
+  /* position sticky (y no relative): si no, esta regla —más específica— anularía
+     el sticky de "thead th" y las columnas de actividades no se quedarían fijas
+     al hacer scroll. Sticky también sirve de contenedor para grip/edit (absolute). */
+  table.rejilla th.act { position: sticky; cursor: grab; font-weight: 600; padding: 7px 22px; }
   table.rejilla th.act.arrastrando-col { opacity: .45; }
   table.rejilla th.act.soltar-antes { box-shadow: inset 3px 0 0 var(--acento); }
   table.rejilla th.act.soltar-despues { box-shadow: inset -3px 0 0 var(--acento); }
   table.rejilla .grip-act { position: absolute; top: 3px; left: 4px; color: var(--texto-3);
+    touch-action: none; user-select: none;
     font-size: 11px; line-height: 1; opacity: 0; transition: opacity .12s; pointer-events: none; }
   table.rejilla th.act:hover .grip-act { opacity: .65; }
   table.rejilla th.act .act-nom { display: block; }
@@ -564,6 +600,15 @@
     /* Las acciones envuelven a varias líneas en vez de salirse */
     .acciones-unidad { flex-wrap: wrap; width: 100%; }
     .acciones-unidad .btn { flex: 1 1 auto; justify-content: center; }
+    /* En las cabeceras de detalle: la papelera no estira (queda cuadrada) y
+       el botón destacado (Resumen) domina la fila frente a Editar. */
+    .acciones-unidad .btn-icono { flex: 0 0 auto; }
+    .acciones-unidad .btn-destacado { flex-grow: 2; }
+
+    /* Botón partido a lo ancho: la acción principal estira, el icono no. */
+    .btn-split { flex: 1 1 auto; }
+    .btn-split .btn:first-child { flex: 1 1 auto; }
+    .btn-split .btn-split-extra { flex: 0 0 auto; }
 
     /* Columna fija de alumno: solo el avatar (el nombre va en el title).
        Así se libera espacio horizontal para las columnas de notas. */
@@ -571,5 +616,28 @@
     table.rejilla th.esq { font-size: 0; }            /* oculta "Alumno/a", deja la celda mínima */
     table.rejilla td.esq .al-nom { display: none; }
     table.rejilla td.esq .mini-avatar { margin-right: 0; }
+    /* Junto al avatar, el nombre corto (nombre de pila o alias) en una columna
+       normal, NO sticky: al hacer scroll horizontal se va con las notas. */
+    table.rejilla .al-corto { display: table-cell; text-align: left;
+      font-weight: 500; color: var(--texto);
+      max-width: 96px; overflow: hidden; text-overflow: ellipsis; }
+    /* Sombra suave en el borde de la columna fija: al hacer scroll, el nombre
+       se desliza "por debajo" del avatar en vez de cortarse en seco. */
+    table.rejilla td.esq, table.rejilla th.esq {
+      box-shadow: 6px 0 8px -6px rgba(16,18,24,.20);
+    }
+  }
+
+  /* "Copiar para Séneca" solo existe en escritorio (la extensión Autonotas es
+     de Chrome de escritorio): se oculta por TIPO de dispositivo (táctil), no
+     por ancho, para que tampoco aparezca en tablets grandes. */
+  @media (hover: none), (pointer: coarse) {
+    .solo-escritorio { display: none !important; }
+  }
+
+  /* ---------- Foco visible (navegación por teclado) ---------- */
+  .clase-card:focus-visible, .tarjeta-unidad:focus-visible,
+  .item-lat:focus-visible, .tab:focus-visible, .volver-icono:focus-visible {
+    outline: 2px solid var(--acento); outline-offset: 2px;
   }
 </style>

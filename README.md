@@ -51,7 +51,6 @@ Unidades.gs       Unidades de cada evaluación
 Actividades.gs    Actividades, ítems y datos de la rejilla
 Resumen.gs        Resumen global de la clase (criterios agregados + nota final)
 Exportador.gs     Regenera data/mapa-curricular.json desde la hoja completa
-Calc.gs           Motor de cálculo de notas (referencia; en vivo en cliente)
 ui.html           Interfaz
 estilos.html      CSS
 cliente.html      JS de cliente

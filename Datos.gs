@@ -144,10 +144,22 @@ var Datos = (function () {
     return prefijo + '_' + Utilities.getUuid().slice(0, 8);
   }
 
+  /**
+   * Siguiente valor de 'orden' a partir de una lista de elementos con campo
+   * .orden: max(orden) + 1. Robusto frente a huecos por borrados (evita
+   * duplicar el orden de un elemento existente, cosa que sí pasa con length+1).
+   */
+  function siguienteOrden_(lista) {
+    var m = 0;
+    (lista || []).forEach(function (x) { var o = Number(x.orden) || 0; if (o > m) m = o; });
+    return m + 1;
+  }
+
   return {
     inicializarEsquema_: inicializarEsquema_,
     asegurarEsquema_: asegurarEsquema_,
     filaDeId_: filaDeId_,
-    nuevoId_: nuevoId_
+    nuevoId_: nuevoId_,
+    siguienteOrden_: siguienteOrden_
   };
 })();

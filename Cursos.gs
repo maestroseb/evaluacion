@@ -8,18 +8,6 @@
  * pocas filas más, que se escanean en milisegundos.
  */
 
-/** Curso activo, curso natural del calendario y lista de cursos con datos. */
-function getCursos() {
-  return Cursos.info_(abrirCuaderno_());
-}
-
-/** Fija el curso académico activo y devuelve el estado de cursos actualizado. */
-function fijarCursoActivo(curso) {
-  var ss = abrirCuaderno_();
-  Cursos.fijar_(curso);
-  return Cursos.info_(ss);
-}
-
 /**
  * Cambia el curso activo y devuelve ya los datos filtrados de ese curso, para
  * repintar Clases y Grupos sin recargar toda la aplicación.
@@ -27,10 +15,11 @@ function fijarCursoActivo(curso) {
 function cambiarCurso(curso) {
   var ss = abrirCuaderno_();
   Cursos.fijar_(curso);
+  var clases = Clases.listar_(ss); // una sola lectura de _clases para todo
   return {
-    cursos: Cursos.info_(ss),
-    clases: Cursos.filtrar_(Clases.listar_(ss), curso),
-    evaluaciones: Cursos.filtrar_(Evaluaciones.listar_(ss), curso)
+    cursos: Cursos.info_(ss, clases),
+    clases: Cursos.filtrar_(clases, curso),
+    evaluaciones: Cursos.filtrar_(Evaluaciones.listar_(ss, clases), curso)
   };
 }
 
@@ -58,16 +47,18 @@ var Cursos = (function () {
   }
 
   /** Cursos presentes en los grupos + el activo + el natural, recientes primero. */
-  function lista_(ss) {
+  function lista_(ss, clasesLista) {
     var set = {};
-    Clases.listar_(ss).forEach(function (c) { if (c.cursoAcademico) set[c.cursoAcademico] = 1; });
+    (clasesLista || Clases.listar_(ss)).forEach(function (c) {
+      if (c.cursoAcademico) set[c.cursoAcademico] = 1;
+    });
     set[actual_()] = 1;
     set[activo_()] = 1;
     return Object.keys(set).sort().reverse();
   }
 
-  function info_(ss) {
-    return { activo: activo_(), actual: actual_(), lista: lista_(ss) };
+  function info_(ss, clasesLista) {
+    return { activo: activo_(), actual: actual_(), lista: lista_(ss, clasesLista) };
   }
 
   /** Filtra una lista (con campo cursoAcademico) al curso dado; vacío = natural. */
@@ -84,6 +75,10 @@ var Cursos = (function () {
    * que es seguro llamarla en cada arranque. Col 9 en _clases y _evaluaciones.
    */
   function backfill_(ss) {
+    // Solo hace falta una vez por usuario: las filas nuevas ya nacen con
+    // cursoAcademico. Un flag evita releer dos hojas en cada arranque.
+    var props = PropertiesService.getUserProperties();
+    if (props.getProperty('backfillCursos') === '1') return;
     var curso = actual_();
     [HOJAS.CLASES, HOJAS.EVALUACIONES].forEach(function (nombre) {
       var sh = ss.getSheetByName(nombre);
@@ -99,10 +94,21 @@ var Cursos = (function () {
       }
       if (cambios) sh.getRange(2, 9, n, 1).setValues(cursos);
     });
+    props.setProperty('backfillCursos', '1');
+  }
+
+  /**
+   * Invalida el flag del backfill. Hay que llamarla cuando entren filas que
+   * pueden venir sin cursoAcademico (importar una copia antigua, restaurar de
+   * la papelera): el siguiente arranque volverá a estamparlas.
+   */
+  function invalidarBackfill_() {
+    PropertiesService.getUserProperties().deleteProperty('backfillCursos');
   }
 
   return {
     actual_: actual_, activo_: activo_, fijar_: fijar_,
-    lista_: lista_, info_: info_, filtrar_: filtrar_, backfill_: backfill_
+    info_: info_, filtrar_: filtrar_, backfill_: backfill_,
+    invalidarBackfill_: invalidarBackfill_
   };
 })();

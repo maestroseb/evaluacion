@@ -52,8 +52,7 @@ var Promocion = (function () {
       throw new Error('Falta el curso académico de destino.');
     }
     cursoDestino = String(cursoDestino).trim();
-    var orig = Clases.obtener_(ss, claseId);
-    if (!orig) throw new Error('Grupo no encontrado.');
+    var orig = Clases.obtener_(ss, claseId); // lanza si el grupo no existe
 
     // Nivel destino: si no se indica, se mantiene el del grupo (misma etapa).
     var nivel = (nivelDestino && String(nivelDestino).trim()) || orig.curso;
@@ -82,19 +81,23 @@ var Promocion = (function () {
           claseId: nueva.claseId, area: ev.area, nombre: ev.nombre,
           color: ev.color, icono: ev.icono
         });
-        Unidades.listar_(ss, ev.evalId).forEach(function (u) {
-          var nu = Unidades.crear_(ss, nEval.evalId, u.nombre);
-          Actividades.listar_(ss, u.unidadId).forEach(function (a) {
+        // La evaluación y las unidades nuevas nacen vacías: el orden es el índice
+        // de cada elemento, así crear_ no relee la hoja en cada iteración (O(n)).
+        Unidades.listar_(ss, ev.evalId).forEach(function (u, ui) {
+          var nu = Unidades.crear_(ss, nEval.evalId, u.nombre, ui + 1);
+          Actividades.listar_(ss, u.unidadId).forEach(function (a, ai) {
             var criterios = a.criterios || [];
             if (cambiaNivel) {
               var remap = remapearCriterios_(criterios, dOrigen, dDestino, validos);
               sinAsignar += (criterios.length - remap.length);
               criterios = remap;
             }
+            // Copia fiel de la estructura: se permite siempre quedar sin
+            // criterios (la actividad original pudo quedarse sin ellos en una
+            // promoción anterior; si no, la copia fallaría a medias).
             Actividades.crear_(ss, nu.unidadId, {
               nombre: a.nombre, criterios: criterios, numItems: a.numItems
-            }, cambiaNivel); // al subir de nivel se permite quedar sin criterios
-
+            }, true, ai + 1);
           });
         });
       });

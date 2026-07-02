@@ -16,8 +16,16 @@ var App = (function () {
   // ---------- arranque ----------
   function iniciar() {
     setupModalNoScroll();
+    setupTeclado();
     restaurarSidebar();
-    window.addEventListener('beforeunload', function () { flushNotas(); }); // guardado de última hora
+    window.addEventListener('resize', ajustarAltoRejillas); // giro / cambio de tamaño
+    // Guardado de última hora: intenta persistir y, si quedan cambios en vuelo,
+    // pide confirmación al navegador para dar tiempo a que la petición llegue.
+    window.addEventListener('beforeunload', function (e) {
+      var pendiente = notasDirty || notasEnCurso;
+      flushNotas();
+      if (pendiente) { e.preventDefault(); e.returnValue = ''; }
+    });
     llamar('getEstadoInicial', [], function (e) {
       estado = e;
       document.getElementById('usuario').textContent = e.usuario;
@@ -26,6 +34,8 @@ var App = (function () {
       document.getElementById('cargando').hidden = true;
       pintarSelectorCurso();
       irAEvaluaciones();
+      // Copia de seguridad automática en 2º plano (no retrasa el arranque).
+      llamarSilencioso('respaldoAutomatico', [], function () {});
     });
   }
 
@@ -35,6 +45,8 @@ var App = (function () {
   function mostrar(id) {
     flushNotas(); // guarda notas pendientes de la unidad al cambiar de vista
     SECCIONES.forEach(function (s) { document.getElementById(s).hidden = (s !== id); });
+    document.getElementById('app').scrollTop = 0; // cada vista empieza arriba
+    // (además estabiliza la medición de ajustarAltoRejillas)
     // Resalta la sección activa en barra lateral y tab bar (por data-nav).
     var clave =
       (id === 'vista-clases' || id === 'vista-clase') ? 'clases' :
@@ -66,6 +78,15 @@ var App = (function () {
   /** Cambia el curso activo: recarga Clases y Grupos ya filtrados del servidor. */
   function cambiarCurso(curso) {
     if (!curso || (estado.cursos && curso === estado.cursos.activo)) return;
+    recargarDatosCurso(curso);
+  }
+
+  /**
+   * Recarga siempre del servidor los datos del curso indicado y repinta. A
+   * diferencia de cambiarCurso, no ignora el caso "mismo curso activo" (lo usa
+   * la promoción, que puede crear el grupo dentro del curso ya activo).
+   */
+  function recargarDatosCurso(curso) {
     llamar('cambiarCurso', [curso], function (r) {
       estado.cursos = r.cursos;
       estado.clases = r.clases;
@@ -105,6 +126,25 @@ var App = (function () {
   function prefetchEval(id) { prefetch_(id, 'obtenerEvaluacion', evalCache); }
   function prefetchClase(id) { prefetch_(id, 'obtenerClase', claseCache); }
   function prefetchRejilla(id) { if (!arrastreAct && !arrastre) prefetch_(id, 'getRejilla', rejillaCache); }
+
+  /**
+   * Ajusta la altura de las tablas de notas (rejilla y resumen) al hueco REAL
+   * de pantalla: desde donde empieza la tabla hasta la tab bar inferior (en
+   * móvil) o el borde de la ventana. Así la tabla aprovecha todo el alto
+   * disponible aunque la cabecera ocupe una o dos líneas, y el scroll queda
+   * dentro de la tabla (con su cabecera sticky), no en la página.
+   */
+  function ajustarAltoRejillas() {
+    [].forEach.call(document.querySelectorAll('.rejilla-cont'), function (el) {
+      if (!el.offsetParent) return; // la vista está oculta
+      var top = el.getBoundingClientRect().top;
+      var tab = document.querySelector('.tabbar');
+      var tabAlto = (tab && getComputedStyle(tab).display !== 'none')
+        ? tab.getBoundingClientRect().height : 0;
+      var alto = window.innerHeight - top - tabAlto - 10; // 10px de respiro
+      if (alto > 160) el.style.maxHeight = alto + 'px';
+    });
+  }
 
   /** Fija el título de la barra superior y limpia el buscador al cambiar de vista. */
   function setTitulo(t) {
@@ -191,8 +231,8 @@ var App = (function () {
       '<p class="mensaje">La app guarda una <b>copia automática</b> de tus datos a diario en tu Drive ' +
       '(las últimas 7). Además puedes descargar una copia o restaurarla:</p>' +
       '<div class="acciones-modal">' +
-      '<button type="button" class="btn" onclick="App.exportarDatos()">⬇ Descargar copia (JSON)</button>' +
-      '<button type="button" class="btn" onclick="App.pedirImportar()">⬆ Restaurar desde archivo</button>' +
+      '<button type="button" class="btn" onclick="App.exportarDatos()">' + svgUI('descargar') + ' Descargar copia (JSON)</button>' +
+      '<button type="button" class="btn" onclick="App.pedirImportar()">' + svgUI('restaurar') + ' Restaurar desde archivo</button>' +
       '</div>',
       'Cerrar', cerrarModal);
   }
@@ -242,6 +282,7 @@ var App = (function () {
     cont.innerHTML = estado.evaluaciones.map(function (ev) {
       var col = ev.color || 'var(--acento)';
       return '<div class="clase-card" data-id="' + ev.evalId + '" style="--c:' + col + '" ' +
+        'tabindex="0" role="button" ' +
         'onmouseenter="App.prefetchEval(\'' + ev.evalId + '\')" ' +
         'onclick="App.abrirEvaluacion(\'' + ev.evalId + '\')">' +
         '<div class="clase-card-head">' +
@@ -254,7 +295,6 @@ var App = (function () {
           '<div class="cc-meta"><b>' + ev.numAlumnos + '</b> alumnos/as</div>' +
           '<div class="cc-meta">' + esc(ev.claseNombre) + ' · ' + esc(ev.curso) + '</div>' +
         '</div>' +
-        '<button type="button" class="btn cc-btn">Ver detalles</button>' +
         '</div>';
     }).join('');
   }
@@ -321,6 +361,25 @@ var App = (function () {
   function iconoElegido() {
     var s = document.querySelector('.icono-opt.sel');
     return s ? s.dataset.ico : ICONO_DEFECTO;
+  }
+
+  // ---------- iconos SVG de interfaz (botones de la app) ----------
+  // Separados del catálogo ICONOS a propósito: aquel alimenta el selector de
+  // iconos de las tarjetas y estos NO deben aparecer ahí. Trazo currentColor;
+  // el tamaño y el estilo de línea los da la clase .svg-ico (ver estilos).
+  var ICONOS_UI = {
+    lapiz:     '<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/>',
+    duplicar:  '<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+    papelera:  '<polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+    equis:     '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+    check:     '<polyline points="20 6 9 17 4 12"/>',
+    descargar: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
+    restaurar: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>'
+  };
+  /** Icono SVG de interfaz por id. */
+  function svgUI(id) {
+    return '<svg class="svg-ico" viewBox="0 0 24 24" aria-hidden="true">' +
+      (ICONOS_UI[id] || '') + '</svg>';
   }
 
   function nuevaEvaluacion() {
@@ -425,6 +484,7 @@ var App = (function () {
     cont.innerHTML = uds.map(function (u, i) {
       var num = (i + 1) < 100 ? ('0' + (i + 1)).slice(-2) : String(i + 1);
       return '<div class="tarjeta tarjeta-unidad" data-id="' + u.unidadId + '" ' +
+        'tabindex="0" role="button" ' +
         'onmouseenter="App.prefetchRejilla(\'' + u.unidadId + '\')" ' +
         'onclick="App.abrirUnidad(\'' + u.unidadId + '\')">' +
         '<span class="u-grip" title="Arrastra para reordenar" ' +
@@ -434,11 +494,11 @@ var App = (function () {
         '<h3 class="u-nom">' + esc(u.nombre) + '</h3>' +
         '<div class="acciones-tarjeta">' +
         '<button class="icono" title="Editar unidad" ' +
-        'onclick="event.stopPropagation();App.editarUnidadUI(\'' + u.unidadId + '\')">✎</button>' +
+        'onclick="event.stopPropagation();App.editarUnidadUI(\'' + u.unidadId + '\')">' + svgUI('lapiz') + '</button>' +
         '<button class="icono" title="Duplicar unidad" ' +
-        'onclick="event.stopPropagation();App.clonarUnidad(\'' + u.unidadId + '\')">⧉</button>' +
+        'onclick="event.stopPropagation();App.clonarUnidad(\'' + u.unidadId + '\')">' + svgUI('duplicar') + '</button>' +
         '<button class="icono peligro" title="Eliminar unidad" ' +
-        'onclick="event.stopPropagation();App.eliminarUnidad(\'' + u.unidadId + '\')">🗑</button>' +
+        'onclick="event.stopPropagation();App.eliminarUnidad(\'' + u.unidadId + '\')">' + svgUI('papelera') + '</button>' +
         '</div>' +
         '</div>';
     }).join('');
@@ -658,6 +718,7 @@ var App = (function () {
   }
 
   function pintarResumen() {
+    ajustarAltoRejillas(); // la cabecera ya está pintada: mide el hueco real
     var cont = document.getElementById('resumen-cont');
     var R = resumenData;
     if (!R.criterios.length && !R.unidades.length) {
@@ -668,7 +729,7 @@ var App = (function () {
     var uds = verUds ? R.unidades : [];
 
     var h = '<table class="rejilla"><thead><tr>' +
-      '<th class="idx">#</th><th class="esq">Alumno/a</th>';
+      '<th class="idx">#</th><th class="esq">Alumno/a</th><th class="al-corto"></th>';
     uds.forEach(function (u) {
       h += '<th class="act" title="Nota de la unidad">' +
         '<span class="act-nom">' + esc(u.nombre) + '</span></th>';
@@ -727,11 +788,28 @@ var App = (function () {
     return COLORES[h % COLORES.length];
   }
 
+  /**
+   * Nombre corto para pantallas pequeñas: el alias si lo hay ("Ye, Xin Yi
+   * (Sofía)" → "Sofía"), si no el nombre de pila ("García, María" → "María"),
+   * y si no hay coma, la primera palabra.
+   */
+  function nombreCorto(nombre) {
+    var s = String(nombre || '');
+    var m = /\(([^)]+)\)/.exec(s);
+    if (m && m[1].trim()) return m[1].trim();
+    var coma = s.indexOf(',');
+    if (coma >= 0) return s.slice(coma + 1).replace(/\([^)]*\)/g, '').trim();
+    return s.trim().split(/\s+/)[0] || '';
+  }
+
   /** Celda izquierda con avatar de iniciales + nombre (rejilla y resumen). */
   function celdaAlumno(nombre) {
     return '<td class="esq" title="' + esc(nombre) + '"><span class="mini-avatar" style="background:' +
       colorAvatar(nombre) + '">' + esc(iniciales(nombre)) + '</span>' +
-      '<span class="al-nom">' + esc(nombre) + '</span></td>';
+      '<span class="al-nom">' + esc(nombre) + '</span></td>' +
+      // Columna extra SOLO móvil con el nombre corto. No es sticky a propósito:
+      // al hacer scroll horizontal se va con las notas y queda fijo solo el avatar.
+      '<td class="al-corto" title="' + esc(nombre) + '">' + esc(nombreCorto(nombre)) + '</td>';
   }
   function infoCritR(cod) {
     var v = (resumenData.criteriosInfo || {})[cod] || {};
@@ -827,7 +905,7 @@ var App = (function () {
   function infoSeneca() {
     var url = 'https://chromewebstore.google.com/detail/autonotas-séneca/fgghhpmbkdhdgnnboeckhhnnjiknnkak?hl=es';
     abrirModal('Copiar para Séneca',
-      '<p class="mensaje">El botón <b>📋 Copiar para Séneca</b> copia al portapapeles, en columnas, ' +
+      '<p class="mensaje">El botón <b>Copiar para Séneca</b> copia al portapapeles, en columnas, ' +
       'el <b>nombre del alumnado</b> y la <b>nota de cada criterio</b> de esta unidad ' +
       '(2 decimales con coma).</p>' +
       '<p class="mensaje">Está pensado para usarse con la extensión de Chrome ' +
@@ -836,7 +914,7 @@ var App = (function () {
       'que pega esas notas directamente en una actividad evaluable por criterios en Séneca.</p>' +
       '<ol class="pasos">' +
       '<li>Instala la extensión <b>Autonotas Séneca</b>.</li>' +
-      '<li>Aquí, pulsa <b>📋 Copiar para Séneca</b>.</li>' +
+      '<li>Aquí, pulsa <b>Copiar para Séneca</b>.</li>' +
       '<li>En Séneca, abre la actividad criterial y usa Autonotas para pegar.</li>' +
       '</ol>' +
       '<p><a class="enlace-ext" href="' + url + '" target="_blank" rel="noopener">' +
@@ -913,7 +991,7 @@ var App = (function () {
   function notaPendientes(p) {
     return p > 0
       ? '<p class="ayuda">Quedan <b>' + p + '</b> criterios sin asignar en la clase (marcados como «sin asignar»).</p>'
-      : '<p class="ayuda">✓ Todos los criterios de la clase están ya asignados a alguna actividad.</p>';
+      : '<p class="ayuda">' + svgUI('check') + ' Todos los criterios de la clase están ya asignados a alguna actividad.</p>';
   }
 
   /** Modal compartido para crear o editar una actividad. act=null → crear. */
@@ -1029,7 +1107,7 @@ var App = (function () {
     return '<div class="fila-act">' +
       '<input class="fa-nombre" type="text" placeholder="Nombre de la actividad">' +
       '<input class="fa-items" type="number" min="1" step="0.5" placeholder="Ítems">' +
-      '<button type="button" class="icono peligro" title="Quitar" onclick="App.quitarFilaAct(this)">✕</button>' +
+      '<button type="button" class="icono peligro" title="Quitar" onclick="App.quitarFilaAct(this)">' + svgUI('equis') + '</button>' +
       '</div>';
   }
   function anadirFilaAct() {
@@ -1045,6 +1123,7 @@ var App = (function () {
    * # | Alumno | actividades… | Nota (global) | criterios (resumen, a la derecha).
    */
   function pintarRejilla() {
+    ajustarAltoRejillas(); // la cabecera ya está pintada: mide el hueco real
     var cont = document.getElementById('rejilla-cont');
     if (!rejilla.actividades.length) {
       cont.innerHTML = '<div class="vacio">Sin actividades. ' +
@@ -1055,14 +1134,14 @@ var App = (function () {
     var crits = verCrit ? criteriosUsados() : [];
 
     var h = '<table class="rejilla"><thead><tr>' +
-      '<th class="idx">#</th><th class="esq">Alumno/a</th>';
+      '<th class="idx">#</th><th class="esq">Alumno/a</th><th class="al-corto"></th>';
     rejilla.actividades.forEach(function (a) {
       h += '<th class="act" data-act="' + a.actividadId + '" ' +
         'title="' + esc(a.criterios.join(', ')) + '" ' +
         'onpointerdown="App.actDown(event,\'' + a.actividadId + '\')">' +
         '<span class="grip-act" title="Arrastra para reordenar">⠿</span>' +
         '<button class="edit-act" title="Editar actividad" onpointerdown="event.stopPropagation()" ' +
-        'onclick="App.editarActividadUI(\'' + a.actividadId + '\')">✎</button>' +
+        'onclick="App.editarActividadUI(\'' + a.actividadId + '\')">' + svgUI('lapiz') + '</button>' +
         '<span class="act-nom">' + esc(a.nombre) + '</span>' +
         '<small>/' + a.numItems + ' · ' + esc(a.criterios.join(', ')) + '</small></th>';
     });
@@ -1170,6 +1249,7 @@ var App = (function () {
     var actId = inp.dataset.act, alId = inp.dataset.al, act = actDe(actId);
     var v = inp.value === '' ? '' : Number(String(inp.value).replace(',', '.'));
     if (v !== '' && isNaN(v)) return null;
+    if (v !== '' && v < 0) { v = 0; inp.value = fmt(v); }
     if (v !== '' && act && v > act.numItems) { v = act.numItems; inp.value = fmt(v); }
     if (v === '') {
       if (rejilla.items[actId]) delete rejilla.items[actId][alId];
@@ -1204,13 +1284,40 @@ var App = (function () {
     notasDirty = false;
     notasEnCurso = true;
     if (cb) notasCola.push(cb);
-    var uid = rejilla.unidad.unidadId;
-    llamar('guardarNotasUnidad', [uid, rejilla.items], function () {
-      notasEnCurso = false;
-      var cbs = notasCola; notasCola = [];
-      cbs.forEach(function (f) { f(); });
-      if (notasDirty) flushNotas(); // hubo más ediciones mientras se guardaba
-    });
+    guardarBloque_(rejilla.unidad.unidadId, rejilla.items, 0);
+  }
+
+  /**
+   * Envía el bloque de una unidad al servidor. Captura uid+items en cada
+   * intento: si el guardado falla y el profe ya está en otra unidad, el
+   * reintento sigue apuntando al bloque correcto. Ante un fallo definitivo
+   * SIEMPRE se desbloquea la cola (si no, la app quedaría colgada: todas las
+   * vistas esperan a flushNotas antes de leer del servidor).
+   */
+  function guardarBloque_(uid, items, intento) {
+    google.script.run
+      .withSuccessHandler(function () {
+        notasEnCurso = false;
+        var cbs = notasCola; notasCola = [];
+        cbs.forEach(function (f) { f(); });
+        if (notasDirty) flushNotas(); // hubo más ediciones mientras se guardaba
+      })
+      .withFailureHandler(function (err) {
+        if (intento < 2) { // reintenta el MISMO bloque con espera creciente
+          setTimeout(function () { guardarBloque_(uid, items, intento + 1); },
+            2000 * (intento + 1));
+          return;
+        }
+        notasEnCurso = false;
+        // Si seguimos en la misma unidad, re-marca los cambios para que el
+        // siguiente flush los reintente; si no, ya solo cabe avisar.
+        if (rejilla && rejilla.unidad && rejilla.unidad.unidadId === uid) notasDirty = true;
+        var cbs = notasCola; notasCola = [];
+        cbs.forEach(function (f) { f(); });
+        aviso('No se pudieron guardar las notas (' + ((err && err.message) || 'error de red') +
+          '). Comprueba la conexión antes de cerrar.');
+      })
+      .guardarNotasUnidad(uid, items);
   }
 
   /** Guarda el valor de un input (una celda): estado local, notas y persistencia. */
@@ -1287,7 +1394,7 @@ var App = (function () {
     }
   }
 
-  // --- cálculo en vivo (espejo de Calc.gs) ---
+  // --- cálculo en vivo (mismo criterio que Resumen.gs en el servidor) ---
   function valorItem(actividadId, alumnoId) {
     var m = rejilla.items[actividadId];
     return m && m[alumnoId] != null ? m[alumnoId] : null;
@@ -1358,6 +1465,7 @@ var App = (function () {
     cont.innerHTML = estado.clases.map(function (c) {
       var col = c.color || colorAvatar(c.nombre);
       return '<div class="clase-card" data-id="' + c.claseId + '" style="--c:' + col + '" ' +
+        'tabindex="0" role="button" ' +
         'onmouseenter="App.prefetchClase(\'' + c.claseId + '\')" ' +
         'onclick="App.abrirClase(\'' + c.claseId + '\')">' +
         '<div class="clase-card-head">' +
@@ -1370,7 +1478,6 @@ var App = (function () {
           '<div class="cc-meta"><b>' + c.numAlumnos + '</b> alumnos/as</div>' +
           '<div class="cc-meta">' + esc(c.curso) + '</div>' +
         '</div>' +
-        '<button type="button" class="btn cc-btn">Ver detalles</button>' +
         '</div>';
     }).join('');
   }
@@ -1396,8 +1503,12 @@ var App = (function () {
       '<textarea id="f-alumnos" rows="8" placeholder="Apellidos, Nombre"></textarea></label>' +
       '<div class="campo-crit"><span class="etq">Color</span>' + swatchesHtml(COLORES[0]) + '</div>' +
       '<div class="campo-crit"><span class="etq">Icono</span>' + iconosHtml('personas') + '</div>' +
-      '<p class="ayuda">Pega la lista desde Séneca o cópiala de otro grupo tuyo. ' +
-      'Puedes añadir un pseudónimo entre paréntesis: «Ye, Xin Yi (Sofía)».</p>',
+      '<p class="ayuda">Escribe cada línea como <b>Apellidos, Nombre</b>, tal y como aparece en ' +
+      'Séneca (lo más cómodo: pegar la lista directamente desde Séneca, o copiarla de otro grupo ' +
+      'tuyo). Así, al exportar las notas por criterios, los nombres encajan sin retoques.</p>' +
+      '<p class="ayuda">Si quieres, añade un <b>alias entre paréntesis</b>: «Ye, Xin Yi (Sofía)». ' +
+      'La app lo usará para mostrar (p. ej. en el móvil se ve el alias en vez del nombre) ' +
+      'y al copiar para Séneca se ignora.</p>',
       'Crear grupo',
       function () {
         var nombre = val('f-nombre').trim();
@@ -1482,8 +1593,11 @@ var App = (function () {
       '<label>Un alumno/a por línea' +
       '<textarea id="f-alumnos" rows="12">' + esc(texto) + '</textarea></label>' +
       '<p class="ayuda">Se conservan las notas del alumnado que no cambie de nombre. ' +
-      'Puedes añadir un pseudónimo entre paréntesis, p. ej. «Ye, Xin Yi (Sofía)»; ' +
-      'al copiar para Séneca se ignora.</p>',
+      'Escribe cada línea como <b>Apellidos, Nombre</b>, igual que en Séneca, para que la ' +
+      'exportación de notas por criterios encaje sin retoques.</p>' +
+      '<p class="ayuda"><b>Alias opcional</b> entre paréntesis: «Ye, Xin Yi (Sofía)». La app lo ' +
+      'usa para mostrar (en el móvil se ve el alias) y al copiar para Séneca se ignora, así que ' +
+      'añadirlo o quitarlo no afecta a las notas.</p>',
       'Guardar',
       function () {
         var nuevos = fusionarAlumnos(claseActual.alumnos || [], parsearLista(val('f-alumnos')));
@@ -1585,7 +1699,7 @@ var App = (function () {
           } else {
             avisoOk('Grupo promocionado a ' + destino + '.');
           }
-          cambiarCurso(destino); // salta al curso destino para ver el resultado
+          recargarDatosCurso(destino); // salta al curso destino (aunque sea el activo) para ver el resultado
         });
       });
   }
@@ -1647,6 +1761,9 @@ var App = (function () {
     accionModal = onAceptar;
     b.onclick = function () { if (accionModal) accionModal(); };
     document.getElementById('modal-fondo').hidden = false;
+    // Lleva el foco al primer campo del modal (o al botón de aceptar).
+    var f = document.querySelector('#modal-cuerpo input, #modal-cuerpo select, #modal-cuerpo textarea');
+    (f || b).focus();
   }
 
   /**
@@ -1665,6 +1782,42 @@ var App = (function () {
         e.preventDefault();
       }
     });
+  }
+
+  /**
+   * Teclado global: Escape cierra el modal, Tab queda atrapado dentro del
+   * modal mientras esté abierto, y Enter/Espacio activan los elementos
+   * navegables que no son <button> (enlaces del menú, flechas de volver,
+   * tarjetas con tabindex).
+   */
+  function setupTeclado() {
+    document.addEventListener('keydown', function (e) {
+      var modalAbierto = !document.getElementById('modal-fondo').hidden;
+      if (modalAbierto) {
+        if (e.key === 'Escape') { cerrarModal(); e.preventDefault(); }
+        else if (e.key === 'Tab') atraparFoco(e);
+        return;
+      }
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      var t = e.target;
+      if (t && t.matches &&
+          t.matches('a.item-lat, a.tab, a.volver-icono, .clase-card, .tarjeta-unidad')) {
+        e.preventDefault(); // evita el scroll de Espacio
+        t.click();
+      }
+    });
+  }
+
+  /** Mantiene el Tab dando vueltas dentro del modal (trampa de foco). */
+  function atraparFoco(e) {
+    var m = document.querySelector('.modal');
+    var focos = [].filter.call(
+      m.querySelectorAll('button, input, select, textarea, a[href]'),
+      function (el) { return !el.disabled && el.offsetParent !== null; });
+    if (!focos.length) return;
+    var primero = focos[0], ultimo = focos[focos.length - 1];
+    if (e.shiftKey && document.activeElement === primero) { ultimo.focus(); e.preventDefault(); }
+    else if (!e.shiftKey && document.activeElement === ultimo) { primero.focus(); e.preventDefault(); }
   }
 
   /** Diálogo de confirmación propio (sustituye al confirm() nativo). */
@@ -1711,7 +1864,8 @@ var App = (function () {
   function spinner() { return '<div class="spinner-wrap"><div class="spinner"></div></div>'; }
   function esc(s) {
     return String(s == null ? '' : s)
-      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;'); // también en atributos con comillas
   }
 
   return {

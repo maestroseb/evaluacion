@@ -25,27 +25,32 @@ function include(nombre) {
 }
 
 /**
- * Devuelve el correo del usuario que ha accedido. Útil para la cabecera.
- */
-function getUsuario() {
-  return Session.getActiveUser().getEmail();
-}
-
-/**
  * Estado inicial que pide el frontend al cargar: usuario, áreas/cursos del mapa
  * central, las clases del profe y sus evaluaciones (clase + área).
+ *
+ * La copia de seguridad automática NO se hace aquí: el cliente la dispara en
+ * segundo plano tras pintar (respaldoAutomatico), para no retrasar el arranque.
  */
 function getEstadoInicial() {
   var ss = abrirCuaderno_();
-  Respaldo.siToca_(ss); // copia de seguridad automática (máx. 1/día), no bloquea
-  Cursos.backfill_(ss); // asigna curso académico a los datos antiguos (idempotente)
+  Cursos.backfill_(ss); // asigna curso académico a los datos antiguos (idempotente, 1 vez)
   var activo = Cursos.activo_();
+  var clases = Clases.listar_(ss); // una sola lectura de _clases para todo el estado
   return {
     usuario: Session.getActiveUser().getEmail(),
     esquemaVersion: CONFIG.ESQUEMA_VERSION,
     areas: Curriculo.listarAreasCursos(),
-    cursos: Cursos.info_(ss),
-    clases: Cursos.filtrar_(Clases.listar_(ss), activo),
-    evaluaciones: Cursos.filtrar_(Evaluaciones.listar_(ss), activo)
+    cursos: Cursos.info_(ss, clases),
+    clases: Cursos.filtrar_(clases, activo),
+    evaluaciones: Cursos.filtrar_(Evaluaciones.listar_(ss, clases), activo)
   };
+}
+
+/**
+ * Copia de seguridad automática (máx. 1/día). La llama el cliente en segundo
+ * plano tras cargar; nunca bloquea ni rompe la app (todo va en try/catch).
+ */
+function respaldoAutomatico() {
+  try { Respaldo.siToca_(abrirCuaderno_()); } catch (e) {}
+  return true;
 }

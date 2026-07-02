@@ -10,11 +10,6 @@
  *   - escritura serializada con LockService → sin condiciones de carrera.
  */
 
-/** Devuelve el bloque de notas de una unidad: { actividadId: { alumnoId: valor } }. */
-function getNotasUnidad(unidadId) {
-  return Notas.leer_(abrirCuaderno_(), unidadId);
-}
-
 /** Guarda TODO el bloque de notas de una unidad (con bloqueo por usuario). */
 function guardarNotasUnidad(unidadId, items) {
   return Notas.guardar_(abrirCuaderno_(), unidadId, items);
@@ -38,6 +33,16 @@ var Notas = (function () {
     var fila = fila_(sh, unidadId);
     if (fila < 0) return {};
     return parse_(sh.getRange(fila, 2).getValue());
+  }
+
+  /** Todos los bloques de notas indexados por unidadId (una sola lectura). */
+  function todas_(ss) {
+    var datos = hoja_(ss).getDataRange().getValues();
+    var out = {};
+    for (var i = 1; i < datos.length; i++) {
+      if (datos[i][0]) out[datos[i][0]] = parse_(datos[i][1]);
+    }
+    return out;
   }
 
   function guardar_(ss, unidadId, items) {
@@ -112,7 +117,7 @@ var Notas = (function () {
   }
 
   return {
-    leer_: leer_, guardar_: guardar_, borrar_: borrar_,
-    quitarActividad_: quitarActividad_, filaCruda_: filaCruda_, limpiar_: limpiar_
+    leer_: leer_, todas_: todas_, guardar_: guardar_, borrar_: borrar_,
+    quitarActividad_: quitarActividad_, filaCruda_: filaCruda_
   };
 })();
