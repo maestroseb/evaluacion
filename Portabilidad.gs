@@ -10,15 +10,18 @@ function getExportacion() {
     var d = ss.getSheetByName(nombre).getDataRange().getValues();
     return d.slice(1).filter(function (r) { return r[0] !== '' && r[0] != null; });
   }
-  var clases = filas(HOJAS.CLASES).map(function (r) {
-    var al = [];
+  function alumnosEnClaro(json) {
     try {
-      al = JSON.parse(r[4] || '[]').map(function (a) {
+      return JSON.parse(json || '[]').map(function (a) {
         return { id: a.id, nombre: Cripto.descifrar(a.nombre) };
       });
-    } catch (e) {}
-    return { claseId: r[0], nombre: r[1], curso: r[2], creado: r[3], alumnos: al,
-      color: r[5] || '', icono: r[6] || '', orden: r[7] || '', cursoAcademico: r[8] || '' };
+    } catch (e) { return []; }
+  }
+  var clases = filas(HOJAS.CLASES).map(function (r) {
+    return { claseId: r[0], nombre: r[1], curso: r[2], creado: r[3],
+      alumnos: alumnosEnClaro(r[4]),
+      color: r[5] || '', icono: r[6] || '', orden: r[7] || '', cursoAcademico: r[8] || '',
+      bajas: alumnosEnClaro(r[9]) };
   });
   return {
     version: CONFIG.ESQUEMA_VERSION,
@@ -49,12 +52,15 @@ function importarDatos(datos) {
     if (filas && filas.length) sh.getRange(2, 1, filas.length, filas[0].length).setValues(filas);
   }
 
-  var clasesRows = (datos.clases || []).map(function (c) {
-    var al = (c.alumnos || []).map(function (a) {
+  function alumnosCifrados(lista) {
+    return JSON.stringify((lista || []).map(function (a) {
       return { id: a.id, nombre: Cripto.cifrar(a.nombre) };
-    });
-    return [c.claseId, c.nombre, c.curso, c.creado, JSON.stringify(al),
-      c.color || '', c.icono || '', c.orden || '', c.cursoAcademico || ''];
+    }));
+  }
+  var clasesRows = (datos.clases || []).map(function (c) {
+    return [c.claseId, c.nombre, c.curso, c.creado, alumnosCifrados(c.alumnos),
+      c.color || '', c.icono || '', c.orden || '', c.cursoAcademico || '',
+      alumnosCifrados(c.bajas)];
   });
   escribir(HOJAS.CLASES, clasesRows);
   escribir(HOJAS.EVALUACIONES, datos.evaluaciones || []);
