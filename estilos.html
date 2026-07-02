@@ -304,6 +304,17 @@
   .btn.peligro:hover { background: var(--peligro-bg); border-color: #f3c6c2; }
   .btn:disabled { opacity: .55; cursor: default; }
 
+  /* Botón partido: acción principal + segmento con icono para la variante
+     (p. ej. "+ Nueva actividad" | crear varias). Se ven como un solo botón. */
+  .btn-split { display: inline-flex; align-items: stretch; }
+  .btn-split .btn:first-child { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+  .btn-split .btn-split-extra {
+    border-top-left-radius: 0; border-bottom-left-radius: 0;
+    padding: 8px 11px; display: inline-flex; align-items: center;
+  }
+  .btn-split .btn.primario.btn-split-extra { border-left: 1px solid rgba(255,255,255,.4); }
+  .btn-split .btn-split-extra svg { width: 17px; height: 17px; display: block; }
+
   /* ---------- Detalle ---------- */
   .contador { color: var(--texto-3); font-weight: 400; font-size: 15px; }
   .meta { color: var(--texto-2); font-size: 14px; }
@@ -388,7 +399,10 @@
     border-radius: var(--radio); box-shadow: var(--sombra-1);
     padding: 16px 18px; margin-bottom: 18px;
   }
-  .titulo-bloque { flex: 1 1 auto; min-width: 0; }
+  /* flex-basis 0 (no auto): con base "auto", un subtítulo largo hacía saltar el
+     bloque a la línea siguiente en pantallas estrechas; con base 0 el título se
+     queda SIEMPRE en la misma fila que la flecha de volver y encoge/envuelve. */
+  .titulo-bloque { flex: 1 1 0; min-width: 0; }
   .cabecera-rejilla h1, .cabecera-clase h1 { font-size: 20px; line-height: 1.15; }
   .cabecera-rejilla .meta, .cabecera-clase .meta { margin: 2px 0 0; font-size: 13px;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -478,7 +492,10 @@
   table.rejilla td.esq .mini-avatar { width: 24px; height: 24px; flex-basis: 24px;
     font-size: 10px; vertical-align: middle; margin-right: 9px; }
 
-  table.rejilla th.act { position: relative; cursor: grab; font-weight: 600; padding: 7px 22px; }
+  /* position sticky (y no relative): si no, esta regla —más específica— anularía
+     el sticky de "thead th" y las columnas de actividades no se quedarían fijas
+     al hacer scroll. Sticky también sirve de contenedor para grip/edit (absolute). */
+  table.rejilla th.act { position: sticky; cursor: grab; font-weight: 600; padding: 7px 22px; }
   table.rejilla th.act.arrastrando-col { opacity: .45; }
   table.rejilla th.act.soltar-antes { box-shadow: inset 3px 0 0 var(--acento); }
   table.rejilla th.act.soltar-despues { box-shadow: inset -3px 0 0 var(--acento); }
@@ -559,6 +576,15 @@
     /* Las acciones envuelven a varias líneas en vez de salirse */
     .acciones-unidad { flex-wrap: wrap; width: 100%; }
     .acciones-unidad .btn { flex: 1 1 auto; justify-content: center; }
+
+    /* Copiar para Séneca (y similares) solo tienen sentido con Séneca en un
+       ordenador: en móvil se ocultan. */
+    .solo-escritorio { display: none !important; }
+
+    /* Botón partido a lo ancho: la acción principal estira, el icono no. */
+    .btn-split { flex: 1 1 auto; }
+    .btn-split .btn:first-child { flex: 1 1 auto; }
+    .btn-split .btn-split-extra { flex: 0 0 auto; }
 
     /* Columna fija de alumno: solo el avatar (el nombre va en el title).
        Así se libera espacio horizontal para las columnas de notas. */

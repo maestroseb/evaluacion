@@ -132,12 +132,18 @@
         </div>
         <div class="acciones-unidad">
           <label class="check"><input type="checkbox" id="ver-criterios" checked onchange="App.pintarRejilla()"> Notas por criterio</label>
-          <span class="grupo-btn">
+          <span class="grupo-btn solo-escritorio">
             <button class="btn" onclick="App.copiarSeneca()">📋 Copiar para Séneca</button>
             <button class="btn-info" title="¿Cómo funciona?" onclick="App.infoSeneca()">ⓘ</button>
           </span>
-          <button class="btn" onclick="App.variasActividades()">+ Varias</button>
-          <button class="btn primario" onclick="App.nuevaActividad()">+ Nueva actividad</button>
+          <span class="btn-split">
+            <button class="btn primario" onclick="App.nuevaActividad()">+ Nueva actividad</button>
+            <button class="btn primario btn-split-extra" onclick="App.variasActividades()"
+              title="Crear varias actividades a la vez" aria-label="Crear varias actividades a la vez">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="12" y2="6"/><line x1="3" y1="12" x2="12" y2="12"/><line x1="3" y1="18" x2="12" y2="18"/><line x1="18" y1="9" x2="18" y2="15"/><line x1="15" y1="12" x2="21" y2="12"/></svg>
+            </button>
+          </span>
         </div>
       </div>
       <div id="rejilla-cont" class="rejilla-cont"></div>
@@ -153,7 +159,7 @@
         </div>
         <div class="acciones-unidad">
           <label class="check"><input type="checkbox" id="ver-unidades-resumen" checked onchange="App.pintarResumen()"> Columnas por unidad</label>
-          <button class="btn" onclick="App.copiarResumenSeneca()">📋 Copiar para Séneca</button>
+          <button class="btn solo-escritorio" onclick="App.copiarResumenSeneca()">📋 Copiar para Séneca</button>
         </div>
       </div>
       <div id="resumen-cont" class="rejilla-cont"></div>
