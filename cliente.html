@@ -956,7 +956,23 @@ var App = (function () {
 
   function celdaNum(n, extra) {
     var g = claseNota(n);
-    return '<td class="num' + (extra || '') + (g ? ' ' + g : '') + '">' + fmt(n) + '</td>';
+    return '<td class="num' + (extra || '') + (g ? ' ' + g : '') + '">' +
+      fmtNota(n, resumenData && resumenData.curso) + '</td>';
+  }
+
+  /** ¿El nivel del grupo es de Infantil? (añade etiquetas a las notas). */
+  function esInfantil_(curso) {
+    return String(curso || '').toLowerCase().indexOf('infantil') >= 0;
+  }
+  /** Etiqueta de la escala Infantil para una nota 0-10 (cortes entre niveles). */
+  function etiquetaInfantil(n) {
+    if (n == null) return '';
+    return n < 3 ? 'POC' : n < 5 ? 'REG' : n < 7 ? 'ADE' : n < 9 ? 'BUE' : 'EXC';
+  }
+  /** Nota formateada; en grupos de Infantil añade su etiqueta ("8,2 BUE"). */
+  function fmtNota(n, curso) {
+    if (n == null) return '';
+    return esInfantil_(curso) ? fmt(n) + ' ' + etiquetaInfantil(n) : fmt(n);
   }
 
   /**
@@ -1274,7 +1290,7 @@ var App = (function () {
     var tipo = tipoActElegido();
     var lab = document.getElementById('l-act-items');
     var txt = document.getElementById('l-act-items-txt');
-    if (lab) lab.hidden = (tipo === 'nota' || tipo === 'check');
+    if (lab) lab.hidden = (tipo !== 'items' && tipo !== 'contador');
     if (txt) {
       txt.textContent = (tipo === 'contador')
         ? 'Máximo del contador (opcional: con máximo y criterios cuenta como nota)'
@@ -1411,7 +1427,7 @@ var App = (function () {
   function celdaNota(id, n, extra) {
     var g = claseNota(n);
     return '<td class="num' + (extra || '') + (g ? ' ' + g : '') +
-      '" id="' + id + '">' + fmt(n) + '</td>';
+      '" id="' + id + '">' + fmtNota(n, evalActual && evalActual.curso) + '</td>';
   }
 
   // ---------- reordenar actividades arrastrando su cabecera ----------
@@ -1496,6 +1512,8 @@ var App = (function () {
     var parte = tipo === 'items' ? '/' + a.numItems :
       tipo === 'nota' ? '0-10' :
       tipo === 'check' ? '✓/✗' :
+      tipo === 'escala' ? 'IN-SB' :
+      tipo === 'escalaInf' ? 'POC-EXC' :
       (a.numItems > 0 ? '± /' + a.numItems : '±');
     return parte + ' · ' + (a.criterios.length ? a.criterios.join(', ') : 'informativa');
   }
@@ -1511,6 +1529,14 @@ var App = (function () {
       return '<td class="celda celda-check' + cls + '" ' + comun +
         ' tabindex="0" role="button" aria-label="Alternar check" ' +
         'onclick="App.ciclarCheck(this)">' + iconoCheck_(v) + '</td>';
+    }
+    if (tipo === 'escala' || tipo === 'escalaInf') {
+      var niv = TIPOS_ACT[tipo].niveles[Math.round(v) - 1] || null;
+      var g = niv ? claseNota(niv.nota) : '';
+      return '<td class="celda celda-escala' + (g ? ' ' + g : '') + '" ' + comun +
+        ' tabindex="0" role="button" aria-label="Cambiar nivel" ' +
+        'title="' + (niv ? esc(niv.nombre) : 'Sin valorar') + '" ' +
+        'onclick="App.ciclarEscala(this)">' + (niv ? niv.cod : '·') + '</td>';
     }
     if (tipo === 'contador') {
       return '<td class="celda celda-cont" ' + comun + '>' +
@@ -1545,6 +1571,22 @@ var App = (function () {
     td.classList.toggle('si', nuevo === 1);
     td.classList.toggle('no', nuevo === 0);
     td.innerHTML = iconoCheck_(nuevo);
+    actualizarNotasFila(alId);
+    programarGuardadoNotas();
+  }
+
+  /** Escala por niveles: cada toque sube un nivel; tras el último, vacía. */
+  function ciclarEscala(td) {
+    var actId = td.dataset.act, alId = td.dataset.al, act = actDe(actId);
+    var niveles = TIPOS_ACT[tipoDe(act)].niveles;
+    var v = valorItem(actId, alId);
+    var nuevo = (v == null) ? 1 : (Math.round(v) >= niveles.length ? null : Math.round(v) + 1);
+    fijarValor(actId, alId, nuevo);
+    var niv = nuevo != null ? niveles[nuevo - 1] : null;
+    td.className = td.className.replace(/\bg-\w+/g, '').trim();
+    if (niv) { var g = claseNota(niv.nota); if (g) td.classList.add(g); }
+    td.title = niv ? niv.nombre : 'Sin valorar';
+    td.textContent = niv ? niv.cod : '·';
     actualizarNotasFila(alId);
     programarGuardadoNotas();
   }
@@ -1657,7 +1699,7 @@ var App = (function () {
   }
   function pintarCeldaNota(td, n) {
     if (!td) return;
-    td.textContent = fmt(n);
+    td.textContent = fmtNota(n, evalActual && evalActual.curso);
     td.classList.remove('g-top', 'g-alta', 'g-media', 'g-baja', 'g-susp');
     var g = claseNota(n);
     if (g) td.classList.add(g);
@@ -1728,11 +1770,26 @@ var App = (function () {
   }
   // ---------- tipos de columna (catálogo; espejo del servidor) ----------
   // Añadir un tipo = añadir aquí su entrada y su celda en celdaValor().
+  // En las escalas se guarda el Nº DE NIVEL (1-5): el blob sigue siendo
+  // numérico y la equivalencia 0-10 vive solo en este catálogo (y su espejo
+  // en Resumen.gs).
   var TIPOS_ACT = {
-    items:    { etiqueta: 'Ítems' },
-    nota:     { etiqueta: 'Nota directa' },
-    check:    { etiqueta: 'Check' },
-    contador: { etiqueta: 'Contador' }
+    items:     { etiqueta: 'Ítems' },
+    nota:      { etiqueta: 'Nota directa' },
+    check:     { etiqueta: 'Check' },
+    contador:  { etiqueta: 'Contador' },
+    escala:    { etiqueta: 'Escala IN–SB', niveles: [
+      { cod: 'IN', nombre: 'Insuficiente',  nota: 2.5 },
+      { cod: 'SU', nombre: 'Suficiente',    nota: 5 },
+      { cod: 'BI', nombre: 'Bien',          nota: 6 },
+      { cod: 'NT', nombre: 'Notable',       nota: 7.5 },
+      { cod: 'SB', nombre: 'Sobresaliente', nota: 9.5 } ] },
+    escalaInf: { etiqueta: 'Escala Infantil', niveles: [
+      { cod: 'POC', nombre: 'Poco',      nota: 2 },
+      { cod: 'REG', nombre: 'Regular',   nota: 4 },
+      { cod: 'ADE', nombre: 'Adecuado',  nota: 6 },
+      { cod: 'BUE', nombre: 'Bueno',     nota: 8 },
+      { cod: 'EXC', nombre: 'Excelente', nota: 10 } ] }
   };
   function tipoDe(act) { return act && TIPOS_ACT[act.tipo] ? act.tipo : 'items'; }
 
@@ -1740,9 +1797,13 @@ var App = (function () {
   function notaActividad(act, alumnoId) {
     var v = valorItem(act.actividadId, alumnoId);
     if (v == null) return null;
-    switch (tipoDe(act)) {
+    var tipo = tipoDe(act);
+    switch (tipo) {
       case 'nota':  return Math.max(0, Math.min(10, v));
       case 'check': return v ? 10 : 0;
+      case 'escala': case 'escalaInf':
+        var niv = TIPOS_ACT[tipo].niveles[Math.round(v) - 1];
+        return niv ? niv.nota : null;
       default: // items y contador con máximo: proporción sobre numItems
         if (!(act.numItems > 0)) return null;
         return Math.max(0, Math.min(10, v / act.numItems * 10));
@@ -2230,7 +2291,7 @@ var App = (function () {
       if (e.key !== 'Enter' && e.key !== ' ') return;
       var t = e.target;
       if (t && t.matches &&
-          t.matches('a.item-lat, a.tab, a.volver-icono, .clase-card, .tarjeta-unidad, td.celda-check')) {
+          t.matches('a.item-lat, a.tab, a.volver-icono, .clase-card, .tarjeta-unidad, td.celda-check, td.celda-escala')) {
         e.preventDefault(); // evita el scroll de Espacio
         t.click();
       }
@@ -2320,6 +2381,7 @@ var App = (function () {
     anadirFilaAct: anadirFilaAct, quitarFilaAct: quitarFilaAct,
     pintarRejilla: pintarRejilla, actDown: actDown,
     ciclarCheck: ciclarCheck, sumarContador: sumarContador, tipoActCambiado: tipoActCambiado,
+    ciclarEscala: ciclarEscala,
     prefetchEval: prefetchEval, prefetchClase: prefetchClase, prefetchRejilla: prefetchRejilla,
     nuevaClase: nuevaClase, copiarDeClase: copiarDeClase,
     abrirClase: abrirClase, editarClaseUI: editarClaseUI, editarAlumnos: editarAlumnos,
