@@ -287,6 +287,24 @@
   .icono-opt.sel { border-color: var(--acento); color: var(--acento-fuerte);
     background: var(--acento-suave); box-shadow: 0 0 0 2px var(--acento-suave); }
 
+  /* ---------- Iconos SVG de interfaz (sustituyen a los emojis) ----------
+     El trazo y el tamaño base van aquí para que el marcado sea compacto;
+     cada contexto ajusta solo el tamaño. */
+  .svg-ico {
+    width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2;
+    stroke-linecap: round; stroke-linejoin: round;
+    vertical-align: -2.5px; flex: 0 0 auto;
+  }
+  .marca-icono .svg-ico { width: 18px; height: 18px; }
+  .item-ico .svg-ico { width: 17px; height: 17px; vertical-align: middle; }
+  .tab-ico .svg-ico { width: 20px; height: 20px; }
+  .hamburguesa .svg-ico { width: 19px; height: 19px; }
+  .buscador-ico .svg-ico, .curso-chip-ico .svg-ico { width: 14px; height: 14px; display: block; }
+  .volver-icono .svg-ico { width: 17px; height: 17px; }
+  .icono .svg-ico { width: 14px; height: 14px; }
+  .btn-info .svg-ico { width: 11px; height: 11px; }
+  .edit-act .svg-ico { width: 11px; height: 11px; display: block; }
+
   /* ---------- Botones ---------- */
   .btn {
     border: 1px solid var(--borde-fuerte); border-radius: 9px; padding: 8px 14px;

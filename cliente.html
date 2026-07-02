@@ -209,8 +209,8 @@ var App = (function () {
       '<p class="mensaje">La app guarda una <b>copia automática</b> de tus datos a diario en tu Drive ' +
       '(las últimas 7). Además puedes descargar una copia o restaurarla:</p>' +
       '<div class="acciones-modal">' +
-      '<button type="button" class="btn" onclick="App.exportarDatos()">⬇ Descargar copia (JSON)</button>' +
-      '<button type="button" class="btn" onclick="App.pedirImportar()">⬆ Restaurar desde archivo</button>' +
+      '<button type="button" class="btn" onclick="App.exportarDatos()">' + svgUI('descargar') + ' Descargar copia (JSON)</button>' +
+      '<button type="button" class="btn" onclick="App.pedirImportar()">' + svgUI('restaurar') + ' Restaurar desde archivo</button>' +
       '</div>',
       'Cerrar', cerrarModal);
   }
@@ -341,6 +341,25 @@ var App = (function () {
     return s ? s.dataset.ico : ICONO_DEFECTO;
   }
 
+  // ---------- iconos SVG de interfaz (botones de la app) ----------
+  // Separados del catálogo ICONOS a propósito: aquel alimenta el selector de
+  // iconos de las tarjetas y estos NO deben aparecer ahí. Trazo currentColor;
+  // el tamaño y el estilo de línea los da la clase .svg-ico (ver estilos).
+  var ICONOS_UI = {
+    lapiz:     '<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/>',
+    duplicar:  '<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+    papelera:  '<polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+    equis:     '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+    check:     '<polyline points="20 6 9 17 4 12"/>',
+    descargar: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
+    restaurar: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>'
+  };
+  /** Icono SVG de interfaz por id. */
+  function svgUI(id) {
+    return '<svg class="svg-ico" viewBox="0 0 24 24" aria-hidden="true">' +
+      (ICONOS_UI[id] || '') + '</svg>';
+  }
+
   function nuevaEvaluacion() {
     if (!estado.clases.length) {
       confirmar('Sin grupos', 'Primero necesitas un grupo de alumnado. ¿Crear un grupo ahora?',
@@ -453,11 +472,11 @@ var App = (function () {
         '<h3 class="u-nom">' + esc(u.nombre) + '</h3>' +
         '<div class="acciones-tarjeta">' +
         '<button class="icono" title="Editar unidad" ' +
-        'onclick="event.stopPropagation();App.editarUnidadUI(\'' + u.unidadId + '\')">✎</button>' +
+        'onclick="event.stopPropagation();App.editarUnidadUI(\'' + u.unidadId + '\')">' + svgUI('lapiz') + '</button>' +
         '<button class="icono" title="Duplicar unidad" ' +
-        'onclick="event.stopPropagation();App.clonarUnidad(\'' + u.unidadId + '\')">⧉</button>' +
+        'onclick="event.stopPropagation();App.clonarUnidad(\'' + u.unidadId + '\')">' + svgUI('duplicar') + '</button>' +
         '<button class="icono peligro" title="Eliminar unidad" ' +
-        'onclick="event.stopPropagation();App.eliminarUnidad(\'' + u.unidadId + '\')">🗑</button>' +
+        'onclick="event.stopPropagation();App.eliminarUnidad(\'' + u.unidadId + '\')">' + svgUI('papelera') + '</button>' +
         '</div>' +
         '</div>';
     }).join('');
@@ -863,7 +882,7 @@ var App = (function () {
   function infoSeneca() {
     var url = 'https://chromewebstore.google.com/detail/autonotas-séneca/fgghhpmbkdhdgnnboeckhhnnjiknnkak?hl=es';
     abrirModal('Copiar para Séneca',
-      '<p class="mensaje">El botón <b>📋 Copiar para Séneca</b> copia al portapapeles, en columnas, ' +
+      '<p class="mensaje">El botón <b>Copiar para Séneca</b> copia al portapapeles, en columnas, ' +
       'el <b>nombre del alumnado</b> y la <b>nota de cada criterio</b> de esta unidad ' +
       '(2 decimales con coma).</p>' +
       '<p class="mensaje">Está pensado para usarse con la extensión de Chrome ' +
@@ -872,7 +891,7 @@ var App = (function () {
       'que pega esas notas directamente en una actividad evaluable por criterios en Séneca.</p>' +
       '<ol class="pasos">' +
       '<li>Instala la extensión <b>Autonotas Séneca</b>.</li>' +
-      '<li>Aquí, pulsa <b>📋 Copiar para Séneca</b>.</li>' +
+      '<li>Aquí, pulsa <b>Copiar para Séneca</b>.</li>' +
       '<li>En Séneca, abre la actividad criterial y usa Autonotas para pegar.</li>' +
       '</ol>' +
       '<p><a class="enlace-ext" href="' + url + '" target="_blank" rel="noopener">' +
@@ -949,7 +968,7 @@ var App = (function () {
   function notaPendientes(p) {
     return p > 0
       ? '<p class="ayuda">Quedan <b>' + p + '</b> criterios sin asignar en la clase (marcados como «sin asignar»).</p>'
-      : '<p class="ayuda">✓ Todos los criterios de la clase están ya asignados a alguna actividad.</p>';
+      : '<p class="ayuda">' + svgUI('check') + ' Todos los criterios de la clase están ya asignados a alguna actividad.</p>';
   }
 
   /** Modal compartido para crear o editar una actividad. act=null → crear. */
@@ -1065,7 +1084,7 @@ var App = (function () {
     return '<div class="fila-act">' +
       '<input class="fa-nombre" type="text" placeholder="Nombre de la actividad">' +
       '<input class="fa-items" type="number" min="1" step="0.5" placeholder="Ítems">' +
-      '<button type="button" class="icono peligro" title="Quitar" onclick="App.quitarFilaAct(this)">✕</button>' +
+      '<button type="button" class="icono peligro" title="Quitar" onclick="App.quitarFilaAct(this)">' + svgUI('equis') + '</button>' +
       '</div>';
   }
   function anadirFilaAct() {
@@ -1098,7 +1117,7 @@ var App = (function () {
         'onpointerdown="App.actDown(event,\'' + a.actividadId + '\')">' +
         '<span class="grip-act" title="Arrastra para reordenar">⠿</span>' +
         '<button class="edit-act" title="Editar actividad" onpointerdown="event.stopPropagation()" ' +
-        'onclick="App.editarActividadUI(\'' + a.actividadId + '\')">✎</button>' +
+        'onclick="App.editarActividadUI(\'' + a.actividadId + '\')">' + svgUI('lapiz') + '</button>' +
         '<span class="act-nom">' + esc(a.nombre) + '</span>' +
         '<small>/' + a.numItems + ' · ' + esc(a.criterios.join(', ')) + '</small></th>';
     });
