@@ -114,7 +114,7 @@ var Traspaso = (function () {
       var filasU = (d.unidades || []).filter(function (r) { return mapa[r[1]]; })
         .map(function (r) { return [nuevo('u', r[0]), mapa[r[1]], r[2], r[3]]; });
       var filasA = (d.actividades || []).filter(function (r) { return mapa[r[1]]; })
-        .map(function (r) { return [nuevo('act', r[0]), mapa[r[1]], r[2], r[3], r[4], r[5]]; });
+        .map(function (r) { return [nuevo('act', r[0]), mapa[r[1]], r[2], r[3], r[4], r[5], r[6] || 'items']; });
       var filasN = (d.notas || []).filter(function (r) { return mapa[r[0]]; })
         .map(function (r) {
           var items = {};

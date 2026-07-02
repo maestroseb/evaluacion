@@ -98,11 +98,18 @@ var Resumen = (function () {
   }
 
   // --- helpers ---
+  /** Nota 0-10 de una actividad según su tipo (espejo del cliente). */
   function notaActividad_(items, act, alId) {
     var fila = items[act.actividadId];
-    var c = fila && fila[alId] != null ? fila[alId] : null;
-    if (c == null || !(act.numItems > 0)) return null;
-    return Math.max(0, Math.min(10, c / act.numItems * 10));
+    var v = fila && fila[alId] != null ? fila[alId] : null;
+    if (v == null) return null;
+    switch (act.tipo || 'items') {
+      case 'nota':  return Math.max(0, Math.min(10, v));
+      case 'check': return v ? 10 : 0;
+      default: // items y contador con máximo: proporción sobre numItems
+        if (!(act.numItems > 0)) return null;
+        return Math.max(0, Math.min(10, v / act.numItems * 10));
+    }
   }
   function media_(arr) {
     if (!arr || !arr.length) return null;

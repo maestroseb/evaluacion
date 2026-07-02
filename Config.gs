@@ -35,7 +35,10 @@ var CONFIG = {
   // v9: columna "bajas" en _clases: alumnado retirado de la lista (id + nombre
   //     cifrado). Si se re-añade a alguien con el mismo nombre, recupera su id
   //     y con él todas sus notas (reincorporación).
-  ESQUEMA_VERSION: 9
+  // v10: columna "tipo" en _actividades: tipos de columna en la rejilla
+  //      (items = actual, nota directa, check, contador). Los criterios pueden
+  //      ir vacíos en cualquier tipo (columna informativa: no cuenta).
+  ESQUEMA_VERSION: 10
 };
 
 /**
