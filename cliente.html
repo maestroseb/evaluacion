@@ -687,7 +687,7 @@ var App = (function () {
     var uds = verUds ? R.unidades : [];
 
     var h = '<table class="rejilla"><thead><tr>' +
-      '<th class="idx">#</th><th class="esq">Alumno/a</th>';
+      '<th class="idx">#</th><th class="esq">Alumno/a</th><th class="al-corto"></th>';
     uds.forEach(function (u) {
       h += '<th class="act" title="Nota de la unidad">' +
         '<span class="act-nom">' + esc(u.nombre) + '</span></th>';
@@ -746,11 +746,28 @@ var App = (function () {
     return COLORES[h % COLORES.length];
   }
 
+  /**
+   * Nombre corto para pantallas pequeñas: el alias si lo hay ("Ye, Xin Yi
+   * (Sofía)" → "Sofía"), si no el nombre de pila ("García, María" → "María"),
+   * y si no hay coma, la primera palabra.
+   */
+  function nombreCorto(nombre) {
+    var s = String(nombre || '');
+    var m = /\(([^)]+)\)/.exec(s);
+    if (m && m[1].trim()) return m[1].trim();
+    var coma = s.indexOf(',');
+    if (coma >= 0) return s.slice(coma + 1).replace(/\([^)]*\)/g, '').trim();
+    return s.trim().split(/\s+/)[0] || '';
+  }
+
   /** Celda izquierda con avatar de iniciales + nombre (rejilla y resumen). */
   function celdaAlumno(nombre) {
     return '<td class="esq" title="' + esc(nombre) + '"><span class="mini-avatar" style="background:' +
       colorAvatar(nombre) + '">' + esc(iniciales(nombre)) + '</span>' +
-      '<span class="al-nom">' + esc(nombre) + '</span></td>';
+      '<span class="al-nom">' + esc(nombre) + '</span></td>' +
+      // Columna extra SOLO móvil con el nombre corto. No es sticky a propósito:
+      // al hacer scroll horizontal se va con las notas y queda fijo solo el avatar.
+      '<td class="al-corto" title="' + esc(nombre) + '">' + esc(nombreCorto(nombre)) + '</td>';
   }
   function infoCritR(cod) {
     var v = (resumenData.criteriosInfo || {})[cod] || {};
@@ -1074,7 +1091,7 @@ var App = (function () {
     var crits = verCrit ? criteriosUsados() : [];
 
     var h = '<table class="rejilla"><thead><tr>' +
-      '<th class="idx">#</th><th class="esq">Alumno/a</th>';
+      '<th class="idx">#</th><th class="esq">Alumno/a</th><th class="al-corto"></th>';
     rejilla.actividades.forEach(function (a) {
       h += '<th class="act" data-act="' + a.actividadId + '" ' +
         'title="' + esc(a.criterios.join(', ')) + '" ' +

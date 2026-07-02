@@ -488,6 +488,8 @@
   table.rejilla .esq { text-align: left; position: sticky; left: 36px; z-index: 1;
     font-weight: 500; color: var(--texto); }
   table.rejilla thead .esq { z-index: 3; }
+  /* Columna del nombre corto: solo existe en móvil (ver bloque responsive). */
+  table.rejilla .al-corto { display: none; }
   table.rejilla td.esq .mini-avatar { width: 24px; height: 24px; flex-basis: 24px;
     font-size: 10px; vertical-align: middle; margin-right: 9px; }
 
@@ -588,6 +590,11 @@
     table.rejilla th.esq { font-size: 0; }            /* oculta "Alumno/a", deja la celda mínima */
     table.rejilla td.esq .al-nom { display: none; }
     table.rejilla td.esq .mini-avatar { margin-right: 0; }
+    /* Junto al avatar, el nombre corto (nombre de pila o alias) en una columna
+       normal, NO sticky: al hacer scroll horizontal se va con las notas. */
+    table.rejilla .al-corto { display: table-cell; text-align: left;
+      font-weight: 500; color: var(--texto);
+      max-width: 96px; overflow: hidden; text-overflow: ellipsis; }
   }
 
   /* "Copiar para Séneca" solo existe en escritorio (la extensión Autonotas es
