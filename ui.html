@@ -25,16 +25,16 @@
       </div>
 
       <nav class="menu-lat">
-        <a id="nav-eval" class="item-lat" data-nav="eval" onclick="App.irAEvaluaciones()" title="Clases">
+        <a id="nav-eval" class="item-lat" tabindex="0" role="button" data-nav="eval" onclick="App.irAEvaluaciones()" title="Clases">
           <span class="item-ico">🗂️</span><span class="item-txt">Clases</span></a>
-        <a id="nav-clases" class="item-lat" data-nav="clases" onclick="App.irAClases()" title="Grupos">
+        <a id="nav-clases" class="item-lat" tabindex="0" role="button" data-nav="clases" onclick="App.irAClases()" title="Grupos">
           <span class="item-ico">👥</span><span class="item-txt">Grupos</span></a>
-        <a id="nav-papelera" class="item-lat" data-nav="papelera" onclick="App.irAPapelera()" title="Papelera">
+        <a id="nav-papelera" class="item-lat" tabindex="0" role="button" data-nav="papelera" onclick="App.irAPapelera()" title="Papelera">
           <span class="item-ico">🗑️</span><span class="item-txt">Papelera</span></a>
       </nav>
 
       <div class="menu-lat menu-lat-pie">
-        <a class="item-lat" onclick="App.abrirCopia()" title="Copia de seguridad">
+        <a class="item-lat" tabindex="0" role="button" onclick="App.abrirCopia()" title="Copia de seguridad">
           <span class="item-ico">💾</span><span class="item-txt">Copia de seguridad</span></a>
       </div>
     </aside>
@@ -81,7 +81,7 @@
     <!-- DETALLE GRUPO -->
     <section id="vista-clase" hidden>
       <div class="cabecera-clase">
-        <a class="volver-icono" onclick="App.irAClases()" title="Volver a mis grupos">←</a>
+        <a class="volver-icono" tabindex="0" role="button" onclick="App.irAClases()" title="Volver a mis grupos">←</a>
         <span class="clase-ico" id="clase-ico"></span>
         <div class="titulo-bloque">
           <h1 id="clase-titulo"></h1>
@@ -103,7 +103,7 @@
     <!-- DETALLE EVALUACIÓN: lista de unidades -->
     <section id="vista-evaluacion" hidden>
       <div class="cabecera-clase">
-        <a class="volver-icono" onclick="App.irAEvaluaciones()" title="Volver a mis clases">←</a>
+        <a class="volver-icono" tabindex="0" role="button" onclick="App.irAEvaluaciones()" title="Volver a mis clases">←</a>
         <span class="clase-ico" id="eval-ico"></span>
         <div class="titulo-bloque">
           <h1 id="eval-titulo"></h1>
@@ -125,7 +125,7 @@
     <!-- REJILLA DE UNA UNIDAD -->
     <section id="vista-unidad" hidden>
       <div class="cabecera-rejilla">
-        <a class="volver-icono" id="volver-unidad" title="Volver a unidades">←</a>
+        <a class="volver-icono" tabindex="0" role="button" id="volver-unidad" title="Volver a unidades">←</a>
         <div class="titulo-bloque">
           <h1 id="unidad-titulo"></h1>
           <p id="unidad-meta" class="meta"></p>
@@ -152,7 +152,7 @@
     <!-- RESUMEN GLOBAL DE LA CLASE -->
     <section id="vista-resumen" hidden>
       <div class="cabecera-rejilla">
-        <a class="volver-icono" id="volver-resumen" title="Volver a unidades">←</a>
+        <a class="volver-icono" tabindex="0" role="button" id="volver-resumen" title="Volver a unidades">←</a>
         <div class="titulo-bloque">
           <h1 id="resumen-titulo"></h1>
           <p id="resumen-meta" class="meta"></p>
@@ -179,20 +179,20 @@
 
     <!-- BARRA DE PESTAÑAS INFERIOR (solo móvil) -->
     <nav class="tabbar">
-      <a class="tab" data-nav="eval" onclick="App.irAEvaluaciones()">
+      <a class="tab" tabindex="0" role="button" data-nav="eval" onclick="App.irAEvaluaciones()">
         <span class="tab-ico">🗂️</span><span>Clases</span></a>
-      <a class="tab" data-nav="clases" onclick="App.irAClases()">
+      <a class="tab" tabindex="0" role="button" data-nav="clases" onclick="App.irAClases()">
         <span class="tab-ico">👥</span><span>Grupos</span></a>
-      <a class="tab" data-nav="papelera" onclick="App.irAPapelera()">
+      <a class="tab" tabindex="0" role="button" data-nav="papelera" onclick="App.irAPapelera()">
         <span class="tab-ico">🗑️</span><span>Papelera</span></a>
-      <a class="tab" onclick="App.abrirCopia()">
+      <a class="tab" tabindex="0" role="button" onclick="App.abrirCopia()">
         <span class="tab-ico">💾</span><span>Copia</span></a>
     </nav>
   </div>
 
   <!-- MODAL -->
   <div id="modal-fondo" class="modal-fondo" hidden onclick="App.cerrarModalFuera(event)">
-    <div class="modal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-titulo">
       <h2 id="modal-titulo"></h2>
       <div id="modal-cuerpo"></div>
       <div class="modal-acciones">

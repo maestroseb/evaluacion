@@ -16,6 +16,7 @@ var App = (function () {
   // ---------- arranque ----------
   function iniciar() {
     setupModalNoScroll();
+    setupTeclado();
     restaurarSidebar();
     // Guardado de última hora: intenta persistir y, si quedan cambios en vuelo,
     // pide confirmación al navegador para dar tiempo a que la petición llegue.
@@ -259,6 +260,7 @@ var App = (function () {
     cont.innerHTML = estado.evaluaciones.map(function (ev) {
       var col = ev.color || 'var(--acento)';
       return '<div class="clase-card" data-id="' + ev.evalId + '" style="--c:' + col + '" ' +
+        'tabindex="0" role="button" ' +
         'onmouseenter="App.prefetchEval(\'' + ev.evalId + '\')" ' +
         'onclick="App.abrirEvaluacion(\'' + ev.evalId + '\')">' +
         '<div class="clase-card-head">' +
@@ -271,7 +273,6 @@ var App = (function () {
           '<div class="cc-meta"><b>' + ev.numAlumnos + '</b> alumnos/as</div>' +
           '<div class="cc-meta">' + esc(ev.claseNombre) + ' · ' + esc(ev.curso) + '</div>' +
         '</div>' +
-        '<button type="button" class="btn cc-btn">Ver detalles</button>' +
         '</div>';
     }).join('');
   }
@@ -442,6 +443,7 @@ var App = (function () {
     cont.innerHTML = uds.map(function (u, i) {
       var num = (i + 1) < 100 ? ('0' + (i + 1)).slice(-2) : String(i + 1);
       return '<div class="tarjeta tarjeta-unidad" data-id="' + u.unidadId + '" ' +
+        'tabindex="0" role="button" ' +
         'onmouseenter="App.prefetchRejilla(\'' + u.unidadId + '\')" ' +
         'onclick="App.abrirUnidad(\'' + u.unidadId + '\')">' +
         '<span class="u-grip" title="Arrastra para reordenar" ' +
@@ -1403,6 +1405,7 @@ var App = (function () {
     cont.innerHTML = estado.clases.map(function (c) {
       var col = c.color || colorAvatar(c.nombre);
       return '<div class="clase-card" data-id="' + c.claseId + '" style="--c:' + col + '" ' +
+        'tabindex="0" role="button" ' +
         'onmouseenter="App.prefetchClase(\'' + c.claseId + '\')" ' +
         'onclick="App.abrirClase(\'' + c.claseId + '\')">' +
         '<div class="clase-card-head">' +
@@ -1415,7 +1418,6 @@ var App = (function () {
           '<div class="cc-meta"><b>' + c.numAlumnos + '</b> alumnos/as</div>' +
           '<div class="cc-meta">' + esc(c.curso) + '</div>' +
         '</div>' +
-        '<button type="button" class="btn cc-btn">Ver detalles</button>' +
         '</div>';
     }).join('');
   }
@@ -1692,6 +1694,9 @@ var App = (function () {
     accionModal = onAceptar;
     b.onclick = function () { if (accionModal) accionModal(); };
     document.getElementById('modal-fondo').hidden = false;
+    // Lleva el foco al primer campo del modal (o al botón de aceptar).
+    var f = document.querySelector('#modal-cuerpo input, #modal-cuerpo select, #modal-cuerpo textarea');
+    (f || b).focus();
   }
 
   /**
@@ -1710,6 +1715,42 @@ var App = (function () {
         e.preventDefault();
       }
     });
+  }
+
+  /**
+   * Teclado global: Escape cierra el modal, Tab queda atrapado dentro del
+   * modal mientras esté abierto, y Enter/Espacio activan los elementos
+   * navegables que no son <button> (enlaces del menú, flechas de volver,
+   * tarjetas con tabindex).
+   */
+  function setupTeclado() {
+    document.addEventListener('keydown', function (e) {
+      var modalAbierto = !document.getElementById('modal-fondo').hidden;
+      if (modalAbierto) {
+        if (e.key === 'Escape') { cerrarModal(); e.preventDefault(); }
+        else if (e.key === 'Tab') atraparFoco(e);
+        return;
+      }
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      var t = e.target;
+      if (t && t.matches &&
+          t.matches('a.item-lat, a.tab, a.volver-icono, .clase-card, .tarjeta-unidad')) {
+        e.preventDefault(); // evita el scroll de Espacio
+        t.click();
+      }
+    });
+  }
+
+  /** Mantiene el Tab dando vueltas dentro del modal (trampa de foco). */
+  function atraparFoco(e) {
+    var m = document.querySelector('.modal');
+    var focos = [].filter.call(
+      m.querySelectorAll('button, input, select, textarea, a[href]'),
+      function (el) { return !el.disabled && el.offsetParent !== null; });
+    if (!focos.length) return;
+    var primero = focos[0], ultimo = focos[focos.length - 1];
+    if (e.shiftKey && document.activeElement === primero) { ultimo.focus(); e.preventDefault(); }
+    else if (!e.shiftKey && document.activeElement === ultimo) { primero.focus(); e.preventDefault(); }
   }
 
   /** Diálogo de confirmación propio (sustituye al confirm() nativo). */
