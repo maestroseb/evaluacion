@@ -446,7 +446,7 @@
   "areaRef": "CCL",
   "competencia": "CCL.1.5",
   "codigo": "CCL.1.5.1",
-  "texto": "Características del arte clásico",
+  "texto": "Conocimiento básico de monumentos clásicos",
   "descripcion": "Conocer las características básicas del arte clásico, identificando los monumentos clásicos más significativos."
  },
  {
@@ -563,7 +563,7 @@
   "areaRef": "EFI",
   "competencia": "EFI.1.1",
   "codigo": "EFI.1.1.3",
-  "texto": "Prevención de lesiones",
+  "texto": "Prevención general de lesiones deportivas",
   "descripcion": "Identificar y adoptar de manera responsable medidas generales para la prevención de lesiones antes, durante y después de la práctica de actividad física, aprendiendo a reconocer posibles situaciones de riesgo."
  },
  {
@@ -1535,7 +1535,7 @@
   "areaRef": "MAT",
   "competencia": "MAT.1.1",
   "codigo": "MAT.1.1.3",
-  "texto": "Obtención de soluciones matemáticas",
+  "texto": "Resolución de problemas cotidianos cercanos",
   "descripcion": "Obtener las soluciones matemáticas en problemas de contextos cercanos de la vida cotidiana, activando los conocimientos necesarios, aceptando el error como parte del proceso."
  },
  {
@@ -2273,7 +2273,7 @@
   "areaRef": "CCL",
   "competencia": "CCL.2.5",
   "codigo": "CCL.2.5.1",
-  "texto": "Características del arte clásico",
+  "texto": "Reconocimiento de monumentos del arte clásico",
   "descripcion": "Buscar y reconocer las características fundamentales del arte clásico, identificando los monumentos clásicos más significativos."
  },
  {
@@ -2651,7 +2651,7 @@
   "areaRef": "FYQ",
   "competencia": "FYQ.2.1",
   "codigo": "FYQ.2.1.2",
-  "texto": "Resolución de problemas fisicoquímicos",
+  "texto": "Resolución de problemas fisicoquímicos sencillos",
   "descripcion": "Resolver los problemas fisicoquímicos que se le proponen, en situaciones habituales de escasa complejidad, aplicando los aspectos básicos de las leyes y teorías científicas estudiadas, razonando los procedimientos utilizados para encontrar y comprobar la(s) solución(es) obtenidas y expresando adecuadamente los resultados."
  },
  {
@@ -3416,7 +3416,7 @@
   "areaRef": "MAT",
   "competencia": "MAT.2.1",
   "codigo": "MAT.2.1.3",
-  "texto": "Obtención de soluciones matemáticas",
+  "texto": "Soluciones matemáticas con herramientas tecnológicas",
   "descripcion": "Obtener las soluciones matemáticas en problemas de la vida cotidiana, activando los conocimientos necesarios, utilizando las herramientas tecnológicas necesarias, interpretando los resultados y aceptando el error como parte del proceso."
  },
  {
@@ -3560,7 +3560,7 @@
   "areaRef": "MAT",
   "competencia": "MAT.2.8",
   "codigo": "MAT.2.8.2",
-  "texto": "Competencia académica",
+  "texto": "Uso del lenguaje matemático en contexto",
   "descripcion": "Reconocer y emplear el lenguaje matemático presente en los ámbitos personal, social y educativo, expresando y comunicando mensajes con contenido matemático y utilizando terminología matemática adecuada de forma clara, precisa, rigurosa y veraz."
  },
  {
@@ -3569,7 +3569,7 @@
   "areaRef": "MAT",
   "competencia": "MAT.2.9",
   "codigo": "MAT.2.9.1",
-  "texto": "Competencia académica",
+  "texto": "Gestión emocional ante retos matemáticos",
   "descripcion": "Gestionar las emociones propias y desarrollar el autoconcepto matemático como herramienta, generando expectativas positivas ante el tratamiento y la gestión de retos matemáticos y cambios, desarrollando, de manera progresiva, el pensamiento crítico y creativo, adaptándose ante la incertidumbre y reconociendo fuentes de estrés."
  },
  {
@@ -3578,7 +3578,7 @@
   "areaRef": "MAT",
   "competencia": "MAT.2.9",
   "codigo": "MAT.2.9.2",
-  "texto": "Competencia académica",
+  "texto": "Actitud perseverante frente al error matemático",
   "descripcion": "Mostrar una actitud positiva y perseverante, aceptando la crítica razonada, tomando conciencia de los errores cometidos y reflexionando sobre su propio esfuerzo y dedicación personal al hacer frente a las diferentes situaciones de aprendizaje de las matemáticas."
  },
  {
@@ -3587,7 +3587,7 @@
   "areaRef": "MAT",
   "competencia": "MAT.2.10",
   "codigo": "MAT.2.10.1",
-  "texto": "Competencia académica",
+  "texto": "Colaboración en equipos heterogéneos de matemáticas",
   "descripcion": "Colaborar activamente y construir relaciones saludables en el trabajo de las matemáticas en equipos heterogéneos, respetando diferentes opiniones, desarrollando destrezas de comunicación efectiva, de planificación, de indagación, de motivación y confianza en sus propias posibilidades y de pensamiento crítico y creativo, tomando decisiones y realizando juicios informados."
  },
  {
@@ -3596,7 +3596,7 @@
   "areaRef": "MAT",
   "competencia": "MAT.2.10",
   "codigo": "MAT.2.10.2",
-  "texto": "Competencia académica",
+  "texto": "Reparto de tareas en el trabajo matemático",
   "descripcion": "Participar en el reparto de tareas que deban desarrollarse en equipo, aportando valor, favoreciendo la inclusión, la escucha activa, participando de forma respetuosa, dialogante y constructiva, asumiendo el rol asignado, analizando los estereotipos e ideas preconcebidas sobre las matemáticas asociadas a cuestiones individuales y responsabilizándose de la propia contribución al equipo."
  },
  {
@@ -3668,7 +3668,7 @@
   "areaRef": "MUS",
   "competencia": "MUS.2.3",
   "codigo": "MUS.2.3.3",
-  "texto": "Competencia académica",
+  "texto": "Interpretación de piezas musicales y dancísticas",
   "descripcion": "Interpretar con corrección piezas musicales y dancísticas sencillas, individuales y grupales, dentro y fuera del aula, gestionando de forma guiada la ansiedad y el miedo escénico, y manteniendo la concentración."
  },
  {
@@ -3749,7 +3749,7 @@
   "areaRef": "OYD",
   "competencia": "OYD.2.2",
   "codigo": "OYD.2.2.4",
-  "texto": "Competencia académica",
+  "texto": "Documentación e investigación para el discurso",
   "descripcion": "Conocer e identificar adecuadamente las técnicas de documentación e investigación para plantear el discurso argumentativo."
  },
  {
@@ -3758,7 +3758,7 @@
   "areaRef": "OYD",
   "competencia": "OYD.2.2",
   "codigo": "OYD.2.2.5",
-  "texto": "Competencia académica",
+  "texto": "Estructuración de ideas del discurso argumentativo",
   "descripcion": "Seleccionar las ideas más adecuadas y organizadas en una estructura ordenada y eficaz, conociendo las diferentes opciones que proporcionan las estructuras textuales argumentativas."
  },
  {
@@ -3767,7 +3767,7 @@
   "areaRef": "OYD",
   "competencia": "OYD.2.2",
   "codigo": "OYD.2.2.6",
-  "texto": "Competencia académica",
+  "texto": "Argumentación con corrección lingüística",
   "descripcion": "Conocer y realizar la argumentación del discurso, empleando los recursos propios de la argumentación con corrección lingüística, atendiendo a la coherencia y cohesión del mismo."
  },
  {
@@ -3803,7 +3803,7 @@
   "areaRef": "OYD",
   "competencia": "OYD.2.3",
   "codigo": "OYD.2.3.4",
-  "texto": "Competencia académica",
+  "texto": "Uso de soportes técnicos en el discurso",
   "descripcion": "Usar de manera adecuada soportes técnicos para apoyar el discurso y mantener la atención del interlocutor."
  },
  {
@@ -3839,7 +3839,7 @@
   "areaRef": "OYD",
   "competencia": "OYD.2.4",
   "codigo": "OYD.2.4.4",
-  "texto": "Competencia académica",
+  "texto": "Uso del lenguaje gestual en el discurso",
   "descripcion": "Utilizar de manera adecuada los elementos propios del lenguaje gestual que garanticen la atención del interlocutor."
  },
  {
@@ -3929,7 +3929,7 @@
   "areaRef": "PEPA",
   "competencia": "PEPA.2.4",
   "codigo": "PEPA.2.4.1",
-  "texto": "Competencia académica",
+  "texto": "Creación de un producto artístico",
   "descripcion": "Crear un producto artístico, diseñando las fases del proceso y seleccionando las técnicas y herramientas más adecuadas para conseguir un resultado adaptado a una intención y a un público determinados."
  },
  {
@@ -3938,7 +3938,7 @@
   "areaRef": "PEPA",
   "competencia": "PEPA.2.4",
   "codigo": "PEPA.2.4.2",
-  "texto": "Competencia académica",
+  "texto": "Exposición crítica del proceso creativo",
   "descripcion": "Exponer el resultado final de la creación de un producto artístico, individual o grupal, poniendo en común y valorando críticamente el desarrollo de su elaboración, las dificultades encontradas, los procesos realizados y los logros alcanzados. Identificar oportunidades relacionadas con el ámbito artístico, comprendiendo su valor añadido y expresando la opinión personal de forma razonada y respetuosa."
  },
  {
@@ -3947,7 +3947,7 @@
   "areaRef": "PEPA",
   "competencia": "PEPA.2.4",
   "codigo": "PEPA.2.4.3",
-  "texto": "Competencia académica",
+  "texto": "Identificación de oportunidades del ámbito artístico",
   "descripcion": "Identificar oportunidades relacionadas con el ámbito artístico, comprendiendo su valor añadido y expresando la opinión personal de forma razonada y respetuosa."
  },
  {
@@ -4037,7 +4037,7 @@
   "areaRef": "TYD",
   "competencia": "TYD.2.5",
   "codigo": "TYD.2.5.3",
-  "texto": "Competencia académica",
+  "texto": "Automatización de robots y sistemas de control",
   "descripcion": "Automatizar procesos, máquinas y objetos simples de manera autónoma, con conexión a internet, mediante el análisis, construcción y programación de robots y sistemas de control básicos."
  },
  {
@@ -4064,7 +4064,7 @@
   "areaRef": "TYD",
   "competencia": "TYD.2.6",
   "codigo": "TYD.2.6.3",
-  "texto": "Competencia académica",
+  "texto": "Almacenamiento seguro de la información",
   "descripcion": "Organizar la información de manera estructurada, aplicando técnicas de almacenamiento seguro."
  },
  {
@@ -4073,7 +4073,7 @@
   "areaRef": "TYD",
   "competencia": "TYD.2.7",
   "codigo": "TYD.2.7.1",
-  "texto": "Competencia académica",
+  "texto": "Influencia de la tecnología en la sostenibilidad",
   "descripcion": "Reconocer la influencia de la actividad tecnológica en la sociedad y en la sostenibilidad ambiental del entorno más cercano a lo largo de su historia, identificando sus aportaciones y repercusiones y valorando su importancia para el desarrollo sostenible, contextualizando sus aplicaciones en nuestra comunidad."
  },
  {
@@ -4082,7 +4082,7 @@
   "areaRef": "TYD",
   "competencia": "TYD.2.7",
   "codigo": "TYD.2.7.2",
-  "texto": "Competencia académica",
+  "texto": "Impacto social de las tecnologías emergentes",
   "descripcion": "Identificar las aportaciones de las tecnologías emergentes al bienestar, a la igualdad social y a la disminución del impacto ambiental, haciendo un uso responsable y ético de las mismas, en el entorno más cercano."
  },
  {
@@ -4172,7 +4172,7 @@
   "areaRef": "BYG",
   "competencia": "BYG.3.3",
   "codigo": "BYG.3.3.4",
-  "texto": "Competencia académica",
+  "texto": "Interpretación crítica de resultados de investigación",
   "descripcion": "Interpretar críticamente los resultados obtenidos en un proyecto de investigación, utilizando, cuando sea necesario, herramientas matemáticas (tablas de datos, fórmulas estadísticas, representaciones gráficas) y tecnológicas (conversores, calculadoras, creadores gráficos, hojas de cálculo)."
  },
  {
@@ -4181,7 +4181,7 @@
   "areaRef": "BYG",
   "competencia": "BYG.3.3",
   "codigo": "BYG.3.3.5",
-  "texto": "Competencia académica",
+  "texto": "Cooperación en un proyecto científico",
   "descripcion": "Cooperar dentro de un proyecto científico, cultivando el autoconocimiento y la confianza, asumiendo responsablemente una función concreta, utilizando espacios virtuales cuando sea necesario, respetando la diversidad y la igualdad de género, y favoreciendo la inclusión."
  },
  {
@@ -4289,7 +4289,7 @@
   "areaRef": "CYR",
   "competencia": "CYR.3.1",
   "codigo": "CYR.3.1.4",
-  "texto": "Competencia académica",
+  "texto": "Principios de ingeniería de los robots",
   "descripcion": "Comprender los principios de ingeniería en los que se basan los robots, su funcionamiento, componentes y características."
  },
  {
@@ -4352,7 +4352,7 @@
   "areaRef": "CYR",
   "competencia": "CYR.3.4",
   "codigo": "CYR.3.4.3",
-  "texto": "Competencia académica",
+  "texto": "Funcionamiento del Data Scraping",
   "descripcion": "Comprender los principios de funcionamiento del Data Scraping."
  },
  {
@@ -4550,7 +4550,7 @@
   "areaRef": "CCL",
   "competencia": "CCL.3.5",
   "codigo": "CCL.3.5.1",
-  "texto": "Características del arte clásico",
+  "texto": "Relación del arte clásico con manifestaciones actuales",
   "descripcion": "Buscar y reconocer las características fundamentales del arte clásico, comprendiendo las artes como un espejo cultural y reconociendo su poder de expresión; relacionar manifestaciones artísticas actuales con los modelos clásicos de Grecia y Roma, identificando los monumentos clásicos más significativos."
  },
  {
@@ -4748,7 +4748,7 @@
   "areaRef": "EFI",
   "competencia": "EFI.3.1",
   "codigo": "EFI.3.1.3",
-  "texto": "Prevención de lesiones",
+  "texto": "Prevención autónoma de lesiones deportivas",
   "descripcion": "Adoptar de manera responsable y autónoma medidas específicas para la prevención de lesiones antes, durante y después de la práctica de actividad física, identificando situaciones de riesgo para actuar preventivamente."
  },
  {
@@ -5279,7 +5279,7 @@
   "areaRef": "FYQ",
   "competencia": "FYQ.3.1",
   "codigo": "FYQ.3.1.2",
-  "texto": "Resolución de problemas fisicoquímicos",
+  "texto": "Resolución razonada de problemas fisicoquímicos",
   "descripcion": "Resolver los problemas fisicoquímicos planteados utilizando las leyes y teorías científicas adecuadas, razonando los procedimientos utilizados para encontrar las soluciones y expresando adecuadamente los resultados."
  },
  {
@@ -5450,7 +5450,7 @@
   "areaRef": "GEH",
   "competencia": "GEH.3.3",
   "codigo": "GEH.3.3.1",
-  "texto": "Objetivos de Desarrollo Sostenible",
+  "texto": "Propuestas para los Objetivos de Desarrollo Sostenible",
   "descripcion": "Conocer los Objetivos de Desarrollo Sostenible, planteando propuestas que contribuyan a su logro, aplicando métodos y proyectos de investigación, incidiendo en el uso de mapas y otras representaciones gráficas, así como de medios accesibles de interpretación de imágenes."
  },
  {
@@ -6143,7 +6143,7 @@
   "areaRef": "MAT",
   "competencia": "MAT.3.1",
   "codigo": "MAT.3.1.3",
-  "texto": "Obtención de soluciones matemáticas",
+  "texto": "Soluciones matemáticas en problemas complejos",
   "descripcion": "Obtener las soluciones matemáticas en problemas de diversa complejidad, activando los conocimientos, utilizando las herramientas tecnológicas necesarias y valorando e interpretando los resultados, aceptando el error como parte del proceso."
  },
  {
@@ -8627,7 +8627,7 @@
   "areaRef": "FYQ",
   "competencia": "FYQ.4.1",
   "codigo": "FYQ.4.1.2",
-  "texto": "Resolución de problemas fisicoquímicos",
+  "texto": "Resolución precisa de problemas fisicoquímicos",
   "descripcion": "Resolver problemas fisicoquímicos mediante las leyes y teorías científicas adecuadas, razonando los procedimientos utilizados para encontrar las soluciones y expresando adecuadamente los resultados con corrección y precisión."
  },
  {
@@ -8798,7 +8798,7 @@
   "areaRef": "GEH",
   "competencia": "GEH.4.3",
   "codigo": "GEH.4.3.1",
-  "texto": "Objetivos de Desarrollo Sostenible",
+  "texto": "Investigación sobre Objetivos de Desarrollo Sostenible",
   "descripcion": "Conocer los Objetivos de Desarrollo Sostenible, realizando propuestas que contribuyan a su logro, aplicando métodos y proyectos de investigación, incidiendo en el uso de mapas y otras representaciones gráficas, así como de medios accesibles de interpretación de imágenes."
  },
  {
@@ -8933,7 +8933,7 @@
   "areaRef": "GEH",
   "competencia": "GEH.4.9",
   "codigo": "GEH.4.9.2",
-  "texto": "Objetivos de Desarrollo Sostenible",
+  "texto": "Análisis de conflictos e instituciones para la paz",
   "descripcion": "Contribuir a la consecución de un mundo más seguro, justo, solidario y sostenible, a través del análisis de los principales conflictos del presente y el reconocimiento de las instituciones del Estado, y de las asociaciones civiles que garantizan la seguridad integral y la convivencia social, así como de los compromisos internacionales de nuestro país y de Andalucía en favor de la paz, la seguridad, la cooperación, la sostenibilidad, los valores democráticos y los Objetivos de Desarrollo Sostenible."
  },
  {
@@ -10337,7 +10337,7 @@
   "areaRef": "AYSO",
   "competencia": "AYSO.1.4",
   "codigo": "AYSO.1.4.1",
-  "texto": "Análisis",
+  "texto": "Impacto de la globalización en sociedades",
   "descripcion": "Analizar el impacto de la globalización económica y cultural en las personas, colectivos, pueblos indígenas o sociedades."
  },
  {
@@ -10355,7 +10355,7 @@
   "areaRef": "AYSO",
   "competencia": "AYSO.1.4",
   "codigo": "AYSO.1.4.3",
-  "texto": "Identificación",
+  "texto": "Factores del reparto desigual de riquezas",
   "descripcion": "Identificar los factores que provocan el reparto desigual de las riquezas, tomando conciencia de sus repercusiones sociales."
  },
  {
@@ -10373,7 +10373,7 @@
   "areaRef": "AMUS",
   "competencia": "AMUS.1.1",
   "codigo": "AMUS.1.1.1",
-  "texto": "Identificación",
+  "texto": "Identificación de elementos de una obra musical",
   "descripcion": "Identificar los elementos que constituyen una obra musical y su función dentro de la composición a través de la escucha activa y con apoyo de la partitura."
  },
  {
@@ -10400,7 +10400,7 @@
   "areaRef": "AMUS",
   "competencia": "AMUS.1.2",
   "codigo": "AMUS.1.2.1",
-  "texto": "Análisis",
+  "texto": "Estructuras formales de obras musicales",
   "descripcion": "Analizar, de forma guiada, obras musicales, identificando estructuras formales simples y los procedimientos compositivos utilizados."
  },
  {
@@ -10418,7 +10418,7 @@
   "areaRef": "AMUS",
   "competencia": "AMUS.1.2",
   "codigo": "AMUS.1.2.3",
-  "texto": "Identificación",
+  "texto": "Elementos del Flamenco como expresión artística",
   "descripcion": "Identificar los principales elementos del Flamenco como forma de expresión artística, valorando su aportación al patrimonio cultural inmaterial."
  },
  {
@@ -10472,7 +10472,7 @@
   "areaRef": "AMUS",
   "competencia": "AMUS.1.5",
   "codigo": "AMUS.1.5.1",
-  "texto": "Identificación",
+  "texto": "Función de la música en otras artes",
   "descripcion": "Identificar las funciones que cumple la música cuando se asocia con otras formas de expresión, por ejemplo: cine, teatro y danza, analizando sus características y el efecto que genera en el espectador."
  },
  {
@@ -10562,7 +10562,7 @@
   "areaRef": "ARES",
   "competencia": "ARES.1.5",
   "codigo": "ARES.1.5.1",
-  "texto": "Identificación",
+  "texto": "Identificación del público de un espectáculo",
   "descripcion": "Identificar el tipo de público al que se dirige un espectáculo determinado, basando los argumentos en el análisis de la obra y en las reacciones del público."
  },
  {
@@ -10661,7 +10661,7 @@
   "areaRef": "BGCA",
   "competencia": "BGCA.1.3",
   "codigo": "BGCA.1.3.4",
-  "texto": "Análisis",
+  "texto": "Interpretación de resultados de investigación",
   "descripcion": "Interpretar y analizar resultados obtenidos en un proyecto de investigación utilizando, cuando sea necesario, herramientas matemáticas y tecnológicas y reconociendo su alcance y limitaciones y obteniendo conclusiones razonadas y fundamentadas o valorando la imposibilidad de hacerlo."
  },
  {
@@ -10679,7 +10679,7 @@
   "areaRef": "BGCA",
   "competencia": "BGCA.1.4",
   "codigo": "BGCA.1.4.1",
-  "texto": "Resolución",
+  "texto": "Resolución de problemas biológicos y geológicos",
   "descripcion": "Resolver problemas o dar explicación a procesos biológicos, geológicos o ambientales, utilizando recursos variados como conocimientos propios, datos e información recabados, razonamiento lógico, pensamiento computacional o herramientas digitales."
  },
  {
@@ -10697,7 +10697,7 @@
   "areaRef": "BGCA",
   "competencia": "BGCA.1.5",
   "codigo": "BGCA.1.5.1",
-  "texto": "Análisis",
+  "texto": "Causas y consecuencias de problemas medioambientales",
   "descripcion": "Analizar las causas y consecuencias ecológicas, sociales y económicas de los principales problemas medioambientales desde una perspectiva individual, local y global, concibiéndolos como grandes retos de la humanidad y basándose en datos científicos y en los saberes de la materia de Biología, Geología y Ciencias Ambientales."
  },
  {
@@ -10724,7 +10724,7 @@
   "areaRef": "BGCA",
   "competencia": "BGCA.1.6",
   "codigo": "BGCA.1.6.2",
-  "texto": "Resolución",
+  "texto": "Resolución de problemas de datación geológica",
   "descripcion": "Resolver problemas de datación analizando elementos del registro geológico y fósil y aplicando métodos de datación."
  },
  {
@@ -10733,7 +10733,7 @@
   "areaRef": "CORO",
   "competencia": "CORO.1.1",
   "codigo": "CORO.1.1.1",
-  "texto": "Análisis",
+  "texto": "Análisis de piezas vocales y puesta en escena",
   "descripcion": "Analizar piezas vocales explicando de manera razonada las cualidades que las hacen afines a un estilo, a un género o a una cultura, así como otras características de la interpretación y de la puesta en escena."
  },
  {
@@ -10859,7 +10859,7 @@
   "areaRef": "CDPC",
   "competencia": "CDPC.1.2",
   "codigo": "CDPC.1.2.3",
-  "texto": "Comprensión",
+  "texto": "Impacto social de la Inteligencia Artificial",
   "descripcion": "Comprender los principios básicos de funcionamiento de la Inteligencia Artificial y su impacto en nuestra sociedad."
  },
  {
@@ -10886,7 +10886,7 @@
   "areaRef": "CDPC",
   "competencia": "CDPC.1.3",
   "codigo": "CDPC.1.3.2",
-  "texto": "Análisis",
+  "texto": "Técnicas de análisis de sistemas",
   "descripcion": "Aplicar distintas técnicas para analizar sistemas."
  },
  {
@@ -10913,7 +10913,7 @@
   "areaRef": "CULA",
   "competencia": "CULA.1.1",
   "codigo": "CULA.1.1.2",
-  "texto": "Análisis",
+  "texto": "Cualidades de producciones fotográficas y audiovisuales",
   "descripcion": "Analizar las cualidades plásticas, formales y semánticas de producciones fotográficas y audiovisuales de distintos estilos, formatos, géneros y culturas, determinando las reglas y códigos por las que se rigen y valorando la flexibilidad de esas normas."
  },
  {
@@ -10967,7 +10967,7 @@
   "areaRef": "CULA",
   "competencia": "CULA.1.3",
   "codigo": "CULA.1.3.2",
-  "texto": "Resolución",
+  "texto": "Planificación de producciones audiovisuales",
   "descripcion": "Planificar producciones audiovisuales, determinando los medios y habilidades necesarios, teniendo en cuenta todos sus aspectos: guion, planificación, interpretación, grabación, edición u otros, justificando razonadamente su elección y considerando los posibles imprevistos y la manera de resolverlos."
  },
  {
@@ -10976,7 +10976,7 @@
   "areaRef": "CULA",
   "competencia": "CULA.1.3",
   "codigo": "CULA.1.3.3",
-  "texto": "Resolución",
+  "texto": "Resolución de imprevistos audiovisuales",
   "descripcion": "Demostrar flexibilidad y habilidad para resolver los imprevistos propios de las producciones audiovisuales, teniéndolos en cuenta en su planificación y considerando de manera abierta las diferentes posibilidades para resolver un problema sobrevenido."
  },
  {
@@ -11948,7 +11948,7 @@
   "areaRef": "EDFI",
   "competencia": "EDFI.1.1",
   "codigo": "EDFI.1.1.3",
-  "texto": "Prevención de lesiones",
+  "texto": "Primeros auxilios y prevención de lesiones",
   "descripcion": "Conocer y aplicar de manera responsable y autónoma medidas específicas para la prevención de lesiones antes, durante y después de la actividad física, así como para la aplicación de primeros auxilios ante situaciones de emergencia o accidente, que permitan y faciliten posteriores intervenciones asistenciales, identificando las posibles transferencias que estos conocimientos tienen al ámbito profesional y ocupacional."
  },
  {
@@ -12290,7 +12290,7 @@
   "areaRef": "FISQ",
   "competencia": "FISQ.1.1",
   "codigo": "FISQ.1.1.2",
-  "texto": "Resolución de problemas fisicoquímicos",
+  "texto": "Resolución de problemas fisicoquímicos cotidianos",
   "descripcion": "Resolver problemas fisicoquímicos planteados a partir de situaciones cotidianas, aplicando las leyes y teorías científicas para encontrar y argumentar las soluciones, expresando adecuadamente los resultados."
  },
  {
@@ -13568,7 +13568,7 @@
   "areaRef": "MATE",
   "competencia": "MATE.1.2",
   "codigo": "MATE.1.2.1",
-  "texto": "Obtención de soluciones matemáticas",
+  "texto": "Estrategias de resolución de problemas matemáticos",
   "descripcion": "Obtener todas las posibles soluciones matemáticas de problemas de la vida cotidiana y de la ciencia y la tecnología, utilizando la estrategia de resolución más apropiada y describiendo el procedimiento utilizado."
  },
  {
@@ -14765,7 +14765,7 @@
   "areaRef": "AFSS",
   "competencia": "AFSS.2.2",
   "codigo": "AFSS.2.2.2",
-  "texto": "Diseño de actividades",
+  "texto": "Diseño y dirección de actividades físicas grupales",
   "descripcion": "Diseñar, planificar y dirigir actividades individuales y colectivas de aprendizaje, recreación o acondicionamiento físico, adaptado al grupo, observando las medidas de seguridad y cuidado de la salud pertinentes y garantizando un tiempo de desempeño motor suficiente, así como la eficiencia en los procesos de comunicación inicial y de feedback necesarios que incluirá tanto información técnica como motivacional."
  },
  {
@@ -14774,7 +14774,7 @@
   "areaRef": "AFSS",
   "competencia": "AFSS.2.2",
   "codigo": "AFSS.2.2.3",
-  "texto": "Diseño de actividades",
+  "texto": "Organización de actividades físicas colectivas",
   "descripcion": "Organizar y gestionar las acciones previas y posteriores a la ejecución de diferentes actividades colectivas de actividad física, deportiva o expresiva, asegurando la disponibilidad de los recursos necesarios para la realización de las actividades, preparando los espacios, los equipos y los materiales requeridos, ajustándose a los objetivos y características de estas, proporcionando seguridad en su práctica, y promoviendo la participación."
  },
  {
@@ -14783,7 +14783,7 @@
   "areaRef": "AFSS",
   "competencia": "AFSS.2.2",
   "codigo": "AFSS.2.2.4",
-  "texto": "Diseño de actividades",
+  "texto": "Participación en roles de la actividad física",
   "descripcion": "Participar y vivenciar las actividades físicas, deportivas o expresivas que se planteen desde los diferentes roles implicados: participante, espectador, organizador, árbitro o dinamizador, y reflexionar sobre la experiencia, comunicándose con respeto, trabajando en grupo y comprendiendo las diferentes visiones y experiencias propias y de los demás."
  },
  {
@@ -14792,7 +14792,7 @@
   "areaRef": "AFSS",
   "competencia": "AFSS.2.2",
   "codigo": "AFSS.2.2.5",
-  "texto": "Diseño de actividades",
+  "texto": "Uso de dispositivos digitales en actividad física",
   "descripcion": "Incorporar el uso de aplicaciones y dispositivos digitales a las diferentes fases del proceso: diseño y planificación, evaluación y comunicación, de las diferentes actividades en contextos variados."
  },
  {
@@ -14801,7 +14801,7 @@
   "areaRef": "AFSS",
   "competencia": "AFSS.2.3",
   "codigo": "AFSS.2.3.1",
-  "texto": "Competencia específica",
+  "texto": "Análisis de la motricidad en gestos técnicos",
   "descripcion": "Identificar, analizar, comprender y progresar en los factores clave que condicionan la intervención de los componentes cualitativos y cuantitativos de la motricidad en la realización de gestos técnicos o situaciones motrices variadas, identificando errores, proponiendo y aplicando soluciones a los mismos."
  },
  {
@@ -14810,7 +14810,7 @@
   "areaRef": "AFSS",
   "competencia": "AFSS.2.3",
   "codigo": "AFSS.2.3.2",
-  "texto": "Competencia específica",
+  "texto": "Desarrollo de proyectos motores cooperativos",
   "descripcion": "Desarrollar proyectos motores de carácter individual, cooperativo o colaborativo, ajustándose a los objetivos y resolviendo eficiente y creativamente los imprevistos, demostrando dominio de los patrones motores básicos y progresando en la adquisición de habilidades específicas para cada contexto."
  },
  {
@@ -14819,7 +14819,7 @@
   "areaRef": "AFSS",
   "competencia": "AFSS.2.3",
   "codigo": "AFSS.2.3.3",
-  "texto": "Competencia específica",
+  "texto": "Toma de decisiones en cooperación-oposición",
   "descripcion": "Ser capaces de percibir los elementos clave, comprender las opciones de resolución y tomar decisiones ajustadas en situaciones de cooperación-oposición, favoreciendo la resolución de estas, de forma exitosa, adaptada y creativa, desde los distintos roles ofensivos y defensivos, así como en distintos momentos del ciclo del juego."
  },
  {
@@ -14828,7 +14828,7 @@
   "areaRef": "AFSS",
   "competencia": "AFSS.2.3",
   "codigo": "AFSS.2.3.4",
-  "texto": "Competencia específica",
+  "texto": "Composiciones motrices con base musical",
   "descripcion": "Aplicar proyectos motores en la creación de composiciones individuales y colectivas, con y sin base musical, de manera coordinada y creativa, utilizando el movimiento como elemento expresivo y optimizando los recursos disponibles."
  },
  {
@@ -14837,7 +14837,7 @@
   "areaRef": "AFSS",
   "competencia": "AFSS.2.3",
   "codigo": "AFSS.2.3.5",
-  "texto": "Competencia específica",
+  "texto": "Gestión autónoma de proyectos motores",
   "descripcion": "Comprender y analizar proyectos motores, propios y de los otros, siendo capaces de gestionar autónomamente cualquier imprevisto y realizar ajustes eficientes y creativos, a partir de las informaciones propias o compartidas, gracias a la capacidad de resiliencia, su motivación, el análisis y la utilización de la información disponible."
  },
  {
@@ -14846,7 +14846,7 @@
   "areaRef": "AFSS",
   "competencia": "AFSS.2.4",
   "codigo": "AFSS.2.4.1",
-  "texto": "Competencia específica",
+  "texto": "Participación en deporte mixto sin estereotipos",
   "descripcion": "Conocer y participar en actividades deportivas reconocidas de carácter mixto, además de organizar y promover la adaptación de otras a este carácter, reconociendo su riqueza y demostrando valores de respeto y superación de los estereotipos de género."
  },
  {
@@ -14855,7 +14855,7 @@
   "areaRef": "AFSS",
   "competencia": "AFSS.2.4",
   "codigo": "AFSS.2.4.2",
-  "texto": "Competencia específica",
+  "texto": "Organización de actividades físicas inclusivas",
   "descripcion": "Organizar, promover y participar en actividades físicas inclusivas, desde el conocimiento de los diferentes tipos de discapacidad, adaptándose a los requerimientos físicos, psíquicos y sociales, realizando adaptaciones creativas de las reglas y los materiales, estableciendo los medios y ayudas técnicas específicas que facilitan la realización de las actividades y posibilitando la inclusión desde el respeto y la empatía."
  },
  {
@@ -14864,7 +14864,7 @@
   "areaRef": "AFSS",
   "competencia": "AFSS.2.4",
   "codigo": "AFSS.2.4.3",
-  "texto": "Competencia específica",
+  "texto": "Organización del deporte adaptado",
   "descripcion": "Conocer y comprender las características y organización del deporte adaptado, experimentando alguna de sus modalidades mediante la autoconstrucción de espacios de práctica y materiales, según los medios disponibles, siempre teniendo en cuenta las medidas de seguridad."
  },
  {
@@ -14873,7 +14873,7 @@
   "areaRef": "AFSS",
   "competencia": "AFSS.2.4",
   "codigo": "AFSS.2.4.4",
-  "texto": "Competencia específica",
+  "texto": "Gestión de actividades físico-deportivas igualitarias",
   "descripcion": "Organizar, promover y gestionar actividades físico-deportivas, aplicando técnicas didácticas, organizadas con base en criterios de igualdad y evitando las agrupaciones por niveles, mediante la propuesta creativa de reglas que propicien la heterogeneidad de grupos y criterios múltiples de valoración."
  },
  {
@@ -14882,7 +14882,7 @@
   "areaRef": "AFSS",
   "competencia": "AFSS.2.5",
   "codigo": "AFSS.2.5.1",
-  "texto": "Competencia específica",
+  "texto": "Análisis crítico de manifestaciones motrices actuales",
   "descripcion": "Comprender, contextualizar y analizar desde una postura crítica la influencia cultural y social, sus relaciones con los medios de comunicación y los intereses económicos y políticos, de las manifestaciones motrices más relevantes en el panorama actual, analizando sus orígenes y su evolución hasta la actualidad y rechazando aquellos componentes que no se ajusten a los valores de una sociedad abierta, inclusiva, diversa e igualitaria y aquellos perjudiciales para la salud."
  },
  {
@@ -14891,7 +14891,7 @@
   "areaRef": "AFSS",
   "competencia": "AFSS.2.5",
   "codigo": "AFSS.2.5.2",
-  "texto": "Competencia específica",
+  "texto": "Investigación social de la cultura motriz",
   "descripcion": "Aplicar técnicas y métodos de investigación social para valorar la implantación e influencia de la cultura motriz en su entorno cercano, rechazando aquellos componentes contrarios a los valores de una sociedad abierta, inclusiva, diversa e igualitaria, y aquellos perjudiciales para la salud."
  },
  {
@@ -14900,7 +14900,7 @@
   "areaRef": "AFSS",
   "competencia": "AFSS.2.5",
   "codigo": "AFSS.2.5.3",
-  "texto": "Competencia específica",
+  "texto": "Comparación de culturas motrices del mundo",
   "descripcion": "Conocer, comparar y analizar las diferencias entre las manifestaciones representativas de la cultura motriz de diferentes zonas y culturas del mundo y de España."
  },
  {
@@ -14909,7 +14909,7 @@
   "areaRef": "AFSS",
   "competencia": "AFSS.2.5",
   "codigo": "AFSS.2.5.4",
-  "texto": "Competencia específica",
+  "texto": "Difusión de la cultura motriz andaluza",
   "descripcion": "Identificar, recopilar, conocer, participar, practicar y difundir aquellas actividades físicas propias de la cultura motriz andaluza."
  },
  {
@@ -14918,7 +14918,7 @@
   "areaRef": "AFSS",
   "competencia": "AFSS.2.6",
   "codigo": "AFSS.2.6.1",
-  "texto": "Competencia específica",
+  "texto": "Proyectos de colaboración en actividad física",
   "descripcion": "Analizar, diseñar, planificar y ofertar proyectos de colaboración con asociaciones u organismos de su entorno, teniendo como base la actividad física, promoviendo hábitos de vida saludable y la inclusión social de diferentes colectivos."
  },
  {
@@ -14927,7 +14927,7 @@
   "areaRef": "AFSS",
   "competencia": "AFSS.2.6",
   "codigo": "AFSS.2.6.2",
-  "texto": "Competencia específica",
+  "texto": "Proyectos de actividad física en entornos naturales",
   "descripcion": "Diseñar, planificar, promover y organizar proyectos de actividad física en el entorno urbano o natural, optimizando los recursos, garantizando la seguridad, incluyendo elementos culturales propios de ese entorno, y realizando acciones que contribuyan a su cuidado y mantenimiento."
  },
  {
@@ -14936,7 +14936,7 @@
   "areaRef": "AFSS",
   "competencia": "AFSS.2.6",
   "codigo": "AFSS.2.6.3",
-  "texto": "Competencia específica",
+  "texto": "Diseño de un proyecto de empresa deportiva",
   "descripcion": "Diseñar cooperativamente un proyecto de empresa relacionada con la actividad física o deportiva, contemplando todos los elementos necesarios: análisis DAFO, recursos financieros y humanos, trámites administrativos y estrategias de promoción."
  },
  {
@@ -14945,7 +14945,7 @@
   "areaRef": "AMUS",
   "competencia": "AMUS.2.1",
   "codigo": "AMUS.2.1.1",
-  "texto": "Análisis musical",
+  "texto": "Descripción de características musicales de una obra",
   "descripcion": "Describir las características musicales de una obra a partir de la escucha activa y el estudio de partituras, analizando sus elementos constitutivos y la función que estos cumplen dentro de la composición."
  },
  {
@@ -14954,7 +14954,7 @@
   "areaRef": "AMUS",
   "competencia": "AMUS.2.1",
   "codigo": "AMUS.2.1.2",
-  "texto": "Análisis musical",
+  "texto": "Comparación de obras musicales diversas",
   "descripcion": "Comparar los elementos constitutivos y las características musicales de diferentes obras, estableciendo analogías y diferencias entre ellas, a partir de la escucha activa y del estudio de partituras, favoreciendo el respeto hacia las distintas convenciones formales y considerando la diversidad como valor democrático esencial."
  },
  {
@@ -14963,7 +14963,7 @@
   "areaRef": "AMUS",
   "competencia": "AMUS.2.2",
   "codigo": "AMUS.2.2.1",
-  "texto": "Análisis musical",
+  "texto": "Evolución de géneros y estilos musicales",
   "descripcion": "Distinguir los principales géneros y estilos musicales que se desarrollan en la historia, analizando los factores que inciden en la evolución de las formas musicales."
  },
  {
@@ -14972,7 +14972,7 @@
   "areaRef": "AMUS",
   "competencia": "AMUS.2.2",
   "codigo": "AMUS.2.2.2",
-  "texto": "Análisis musical",
+  "texto": "Asociación de obras a un estilo y contexto",
   "descripcion": "Asociar las obras analizadas con un género, un estilo y un contexto de creación determinados, identificando, de forma autónoma, la estructura formal y los procedimientos compositivos utilizados."
  },
  {
@@ -14981,7 +14981,7 @@
   "areaRef": "AMUS",
   "competencia": "AMUS.2.2",
   "codigo": "AMUS.2.2.3",
-  "texto": "Análisis musical",
+  "texto": "Patrimonio musical andaluz y flamenco",
   "descripcion": "Analizar las características del patrimonio musical andaluz, incidiendo en el flamenco y en sus códigos creativos, reconociendo la pluralidad artística y cultural para ayudar a superar cualquier tipo de discriminación."
  },
  {
@@ -14990,7 +14990,7 @@
   "areaRef": "AMUS",
   "competencia": "AMUS.2.3",
   "codigo": "AMUS.2.3.1",
-  "texto": "Análisis musical",
+  "texto": "Juicios personales sobre obras musicales",
   "descripcion": "Expresar juicios personales sobre las obras analizadas, argumentando la opinión propia y utilizando una terminología musical adecuada."
  },
  {
@@ -14999,7 +14999,7 @@
   "areaRef": "AMUS",
   "competencia": "AMUS.2.3",
   "codigo": "AMUS.2.3.2",
-  "texto": "Análisis musical",
+  "texto": "Justificación documentada de la opinión musical",
   "descripcion": "Justificar la opinión propia sobre las obras analizadas, investigando y seleccionando la información más pertinente a partir de medios analógicos y digitales."
  },
  {
@@ -15008,7 +15008,7 @@
   "areaRef": "AMUS",
   "competencia": "AMUS.2.3",
   "codigo": "AMUS.2.3.3",
-  "texto": "Análisis musical",
+  "texto": "Elaboración de críticas musicales",
   "descripcion": "Elaborar críticas musicales y comentarios propios para su difusión en medios analógicos y digitales, respetando los derechos de autor y la propiedad intelectual."
  },
  {
@@ -15017,7 +15017,7 @@
   "areaRef": "AMUS",
   "competencia": "AMUS.2.4",
   "codigo": "AMUS.2.4.1",
-  "texto": "Análisis musical",
+  "texto": "Improvisación y composición musical grupal",
   "descripcion": "Realizar improvisaciones sencillas o pequeñas composiciones, en proyectos musicales grupales, utilizando los procedimientos compositivos fundamentales y aplicando patrones melódicos, rítmicos, armónicos y formales previamente analizados e interiorizados."
  },
  {
@@ -15026,7 +15026,7 @@
   "areaRef": "AMUS",
   "competencia": "AMUS.2.4",
   "codigo": "AMUS.2.4.2",
-  "texto": "Análisis musical",
+  "texto": "Herramientas tecnológicas en creación musical",
   "descripcion": "Utilizar diferentes herramientas tecnológicas en la creación de proyectos musicales diversos."
  },
  {
@@ -15035,7 +15035,7 @@
   "areaRef": "AMUS",
   "competencia": "AMUS.2.5",
   "codigo": "AMUS.2.5.1",
-  "texto": "Análisis musical",
+  "texto": "Efectos de la música en salud y emociones",
   "descripcion": "Analizar los diferentes usos de la música y cómo inciden determinados rasgos musicales en la salud y las emociones, a partir de la información obtenida en fuentes de información fiables."
  },
  {
@@ -15044,7 +15044,7 @@
   "areaRef": "AMUS",
   "competencia": "AMUS.2.5",
   "codigo": "AMUS.2.5.2",
-  "texto": "Análisis musical",
+  "texto": "Características de la música terapéutica",
   "descripcion": "Describir las características de la música que se utiliza con fines terapéuticos, analizando ejemplos de obras y relacionando sus rasgos con posibles efectos en el oyente."
  },
  {
@@ -15053,7 +15053,7 @@
   "areaRef": "ARES",
   "competencia": "ARES.2.1",
   "codigo": "ARES.2.1.1",
-  "texto": "Expresión escénica",
+  "texto": "Análisis de manifestaciones escénicas históricas",
   "descripcion": "Analizar, con un vocabulario adecuado, manifestaciones escénicas de diferentes épocas y tradiciones, describiendo sus características, estableciendo relaciones con su contexto y evidenciando una actitud de apertura, interés y respeto en la recepción activa de las mismas."
  },
  {
@@ -15062,7 +15062,7 @@
   "areaRef": "ARES",
   "competencia": "ARES.2.1",
   "codigo": "ARES.2.1.2",
-  "texto": "Expresión escénica",
+  "texto": "Valoración crítica del Flamenco y teatro andaluz",
   "descripcion": "Valorar críticamente los hábitos, los gustos y los referentes escénicos de diferentes épocas y tradiciones, prestando especial atención al Flamenco y al teatro andaluz, reflexionando sobre su evolución y sobre su relación con los del presente."
  },
  {
@@ -15071,7 +15071,7 @@
   "areaRef": "ARES",
   "competencia": "ARES.2.2",
   "codigo": "ARES.2.2.1",
-  "texto": "Expresión escénica",
+  "texto": "Exploración práctica de códigos escénicos",
   "descripcion": "Participar, con iniciativa, confianza y creatividad, en la exploración de sistemas, medios y códigos de significación escénica, a través de actividades de carácter práctico."
  },
  {
@@ -15080,7 +15080,7 @@
   "areaRef": "ARES",
   "competencia": "ARES.2.2",
   "codigo": "ARES.2.2.2",
-  "texto": "Expresión escénica",
+  "texto": "Recreación de personajes y situaciones dramáticas",
   "descripcion": "Recrear la acción dramática, el diseño de personajes y la configuración de situaciones y escenas, seleccionando las técnicas del repertorio personal de recursos más adecuadas a la intención comunicativa."
  },
  {
@@ -15089,7 +15089,7 @@
   "areaRef": "ARES",
   "competencia": "ARES.2.3",
   "codigo": "ARES.2.3.1",
-  "texto": "Expresión escénica",
+  "texto": "Técnicas de interpretación y memorización",
   "descripcion": "Emplear diferentes técnicas de interpretación de forma creativa, aplicando estrategias de memorización y valorando los ensayos como espacios de escucha, diálogo y aprendizaje."
  },
  {
@@ -15098,7 +15098,7 @@
   "areaRef": "ARES",
   "competencia": "ARES.2.3",
   "codigo": "ARES.2.3.2",
-  "texto": "Expresión escénica",
+  "texto": "Representación dramática con gestión de la ansiedad",
   "descripcion": "Recrear y representar la acción dramática, demostrando precisión, eficacia y expresividad, siguiendo las indicaciones de la dirección, manteniendo la concentración y gestionando de forma guiada la ansiedad y el miedo escénico."
  },
  {
@@ -15107,7 +15107,7 @@
   "areaRef": "ARES",
   "competencia": "ARES.2.4",
   "codigo": "ARES.2.4.1",
-  "texto": "Expresión escénica",
+  "texto": "Planificación de proyectos de creación escénica",
   "descripcion": "Participar, con iniciativa, responsabilidad y conciencia de grupo, en el diseño, la planificación y la realización de proyectos colectivos de creación y difusión escénica, organizando correctamente sus fases, distribuyendo de forma razonada las tareas, evaluando su viabilidad y sostenibilidad, y seleccionando y estructurando los elementos de significación, así como las directrices de interpretación, representación o escenificación."
  },
  {
@@ -15116,7 +15116,7 @@
   "areaRef": "ARES",
   "competencia": "ARES.2.4",
   "codigo": "ARES.2.4.2",
-  "texto": "Expresión escénica",
+  "texto": "Evaluación de resultados de proyectos escénicos",
   "descripcion": "Evaluar y presentar los resultados de proyectos de creación y difusión escénica, analizando la relación entre los objetivos planteados y el producto final obtenido, y explicando las posibles diferencias entre ellos."
  },
  {
@@ -15125,7 +15125,7 @@
   "areaRef": "ARES",
   "competencia": "ARES.2.4",
   "codigo": "ARES.2.4.3",
-  "texto": "Expresión escénica",
+  "texto": "Oportunidades de desarrollo en el ámbito artístico",
   "descripcion": "Identificar oportunidades de desarrollo personal, social, académico o profesional relacionadas con el ámbito artístico, comprendiendo su valor añadido y expresando la opinión personal de forma crítica y respetuosa."
  },
  {
@@ -15134,7 +15134,7 @@
   "areaRef": "ARES",
   "competencia": "ARES.2.5",
   "codigo": "ARES.2.5.1",
-  "texto": "Expresión escénica",
+  "texto": "Valoración de la recepción del espectáculo",
   "descripcion": "Valorar la recepción brindada a un espectáculo determinado, relacionando las características de la obra, el contexto de la puesta en escena y las reacciones del público."
  },
  {
@@ -15143,7 +15143,7 @@
   "areaRef": "ARES",
   "competencia": "ARES.2.5",
   "codigo": "ARES.2.5.2",
-  "texto": "Expresión escénica",
+  "texto": "Redacción de reseñas y críticas escénicas",
   "descripcion": "Realizar y compartir reseñas y críticas escénicas, empleando la terminología adecuada, consultando fuentes fiables y reflexionando, con rigor y solidez, sobre las características, los presupuestos artísticos y la recepción de la obra."
  },
  {
@@ -15152,7 +15152,7 @@
   "areaRef": "BIOL",
   "competencia": "BIOL.2.1",
   "codigo": "BIOL.2.1.1",
-  "texto": "Procesos biológicos",
+  "texto": "Interpretación de información científica biológica",
   "descripcion": "Analizar críticamente conceptos y procesos biológicos, seleccionando e interpretando información en diferentes formatos (modelos, gráficos, tablas, diagramas, fórmulas, esquemas u otros)."
  },
  {
@@ -15161,7 +15161,7 @@
   "areaRef": "BIOL",
   "competencia": "BIOL.2.1",
   "codigo": "BIOL.2.1.2",
-  "texto": "Procesos biológicos",
+  "texto": "Comunicación razonada de saberes biológicos",
   "descripcion": "Comunicar informaciones u opiniones razonadas relacionadas con los saberes de la materia, transmitiéndolas de forma clara y rigurosa, utilizando la terminología y el formato adecuados (modelos, gráficos, tablas, vídeos, informes, diagramas, fórmulas, esquemas, símbolos o contenidos digitales, entre otros) y respondiendo de manera fundamentada y precisa a las cuestiones que puedan surgir durante el proceso."
  },
  {
@@ -15170,7 +15170,7 @@
   "areaRef": "BIOL",
   "competencia": "BIOL.2.1",
   "codigo": "BIOL.2.1.3",
-  "texto": "Procesos biológicos",
+  "texto": "Argumentación sobre posturas biológicas",
   "descripcion": "Argumentar sobre aspectos relacionados con los saberes de la materia, considerando los puntos fuertes y débiles de diferentes posturas de forma razonada y con una actitud abierta, flexible, receptiva y respetuosa ante la opinión de los demás."
  },
  {
@@ -15179,7 +15179,7 @@
   "areaRef": "BIOL",
   "competencia": "BIOL.2.2",
   "codigo": "BIOL.2.2.1",
-  "texto": "Procesos biológicos",
+  "texto": "Creación de contenidos con fuentes biológicas",
   "descripcion": "Plantear y resolver cuestiones y crear contenidos relacionados con los saberes de la materia, localizando y citando fuentes de forma adecuada; seleccionando, organizando y analizando críticamente la información."
  },
  {
@@ -15188,7 +15188,7 @@
   "areaRef": "BIOL",
   "competencia": "BIOL.2.2",
   "codigo": "BIOL.2.2.2",
-  "texto": "Procesos biológicos",
+  "texto": "Contraste de veracidad frente a pseudociencias",
   "descripcion": "Contrastar y justificar la veracidad de información relacionada con la materia, utilizando fuentes fiables, aportando datos y adoptando una actitud crítica y escéptica ante informaciones sin una base científica como pseudociencias, teorías conspiratorias, creencias infundadas o bulos."
  },
  {
@@ -15197,7 +15197,7 @@
   "areaRef": "BIOL",
   "competencia": "BIOL.2.3",
   "codigo": "BIOL.2.3.1",
-  "texto": "Procesos biológicos",
+  "texto": "Evaluación de conclusiones de investigación científica",
   "descripcion": "Evaluar la fiabilidad de las conclusiones de un trabajo de investigación o divulgación científica relacionado con los saberes de la materia de acuerdo a la interpretación de los resultados obtenidos."
  },
  {
@@ -15206,7 +15206,7 @@
   "areaRef": "BIOL",
   "competencia": "BIOL.2.3",
   "codigo": "BIOL.2.3.2",
-  "texto": "Procesos biológicos",
+  "texto": "Contribución de la ciencia y papel de la mujer",
   "descripcion": "Argumentar, utilizando ejemplos concretos, sobre la contribución de la ciencia a la sociedad y la labor de las personas dedicadas a ella, destacando el papel de la mujer y entendiendo la investigación como una labor colectiva e interdisciplinar en constante evolución influida por el contexto político y social y por los recursos económicos propios de Andalucía."
  },
  {
@@ -15215,7 +15215,7 @@
   "areaRef": "BIOL",
   "competencia": "BIOL.2.4",
   "codigo": "BIOL.2.4.1",
-  "texto": "Procesos biológicos",
+  "texto": "Explicación de fenómenos biológicos",
   "descripcion": "Explicar fenómenos biológicos, a través del planteamiento y resolución de problemas, buscando y utilizando las estrategias y recursos adecuados."
  },
  {
@@ -15224,7 +15224,7 @@
   "areaRef": "BIOL",
   "competencia": "BIOL.2.4",
   "codigo": "BIOL.2.4.2",
-  "texto": "Procesos biológicos",
+  "texto": "Reformulación crítica de soluciones biológicas",
   "descripcion": "Analizar críticamente la solución a un problema utilizando los saberes de la materia de Biología y reformular los procedimientos utilizados o conclusiones si dicha solución no fuese viable o ante nuevos datos aportados o encontrados con posterioridad."
  },
  {
@@ -15233,7 +15233,7 @@
   "areaRef": "BIOL",
   "competencia": "BIOL.2.5",
   "codigo": "BIOL.2.5.1",
-  "texto": "Procesos biológicos",
+  "texto": "Estilos de vida saludables y sostenibles",
   "descripcion": "Argumentar sobre la importancia de adoptar estilos de vida saludables, propios y de los miembros de la comunidad educativa, y compatibles con el desarrollo sostenible, basándose en los principios de la Biología molecular y relacionándolos con los procesos macroscópicos, proponiendo medidas para el cambio positivo hacia un modo de vida más saludable y sostenible."
  },
  {
@@ -15242,7 +15242,7 @@
   "areaRef": "BIOL",
   "competencia": "BIOL.2.6",
   "codigo": "BIOL.2.6.1",
-  "texto": "Procesos biológicos",
+  "texto": "Procesos vitales y biomoléculas",
   "descripcion": "Explicar las características y procesos vitales de los seres vivos mediante el análisis de sus biomoléculas, de las interacciones bioquímicas entre ellas y de sus reacciones metabólicas."
  },
  {
@@ -15251,7 +15251,7 @@
   "areaRef": "BIOL",
   "competencia": "BIOL.2.6",
   "codigo": "BIOL.2.6.2",
-  "texto": "Procesos biológicos",
+  "texto": "Metodologías analíticas de laboratorio",
   "descripcion": "Aplicar metodologías analíticas en el laboratorio utilizando los materiales adecuados con precisión."
  },
  {
@@ -15260,7 +15260,7 @@
   "areaRef": "CCGG",
   "competencia": "CCGG.2.1",
   "codigo": "CCGG.2.1.1",
-  "texto": "Competencia específica",
+  "texto": "Cuestiones científicas sobre el entorno",
   "descripcion": "Plantear y responder cuestiones acerca de procesos observados en el entorno, siguiendo las pautas de las metodologías científicas."
  },
  {
@@ -15269,7 +15269,7 @@
   "areaRef": "CCGG",
   "competencia": "CCGG.2.1",
   "codigo": "CCGG.2.1.2",
-  "texto": "Competencia específica",
+  "texto": "Contraste de hipótesis experimentales",
   "descripcion": "Contrastar hipótesis, realizando experimentos en laboratorios o en entornos virtuales siguiendo las normas de seguridad correspondientes."
  },
  {
@@ -15278,7 +15278,7 @@
   "areaRef": "CCGG",
   "competencia": "CCGG.2.1",
   "codigo": "CCGG.2.1.3",
-  "texto": "Competencia específica",
+  "texto": "Comunicación de resultados científicos",
   "descripcion": "Comunicar los resultados de un experimento o trabajo científico, utilizando los recursos adecuados y de acuerdo a los principios éticos básicos."
  },
  {
@@ -15287,7 +15287,7 @@
   "areaRef": "CCGG",
   "competencia": "CCGG.2.1",
   "codigo": "CCGG.2.1.4",
-  "texto": "Competencia específica",
+  "texto": "Aportación de la comunidad científica",
   "descripcion": "Valorar la aportación de la comunidad científica en el avance y mejora de la sociedad."
  },
  {
@@ -15296,7 +15296,7 @@
   "areaRef": "CCGG",
   "competencia": "CCGG.2.2",
   "codigo": "CCGG.2.2.1",
-  "texto": "Competencia específica",
+  "texto": "Representación de fenómenos del entorno",
   "descripcion": "Analizar y explicar fenómenos del entorno, representándolos mediante expresiones, tablas, gráficas, modelos, simulaciones, diagramas u otros formatos."
  },
  {
@@ -15305,7 +15305,7 @@
   "areaRef": "CCGG",
   "competencia": "CCGG.2.2",
   "codigo": "CCGG.2.2.2",
-  "texto": "Competencia específica",
+  "texto": "Explicación de fenómenos con principios científicos",
   "descripcion": "Explicar fenómenos que ocurren en el entorno, utilizando principios, leyes y teorías de las ciencias de la naturaleza."
  },
  {
@@ -15314,7 +15314,7 @@
   "areaRef": "CCGG",
   "competencia": "CCGG.2.2",
   "codigo": "CCGG.2.2.3",
-  "texto": "Competencia específica",
+  "texto": "Análisis de fenómenos fisicoquímicos",
   "descripcion": "Reconocer y analizar los fenómenos fisicoquímicos más relevantes, explicándolos a través de las principales leyes o teorías científicas."
  },
  {
@@ -15323,7 +15323,7 @@
   "areaRef": "CCGG",
   "competencia": "CCGG.2.2",
   "codigo": "CCGG.2.2.4",
-  "texto": "Competencia específica",
+  "texto": "Elementos de la biosfera y geosfera",
   "descripcion": "Explicar, utilizando los fundamentos científicos adecuados, los elementos y procesos básicos de la biosfera y la geosfera."
  },
  {
@@ -15332,7 +15332,7 @@
   "areaRef": "CCGG",
   "competencia": "CCGG.2.3",
   "codigo": "CCGG.2.3.1",
-  "texto": "Competencia específica",
+  "texto": "Hábitos de desarrollo sostenible",
   "descripcion": "Adoptar y promover hábitos compatibles con un modelo de desarrollo sostenible y valorar su importancia utilizando fundamentos científicos."
  },
  {
@@ -15341,7 +15341,7 @@
   "areaRef": "CCGG",
   "competencia": "CCGG.2.3",
   "codigo": "CCGG.2.3.2",
-  "texto": "Competencia específica",
+  "texto": "Hábitos saludables y fisiología humana",
   "descripcion": "Adoptar y promover hábitos saludables (dieta equilibrada, higiene, vacunación, uso adecuado de antibióticos, rechazo al consumo de drogas legales e ilegales, ejercicio físico, higiene del sueño, posturas adecuadas…) valorar su importancia, utilizando los fundamentos de la fisiología humana."
  },
  {
@@ -15350,7 +15350,7 @@
   "areaRef": "CCGG",
   "competencia": "CCGG.2.4",
   "codigo": "CCGG.2.4.1",
-  "texto": "Competencia específica",
+  "texto": "Resolución de problemas científico-matemáticos",
   "descripcion": "Resolver problemas relacionados con fenómenos y procesos físicos, químicos, biológicos y geológicos utilizando el pensamiento científico y el razonamiento lógico-matemático y buscando estrategias alternativas de resolución cuando sea necesario."
  },
  {
@@ -15359,7 +15359,7 @@
   "areaRef": "CCGG",
   "competencia": "CCGG.2.4",
   "codigo": "CCGG.2.4.2",
-  "texto": "Competencia específica",
+  "texto": "Análisis crítico de soluciones a problemas científicos",
   "descripcion": "Analizar críticamente la solución de un problema relacionado con fenómenos y procesos físicos, químicos, biológicos y geológicos, modificando las conclusiones o las estrategias utilizadas si la solución no es viable, o ante nuevos datos aportados."
  },
  {
@@ -15368,7 +15368,7 @@
   "areaRef": "CCGG",
   "competencia": "CCGG.2.5",
   "codigo": "CCGG.2.5.1",
-  "texto": "Competencia específica",
+  "texto": "Interrelación de las disciplinas científicas",
   "descripcion": "Reconocer la ciencia como un área de conocimiento global, analizando la interrelación e interdependencia entre cada una de las disciplinas que la forman."
  },
  {
@@ -15944,7 +15944,7 @@
   "areaRef": "DTAP",
   "competencia": "DTAP.2.1",
   "codigo": "DTAP.2.1.1",
-  "texto": "Análisis y comprensión de contenidos",
+  "texto": "Formas geométricas en el arte y diseño",
   "descripcion": "Identificar y explicar la presencia de formas y relaciones geométricas en el arte y el diseño, comprendiendo el motivo o intencionalidad con la que se han utilizado."
  },
  {
@@ -15971,7 +15971,7 @@
   "areaRef": "DTAP",
   "competencia": "DTAP.2.3",
   "codigo": "DTAP.2.3.1",
-  "texto": "Análisis y comprensión de contenidos",
+  "texto": "Perspectivas isométrica y caballera con curvas",
   "descripcion": "Dibujar, en las perspectivas isométrica y caballera, formas volumétricas incorporando curvas."
  },
  {
@@ -16223,7 +16223,7 @@
   "areaRef": "ELTR",
   "competencia": "ELTR.2.1",
   "codigo": "ELTR.2.1.1",
-  "texto": "Análisis de dispositivos eléctricos",
+  "texto": "Funcionamiento cualitativo de dispositivos eléctricos",
   "descripcion": "Conocer y analizar de forma cualitativa el funcionamiento de un dispositivo eléctrico, aplicando los principios y leyes eléctricas y electromagnéticas."
  },
  {
@@ -16241,7 +16241,7 @@
   "areaRef": "ELTR",
   "competencia": "ELTR.2.1",
   "codigo": "ELTR.2.1.3",
-  "texto": "Análisis de dispositivos eléctricos",
+  "texto": "Elementos y funcionamiento de circuitos eléctricos",
   "descripcion": "Comprender y describir la función de los elementos básicos de un circuito eléctrico y el funcionamiento de circuitos simples destinados a producir luz, energía motriz o calor, aplicando los principios y leyes eléctricas y electromagnéticas."
  },
  {
@@ -16259,7 +16259,7 @@
   "areaRef": "ELTR",
   "competencia": "ELTR.2.2",
   "codigo": "ELTR.2.2.2",
-  "texto": "Análisis de dispositivos eléctricos",
+  "texto": "Medición de magnitudes de un circuito eléctrico",
   "descripcion": "Medir las magnitudes básicas de un circuito eléctrico e interpretarlas para verificar su correcto funcionamiento, seleccionando el aparato de medida adecuado y aplicando el procedimiento de medida oportuno."
  },
  {
@@ -16430,7 +16430,7 @@
   "areaRef": "EYDI",
   "competencia": "EYDI.2.3",
   "codigo": "EYDI.2.3.1",
-  "texto": "Propuesta de modelos de negocio",
+  "texto": "Diseño de modelos de negocio innovadores",
   "descripcion": "Proponer un modelo de negocio o de gestión diferenciado que permita dar respuesta a las necesidades de los usuarios, generar valor y contribuir al bienestar económico y social actual, comparando distintos modelos y utilizando estrategias y herramientas de diseño creativo."
  },
  {
@@ -16439,7 +16439,7 @@
   "areaRef": "EYDI",
   "competencia": "EYDI.2.3",
   "codigo": "EYDI.2.3.2",
-  "texto": "Propuesta de modelos de negocio",
+  "texto": "Características organizativas de la empresa",
   "descripcion": "Analizar las características organizativas y funcionales de la empresa, analizando, a partir de ellas, las decisiones de planificación, organización, gestión, control y optimización de actividades de todas sus áreas funcionales, recursos, y asociaciones clave de un modelo de negocio innovador."
  },
  {
@@ -16448,7 +16448,7 @@
   "areaRef": "EYDI",
   "competencia": "EYDI.2.3",
   "codigo": "EYDI.2.3.3",
-  "texto": "Propuesta de modelos de negocio",
+  "texto": "Eficiencia y productividad de procesos productivos",
   "descripcion": "Analizar y tomar decisiones sobre los procesos productivos desde la perspectiva de la eficiencia y la productividad, definiendo el soporte necesario para hacer realidad el modelo de negocio, comprendiendo la relación entre los ingresos y los costes, el proceso de obtención del beneficio y del umbral de rentabilidad de la empresa y las decisiones de producción o compra."
  },
  {
@@ -16457,7 +16457,7 @@
   "areaRef": "EYDI",
   "competencia": "EYDI.2.3",
   "codigo": "EYDI.2.3.4",
-  "texto": "Propuesta de modelos de negocio",
+  "texto": "Marketing mix y fuentes de ingresos",
   "descripcion": "Analizar las características del mercado y explicar, de acuerdo con ellas, la propuesta de valor, canales, relaciones con clientes y otras variables del marketing mix, así como las fuentes de ingresos de un modelo de negocio innovador."
  },
  {
@@ -16484,7 +16484,7 @@
   "areaRef": "EYDI",
   "competencia": "EYDI.2.4",
   "codigo": "EYDI.2.4.3",
-  "texto": "Propuesta de modelos de negocio",
+  "texto": "Exposición del proyecto de negocio",
   "descripcion": "Exponer el proyecto de modelo de negocio llevado a cabo, utilizando las herramientas necesarias que permitan despertar el interés y cautivar a los demás con la propuesta de valor presentada."
  },
  {
@@ -16493,7 +16493,7 @@
   "areaRef": "EYDI",
   "competencia": "EYDI.2.5",
   "codigo": "EYDI.2.5.1",
-  "texto": "Propuesta de modelos de negocio",
+  "texto": "Validación del modelo de negocio en Andalucía",
   "descripcion": "Validar la propuesta de modelo de negocio diseñado dentro de un contexto andaluz determinado, definiéndolo a partir de las tendencias clave del momento, la situación macroeconómica, el mercado y la competencia, comprendiendo todo el proceso llevado a cabo y aplicando técnicas de estudio previsional y herramientas de análisis empresarial."
  },
  {
@@ -16502,7 +16502,7 @@
   "areaRef": "EYDI",
   "competencia": "EYDI.2.5",
   "codigo": "EYDI.2.5.2",
-  "texto": "Propuesta de modelos de negocio",
+  "texto": "Estructura de ingresos y umbral de rentabilidad",
   "descripcion": "Determinar previsionalmente la estructura de ingresos y costes, calculando su beneficio y umbral de rentabilidad, a partir del modelo de negocio planteado."
  },
  {
@@ -17006,7 +17006,7 @@
   "areaRef": "FISI",
   "competencia": "FISI.2.2",
   "codigo": "FISI.2.2.1",
-  "texto": "Análisis de fenómenos físicos",
+  "texto": "Evolución de sistemas naturales con modelos físicos",
   "descripcion": "Analizar y comprender la evolución de los sistemas naturales, utilizando modelos, leyes y teorías de la Física."
  },
  {
@@ -17051,7 +17051,7 @@
   "areaRef": "FISI",
   "competencia": "FISI.2.3",
   "codigo": "FISI.2.3.3",
-  "texto": "Análisis de fenómenos físicos",
+  "texto": "Expresión de resultados en problemas de física",
   "descripcion": "Expresar de forma adecuada los resultados, argumentando las soluciones obtenidas, en la resolución de los ejercicios y problemas que se plantean, bien sea a través de situaciones reales o ideales."
  },
  {
@@ -17096,7 +17096,7 @@
   "areaRef": "FISI",
   "competencia": "FISI.2.5",
   "codigo": "FISI.2.5.3",
-  "texto": "Análisis de fenómenos físicos",
+  "texto": "Debate ético sobre los avances de la física",
   "descripcion": "Valorar la Física, debatiendo de forma fundamentada sobre sus avances y la implicación en la sociedad desde el punto de vista de la ética y de la sostenibilidad."
  },
  {
@@ -17105,7 +17105,7 @@
   "areaRef": "FISI",
   "competencia": "FISI.2.6",
   "codigo": "FISI.2.6.1",
-  "texto": "Análisis de fenómenos físicos",
+  "texto": "Avances científicos en la formulación de leyes físicas",
   "descripcion": "Identificar los principales avances científicos relacionados con la Física que han contribuido a la formulación de las leyes y teorías aceptadas actualmente en el conjunto de las disciplinas científicas, como las fases para el entendimiento de las metodologías de la ciencia, su evolución constante y su universalidad."
  },
  {
@@ -17114,7 +17114,7 @@
   "areaRef": "FISI",
   "competencia": "FISI.2.6",
   "codigo": "FISI.2.6.2",
-  "texto": "Análisis de fenómenos físicos",
+  "texto": "Carácter multidisciplinar de la ciencia",
   "descripcion": "Reconocer el carácter multidisciplinar de la ciencia y las contribuciones de unas disciplinas en otras, estableciendo relaciones entre la Física y la Química, la Biología, la Geología o las Matemáticas."
  },
  {
@@ -17123,7 +17123,7 @@
   "areaRef": "GEOG",
   "competencia": "GEOG.2.1",
   "codigo": "GEOG.2.1.1",
-  "texto": "Análisis y comprensión de contenidos",
+  "texto": "Análisis geográfico de retos ecosociales",
   "descripcion": "Cuestionar modos de vida insostenibles mediante el análisis geográfico de todo tipo de fuentes de información que trate los retos ecosociales presentes y futuros desde argumentos fundados en la relevancia y la necesidad de las acciones para afrontarlos."
  },
  {
@@ -17132,7 +17132,7 @@
   "areaRef": "GEOG",
   "competencia": "GEOG.2.1",
   "codigo": "GEOG.2.1.2",
-  "texto": "Análisis y comprensión de contenidos",
+  "texto": "Debate sobre retos naturales y sociales de España",
   "descripcion": "Debatir sobre los retos naturales y sociales de España de forma comprometida y respetuosa con opiniones ajenas, utilizando estrategias orales con apoyo digital de gráficos, imágenes y cartografía y manejando datos rigurosos."
  },
  {
@@ -17141,7 +17141,7 @@
   "areaRef": "GEOG",
   "competencia": "GEOG.2.1",
   "codigo": "GEOG.2.1.3",
-  "texto": "Análisis y comprensión de contenidos",
+  "texto": "Problemas locales económicos y ambientales",
   "descripcion": "Identificar problemas económicos, sociales y ambientales, a nivel local, valorando las responsabilidades personales y proponiendo actuaciones propias y directas."
  },
  {
@@ -17150,7 +17150,7 @@
   "areaRef": "GEOG",
   "competencia": "GEOG.2.2",
   "codigo": "GEOG.2.2.1",
-  "texto": "Análisis y comprensión de contenidos",
+  "texto": "El paisaje como resultado cultural",
   "descripcion": "Documentar el concepto de paisaje como resultado cultural, identificando paisajes diferentes como producto de procesos culturales distintos."
  },
  {
@@ -17159,7 +17159,7 @@
   "areaRef": "GEOG",
   "competencia": "GEOG.2.2",
   "codigo": "GEOG.2.2.2",
-  "texto": "Análisis y comprensión de contenidos",
+  "texto": "Impacto de la acción antrópica y sostenibilidad",
   "descripcion": "Valorar todo impacto de la acción antrópica desde el principio de sostenibilidad, reconociendo la complejidad sistémica del medio natural y de las propias actividades humanas."
  },
  {
@@ -17168,7 +17168,7 @@
   "areaRef": "GEOG",
   "competencia": "GEOG.2.2",
   "codigo": "GEOG.2.2.3",
-  "texto": "Análisis y comprensión de contenidos",
+  "texto": "Extracción de información de paisajes",
   "descripcion": "Extraer información de paisajes naturales y humanizados, analizando fuentes visuales, distinguiendo elementos geográficos e interpretando la influencia e interrelaciones de factores físicos y humanos."
  },
  {
@@ -17177,7 +17177,7 @@
   "areaRef": "GEOG",
   "competencia": "GEOG.2.3",
   "codigo": "GEOG.2.3.1",
-  "texto": "Análisis y comprensión de contenidos",
+  "texto": "Unidades geomorfológicas y edáficas en mapas",
   "descripcion": "Reflexionar sobre la percepción del espacio geográfico, localizando y reconociendo en mapas las principales unidades geomorfológicas, litológicas y edáficas con características comunes y específicas."
  },
  {
@@ -17186,7 +17186,7 @@
   "areaRef": "GEOG",
   "competencia": "GEOG.2.3",
   "codigo": "GEOG.2.3.2",
-  "texto": "Análisis y comprensión de contenidos",
+  "texto": "Diversidad climática de España",
   "descripcion": "Analizar la diversidad climática en España, distinguiendo los distintos factores y elementos del clima e interpretando mapas meteorológicos junto con otros datos climatológicos proporcionados por las TIG para reconocer y analizar la variedad de tipos de tiempo atmosférico, evaluando su incidencia en la conformación de las diferentes regiones vegetales y valorando sus consecuencias sobre el territorio, la población y los recursos."
  },
  {
@@ -17195,7 +17195,7 @@
   "areaRef": "GEOG",
   "competencia": "GEOG.2.3",
   "codigo": "GEOG.2.3.3",
-  "texto": "Análisis y comprensión de contenidos",
+  "texto": "Diversidad hídrica de la península ibérica",
   "descripcion": "Analizar e interpretar la diversidad hídrica de la península ibérica, identificando los diversos regímenes hídricos existentes, valorando y debatiendo su importancia ecológica y el aprovechamiento que se realiza de los recursos hídricos en nuestro país."
  },
  {
@@ -17204,7 +17204,7 @@
   "areaRef": "GEOG",
   "competencia": "GEOG.2.3",
   "codigo": "GEOG.2.3.4",
-  "texto": "Análisis y comprensión de contenidos",
+  "texto": "Diversidad de paisajes naturales autonómicos",
   "descripcion": "Identificar la diversidad y singularidad de paisajes naturales, comparando su distribución, características y contrastes a escala autonómica, de España y de Europa, así como formas humanas de relación con esos entornos."
  },
  {
@@ -17213,7 +17213,7 @@
   "areaRef": "GEOG",
   "competencia": "GEOG.2.4",
   "codigo": "GEOG.2.4.1",
-  "texto": "Análisis y comprensión de contenidos",
+  "texto": "Escala de representación con TIG",
   "descripcion": "Emplear la escala apropiada para localizar o representar con apoyo de las TIG cualquier fenómeno físico o humano, justificando los métodos y datos elegidos y la delimitación de regiones o categorías de análisis, así como de áreas de transición."
  },
  {
@@ -17222,7 +17222,7 @@
   "areaRef": "GEOG",
   "competencia": "GEOG.2.4",
   "codigo": "GEOG.2.4.2",
-  "texto": "Análisis y comprensión de contenidos",
+  "texto": "Interpretación de fenómenos con TIG",
   "descripcion": "Interpretar los fenómenos naturales y humanos, valorando la información que nos facilitan y ofrecen las Tecnologías de la Información Geográfica (TIG) y métodos y técnicas propios de otras ciencias afines, con la finalidad de identificar, describir, analizar e interpretar los elementos que integran el espacio geográfico, distinguiendo entre paisajes naturales y culturales."
  },
  {
@@ -17231,7 +17231,7 @@
   "areaRef": "GEOG",
   "competencia": "GEOG.2.4",
   "codigo": "GEOG.2.4.3",
-  "texto": "Análisis y comprensión de contenidos",
+  "texto": "Creación de productos explicativos con TIG",
   "descripcion": "Crear productos propios individuales o en grupo con fines explicativos comunicando diagnósticos, proponiendo hipótesis o conclusiones, y aplicando las TIG."
  },
  {
@@ -17240,7 +17240,7 @@
   "areaRef": "GEOG",
   "competencia": "GEOG.2.5",
   "codigo": "GEOG.2.5.1",
-  "texto": "Análisis y comprensión de contenidos",
+  "texto": "Globalización y posición de España en el mundo",
   "descripcion": "Valorar la globalización como contexto de evolución socioeconómica y cultural, analizando el impacto de las relaciones entre España y las grandes áreas geopolíticas y socioeconómicas mundiales a través de distintas fuentes de información, con la finalidad de valorar los aspectos más relevantes de la situación de España en el orden mundial y, más concretamente, en la Unión Europea."
  },
  {
@@ -17249,7 +17249,7 @@
   "areaRef": "GEOG",
   "competencia": "GEOG.2.5",
   "codigo": "GEOG.2.5.2",
-  "texto": "Análisis y comprensión de contenidos",
+  "texto": "Dignidad humana en el sistema económico globalizado",
   "descripcion": "Valorar la dignidad humana analizando críticamente las consecuencias de nuestras acciones sobre las condiciones laborales y de vida, tanto en Andalucía y España como en otros países, investigando el sistema de relaciones económicas globalizadas y los sectores económicos, y planteando soluciones razonables."
  },
  {
@@ -17258,7 +17258,7 @@
   "areaRef": "GEOG",
   "competencia": "GEOG.2.5",
   "codigo": "GEOG.2.5.3",
-  "texto": "Análisis y comprensión de contenidos",
+  "texto": "Preservación del medio natural",
   "descripcion": "Expresar la necesidad de preservar el medio natural indagando sobre los impactos de los modos de producción, distribución y consumo a escala local y global, y proponiendo actuaciones de mejora."
  },
  {
@@ -17267,7 +17267,7 @@
   "areaRef": "GEOG",
   "competencia": "GEOG.2.6",
   "codigo": "GEOG.2.6.1",
-  "texto": "Análisis y comprensión de contenidos",
+  "texto": "Compensación de desigualdades territoriales",
   "descripcion": "Justificar la necesidad de mecanismos de compensación de las desigualdades individuales y territoriales, identificando los procesos pasados y recientes, así como sus causas y consecuencias sociolaborales y demográficas."
  },
  {
@@ -17276,7 +17276,7 @@
   "areaRef": "GEOG",
   "competencia": "GEOG.2.6",
   "codigo": "GEOG.2.6.2",
-  "texto": "Análisis y comprensión de contenidos",
+  "texto": "Desequilibrios socioeconómicos de España y Europa",
   "descripcion": "Argumentar sobre el origen de los desequilibrios socioeconómicos de España y Europa, analizando los factores de localización de las actividades económicas y de la población en una sociedad terciarizada."
  },
  {
@@ -17285,7 +17285,7 @@
   "areaRef": "GEOG",
   "competencia": "GEOG.2.6",
   "codigo": "GEOG.2.6.3",
-  "texto": "Análisis y comprensión de contenidos",
+  "texto": "Ejemplos de desequilibrios en el contexto cercano",
   "descripcion": "Situar en el contexto cercano ejemplos de desequilibrios identificando su origen."
  },
  {
@@ -17294,7 +17294,7 @@
   "areaRef": "GEOG",
   "competencia": "GEOG.2.7",
   "codigo": "GEOG.2.7.1",
-  "texto": "Análisis y comprensión de contenidos",
+  "texto": "Pensamiento geográfico ante nuevos contextos",
   "descripcion": "Reelaborar saberes sobre fenómenos naturales y humanos relevantes a diferentes escalas y en nuevos contextos, aplicando el pensamiento geográfico, movilizando y revisando críticamente conocimientos previos y nuevos, diagnosticando problemas y oportunidades, y razonando sobre posibles previsiones y soluciones."
  },
  {
@@ -17303,7 +17303,7 @@
   "areaRef": "GEOG",
   "competencia": "GEOG.2.7",
   "codigo": "GEOG.2.7.2",
-  "texto": "Análisis y comprensión de contenidos",
+  "texto": "Conflicto entre espacio natural y actividad antrópica",
   "descripcion": "Reflexionar sobre el conflicto generado entre espacio natural y actividad antrópica, analizando, debatiendo y exponiendo en grupo, a partir de argumentos diferentes."
  },
  {
@@ -17312,7 +17312,7 @@
   "areaRef": "GEOG",
   "competencia": "GEOG.2.7",
   "codigo": "GEOG.2.7.3",
-  "texto": "Análisis y comprensión de contenidos",
+  "texto": "Organización territorial del Estado español",
   "descripcion": "Documentar la actual organización territorial del Estado Español, tomando como base la evolución histórica y la Constitución de 1978, analizando, debatiendo y exponiendo en grupo la información extraída de distintas fuentes y recursos, sobre las causas de los desequilibrios y contrastes territoriales, así como sus posibles mecanismos correctores."
  },
  {
@@ -17321,7 +17321,7 @@
   "areaRef": "GYCA",
   "competencia": "GYCA.2.1",
   "codigo": "GYCA.2.1.1",
-  "texto": "Análisis y comprensión de contenidos",
+  "texto": "Interpretación de mapas geológicos y ambientales",
   "descripcion": "Analizar críticamente conceptos y procesos, relacionados con los saberes de la materia, seleccionando e interpretando información en diversos formatos como mapas topográficos, hidrográficos, geológicos, de vegetación, etc., cortes, modelos, diagramas de flujo u otros."
  },
  {
@@ -17330,7 +17330,7 @@
   "areaRef": "GYCA",
   "competencia": "GYCA.2.1",
   "codigo": "GYCA.2.1.2",
-  "texto": "Análisis y comprensión de contenidos",
+  "texto": "Comunicación de saberes geológicos y ambientales",
   "descripcion": "Comunicar informaciones u opiniones razonadas relacionadas con los saberes de la materia, transmitiéndolas de forma clara y rigurosa y utilizando el vocabulario y los formatos adecuados como mapas topográficos, hidrográficos, geológicos, de vegetación, etc., cortes, modelos, diagramas de flujo, u otros y respondiendo con precisión a las cuestiones que puedan surgir durante la exposición."
  },
  {
@@ -17339,7 +17339,7 @@
   "areaRef": "GYCA",
   "competencia": "GYCA.2.1",
   "codigo": "GYCA.2.1.3",
-  "texto": "Análisis y comprensión de contenidos",
+  "texto": "Discusión científica en geología y ambiente",
   "descripcion": "Realizar discusiones científicas sobre aspectos relacionados con los saberes de la materia, considerando los puntos fuertes y débiles de diferentes posturas de forma razonada y con actitud, receptiva y respetuosa ante la opinión de los demás."
  },
  {
@@ -17348,7 +17348,7 @@
   "areaRef": "GYCA",
   "competencia": "GYCA.2.2",
   "codigo": "GYCA.2.2.1",
-  "texto": "Análisis y comprensión de contenidos",
+  "texto": "Creación de contenidos geológicos con fuentes citadas",
   "descripcion": "Plantear y resolver cuestiones y crear contenidos relacionados con los saberes de la materia, localizando y citando fuentes de forma adecuada; seleccionando, organizando y analizando críticamente la información."
  },
  {
@@ -17357,7 +17357,7 @@
   "areaRef": "GYCA",
   "competencia": "GYCA.2.2",
   "codigo": "GYCA.2.2.2",
-  "texto": "Análisis y comprensión de contenidos",
+  "texto": "Veracidad frente a pseudociencias ambientales",
   "descripcion": "Contrastar y justificar la veracidad de información relacionada con los saberes de la materia, utilizando fuentes fiables, aportando datos y adoptando una actitud crítica y escéptica hacia informaciones sin una base científica como pseudociencias, teorías conspiratorias, creencias infundadas, bulos, etc."
  },
  {
@@ -17366,7 +17366,7 @@
   "areaRef": "GYCA",
   "competencia": "GYCA.2.3",
   "codigo": "GYCA.2.3.1",
-  "texto": "Análisis y comprensión de contenidos",
+  "texto": "Fiabilidad de conclusiones geológicas",
   "descripcion": "Evaluar la fiabilidad de las conclusiones de un trabajo de investigación o divulgación científica relacionado con los saberes de la materia de Geología y Ciencias Ambientales de acuerdo a la interpretación de los resultados obtenidos."
  },
  {
@@ -17375,7 +17375,7 @@
   "areaRef": "GYCA",
   "competencia": "GYCA.2.3",
   "codigo": "GYCA.2.3.2",
-  "texto": "Análisis y comprensión de contenidos",
+  "texto": "Labor colectiva de la investigación científica",
   "descripcion": "Argumentar, utilizando ejemplos concretos, sobre la contribución de la ciencia a la sociedad y la labor de las personas dedicadas a ella, destacando el papel de la mujer y entendiendo la investigación como una labor colectiva e interdisciplinar en constante evolución influida por el contexto político y los recursos económicos."
  },
  {
@@ -17384,7 +17384,7 @@
   "areaRef": "GYCA",
   "competencia": "GYCA.2.4",
   "codigo": "GYCA.2.4.1",
-  "texto": "Análisis y comprensión de contenidos",
+  "texto": "Resolución de problemas geoambientales",
   "descripcion": "Explicar fenómenos relacionados con los saberes de la materia de Geología y Ciencias Ambientales a través del planteamiento y resolución de problemas buscando y utilizando las estrategias y recursos adecuados."
  },
  {
@@ -17393,7 +17393,7 @@
   "areaRef": "GYCA",
   "competencia": "GYCA.2.4",
   "codigo": "GYCA.2.4.2",
-  "texto": "Análisis y comprensión de contenidos",
+  "texto": "Reformulación de soluciones geoambientales",
   "descripcion": "Analizar críticamente la solución a un problema relacionado con los saberes de la materia de Geología y Ciencias Ambientales y reformular los procedimientos utilizados o conclusiones si dicha solución no fuese viable o ante nuevos datos aportados o encontrados con posterioridad."
  },
  {
@@ -17402,7 +17402,7 @@
   "areaRef": "GYCA",
   "competencia": "GYCA.2.5",
   "codigo": "GYCA.2.5.1",
-  "texto": "Análisis y comprensión de contenidos",
+  "texto": "Hábitos sostenibles y recursos geológicos",
   "descripcion": "Promover y adoptar hábitos sostenibles a partir del análisis de los diferentes tipos de recursos geológicos y de la biosfera y sus posibles usos."
  },
  {
@@ -17411,7 +17411,7 @@
   "areaRef": "GYCA",
   "competencia": "GYCA.2.5",
   "codigo": "GYCA.2.5.2",
-  "texto": "Análisis y comprensión de contenidos",
+  "texto": "Explotación de recursos y deterioro ambiental",
   "descripcion": "Relacionar el impacto de la explotación de determinados recursos con el deterioro medioambiental argumentando sobre la importancia de su consumo y aprovechamiento responsables."
  },
  {
@@ -17420,7 +17420,7 @@
   "areaRef": "GYCA",
   "competencia": "GYCA.2.6",
   "codigo": "GYCA.2.6.1",
-  "texto": "Análisis y comprensión de contenidos",
+  "texto": "Historia geológica de un área determinada",
   "descripcion": "Deducir y explicar la historia geológica de un área determinada, identificando y analizando sus elementos geológicos a partir de información en diferentes formatos: fotografías, cortes, mapas geológicos u otros."
  },
  {
@@ -17429,7 +17429,7 @@
   "areaRef": "GYCA",
   "competencia": "GYCA.2.6",
   "codigo": "GYCA.2.6.2",
-  "texto": "Análisis y comprensión de contenidos",
+  "texto": "Predicción de riesgos geológicos naturales",
   "descripcion": "Realizar predicciones sobre fenómenos geológicos y riesgos naturales en un área determinada, analizando la influencia de diferentes factores sobre ellos: actividades humanas, climatología, relieve, vegetación, localización, procesos geológicos internos, etc. y proponer acciones para prevenir o minimizar sus efectos negativos."
  },
  {
@@ -17438,7 +17438,7 @@
   "areaRef": "GYCA",
   "competencia": "GYCA.2.6",
   "codigo": "GYCA.2.6.3",
-  "texto": "Análisis y comprensión de contenidos",
+  "texto": "Geodinámica interna mediante tectónica de placas",
   "descripcion": "Explicar, a través de la Teoría de la Tectónica de Placas, los fenómenos geológicos de una región determinada de Andalucía, para que el alumnado sea capaz de comprender las manifestaciones actuales de la geodinámica interna de la Tierra."
  },
  {
@@ -17447,7 +17447,7 @@
   "areaRef": "GYCA",
   "competencia": "GYCA.2.6",
   "codigo": "GYCA.2.6.4",
-  "texto": "Análisis y comprensión de contenidos",
+  "texto": "Magmatismo y metamorfismo en Andalucía",
   "descripcion": "Explicar, a través de la Teoría de la Tectónica de Placas, los procesos relacionados con el magmatismo, diagénesis y metamorfismo de una región determinada de Andalucía, para que el alumnado sea capaz de comprender las manifestaciones actuales de la geodinámica externa de la Tierra."
  },
  {
@@ -17456,7 +17456,7 @@
   "areaRef": "GRIE",
   "competencia": "GRIE.2.1",
   "codigo": "GRIE.2.1.1",
-  "texto": "Análisis y comprensión de contenidos",
+  "texto": "Traducción directa e inversa de textos griegos",
   "descripcion": "Realizar traducciones directas o inversas de textos o fragmentos de dificultad adecuada y progresiva, empleando una redacción estilísticamente correcta y conforme a las normas gramaticales y ortográficas."
  },
  {
@@ -17465,7 +17465,7 @@
   "areaRef": "GRIE",
   "competencia": "GRIE.2.1",
   "codigo": "GRIE.2.1.2",
-  "texto": "Análisis y comprensión de contenidos",
+  "texto": "Unidades morfosintácticas de la lengua griega",
   "descripcion": "Identificar y analizar, de manera autónoma, unidades lingüísticas regulares e irregulares en el plano morfosintáctico de la lengua, estableciendo la correspondencia y las divergencias con las de la lengua de enseñanza y con otras lenguas conocidas."
  },
  {
@@ -17474,7 +17474,7 @@
   "areaRef": "GRIE",
   "competencia": "GRIE.2.1",
   "codigo": "GRIE.2.1.3",
-  "texto": "Análisis y comprensión de contenidos",
+  "texto": "Selección de significado de palabras polisémicas",
   "descripcion": "Seleccionar el significado apropiado de palabras polisémicas y justificar la decisión, teniendo en cuenta la información cotextual o contextual y utilizando herramientas de apoyo al proceso de traducción en distintos soportes, tales como listas de vocabulario, léxicos de frecuencia, glosarios, diccionarios, mapas o atlas y gramáticas."
  },
  {
@@ -17483,7 +17483,7 @@
   "areaRef": "GRIE",
   "competencia": "GRIE.2.1",
   "codigo": "GRIE.2.1.4",
-  "texto": "Análisis y comprensión de contenidos",
+  "texto": "Revisión y mejora de traducciones griegas",
   "descripcion": "Revisar y subsanar las propias traducciones y las de los compañeros y las compañeras, realizando propuestas de mejora y argumentando los cambios con terminología especializada a partir de la reflexión lingüística."
  },
  {
@@ -17492,7 +17492,7 @@
   "areaRef": "GRIE",
   "competencia": "GRIE.2.1",
   "codigo": "GRIE.2.1.5",
-  "texto": "Análisis y comprensión de contenidos",
+  "texto": "Lectura directa de textos griegos",
   "descripcion": "Realizar la lectura directa de textos griegos de dificultad adecuada, identificando las unidades lingüísticas más frecuentes de la lengua griega, comparándolas con las de las lenguas del repertorio lingüístico propio y asimilando los aspectos morfológicos, sintácticos y léxicos del griego."
  },
  {
@@ -17501,7 +17501,7 @@
   "areaRef": "GRIE",
   "competencia": "GRIE.2.1",
   "codigo": "GRIE.2.1.6",
-  "texto": "Análisis y comprensión de contenidos",
+  "texto": "Registro del progreso en el aprendizaje del griego",
   "descripcion": "Registrar los progresos y dificultades de aprendizaje de la lengua griega, seleccionando las estrategias más adecuadas y eficaces para superar esas dificultades y consolidar su aprendizaje, realizando actividades de planificación del propio aprendizaje, autoevaluación y coevaluación, como las propuestas en el Portfolio Europeo de las Lenguas (PEL) o en un diario de aprendizaje, haciéndolos explícitos y compartiéndolos."
  },
  {
@@ -17510,7 +17510,7 @@
   "areaRef": "GRIE",
   "competencia": "GRIE.2.2",
   "codigo": "GRIE.2.2.1",
-  "texto": "Análisis y comprensión de contenidos",
+  "texto": "Deducción del significado etimológico",
   "descripcion": "Deducir el significado etimológico de un término de uso común e inferir el significado de términos de nueva aparición o procedentes de léxico especializado, aplicando estrategias de reconocimiento de étimos y formantes griegos, atendiendo a los cambios fonéticos, morfológicos o semánticos que hayan tenido lugar."
  },
  {
@@ -17519,7 +17519,7 @@
   "areaRef": "GRIE",
   "competencia": "GRIE.2.2",
   "codigo": "GRIE.2.2.2",
-  "texto": "Análisis y comprensión de contenidos",
+  "texto": "Relación del griego con las lenguas modernas",
   "descripcion": "Explicar la relación del griego con las lenguas modernas, analizando los elementos lingüísticos comunes de origen griego y utilizando con iniciativa estrategias y conocimientos de las lenguas y lenguajes que conforman el repertorio propio."
  },
  {
@@ -17528,7 +17528,7 @@
   "areaRef": "GRIE",
   "competencia": "GRIE.2.2",
   "codigo": "GRIE.2.2.3",
-  "texto": "Análisis y comprensión de contenidos",
+  "texto": "Estereotipos lingüísticos y diversidad cultural",
   "descripcion": "Analizar críticamente estereotipos lingüísticos, adoptando una actitud de respeto y valoración de la diversidad como riqueza cultural, lingüística y dialectal."
  },
  {
@@ -17537,7 +17537,7 @@
   "areaRef": "GRIE",
   "competencia": "GRIE.2.3",
   "codigo": "GRIE.2.3.1",
-  "texto": "Análisis y comprensión de contenidos",
+  "texto": "Interpretación de textos literarios griegos",
   "descripcion": "Interpretar y comentar textos y fragmentos literarios de diversa índole de creciente complejidad, aplicando estrategias de análisis y reflexión que impliquen movilizar la propia experiencia, comprender el mundo y la condición humana y desarrollar la sensibilidad estética y el hábito lector."
  },
  {
@@ -17546,7 +17546,7 @@
   "areaRef": "GRIE",
   "competencia": "GRIE.2.3",
   "codigo": "GRIE.2.3.2",
-  "texto": "Análisis y comprensión de contenidos",
+  "texto": "Géneros y valores de la literatura griega",
   "descripcion": "Analizar y explicar los géneros, temas, tópicos y valores éticos o estéticos de obras o fragmentos literarios griegos, comparándolos con obras o fragmentos literarios posteriores desde un enfoque intertextual."
  },
  {
@@ -17555,7 +17555,7 @@
   "areaRef": "GRIE",
   "competencia": "GRIE.2.3",
   "codigo": "GRIE.2.3.3",
-  "texto": "Análisis y comprensión de contenidos",
+  "texto": "Conceptos culturales de la civilización helena",
   "descripcion": "Identificar y definir palabras griegas que designan conceptos fundamentales para el estudio y comprensión de la civilización helena y cuyo aprendizaje combina conocimientos léxicos y culturales, tales como ἀρητή, δόξα, ἀγών, κάθαρσις, ὓβρις en textos de diferentes formatos."
  },
  {
@@ -17564,7 +17564,7 @@
   "areaRef": "GRIE",
   "competencia": "GRIE.2.3",
   "codigo": "GRIE.2.3.4",
-  "texto": "Análisis y comprensión de contenidos",
+  "texto": "Creación literaria inspirada en la cultura griega",
   "descripcion": "Crear textos individuales o colectivos con intención literaria y conciencia de estilo, en distintos soportes y con ayuda de otros lenguajes artísticos y audiovisuales, a partir de la lectura de obras o fragmentos significativos en los que se haya partido de la civilización y la cultura griegas como fuente de inspiración."
  },
  {
@@ -18923,7 +18923,7 @@
   "areaRef": "MATE",
   "competencia": "MATE.2.1",
   "codigo": "MATE.2.1.2",
-  "texto": "Obtención de soluciones matemáticas",
+  "texto": "Soluciones matemáticas de problemas cotidianos",
   "descripcion": "Obtener todas las posibles soluciones matemáticas de problemas de la vida cotidiana y de la ciencia y la tecnología, usando la estrategia de resolución más apropiada y describiendo el procedimiento utilizado."
  },
  {
@@ -21101,7 +21101,7 @@
   "areaRef": "ALS",
   "competencia": "ALS.2.6",
   "codigo": "ALS.2.6.1",
-  "texto": "Descriptor genérico",
+  "texto": "Búsqueda y contraste de fuentes de información",
   "descripcion": "Buscar, seleccionar y contrastar información mediante la consulta de diferentes fuentes, desarrollando estrategias de búsqueda, selección y tratamiento de información relativas a procesos y acontecimientos relevantes del presente y del pasado, calibrando su fiabilidad y pertinencia en función de los objetivos de lectura; así como identificar, valorar y mostrar interés por los principales problemas que afectan a la sociedad, adoptando una posición crítica hacia los mismos."
  },
  {
@@ -21110,7 +21110,7 @@
   "areaRef": "ALS",
   "competencia": "ALS.2.6",
   "codigo": "ALS.2.6.2",
-  "texto": "Descriptor genérico",
+  "texto": "Reelaboración de información en investigaciones",
   "descripcion": "Organizar la información de diferentes fuentes relativas a procesos y acontecimientos relevantes del presente y del pasado y reelaborarla en diferentes tipos de textos, integrando y presentando contenidos propios en forma de esquemas, tablas informativas y otros tipos de formatos mediante el desarrollo de estrategias de búsqueda, selección y tratamiento de información y elaborando trabajos de investigación de manera dirigida en diferentes soportes sobre diversos temas de interés académico, personal o social a partir de la información seleccionada."
  },
  {
@@ -21119,7 +21119,7 @@
   "areaRef": "ALS",
   "competencia": "ALS.2.7",
   "codigo": "ALS.2.7.1",
-  "texto": "Descriptor genérico",
+  "texto": "Análisis crítico de manifestaciones artísticas",
   "descripcion": "Analizar de manera crítica obras de distintas manifestaciones artísticas, tanto nacionales como universales, ampliando el itinerario lector y la propia identidad lectora, valorando la diversidad cultural y la cooperación, mostrando la implicación y la respuesta personal."
  },
  {
@@ -21128,7 +21128,7 @@
   "areaRef": "ALS",
   "competencia": "ALS.2.7",
   "codigo": "ALS.2.7.2",
-  "texto": "Descriptor genérico",
+  "texto": "Actuación empática en contextos interculturales",
   "descripcion": "Actuar de forma adecuada, empática y respetuosa en diferentes contextos y situaciones interculturales construyendo vínculos entre las diferentes lenguas y culturas, rechazando cualquier tipo de discriminación, prejuicio y estereotipo en contextos comunicativos cotidianos, considerando y proponiendo vías efectivas de solución a aquellos factores socioculturales que dificulten la comunicación y la convivencia."
  },
  {
@@ -21137,7 +21137,7 @@
   "areaRef": "ALS",
   "competencia": "ALS.2.7",
   "codigo": "ALS.2.7.3",
-  "texto": "Descriptor genérico",
+  "texto": "Conexión de España y Andalucía con la historia",
   "descripcion": "Identificar e interpretar la conexión de España y Andalucía con los grandes procesos históricos, valorando su evolución y vinculándola con los desafíos del mundo actual."
  },
  {
@@ -21146,7 +21146,7 @@
   "areaRef": "ALS",
   "competencia": "ALS.2.8",
   "codigo": "ALS.2.8.1",
-  "texto": "Descriptor genérico",
+  "texto": "Revisión autónoma de textos propios",
   "descripcion": "Revisar los propios textos, orales y escritos, de manera autónoma, en lengua castellana y en lengua extranjera, reflexionando sobre su funcionamiento, con el fin de mejorar las situaciones comunicativas cotidianas."
  },
  {
@@ -21155,7 +21155,7 @@
   "areaRef": "ALS",
   "competencia": "ALS.2.8",
   "codigo": "ALS.2.8.2",
-  "texto": "Descriptor genérico",
+  "texto": "Metalenguaje sobre elecciones lingüísticas",
   "descripcion": "Utilizar un metalenguaje específico, en lengua castellana y en lengua extranjera, para explicar y argumentar la interrelación entre el propósito comunicativo y las elecciones lingüísticas en situaciones comunicativas cotidianas, consultando de manera autónoma diccionarios, manuales y gramáticas."
  },
  {
@@ -21164,7 +21164,7 @@
   "areaRef": "ALS",
   "competencia": "ALS.2.8",
   "codigo": "ALS.2.8.3",
-  "texto": "Descriptor genérico",
+  "texto": "Autoevaluación del progreso lingüístico oral y escrito",
   "descripcion": "Identificar, registrar y analizar de forma crítica los progresos y dificultades de aprendizaje, a nivel oral y escrito, en lengua castellana y en lengua extranjera, realizando actividades de autoevaluación y coevaluación como las propuestas en el Portfolio Europeo de las Lenguas (PLE), en un soporte analógico o digital."
  },
  {
@@ -21173,7 +21173,7 @@
   "areaRef": "ALS",
   "competencia": "ALS.2.9",
   "codigo": "ALS.2.9.1",
-  "texto": "Descriptor genérico",
+  "texto": "Mecanismos históricos de convivencia democrática",
   "descripcion": "Identificar, interpretar y analizar los mecanismos que han regulado la convivencia y la vida en común a lo largo de la historia, destacando las actitudes pacíficas y tolerantes que favorecen la convivencia democrática."
  },
  {
@@ -21182,7 +21182,7 @@
   "areaRef": "ALS",
   "competencia": "ALS.2.9",
   "codigo": "ALS.2.9.2",
-  "texto": "Descriptor genérico",
+  "texto": "Estrategias comunicativas no discriminatorias",
   "descripcion": "Aplicar de forma autónoma estrategias comunicativas variadas que ayuden a facilitar la comprensión, explicación y producción de mensajes que respeten los derechos humanos, la igualdad y un uso no discriminatorio de las lenguas, en cualquier ámbito de uso."
  },
  {
@@ -21191,7 +21191,7 @@
   "areaRef": "ALS",
   "competencia": "ALS.2.10",
   "codigo": "ALS.2.10.1",
-  "texto": "Descriptor genérico",
+  "texto": "Análisis sistémico del paisaje y ciclos demográficos",
   "descripcion": "Identificar y analizar de forma crítica el entorno desde una perspectiva sistémica e integradora, a través del concepto de paisaje y sus elementos, reflexionando sobre la evolución de los ciclos demográficos."
  },
  {
@@ -21200,7 +21200,7 @@
   "areaRef": "ALS",
   "competencia": "ALS.2.10",
   "codigo": "ALS.2.10.2",
-  "texto": "Descriptor genérico",
+  "texto": "Defensa y conservación del entorno",
   "descripcion": "Conocer, promover y potenciar de forma activa actitudes de defensa, protección, conservación y mejora del entorno, fomentando alternativas saludables, sostenibles, enriquecedoras y respetuosas."
  },
  {
@@ -21209,7 +21209,7 @@
   "areaRef": "ACA",
   "competencia": "ACA.1.1",
   "codigo": "ACA.1.1.1",
-  "texto": "Descriptor genérico",
+  "texto": "Explicación de fenómenos naturales cotidianos",
   "descripcion": "Reconocer los motivos por los que ocurren los principales fenómenos naturales más relevantes, a partir de situaciones cotidianas y locales, con objeto de explicarlos en términos de principios, leyes y principios científicos adecuados, para que se establezcan relaciones constructivas entre la ciencia, el entorno profesional y la vida cotidiana, y poner en valor la contribución de la ciencia a la mejora de la calidad de vida de su entorno."
  },
  {
@@ -21218,7 +21218,7 @@
   "areaRef": "ACA",
   "competencia": "ACA.1.1",
   "codigo": "ACA.1.1.2",
-  "texto": "Descriptor genérico",
+  "texto": "Contribución de científicos españoles a la sociedad",
   "descripcion": "Justificar la contribución de la ciencia a la mejora de la calidad de vida y la labor de los hombres y mujeres dedicados a su desarrollo, como los científicos españoles Isaac Peral, Severo Ochoa, Ramón y Cajal, Margarita Salas, etc., entendiendo la investigación como una labor colectiva en constante evolución fruto de la interacción entre la ciencia, la tecnología, la sociedad y el medio ambiente."
  },
  {
@@ -21227,7 +21227,7 @@
   "areaRef": "ACA",
   "competencia": "ACA.1.2",
   "codigo": "ACA.1.2.1",
-  "texto": "Descriptor genérico",
+  "texto": "Formulación de preguntas e hipótesis científicas",
   "descripcion": "Realizar observaciones sobre el entorno cotidiano, plantear preguntas e hipótesis que puedan ser respondidas o contrastadas utilizando los métodos científicos, para alcanzar la capacidad de realizar observaciones, formular preguntas e hipótesis y comprobar la veracidad de las mismas mediante el empleo de la experimentación, el análisis de los resultados, y utilizando las herramientas y normativas que sean más convenientes en cada caso, explicando fenómenos naturales y realizando predicciones sobre estos."
  },
  {
@@ -21236,7 +21236,7 @@
   "areaRef": "ACA",
   "competencia": "ACA.1.2",
   "codigo": "ACA.1.2.2",
-  "texto": "Descriptor genérico",
+  "texto": "Diseño de experimentos y obtención de datos",
   "descripcion": "Diseñar y realizar experimentos y obtener datos cuantitativos y cualitativos sobre fenómenos que suceden en su entorno y en el laboratorio utilizando con corrección los instrumentos, herramientas o técnicas adecuadas a la hora de obtener resultados claros que respondan a cuestiones concretas o que contrasten la veracidad de una hipótesis, afianzando a través de la práctica el uso de la metodología científica."
  },
  {
@@ -21245,7 +21245,7 @@
   "areaRef": "ACA",
   "competencia": "ACA.1.2",
   "codigo": "ACA.1.2.3",
-  "texto": "Descriptor genérico",
+  "texto": "Interpretación de resultados de investigación",
   "descripcion": "Interpretar y reflexionar sobre los resultados obtenidos en proyectos de investigación utilizando el razonamiento y, cuando sea necesario, herramientas matemáticas y tecnológicas."
  },
  {
@@ -21254,7 +21254,7 @@
   "areaRef": "ACA",
   "competencia": "ACA.1.3",
   "codigo": "ACA.1.3.1",
-  "texto": "Descriptor genérico",
+  "texto": "Hábitos saludables y sostenibles",
   "descripcion": "Evaluar los efectos de determinadas acciones cotidianas y costumbres individuales sobre el organismo y el medio natural y reconocer e identificar hábitos saludables y sostenibles basados en los conocimientos científicos y la información disponible, cuyo significado les provea de las destrezas suficientes para conseguir estar sano."
  },
  {
@@ -21263,7 +21263,7 @@
   "areaRef": "ACA",
   "competencia": "ACA.1.3",
   "codigo": "ACA.1.3.2",
-  "texto": "Descriptor genérico",
+  "texto": "Preservación de la biodiversidad y la salud",
   "descripcion": "Relacionar la preservación de la biodiversidad, la conservación del medio ambiente, la protección de los seres vivos del entorno, el desarrollo sostenible y la calidad de vida con la importancia de los hábitos que mejoran la salud individual, evitan o minimizan los impactos medioambientales negativos en su entorno y son compatibles con un desarrollo sostenible (alimentación sana, ejercicio físico, interacción social, consumo responsable…)."
  },
  {
@@ -21272,7 +21272,7 @@
   "areaRef": "ACA",
   "competencia": "ACA.1.4",
   "codigo": "ACA.1.4.1",
-  "texto": "Descriptor genérico",
+  "texto": "Aplicación integrada de física y matemáticas",
   "descripcion": "Conocer la aplicación integrada de los procedimientos propios de las ciencias físicas y las matemáticas implicadas en contextos diversos, interrelacionando conceptos y procedimientos para aplicarlos en situaciones de la vida cotidiana a la resolución de problemas del entorno personal, social y del ámbito profesional correspondiente."
  },
  {
@@ -21281,7 +21281,7 @@
   "areaRef": "ACA",
   "competencia": "ACA.1.5",
   "codigo": "ACA.1.5.1",
-  "texto": "Descriptor genérico",
+  "texto": "Resiliencia ante el error en el aprendizaje",
   "descripcion": "Mostrar resiliencia ante los retos académicos, poniendo en práctica estrategias de detección, aceptación y corrección del error como parte del proceso de aprendizaje, enfrentándose a pequeños retos que contribuyan a la reflexión sobre el propio pensamiento y desarrollando un autoconcepto positivo ante las ciencias."
  },
  {
@@ -21290,7 +21290,7 @@
   "areaRef": "ACA",
   "competencia": "ACA.1.5",
   "codigo": "ACA.1.5.2",
-  "texto": "Descriptor genérico",
+  "texto": "Reflexión sobre errores en pequeños retos",
   "descripcion": "Resolver pequeños retos mostrando una reflexión sobre los errores cometidos."
  },
  {
@@ -21299,7 +21299,7 @@
   "areaRef": "ACA",
   "competencia": "ACA.1.6",
   "codigo": "ACA.1.6.1",
-  "texto": "Descriptor genérico",
+  "texto": "Trabajo colaborativo en proyectos científicos",
   "descripcion": "Asumir responsablemente una función concreta dentro de un proyecto científico utilizando espacios virtuales cuando sea necesario, aportando valor, analizando críticamente las contribuciones del grupo respetando la diversidad, y favoreciendo la inclusión y la igualdad de género."
  },
  {
@@ -21308,7 +21308,7 @@
   "areaRef": "ACA",
   "competencia": "ACA.1.6",
   "codigo": "ACA.1.6.2",
-  "texto": "Descriptor genérico",
+  "texto": "Emprendimiento de proyectos científicos guiados",
   "descripcion": "Emprender, de forma guiada y de acuerdo a la metodología adecuada, proyectos científicos colaborativos orientados a la mejora y a la creación de valor en la sociedad."
  },
  {
@@ -21317,7 +21317,7 @@
   "areaRef": "ACA",
   "competencia": "ACA.1.7",
   "codigo": "ACA.1.7.1",
-  "texto": "Descriptor genérico",
+  "texto": "Representaciones para resolver problemas cotidianos",
   "descripcion": "Elaborar representaciones que ayuden en la búsqueda de estrategias de resolución de problemas y situaciones de la vida cotidiana, organizando los datos dados y comprendiendo las preguntas formuladas para aprender a elaborar mecanismos capaces de dar solución a los problemas planteados."
  },
  {
@@ -21326,7 +21326,7 @@
   "areaRef": "ACA",
   "competencia": "ACA.1.7",
   "codigo": "ACA.1.7.2",
-  "texto": "Descriptor genérico",
+  "texto": "Resolución de problemas con algoritmos",
   "descripcion": "Hallar las soluciones de un problema utilizando los datos e información aportados, los propios conocimientos y las estrategias y herramientas apropiadas, así como algoritmos cuyo uso reiterado mejore la destreza y confianza en la resolución de problemas."
  },
  {
@@ -21335,7 +21335,7 @@
   "areaRef": "ACA",
   "competencia": "ACA.1.7",
   "codigo": "ACA.1.7.3",
-  "texto": "Descriptor genérico",
+  "texto": "Comprobación de la corrección de soluciones",
   "descripcion": "Comprobar la corrección de las soluciones de un problema y su coherencia en el contexto planteado."
  },
  {
@@ -21344,7 +21344,7 @@
   "areaRef": "ACA",
   "competencia": "ACA.1.7",
   "codigo": "ACA.1.7.4",
-  "texto": "Descriptor genérico",
+  "texto": "Uso de herramientas tecnológicas en problemas",
   "descripcion": "Emplear herramientas tecnológicas adecuadas en la representación, la resolución de problemas y la comprobación de las soluciones."
  },
  {
@@ -21353,7 +21353,7 @@
   "areaRef": "ACA",
   "competencia": "ACA.1.8",
   "codigo": "ACA.1.8.1",
-  "texto": "Descriptor genérico",
+  "texto": "Comunicación de información científica y matemática",
   "descripcion": "Seleccionar, organizar y comunicar información científica y matemática de forma clara y rigurosa de manera verbal, gráfica, numérica, etc., utilizando el formato más adecuado."
  },
  {
@@ -21362,7 +21362,7 @@
   "areaRef": "ACA",
   "competencia": "ACA.1.8",
   "codigo": "ACA.1.8.2",
-  "texto": "Descriptor genérico",
+  "texto": "Análisis crítico de información científica cotidiana",
   "descripcion": "Analizar e interpretar información científica y matemática presente en la vida cotidiana manteniendo una actitud crítica, estableciendo relaciones entre el concepto objeto de estudio y el procedimiento aplicado en su análisis."
  },
  {
@@ -21371,7 +21371,7 @@
   "areaRef": "ACA",
   "competencia": "ACA.1.8",
   "codigo": "ACA.1.8.3",
-  "texto": "Descriptor genérico",
+  "texto": "Citación de fuentes científicas fiables",
   "descripcion": "Emplear y citar de forma adecuada fuentes fiables seleccionando la información científica relevante en la consulta y creación de contenidos para la mejora del aprendizaje propio y colectivo."
  },
  {
@@ -21380,7 +21380,7 @@
   "areaRef": "ACS",
   "competencia": "ACS.1.1",
   "codigo": "ACS.1.1.1",
-  "texto": "Descriptor genérico",
+  "texto": "Perspectiva sistémica del entorno geográfico",
   "descripcion": "Analizar e interpretar el entorno para que el alumnado pueda asumir sus derechos y responsabilidades y pueda contribuir al bienestar futuro y al desarrollo sostenible desde una perspectiva sistémica e integradora, a través de conceptos y procedimientos geográficos, identificando algunos de sus elementos y las interrelaciones existentes, valorando el grado de sostenibilidad y equilibrio de los espacios a partir de actitudes de defensa, protección, conservación y mejora de su entorno más cercano."
  },
  {
@@ -21389,7 +21389,7 @@
   "areaRef": "ACS",
   "competencia": "ACS.1.1",
   "codigo": "ACS.1.1.2",
-  "texto": "Descriptor genérico",
+  "texto": "Culturas y civilizaciones desde la prehistoria",
   "descripcion": "Relacionar las culturas y civilizaciones que se han desarrollado desde la prehistoria con las distintas identidades colectivas que se han construido hasta la edad moderna, contextualizando los fenómenos que se han ido produciendo y las respuestas que se han dado en cada momento de la historia, reflexionando sobre los múltiples significados que adoptan y las distintas finalidades de las mismas, y explicando y valorando la realidad multicultural generada a lo largo del tiempo."
  },
  {
@@ -21398,7 +21398,7 @@
   "areaRef": "ACS",
   "competencia": "ACS.1.1",
   "codigo": "ACS.1.1.3",
-  "texto": "Descriptor genérico",
+  "texto": "Conservación del patrimonio andaluz",
   "descripcion": "Valorar, proteger y conservar el patrimonio histórico-artístico, cultural y natural para comprender el entorno cercano, especialmente de la Comunidad Autónoma andaluza, y como un recurso esencial para el disfrute y desarrollo de los pueblos, realizando propuestas que contribuyan a su conservación y a un desarrollo ecosocial sostenible."
  },
  {
@@ -21407,7 +21407,7 @@
   "areaRef": "ACS",
   "competencia": "ACS.1.2",
   "codigo": "ACS.1.2.1",
-  "texto": "Descriptor genérico",
+  "texto": "Unificación del espacio europeo",
   "descripcion": "Explicar el proceso de unificación del espacio europeo y su relevancia en la construcción de la sociedad española en el escenario de los grandes flujos de difusión cultural y técnica y en el contexto de las relaciones políticas y de la economía internacional para entender la política, la sociedad y la cultura de nuestro país."
  },
  {
@@ -21416,7 +21416,7 @@
   "areaRef": "ACS",
   "competencia": "ACS.1.2",
   "codigo": "ACS.1.2.2",
-  "texto": "Descriptor genérico",
+  "texto": "Papel de España en las redes europeas",
   "descripcion": "Identificar y valorar el papel que ha desempeñado España en las redes de intercambio europeas y qué implicaciones tiene en el presente y en el futuro de la sociedad española y andaluza, el hecho de formar parte de la Unión, y las principales instituciones europeas, analizando sus principios rectores, sus normas de funcionamiento y sus funciones, juzgando su papel en los conflictos internacionales y reconociendo su contribución a la paz y a la cooperación internacional, al desarrollo sostenible, a la lucha contra el cambio climático y a la ciudadanía global."
  },
  {
@@ -21425,7 +21425,7 @@
   "areaRef": "ACS",
   "competencia": "ACS.1.2",
   "codigo": "ACS.1.2.3",
-  "texto": "Descriptor genérico",
+  "texto": "Interés por la realidad internacional",
   "descripcion": "Promover el interés del alumnado por la realidad internacional y los problemas y retos que plantea el mundo en el que vivimos, expresando la importancia de implicarse en la búsqueda de soluciones y en el modo de concretarlos desde la propia capacidad de acción a partir de la riqueza que supone la diversidad cultural, valorando la contribución de programas y misiones dirigidos por los Estados, los organismos internacionales y las asociaciones civiles para el logro de la paz, la seguridad integral, la convivencia social y la cooperación entre los pueblos."
  },
  {
@@ -21434,7 +21434,7 @@
   "areaRef": "ACS",
   "competencia": "ACS.1.3",
   "codigo": "ACS.1.3.1",
-  "texto": "Descriptor genérico",
+  "texto": "Principios de la Constitución española",
   "descripcion": "Identificar y analizar los principios, valores, deberes y derechos fundamentales de la Constitución española, el sistema democrático y sus instituciones y sus diferentes organizaciones sociales, políticas y económicas, explicando su función como mecanismos que regulan la convivencia y la vida en comunidad."
  },
  {
@@ -21443,7 +21443,7 @@
   "areaRef": "ACS",
   "competencia": "ACS.1.3",
   "codigo": "ACS.1.3.2",
-  "texto": "Descriptor genérico",
+  "texto": "Transición democrática en España",
   "descripcion": "Reconocer y explicar los mecanismos que han regulado la convivencia y la vida en común tanto del período de transición a la democracia en España como de los distintos movimientos, acciones y acontecimientos que han afianzado las ideas y valores que conforman nuestro actual sistema democrático, señalando los principales modelos de organización social y política que se han ido gestando."
  },
  {
@@ -21452,7 +21452,7 @@
   "areaRef": "ACS",
   "competencia": "ACS.1.3",
   "codigo": "ACS.1.3.3",
-  "texto": "Descriptor genérico",
+  "texto": "Comportamiento acorde a valores democráticos",
   "descripcion": "Adecuar el comportamiento propio al cumplimiento de los principios, valores, derechos y deberes democráticos y constitucionales, identificando los motivos y argumentos que sustentan su validez y rechazando todo tipo de discriminación, especialmente aquella que se da por motivos socio-económicos, de género, orientación sexual o pertenencia a minorías etnoculturales."
  },
  {
@@ -21461,7 +21461,7 @@
   "areaRef": "ACS",
   "competencia": "ACS.1.4",
   "codigo": "ACS.1.4.1",
-  "texto": "Descriptor genérico",
+  "texto": "Búsqueda fiable de información digital",
   "descripcion": "Aplicar estrategias tanto analógicas como digitales de búsqueda, selección y organización de información, evaluando su fiabilidad y su pertinencia en función del objetivo perseguido y evitando los riesgos de manipulación y desinformación."
  },
  {
@@ -21470,7 +21470,7 @@
   "areaRef": "ACS",
   "competencia": "ACS.1.4",
   "codigo": "ACS.1.4.2",
-  "texto": "Descriptor genérico",
+  "texto": "Elaboración autónoma de contenidos propios",
   "descripcion": "Elaborar contenidos propios a partir de diferentes fuentes de manera progresivamente autónoma, respetando los principios de propiedad intelectual y citando las fuentes consultadas."
  },
  {
@@ -21479,7 +21479,7 @@
   "areaRef": "ACS",
   "competencia": "ACS.1.5",
   "codigo": "ACS.1.5.1",
-  "texto": "Descriptor genérico",
+  "texto": "Comprensión global de textos multimodales",
   "descripcion": "Comprender el sentido global, la estructura, la información más relevante en función de las necesidades comunicativas y la intención del emisor en textos orales, escritos y multimodales de diferentes ámbitos, evaluando su calidad, su fiabilidad y la idoneidad del canal utilizado con el propósito de formar lectores competentes y autónomos ante todo tipo de textos, incorporando el andaluz, como modalidad lingüística diferenciadora para ser valorada y respetada como patrimonio propio en el marco de la lengua española."
  },
  {
@@ -21488,7 +21488,7 @@
   "areaRef": "ACS",
   "competencia": "ACS.1.5",
   "codigo": "ACS.1.5.2",
-  "texto": "Descriptor genérico",
+  "texto": "Exposición oral formal monologada",
   "descripcion": "Realizar exposiciones orales síncronas de carácter formal, monologada, con diferente grado de planificación sobre temas de interés personal, ecosocial, educativo y profesional, ajustándose a las convenciones propias de los diversos géneros discursivos, con fluidez, coherencia y el registro adecuado, en diferentes soportes y utilizando de manera eficaz recursos verbales y no verbales."
  },
  {
@@ -21497,7 +21497,7 @@
   "areaRef": "ACS",
   "competencia": "ACS.1.5",
   "codigo": "ACS.1.5.3",
-  "texto": "Descriptor genérico",
+  "texto": "Planificación de textos escritos multimodales",
   "descripcion": "Planificar la redacción de textos escritos y multimodales atendiendo a la situación comunicativa, destinatario, propósito y canal; redactar borradores y revisarlos, y presentar un texto final coherente, cohesionado y con el registro adecuado, con precisión léxica y corrección ortográfica y gramatical."
  },
  {
@@ -21506,7 +21506,7 @@
   "areaRef": "ACS",
   "competencia": "ACS.1.5",
   "codigo": "ACS.1.5.4",
-  "texto": "Descriptor genérico",
+  "texto": "Participación en interacciones orales informales",
   "descripcion": "Participar de manera activa y adecuada en interacciones orales informales, en el trabajo en equipo y en situaciones orales de carácter dialogado, con actitudes de escucha activa y estrategias de cooperación conversacional y cortesía lingüística conociendo las estrategias para tomar y ceder la palabra."
  },
  {
@@ -21515,7 +21515,7 @@
   "areaRef": "ACS",
   "competencia": "ACS.1.6",
   "codigo": "ACS.1.6.1",
-  "texto": "Descriptor genérico",
+  "texto": "Lectura autónoma según intereses propios",
   "descripcion": "Leer de manera autónoma textos seleccionados en función de los propios gustos, intereses y necesidades, dejando constancia del progreso del propio itinerario lector y cultural y explicando los criterios de selección de las lecturas, e incluyendo el contacto con formas literarias actuales impresas y digitales, para fomentar el hábito lector y configurar la autonomía y la identidad lectora, incorporando autores y obras relevantes de nuestra cultura andaluza, para que sean conocidos, valorados y respetados, como patrimonio propio y en el marco de la literatura española y universal."
  },
  {
@@ -21524,7 +21524,7 @@
   "areaRef": "ACS",
   "competencia": "ACS.1.6",
   "codigo": "ACS.1.6.2",
-  "texto": "Descriptor genérico",
+  "texto": "Comunidad de lectores y flamenco como patrimonio",
   "descripcion": "Compartir la experiencia de lectura literaria en soportes diversos para configurar una comunidad de lectores con referentes compartidos y desarrollar de manera guiada las habilidades de interpretación, relacionando el sentido de la obra con sus elementos formales y contextuales, y relacionando el texto leído con otras manifestaciones artísticas, incluido el Flamenco como expresión artística, patrimonio cultural inmaterial de la humanidad, en función de temas, estructuras, lenguaje y valores éticos y estéticos, facilitando el tránsito a textos inicialmente alejados de la experiencia inmediata del alumnado."
  },
  {
@@ -21533,7 +21533,7 @@
   "areaRef": "ACS",
   "competencia": "ACS.1.7",
   "codigo": "ACS.1.7.1",
-  "texto": "Descriptor genérico",
+  "texto": "Comprensión de textos breves en lengua extranjera",
   "descripcion": "Entender el sentido global y la información específica y explícita de textos orales, escritos y multimodales breves y sencillos sobre temas frecuentes y cotidianos, de relevancia personal o propios de su iniciación profesional de especialización, que permitan al alumnado extraer su sentido general para satisfacer necesidades comunicativas concretas, expresados de forma clara y en el registro estándar de la lengua extranjera."
  },
  {
@@ -21542,7 +21542,7 @@
   "areaRef": "ACS",
   "competencia": "ACS.1.7",
   "codigo": "ACS.1.7.2",
-  "texto": "Descriptor genérico",
+  "texto": "Producción de textos breves en lengua extranjera",
   "descripcion": "Producir en lengua extranjera textos orales, escritos y multimodales, breves, sencillos, estructurados, comprensibles y adecuados a la situación comunicativa, siguiendo pautas establecidas y haciendo uso de herramientas y recursos analógicos y digitales, dando lugar a la redacción y exposición de textos; incluir la exposición de una pequeña descripción o anécdota, una presentación formal sobre un tema propio del ámbito profesional de especialización del ciclo."
  },
  {
@@ -21551,7 +21551,7 @@
   "areaRef": "ACS",
   "competencia": "ACS.1.7",
   "codigo": "ACS.1.7.3",
-  "texto": "Descriptor genérico",
+  "texto": "Interacción oral guiada en lengua extranjera",
   "descripcion": "Participar en situaciones y acciones guiadas síncronas, implicando uno o dos participantes en la construcción de un discurso con producciones breves y sencillas, en lengua extranjera, sobre temas cotidianos, de relevancia personal o próximos al ámbito profesional del ciclo, mostrando empatía y respeto por la cortesía lingüística y la etiqueta digital, así como por las diferentes necesidades, ideas, inquietudes, iniciativas y motivaciones de interlocutores e interlocutoras."
  },
  {
@@ -21560,7 +21560,7 @@
   "areaRef": "ACS",
   "competencia": "ACS.1.7",
   "codigo": "ACS.1.7.4",
-  "texto": "Descriptor genérico",
+  "texto": "Etiqueta digital en lengua extranjera",
   "descripcion": "Utilizar, de forma guiada y en entornos personales y de la propia especialidad profesional síncronos, estrategias adecuadas para poner en práctica la etiqueta digital, los elementos verbales y no verbales de la comunicación, así como iniciar, mantener y terminar la comunicación, tomar y ceder la palabra en lengua extranjera."
  },
  {
@@ -21569,7 +21569,7 @@
   "areaRef": "ACS",
   "competencia": "ACS.1.8",
   "codigo": "ACS.1.8.1",
-  "texto": "Descriptor genérico",
+  "texto": "Ampliación del repertorio lingüístico personal",
   "descripcion": "Mejorar la capacidad de comunicarse en lengua extranjera utilizando los conocimientos y estrategias del repertorio lingüístico y cultural propio, para que, partiendo de experiencias propias, el alumnado pueda ampliar y mejorar el aprendizaje de lenguas nuevas con apoyo de otras y otros participantes y de soportes analógicos y digitales."
  },
  {
@@ -21578,7 +21578,7 @@
   "areaRef": "ACS",
   "competencia": "ACS.1.8",
   "codigo": "ACS.1.8.2",
-  "texto": "Descriptor genérico",
+  "texto": "Valoración de la diversidad lingüística andaluza",
   "descripcion": "Aceptar y valorar la diversidad lingüística y cultural como fuente de enriquecimiento personal y profesional, identificando los elementos culturales y lingüísticos, incluyendo rasgos de la cultura andaluza, que fomentan el respeto, la sostenibilidad y la democracia."
  },
  {
@@ -21587,7 +21587,7 @@
   "areaRef": "ACA",
   "competencia": "ACA.2.1",
   "codigo": "ACA.2.1.1",
-  "texto": "Descriptor genérico",
+  "texto": "Explicación de fenómenos naturales globales",
   "descripcion": "Reconocer los motivos por los que ocurren los principales fenómenos naturales, a partir de situaciones globales, y explicarlos en términos de principios, leyes y teorías científicas adecuadas para que se establezcan relaciones constructivas entre la ciencia, el entorno profesional y la vida cotidiana, así como poner en valor la contribución de la ciencia a la sociedad."
  },
  {
@@ -21596,7 +21596,7 @@
   "areaRef": "ACA",
   "competencia": "ACA.2.1",
   "codigo": "ACA.2.1.2",
-  "texto": "Descriptor genérico",
+  "texto": "Contribución de científicos internacionales",
   "descripcion": "Justificar la contribución de la ciencia a la sociedad y la labor de los hombres y mujeres dedicados a su desarrollo, como Luis Pasteur, Alexander Fleming, Graham Bell, James Watson, Francis Crick, Rosalind Franklin, María Curie, Isaac Newton, etc., entendiendo la investigación como una labor colectiva en constante evolución, fruto de la interacción entre la ciencia, la tecnología, la sociedad y el medio ambiente, que ha favorecido la calidad de vida."
  },
  {
@@ -21605,7 +21605,7 @@
   "areaRef": "ACA",
   "competencia": "ACA.2.2",
   "codigo": "ACA.2.2.1",
-  "texto": "Descriptor genérico",
+  "texto": "Hipótesis ante problemas profesionales",
   "descripcion": "Plantear preguntas e hipótesis ante problemas y situaciones cotidianas o profesionales, que puedan ser respondidas o contrastadas utilizando los métodos científicos, siendo capaz de realizar observaciones, formular preguntas e hipótesis y comprobar la veracidad de las mismas mediante el empleo de la experimentación, utilizando las herramientas y normativas que sean más convenientes en cada caso, explicando fenómenos naturales y realizando predicciones sobre estos."
  },
  {
@@ -21614,7 +21614,7 @@
   "areaRef": "ACA",
   "competencia": "ACA.2.2",
   "codigo": "ACA.2.2.2",
-  "texto": "Descriptor genérico",
+  "texto": "Experimentación en el medio natural y laboratorio",
   "descripcion": "Diseñar y realizar experimentos y obtener datos cuantitativos y cualitativos sobre fenómenos naturales en el medio natural y en el laboratorio, utilizando con corrección los instrumentos, herramientas o técnicas adecuadas a la hora de obtener resultados claros que respondan a cuestiones concretas o que contrasten la veracidad de una hipótesis, afianzando a través de la práctica el uso de la metodología científica en el ejercicio de su profesión."
  },
  {
@@ -21623,7 +21623,7 @@
   "areaRef": "ACA",
   "competencia": "ACA.2.2",
   "codigo": "ACA.2.2.3",
-  "texto": "Descriptor genérico",
+  "texto": "Interpretación matemática de resultados",
   "descripcion": "Interpretar los resultados obtenidos en proyectos de investigación, utilizando el razonamiento y, cuando sea necesario, herramientas matemáticas y tecnológicas."
  },
  {
@@ -21632,7 +21632,7 @@
   "areaRef": "ACA",
   "competencia": "ACA.2.3",
   "codigo": "ACA.2.3.1",
-  "texto": "Descriptor genérico",
+  "texto": "Hábitos saludables y minimización de impactos",
   "descripcion": "Evaluar los efectos de determinadas acciones cotidianas y costumbres individuales sobre el organismo y el medio natural, reconociendo e identificando hábitos saludables y sostenibles basados en los conocimientos científicos y la información disponible, cuyo significado les provea de las destrezas suficientes para minimizar los impactos ambientales en su entorno y adopten actitudes compatibles con el desarrollo sostenible."
  },
  {
@@ -21641,7 +21641,7 @@
   "areaRef": "ACA",
   "competencia": "ACA.2.3",
   "codigo": "ACA.2.3.2",
-  "texto": "Descriptor genérico",
+  "texto": "Biodiversidad y hábitos de vida sostenible",
   "descripcion": "Relacionar la preservación de la biodiversidad, la conservación del medio ambiente, la protección de los seres vivos del entorno, el desarrollo sostenible y la calidad de vida con la importancia de los hábitos que mejoran la salud individual, evitan o minimizan los impactos medioambientales negativos en su entorno y son compatibles con un desarrollo sostenible (alimentación sana, ejercicio físico, interacción social, consumo responsable…)."
  },
  {
@@ -21650,7 +21650,7 @@
   "areaRef": "ACA",
   "competencia": "ACA.2.4",
   "codigo": "ACA.2.4.1",
-  "texto": "Descriptor genérico",
+  "texto": "Física y matemáticas en el ámbito profesional",
   "descripcion": "Aplicar los procedimientos propios de las ciencias físicas y las matemáticas implicadas en contextos diversos, interrelacionando conceptos y procedimientos para aplicarlos en situaciones de la vida cotidiana a la resolución de problemas del entorno natural, personal, social y del ámbito profesional correspondiente."
  },
  {
@@ -21659,7 +21659,7 @@
   "areaRef": "ACA",
   "competencia": "ACA.2.5",
   "codigo": "ACA.2.5.1",
-  "texto": "Descriptor genérico",
+  "texto": "Resiliencia ante retos académicos profesionales",
   "descripcion": "Mostrar resiliencia ante los retos académicos asumiendo el error como una oportunidad para la mejora poniendo en práctica estrategias de detección, aceptación y corrección del error como parte del proceso de aprendizaje, enfrentándose a pequeños retos que contribuyan a la reflexión sobre el propio pensamiento y desarrollando un autoconcepto positivo ante las ciencias."
  },
  {
@@ -21668,7 +21668,7 @@
   "areaRef": "ACA",
   "competencia": "ACA.2.5",
   "codigo": "ACA.2.5.2",
-  "texto": "Descriptor genérico",
+  "texto": "Reflexión sobre errores en retos profesionales",
   "descripcion": "Resolver retos del ámbito profesional correspondiente mostrando una reflexión sobre los errores cometidos."
  },
  {
@@ -21677,7 +21677,7 @@
   "areaRef": "ACA",
   "competencia": "ACA.2.6",
   "codigo": "ACA.2.6.1",
-  "texto": "Descriptor genérico",
+  "texto": "Coordinación de equipos en proyectos científicos",
   "descripcion": "Asumir responsablemente una función concreta dentro de un proyecto científico, utilizando espacios virtuales de colaboración y coordinando a los demás miembros del equipo cuando sea necesario, aportando valor, analizando críticamente las contribuciones del resto del equipo, respetando la diversidad y favoreciendo la inclusión."
  },
  {
@@ -21686,7 +21686,7 @@
   "areaRef": "ACA",
   "competencia": "ACA.2.6",
   "codigo": "ACA.2.6.2",
-  "texto": "Descriptor genérico",
+  "texto": "Emprendimiento autónomo de proyectos científicos",
   "descripcion": "Emprender, de forma autónoma y de acuerdo a la metodología adecuada, proyectos científicos colaborativos orientados a la mejora y a la creación de valor en la sociedad."
  },
  {
@@ -21695,7 +21695,7 @@
   "areaRef": "ACA",
   "competencia": "ACA.2.7",
   "codigo": "ACA.2.7.1",
-  "texto": "Descriptor genérico",
+  "texto": "Representaciones para problemas profesionales",
   "descripcion": "Elaborar representaciones que ayuden en la búsqueda de estrategias de resolución de problemas y situaciones de la vida cotidiana y profesional, organizando los datos dados y comprendiendo las preguntas formuladas para aprender a elaborar mecanismos capaces de dar solución a los problemas planteados."
  },
  {
@@ -21704,7 +21704,7 @@
   "areaRef": "ACA",
   "competencia": "ACA.2.7",
   "codigo": "ACA.2.7.2",
-  "texto": "Descriptor genérico",
+  "texto": "Resolución de problemas en distintos contextos",
   "descripcion": "Hallar las soluciones de un problema utilizando los datos e información aportados, los propios conocimientos y las estrategias y herramientas apropiadas, así como algoritmos cuyo uso reiterado mejore la destreza y confianza en la resolución de problemas en diferentes contextos."
  },
  {
@@ -21713,7 +21713,7 @@
   "areaRef": "ACA",
   "competencia": "ACA.2.7",
   "codigo": "ACA.2.7.3",
-  "texto": "Descriptor genérico",
+  "texto": "Coherencia de soluciones y sostenibilidad",
   "descripcion": "Comprobar la corrección de las soluciones de un problema y su coherencia en el contexto planteado, tanto desde un punto de vista estrictamente matemático como desde una perspectiva global, valorando aspectos relacionados con la sostenibilidad, el consumo responsable, la igualdad de género, la equidad o la no discriminación, entre otros."
  },
  {
@@ -21722,7 +21722,7 @@
   "areaRef": "ACA",
   "competencia": "ACA.2.7",
   "codigo": "ACA.2.7.4",
-  "texto": "Descriptor genérico",
+  "texto": "Herramientas tecnológicas en problemas profesionales",
   "descripcion": "Emplear herramientas tecnológicas adecuadas en la representación, la resolución de problemas y situaciones de la vida cotidiana y profesional, y la comprobación de las soluciones."
  },
  {
@@ -21731,7 +21731,7 @@
   "areaRef": "ACA",
   "competencia": "ACA.2.8",
   "codigo": "ACA.2.8.1",
-  "texto": "Descriptor genérico",
+  "texto": "Normas de comunicación científica profesional",
   "descripcion": "Seleccionar, organizar y comunicar información científica y matemática de forma clara y rigurosa de manera verbal, gráfica, numérica, etc., utilizando el formato más adecuado, teniendo en cuenta las normas de comunicación de las disciplinas científicas."
  },
  {
@@ -21740,7 +21740,7 @@
   "areaRef": "ACA",
   "competencia": "ACA.2.8",
   "codigo": "ACA.2.8.2",
-  "texto": "Descriptor genérico",
+  "texto": "Adecuación contextual del análisis científico",
   "descripcion": "Analizar e interpretar información científica y matemática presente en la vida cotidiana manteniendo una actitud crítica, estableciendo relaciones entre el concepto objeto de estudio, el procedimiento aplicado en su análisis y su adecuación al contexto."
  },
  {
@@ -21749,7 +21749,7 @@
   "areaRef": "ACA",
   "competencia": "ACA.2.8",
   "codigo": "ACA.2.8.3",
-  "texto": "Descriptor genérico",
+  "texto": "Transmisión de hallazgos y procesos científicos",
   "descripcion": "Emplear y citar de forma adecuada fuentes fiables seleccionando la información científica relevante en la consulta y creación de contenidos, y mejorando el aprendizaje propio y colectivo, transmitiendo adecuadamente los conocimientos, hallazgos y procesos."
  },
  {
@@ -21758,7 +21758,7 @@
   "areaRef": "ACS",
   "competencia": "ACS.2.1",
   "codigo": "ACS.2.1.1",
-  "texto": "Descriptor genérico",
+  "texto": "Sostenibilidad del paisaje natural, rural y urbano",
   "descripcion": "Analizar e interpretar el entorno para que el alumnado pueda asumir sus derechos y responsabilidades y pueda contribuir al bienestar futuro y al desarrollo sostenible desde una perspectiva sistémica e integradora, a través de conceptos y procedimientos geográficos de paisaje, identificando sus principales elementos y las interrelaciones existentes, valorando el grado de sostenibilidad y equilibrio de los espacios a partir de actitudes de defensa, protección, conservación y mejora del entorno (natural, rural y urbano)."
  },
  {
@@ -21767,7 +21767,7 @@
   "areaRef": "ACS",
   "competencia": "ACS.2.1",
   "codigo": "ACS.2.1.2",
-  "texto": "Descriptor genérico",
+  "texto": "Identidades colectivas en la sociedad contemporánea",
   "descripcion": "Relacionar las culturas y civilizaciones que se han desarrollado en la sociedad contemporánea española y europea con las distintas identidades colectivas que se han construido hasta la actualidad, contextualizando los fenómenos que se han ido produciendo y las respuestas que se han dado en cada momento, explicando y valorando la realidad multicultural generada a lo largo del tiempo y analizando las situaciones y los problemas del presente."
  },
  {
@@ -21776,7 +21776,7 @@
   "areaRef": "ACS",
   "competencia": "ACS.2.1",
   "codigo": "ACS.2.1.3",
-  "texto": "Descriptor genérico",
+  "texto": "Patrimonio histórico-artístico como identidad colectiva",
   "descripcion": "Valorar, proteger y conservar el patrimonio histórico-artístico, cultural y natural para comprender el mundo actual como fundamento de nuestra identidad colectiva y como un recurso esencial para el disfrute y el desarrollo de los pueblos, realizando propuestas que contribuyan a su conservación y a un desarrollo ecosocial sostenible."
  },
  {
@@ -21785,7 +21785,7 @@
   "areaRef": "ACS",
   "competencia": "ACS.2.2",
   "codigo": "ACS.2.2.1",
-  "texto": "Descriptor genérico",
+  "texto": "Influencia europea en la política nacional",
   "descripcion": "Explicar el proceso de unificación del espacio europeo y su relevancia en la construcción de la sociedad española en el escenario de los grandes flujos de difusión cultural y técnica y en el contexto de las relaciones políticas y de la economía internacional, analizando su evolución y argumentando su influencia en la política nacional."
  },
  {
@@ -21794,7 +21794,7 @@
   "areaRef": "ACS",
   "competencia": "ACS.2.2",
   "codigo": "ACS.2.2.2",
-  "texto": "Descriptor genérico",
+  "texto": "Instituciones europeas y cooperación internacional",
   "descripcion": "Identificar y valorar las principales instituciones europeas, analizando sus principios rectores, sus normas de funcionamiento y sus funciones, juzgando su papel en los conflictos internacionales y reconociendo su contribución a la paz y a la cooperación internacional, al desarrollo sostenible, a la lucha contra el cambio climático y a la ciudadanía global."
  },
  {
@@ -21803,7 +21803,7 @@
   "areaRef": "ACS",
   "competencia": "ACS.2.2",
   "codigo": "ACS.2.2.3",
-  "texto": "Descriptor genérico",
+  "texto": "Desafíos de la ciudadanía global",
   "descripcion": "Interpretar desde la perspectiva del desarrollo sostenible y la ciudadanía global los principales desafíos del mundo actual, expresando la importancia de implicarse en la búsqueda de soluciones para poder entender y asumir el compromiso colectivo de formar parte de una sociedad globalizada a partir de la riqueza que supone la diversidad cultural, valorando la contribución de programas y misiones dirigidos por los Estados, los organismos internacionales y las asociaciones civiles para el logro de la paz, la seguridad integral, la convivencia social y la cooperación entre los pueblos."
  },
  {
@@ -21812,7 +21812,7 @@
   "areaRef": "ACS",
   "competencia": "ACS.2.3",
   "codigo": "ACS.2.3.1",
-  "texto": "Descriptor genérico",
+  "texto": "Derechos y deberes ciudadanos constitucionales",
   "descripcion": "Identificar, interpretar y analizar los principios valores, deberes y derechos fundamentales de la Constitución española, el sistema democrático y sus instituciones y sus diferentes organizaciones sociales, políticas y económicas, explicando su función como mecanismos que regulan la convivencia y la vida en comunidad, para que el alumnado sea consciente de sus derechos y sus deberes en cuanto ciudadanos y ciudadanas, y pueda adecuar su comportamiento al cumplimiento de los principios y valores democráticos y constitucionales."
  },
  {
@@ -21821,7 +21821,7 @@
   "areaRef": "ACS",
   "competencia": "ACS.2.3",
   "codigo": "ACS.2.3.2",
-  "texto": "Descriptor genérico",
+  "texto": "Modelos de organización social e histórica",
   "descripcion": "Reconocer y explicar los mecanismos que han regulado la convivencia y la vida en común a lo largo de la historia, desde el origen de la sociedad a las distintas civilizaciones que se han ido sucediendo, señalando los principales modelos de organización social y política que se han ido gestando."
  },
  {
@@ -21830,7 +21830,7 @@
   "areaRef": "ACS",
   "competencia": "ACS.2.3",
   "codigo": "ACS.2.3.3",
-  "texto": "Descriptor genérico",
+  "texto": "Ciudadanía ética y ecosocialmente responsable",
   "descripcion": "Adecuar el comportamiento propio al cumplimiento de los principios, valores, derechos y deberes democráticos y constitucionales, identificando los motivos y argumentos que sustentan su validez y rechazando todo tipo de discriminación, especialmente aquella que se da por motivos socio-económicos, de género, orientación sexual o pertenencia a minorías etnoculturales, participando plenamente de la vida social, política y cívica y ejerciendo una ciudadanía ética y ecosocialmente responsable."
  },
  {
@@ -21839,7 +21839,7 @@
   "areaRef": "ACS",
   "competencia": "ACS.2.4",
   "codigo": "ACS.2.4.1",
-  "texto": "Descriptor genérico",
+  "texto": "Transformación de información en conocimiento",
   "descripcion": "Aplicar estrategias tanto analógicas como digitales de búsqueda, selección y organización de información, evaluando su fiabilidad y su pertinencia en función del objetivo perseguido y evitando los riesgos de manipulación y desinformación, para valorar e interpretar la información y para transformarla en conocimiento."
  },
  {
@@ -21848,7 +21848,7 @@
   "areaRef": "ACS",
   "competencia": "ACS.2.4",
   "codigo": "ACS.2.4.2",
-  "texto": "Descriptor genérico",
+  "texto": "Contenidos propios según familia profesional",
   "descripcion": "Elaborar contenidos propios a partir de diferentes fuentes de manera progresivamente autónoma, para el desarrollo de la creatividad y la adecuación al contexto específicos de cada familia profesional, respetando los principios de propiedad intelectual y citando las fuentes consultadas."
  },
  {
@@ -21857,7 +21857,7 @@
   "areaRef": "ACS",
   "competencia": "ACS.2.5",
   "codigo": "ACS.2.5.1",
-  "texto": "Descriptor genérico",
+  "texto": "Distinción entre hechos y opiniones en textos",
   "descripcion": "Comprender e interpretar el sentido global, la estructura, la información más relevante en función de las necesidades comunicativas y la intención del emisor en textos orales, escritos y multimodales de diferentes ámbitos, distinguiendo entre hechos y opiniones, evaluando su calidad, su fiabilidad y la idoneidad del canal utilizado con el propósito de formar lectores competentes y autónomos ante todo tipo de textos, incorporando el andaluz como modalidad lingüística diferenciadora para ser valorada y respetada como patrimonio propio en el marco de la lengua española."
  },
  {
@@ -21866,7 +21866,7 @@
   "areaRef": "ACS",
   "competencia": "ACS.2.5",
   "codigo": "ACS.2.5.2",
-  "texto": "Descriptor genérico",
+  "texto": "Exposición oral síncrona y asíncrona",
   "descripcion": "Realizar exposiciones orales tanto síncronas como asíncronas, de carácter formal, monologada o dialogada, con diferente grado de planificación sobre temas de interés personal, ecosocial, educativo y profesional, ajustándose a las convenciones propias de los diversos géneros discursivos, con fluidez, coherencia y el registro adecuado, en diferentes soportes y utilizando de manera eficaz recursos verbales y no verbales."
  },
  {
@@ -21875,7 +21875,7 @@
   "areaRef": "ACS",
   "competencia": "ACS.2.5",
   "codigo": "ACS.2.5.3",
-  "texto": "Descriptor genérico",
+  "texto": "Textos escritos hipertextuales y multimodales",
   "descripcion": "Planificar la redacción de textos escritos, de carácter hipertextual y multimodales, atendiendo a la situación comunicativa, destinatario, propósito y canal; redactar borradores y revisarlos, y presentar un texto final coherente, cohesionado y con el registro adecuado, con precisión léxica y corrección ortográfica y gramatical."
  },
  {
@@ -21884,7 +21884,7 @@
   "areaRef": "ACS",
   "competencia": "ACS.2.5",
   "codigo": "ACS.2.5.4",
-  "texto": "Descriptor genérico",
+  "texto": "Cooperación conversacional en el trabajo en equipo",
   "descripcion": "Participar de manera activa y adecuada en interacciones orales informales, en el trabajo en equipo y en situaciones orales formales de carácter dialogado, con actitudes de escucha activa y estrategias de cooperación conversacional y cortesía lingüística conociendo las estrategias para tomar y ceder la palabra."
  },
  {
@@ -21893,7 +21893,7 @@
   "areaRef": "ACS",
   "competencia": "ACS.2.6",
   "codigo": "ACS.2.6.1",
-  "texto": "Descriptor genérico",
+  "texto": "Itinerario lector y prácticas culturales emergentes",
   "descripcion": "Leer de manera autónoma textos seleccionados en función de los propios gustos, intereses y necesidades, dejando constancia del progreso del propio itinerario lector y cultural y explicando los criterios de selección de las lecturas, que incluyan el contacto con formas literarias actuales impresas y digitales, así como con prácticas culturales emergentes, para fomentar el hábito lector y configurar la autonomía y la identidad lectora, incorporando autores y obras relevantes de nuestra cultura andaluza, para que sean conocidos, valorados y respetados, como patrimonio propio y en el marco de la literatura española y universal."
  },
  {
@@ -21902,7 +21902,7 @@
   "areaRef": "ACS",
   "competencia": "ACS.2.6",
   "codigo": "ACS.2.6.2",
-  "texto": "Descriptor genérico",
+  "texto": "Selección de textos y flamenco como patrimonio",
   "descripcion": "Compartir la experiencia de lectura literaria en soportes diversos para configurar una comunidad de lectores con referentes compartidos, brindar estrategias que ayuden a cada lector a seleccionar los textos de su interés y apropiarse de ellos, relacionando el sentido de la obra con sus elementos formales y contextuales, y relacionando el texto leído con otras manifestaciones artísticas, incluido el Flamenco, como expresión artística, patrimonio cultural inmaterial de la humanidad, en función de temas, estructuras, lenguaje y valores éticos y estéticos, facilitando el tránsito a textos inicialmente alejados de la experiencia inmediata del alumnado."
  },
  {
@@ -21911,7 +21911,7 @@
   "areaRef": "ACS",
   "competencia": "ACS.2.7",
   "codigo": "ACS.2.7.1",
-  "texto": "Descriptor genérico",
+  "texto": "Comprensión de textos del ámbito profesional",
   "descripcion": "Interpretar el sentido global y la información específica y explícita de textos orales, escritos y multimodales breves y sencillos sobre temas frecuentes y cotidianos, de relevancia personal o propios de su ámbito profesional de especialización, que permitan al alumnado extraer su sentido general para satisfacer necesidades comunicativas concretas, expresados de forma clara y en el registro estándar de la lengua extranjera."
  },
  {
@@ -21920,7 +21920,7 @@
   "areaRef": "ACS",
   "competencia": "ACS.2.7",
   "codigo": "ACS.2.7.2",
-  "texto": "Descriptor genérico",
+  "texto": "Producción de textos útiles para el futuro profesional",
   "descripcion": "Producir en lengua extranjera textos orales, escritos y multimodales, breves, sencillos, estructurados, comprensibles y adecuados a la situación comunicativa, siguiendo pautas establecidas y haciendo uso de herramientas y recursos analógicos y digitales, dando lugar a la redacción y exposición de textos útiles para el futuro profesional del alumnado."
  },
  {
@@ -21929,7 +21929,7 @@
   "areaRef": "ACS",
   "competencia": "ACS.2.7",
   "codigo": "ACS.2.7.3",
-  "texto": "Descriptor genérico",
+  "texto": "Interacción oral síncrona y asíncrona",
   "descripcion": "Participar en situaciones y acciones guiadas síncronas y asíncronas, implicando dos o más participantes en la construcción de un discurso con producciones breves y sencillas, en lengua extranjera, sobre temas cotidianos, de relevancia personal o próximos al ámbito profesional del ciclo, mostrando empatía y respeto por la cortesía lingüística y la etiqueta digital, así como por las diferentes necesidades, ideas, inquietudes, iniciativas y motivaciones de interlocutores e interlocutoras."
  },
  {
@@ -21938,7 +21938,7 @@
   "areaRef": "ACS",
   "competencia": "ACS.2.7",
   "codigo": "ACS.2.7.4",
-  "texto": "Descriptor genérico",
+  "texto": "Cortesía lingüística en entornos profesionales",
   "descripcion": "Utilizar, de forma guiada y en entornos personales y de la propia especialidad profesional síncronos y asíncronos, próximos a su experiencia, estrategias adecuadas para poner en práctica la cortesía lingüística y la etiqueta digital, los elementos verbales y no verbales de la comunicación, así como iniciar, mantener y terminar la comunicación, tomar y ceder la palabra, solicitar y formular aclaraciones y explicaciones en lengua extranjera."
  },
  {
@@ -21947,7 +21947,7 @@
   "areaRef": "ACS",
   "competencia": "ACS.2.8",
   "codigo": "ACS.2.8.1",
-  "texto": "Descriptor genérico",
+  "texto": "Apertura a nuevas culturas y experiencias",
   "descripcion": "Mejorar la capacidad de comunicarse en lengua extranjera utilizando los conocimientos y estrategias del repertorio lingüístico y cultural propio, para que el alumnado pueda ampliar y mejorar el aprendizaje de lenguas nuevas, actuar de forma empática y respetuosa, abrirse a nuevas experiencias, ideas, sociedades y culturas, mostrando interés hacia lo diferente con apoyo de otras y otros participantes y de soportes analógicos y digitales."
  },
  {
@@ -21956,7 +21956,7 @@
   "areaRef": "ACS",
   "competencia": "ACS.2.8",
   "codigo": "ACS.2.8.2",
-  "texto": "Descriptor genérico",
+  "texto": "Rechazo crítico de estereotipos culturales",
   "descripcion": "Aceptar y valorar de manera crítica la diversidad lingüística y cultural como fuente de enriquecimiento personal y profesional, identificando los elementos culturales y lingüísticos, incluyendo rasgos de la cultura andaluza, que fomentan el respeto, la sostenibilidad y la democracia y permitiendo al alumnado distanciarse y evitar las actitudes sustentadas sobre cualquier tipo de discriminación o refuerzo de estereotipos."
  }
 ]
