@@ -42,8 +42,10 @@ var App = (function () {
   // ---------- navegación ----------
   var SECCIONES = ['vista-evaluaciones', 'vista-clases', 'vista-clase',
     'vista-evaluacion', 'vista-unidad', 'vista-resumen', 'vista-papelera'];
+  var vistaActual = null; // vista visible: descarta respuestas tardías del servidor
   function mostrar(id) {
     flushNotas(); // guarda notas pendientes de la unidad al cambiar de vista
+    vistaActual = id;
     SECCIONES.forEach(function (s) { document.getElementById(s).hidden = (s !== id); });
     document.getElementById('app').scrollTop = 0; // cada vista empieza arriba
     // (además estabiliza la medición de ajustarAltoRejillas)
@@ -433,8 +435,10 @@ var App = (function () {
   }
 
   var evalCache = {}; // evalId -> evaluación (con clase y alumnos)
+  var evalActiva = null; // última clase abierta (descarta respuestas tardías)
 
   function abrirEvaluacion(evalId) {
+    evalActiva = evalId;
     if (evalCache[evalId]) {
       abrirEvaluacionCargada(evalCache[evalId]);     // instantáneo desde caché
     } else {
@@ -448,6 +452,9 @@ var App = (function () {
       var prev = evalCache[evalId];
       if (prev && prev.unidades) ev.unidades = prev.unidades;
       evalCache[evalId] = ev;
+      // Si ya navegaste a otro sitio (u otra clase), la respuesta tardía solo
+      // actualiza la caché: NUNCA debe devolverte a esta vista.
+      if (vistaActual !== 'vista-evaluacion' || evalActiva !== evalId) return;
       abrirEvaluacionCargada(ev);
     });
   }
@@ -626,16 +633,24 @@ var App = (function () {
     });
   }
 
-  /** Eliminar desde la tarjeta del listado. */
+  /** Eliminar desde la tarjeta del listado (optimista: la tarjeta sale ya). */
   function eliminarUnidad(unidadId) {
     var u = (evalActual.unidades || []).filter(function (x) { return x.unidadId === unidadId; })[0];
     confirmar('Eliminar unidad',
       'Se eliminarán la unidad "' + (u ? u.nombre : '') + '", sus actividades y notas. ¿Continuar?',
       'Eliminar', function () {
         delete rejillaCache[unidadId];
-        llamar('eliminarUnidad', [unidadId], function () {});
+        var pos = (evalActual.unidades || []).indexOf(u);
         evalActual.unidades = (evalActual.unidades || []).filter(function (x) { return x.unidadId !== unidadId; });
         pintarUnidades();
+        google.script.run
+          .withSuccessHandler(function () { avisoOk('Unidad eliminada.'); })
+          .withFailureHandler(function (err) {
+            if (u) (evalActual.unidades = evalActual.unidades || []).splice(pos < 0 ? 0 : pos, 0, u);
+            if (vistaActual === 'vista-evaluacion') pintarUnidades();
+            aviso('No se pudo eliminar la unidad: ' + ((err && err.message) || 'error'));
+          })
+          .eliminarUnidad(unidadId);
       });
   }
   function nuevaUnidad() {
@@ -686,10 +701,21 @@ var App = (function () {
       '¿Eliminar esta clase? El grupo y su alumnado se conservan.',
       'Eliminar', function () {
         var id = evalActual.evalId;
-        llamar('eliminarEvaluacion', [id], function () {
-          estado.evaluaciones = estado.evaluaciones.filter(function (e) { return e.evalId !== id; });
-          irAEvaluaciones();
-        });
+        // Borrado optimista: se sale YA de la pantalla y el servidor trabaja
+        // detrás. Si el borrado falla, se restaura la tarjeta y se avisa.
+        var pos = -1, borrada = null;
+        estado.evaluaciones.forEach(function (e, i) { if (e.evalId === id) { pos = i; borrada = e; } });
+        estado.evaluaciones = estado.evaluaciones.filter(function (e) { return e.evalId !== id; });
+        delete evalCache[id];
+        irAEvaluaciones();
+        google.script.run
+          .withSuccessHandler(function () { avisoOk('Clase eliminada.'); })
+          .withFailureHandler(function (err) {
+            if (borrada) estado.evaluaciones.splice(pos < 0 ? 0 : pos, 0, borrada);
+            if (vistaActual === 'vista-evaluaciones') pintarEvaluaciones();
+            aviso('No se pudo eliminar la clase: ' + ((err && err.message) || 'error'));
+          })
+          .eliminarEvaluacion(id);
       });
   }
 
@@ -862,7 +888,9 @@ var App = (function () {
     flushNotas(function () {
       llamar('getRejilla', [unidadId], function (r) {
         rejillaCache[unidadId] = r;                 // la caché siempre se actualiza
-        if (unidadId !== unidadActiva) return;      // ya abriste otra unidad: descarta
+        // Descarta si ya abriste otra unidad O si saliste de la vista de unidad
+        // (repintar en diferido cambiaría el título de la barra superior).
+        if (unidadId !== unidadActiva || vistaActual !== 'vista-unidad') return;
         rejilla = r;
         pintarUnidadActual();
       });
@@ -1485,6 +1513,7 @@ var App = (function () {
   function nuevaClase() {
     var cursos = cursosDisponibles();
     if (!cursos.length) return aviso('El Mapa Curricular está vacío o sin configurar.');
+    copiaAlumnosEnCurso = false; // modal recién abierto: sin copias en vuelo
     var optCursos = '<option value="" selected>— Seleccionar curso —</option>' +
       opcionesCursosHtml('');
     var optCopiar = '<option value="">— No copiar —</option>' +
@@ -1515,6 +1544,9 @@ var App = (function () {
         var curso = val('f-curso');
         if (!nombre) return aviso('Pon un nombre al grupo.');
         if (!curso) return aviso('Elige el curso.');
+        if (copiaAlumnosEnCurso) {
+          return aviso('Un momento: aún se está cargando el alumnado a copiar…');
+        }
         var alumnos = parsearLista(val('f-alumnos'));
         botonModalCargando('Creando…');
         llamar('crearClase',
@@ -1533,17 +1565,43 @@ var App = (function () {
       });
   }
 
+  var copiaAlumnosEnCurso = false; // bloquea "Crear grupo" mientras carga la copia
+
   /** Rellena el textarea con el alumnado de la clase elegida para copiar. */
   function copiarDeClase() {
     var id = val('f-copiar');
+    var ta = document.getElementById('f-alumnos');
     if (!id) return;
-    llamar('obtenerClase', [id], function (cl) {
-      document.getElementById('f-alumnos').value =
-        (cl.alumnos || []).map(function (a) { return a.nombre; }).join('\n');
-    });
+    function rellenar(cl) {
+      ta.value = (cl.alumnos || []).map(function (a) { return a.nombre; }).join('\n');
+    }
+    if (claseCache[id]) { rellenar(claseCache[id]); return; } // instantáneo
+    // Traer el alumnado tarda 1-3 s: mientras, se bloquea el envío del modal
+    // para que "Crear grupo" no se dispare con el textarea aún vacío.
+    copiaAlumnosEnCurso = true;
+    ta.disabled = true;
+    ta.placeholder = 'Cargando alumnado…';
+    google.script.run
+      .withSuccessHandler(function (cl) {
+        claseCache[id] = cl;
+        copiaAlumnosEnCurso = false;
+        ta.disabled = false; ta.placeholder = 'Apellidos, Nombre';
+        // Solo si el modal sigue abierto y sigue elegido ese mismo grupo.
+        var sel = document.getElementById('f-copiar');
+        if (sel && sel.value === id) rellenar(cl);
+      })
+      .withFailureHandler(function (err) {
+        copiaAlumnosEnCurso = false;
+        ta.disabled = false; ta.placeholder = 'Apellidos, Nombre';
+        aviso('No se pudo cargar el alumnado a copiar: ' + ((err && err.message) || 'error'));
+      })
+      .obtenerClase(id);
   }
 
+  var claseActiva = null; // último grupo abierto (descarta respuestas tardías)
+
   function abrirClase(claseId) {
+    claseActiva = claseId;
     setTitulo('Grupos');
     mostrar('vista-clase');
     if (claseCache[claseId]) {
@@ -1562,6 +1620,9 @@ var App = (function () {
     // Refresca siempre desde el servidor y actualiza la caché.
     llamar('obtenerClase', [claseId], function (cl) {
       claseCache[claseId] = cl;
+      // Si ya navegaste a otro sitio (u otro grupo), la respuesta tardía solo
+      // actualiza la caché: NUNCA debe devolverte a esta vista.
+      if (vistaActual !== 'vista-clase' || claseActiva !== claseId) return;
       abrirClaseCargada(cl);
     });
   }
@@ -1641,11 +1702,22 @@ var App = (function () {
     confirmar('Eliminar grupo', '¿Eliminar el grupo "' + claseActual.nombre + '"?',
       'Eliminar', function () {
         var id = claseActual.claseId;
-        llamar('eliminarClase', [id], function () {
-          delete claseCache[id];
-          estado.clases = estado.clases.filter(function (c) { return c.claseId !== id; });
-          irAClases();
-        });
+        // Borrado optimista: se sale YA de la pantalla y el servidor trabaja
+        // detrás. Si falla (p. ej. el grupo tiene clases asociadas), se
+        // restaura la tarjeta y se muestra el motivo.
+        var pos = -1, borrado = null;
+        estado.clases.forEach(function (c, i) { if (c.claseId === id) { pos = i; borrado = c; } });
+        estado.clases = estado.clases.filter(function (c) { return c.claseId !== id; });
+        delete claseCache[id];
+        irAClases();
+        google.script.run
+          .withSuccessHandler(function () { avisoOk('Grupo eliminado.'); })
+          .withFailureHandler(function (err) {
+            if (borrado) estado.clases.splice(pos < 0 ? 0 : pos, 0, borrado);
+            if (vistaActual === 'vista-clases') pintarClases();
+            aviso('No se pudo eliminar el grupo: ' + ((err && err.message) || 'error'));
+          })
+          .eliminarClase(id);
       });
   }
 
