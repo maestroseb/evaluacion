@@ -18,6 +18,7 @@ var App = (function () {
     setupModalNoScroll();
     setupTeclado();
     restaurarSidebar();
+    window.addEventListener('resize', ajustarAltoRejillas); // giro / cambio de tamaño
     // Guardado de última hora: intenta persistir y, si quedan cambios en vuelo,
     // pide confirmación al navegador para dar tiempo a que la petición llegue.
     window.addEventListener('beforeunload', function (e) {
@@ -44,6 +45,8 @@ var App = (function () {
   function mostrar(id) {
     flushNotas(); // guarda notas pendientes de la unidad al cambiar de vista
     SECCIONES.forEach(function (s) { document.getElementById(s).hidden = (s !== id); });
+    document.getElementById('app').scrollTop = 0; // cada vista empieza arriba
+    // (además estabiliza la medición de ajustarAltoRejillas)
     // Resalta la sección activa en barra lateral y tab bar (por data-nav).
     var clave =
       (id === 'vista-clases' || id === 'vista-clase') ? 'clases' :
@@ -123,6 +126,25 @@ var App = (function () {
   function prefetchEval(id) { prefetch_(id, 'obtenerEvaluacion', evalCache); }
   function prefetchClase(id) { prefetch_(id, 'obtenerClase', claseCache); }
   function prefetchRejilla(id) { if (!arrastreAct && !arrastre) prefetch_(id, 'getRejilla', rejillaCache); }
+
+  /**
+   * Ajusta la altura de las tablas de notas (rejilla y resumen) al hueco REAL
+   * de pantalla: desde donde empieza la tabla hasta la tab bar inferior (en
+   * móvil) o el borde de la ventana. Así la tabla aprovecha todo el alto
+   * disponible aunque la cabecera ocupe una o dos líneas, y el scroll queda
+   * dentro de la tabla (con su cabecera sticky), no en la página.
+   */
+  function ajustarAltoRejillas() {
+    [].forEach.call(document.querySelectorAll('.rejilla-cont'), function (el) {
+      if (!el.offsetParent) return; // la vista está oculta
+      var top = el.getBoundingClientRect().top;
+      var tab = document.querySelector('.tabbar');
+      var tabAlto = (tab && getComputedStyle(tab).display !== 'none')
+        ? tab.getBoundingClientRect().height : 0;
+      var alto = window.innerHeight - top - tabAlto - 10; // 10px de respiro
+      if (alto > 160) el.style.maxHeight = alto + 'px';
+    });
+  }
 
   /** Fija el título de la barra superior y limpia el buscador al cambiar de vista. */
   function setTitulo(t) {
@@ -696,6 +718,7 @@ var App = (function () {
   }
 
   function pintarResumen() {
+    ajustarAltoRejillas(); // la cabecera ya está pintada: mide el hueco real
     var cont = document.getElementById('resumen-cont');
     var R = resumenData;
     if (!R.criterios.length && !R.unidades.length) {
@@ -1100,6 +1123,7 @@ var App = (function () {
    * # | Alumno | actividades… | Nota (global) | criterios (resumen, a la derecha).
    */
   function pintarRejilla() {
+    ajustarAltoRejillas(); // la cabecera ya está pintada: mide el hueco real
     var cont = document.getElementById('rejilla-cont');
     if (!rejilla.actividades.length) {
       cont.innerHTML = '<div class="vacio">Sin actividades. ' +

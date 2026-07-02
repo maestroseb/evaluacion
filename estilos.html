@@ -321,6 +321,10 @@
   .btn.peligro:hover { background: var(--peligro-bg); border-color: #f3c6c2; }
   .btn:disabled { opacity: .55; cursor: default; }
 
+  /* Botón cuadrado de solo icono (p. ej. la papelera roja de las cabeceras). */
+  .btn-icono { padding: 8px 10px; line-height: 0; }
+  .btn-icono .svg-ico { width: 16px; height: 16px; vertical-align: 0; }
+
   /* Botón partido: acción principal + segmento con icono para la variante
      (p. ej. "+ Nueva actividad" | crear varias). Se ven como un solo botón. */
   .btn-split { display: inline-flex; align-items: stretch; }
@@ -596,6 +600,10 @@
     /* Las acciones envuelven a varias líneas en vez de salirse */
     .acciones-unidad { flex-wrap: wrap; width: 100%; }
     .acciones-unidad .btn { flex: 1 1 auto; justify-content: center; }
+    /* En las cabeceras de detalle: la papelera no estira (queda cuadrada) y
+       el botón destacado (Resumen) domina la fila frente a Editar. */
+    .acciones-unidad .btn-icono { flex: 0 0 auto; }
+    .acciones-unidad .btn-destacado { flex-grow: 2; }
 
     /* Botón partido a lo ancho: la acción principal estira, el icono no. */
     .btn-split { flex: 1 1 auto; }
