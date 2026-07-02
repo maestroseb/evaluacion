@@ -32,7 +32,10 @@ var CONFIG = {
   //     cuaderno; la interfaz filtra por el curso académico activo).
   // v8: se retira la pestaña legado _items (las notas viven solo en _notas). La
   //     migración _items→_notas ya no forma parte del código.
-  ESQUEMA_VERSION: 8
+  // v9: columna "bajas" en _clases: alumnado retirado de la lista (id + nombre
+  //     cifrado). Si se re-añade a alguien con el mismo nombre, recupera su id
+  //     y con él todas sus notas (reincorporación).
+  ESQUEMA_VERSION: 9
 };
 
 /**

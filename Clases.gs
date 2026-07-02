@@ -69,7 +69,7 @@ var Clases = (function () {
     hoja_(ss).appendRow([
       claseId, payload.nombre.trim(), payload.curso,
       new Date().toISOString(), serializar_(alumnos),
-      payload.color || '', payload.icono || '', orden, cursoAcad
+      payload.color || '', payload.icono || '', orden, cursoAcad, ''
     ]);
     return obtener_(ss, claseId);
   }
@@ -96,11 +96,13 @@ var Clases = (function () {
     var sh = hoja_(ss);
     var fila = Datos.filaDeId_(sh, claseId);
     if (fila < 0) throw new Error('Clase no encontrada.');
-    var f = sh.getRange(fila, 1, 1, 9).getValues()[0];
+    var f = sh.getRange(fila, 1, 1, 10).getValues()[0];
     return {
       claseId: f[0], nombre: f[1], curso: f[2], creado: f[3],
       alumnos: deserializar_(f[4]), color: f[5] || '', icono: f[6] || '',
-      cursoAcademico: f[8] || ''
+      cursoAcademico: f[8] || '',
+      // Alumnado retirado de la lista: permite reincorporar con sus notas.
+      bajas: deserializar_(f[9])
     };
   }
 
@@ -121,7 +123,24 @@ var Clases = (function () {
     var sh = hoja_(ss);
     var fila = Datos.filaDeId_(sh, claseId);
     if (fila < 0) throw new Error('Clase no encontrada.');
-    sh.getRange(fila, 5).setValue(serializar_(normalizarAlumnos_(alumnos)));
+    var previos = deserializar_(sh.getRange(fila, 5).getValue());
+    var nuevos = normalizarAlumnos_(alumnos);
+
+    // Mantiene la lista de bajas (col 10): quien sale de la lista entra en
+    // bajas (recientes primero); quien reaparece en la lista sale de bajas.
+    // Así, re-añadir a un alumno/a con su mismo nombre recupera su id y notas.
+    var enLista = {};
+    nuevos.forEach(function (a) { enLista[a.id] = true; });
+    var bajas = previos.filter(function (a) { return a.id && !enLista[a.id]; });
+    var vistos = {};
+    bajas.forEach(function (b) { vistos[b.id] = true; });
+    deserializar_(sh.getRange(fila, 10).getValue()).forEach(function (b) {
+      if (b.id && !enLista[b.id] && !vistos[b.id]) { vistos[b.id] = true; bajas.push(b); }
+    });
+    bajas = bajas.slice(0, 60); // techo defensivo: no crece sin límite
+
+    sh.getRange(fila, 5).setValue(serializar_(nuevos));
+    sh.getRange(fila, 10).setValue(serializar_(bajas));
     return obtener_(ss, claseId);
   }
 

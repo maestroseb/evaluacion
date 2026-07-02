@@ -1654,6 +1654,8 @@ var App = (function () {
       '<label>Un alumno/a por línea' +
       '<textarea id="f-alumnos" rows="12">' + esc(texto) + '</textarea></label>' +
       '<p class="ayuda">Se conservan las notas del alumnado que no cambie de nombre. ' +
+      'Si quitas a alguien y más adelante lo vuelves a añadir con el mismo nombre ' +
+      '(p. ej. un alumno que se va unos meses y vuelve), recupera sus notas. ' +
       'Escribe cada línea como <b>Apellidos, Nombre</b>, igual que en Séneca, para que la ' +
       'exportación de notas por criterios encaje sin retoques.</p>' +
       '<p class="ayuda"><b>Alias opcional</b> entre paréntesis: «Ye, Xin Yi (Sofía)». La app lo ' +
@@ -1661,7 +1663,8 @@ var App = (function () {
       'añadirlo o quitarlo no afecta a las notas.</p>',
       'Guardar',
       function () {
-        var nuevos = fusionarAlumnos(claseActual.alumnos || [], parsearLista(val('f-alumnos')));
+        var nuevos = fusionarAlumnos(claseActual.alumnos || [], claseActual.bajas || [],
+          parsearLista(val('f-alumnos')));
         botonModalCargando('Guardando…');
         llamar('actualizarAlumnosClase', [claseActual.claseId, nuevos], function (cl) {
           var c = claseDe(cl.claseId); if (c) c.numAlumnos = cl.alumnos.length;
@@ -1838,12 +1841,19 @@ var App = (function () {
       .filter(function (l) { return l.length; })
       .map(function (nombre) { return { nombre: nombre }; });
   }
-  function fusionarAlumnos(previos, nuevos) {
+  function fusionarAlumnos(previos, bajas, nuevos) {
     var porNombre = {}, porBase = {};
     previos.forEach(function (a) {
       porNombre[a.nombre] = a.id;
       var base = nombreSeneca(a.nombre);
       if (!(base in porBase)) porBase[base] = a.id; // el primero gana
+    });
+    // Las bajas (alumnado retirado antes) solo rellenan los huecos que dejen
+    // los presentes: re-añadir el mismo nombre = reincorporación con sus notas.
+    (bajas || []).forEach(function (a) {
+      if (!(a.nombre in porNombre)) porNombre[a.nombre] = a.id;
+      var base = nombreSeneca(a.nombre);
+      if (!(base in porBase)) porBase[base] = a.id;
     });
     return nuevos.map(function (a) {
       // Empareja por nombre exacto y, si no, por nombre sin pseudónimo, para
