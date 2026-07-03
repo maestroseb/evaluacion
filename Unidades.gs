@@ -2,10 +2,6 @@
  * Unidades de una evaluación. Cada unidad agrupa varias actividades.
  */
 
-function listarUnidades(evalId) {
-  return Unidades.listar_(abrirCuaderno_(), evalId);
-}
-
 function crearUnidad(evalId, nombre) {
   return Unidades.crear_(abrirCuaderno_(), evalId, nombre);
 }

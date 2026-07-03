@@ -73,6 +73,10 @@ var Promocion = (function () {
       color: orig.color, icono: orig.icono, cursoAcademico: cursoDestino
     });
 
+    // Una sola lectura de _actividades para todo el grupo (antes: una lectura
+    // completa de la hoja por cada unidad).
+    var actsPorUnidad = Actividades.porUnidad_(ss);
+
     // Duplica cada clase (evaluación) del grupo con su estructura, sin notas.
     Evaluaciones.listar_(ss)
       .filter(function (e) { return e.claseId === claseId; })
@@ -85,7 +89,7 @@ var Promocion = (function () {
         // de cada elemento, así crear_ no relee la hoja en cada iteración (O(n)).
         Unidades.listar_(ss, ev.evalId).forEach(function (u, ui) {
           var nu = Unidades.crear_(ss, nEval.evalId, u.nombre, ui + 1);
-          Actividades.listar_(ss, u.unidadId).forEach(function (a, ai) {
+          (actsPorUnidad[u.unidadId] || []).forEach(function (a, ai) {
             var criterios = a.criterios || [];
             if (cambiaNivel) {
               var remap = remapearCriterios_(criterios, dOrigen, dDestino, validos);

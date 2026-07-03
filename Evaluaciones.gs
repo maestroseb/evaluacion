@@ -15,14 +15,9 @@ function editarEvaluacion(evalId, payload) {
   return Evaluaciones.editar_(abrirCuaderno_(), evalId, payload);
 }
 
-/** Evaluación completa, incluida la clase y su alumnado. */
-function obtenerEvaluacion(evalId) {
-  return Evaluaciones.obtener_(abrirCuaderno_(), evalId);
-}
-
 /**
- * Evaluación + sus unidades en UNA sola llamada: abrir una clase pasa de dos
- * viajes secuenciales al servidor (evaluación → unidades) a uno.
+ * Evaluación completa (con clase y alumnado) + sus unidades, en UNA sola
+ * llamada: abrir una clase es un único viaje al servidor.
  */
 function getEvaluacionCompleta(evalId) {
   var ss = abrirCuaderno_();

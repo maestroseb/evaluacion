@@ -1,5 +1,5 @@
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@500;700&display=swap');
+  /* La fuente se carga con <link> desde ui.html (más rápido que @import). */
 
   :root {
     --acento: #5b5bd6;        /* índigo Linear-ish */
@@ -508,8 +508,14 @@
   }
   table.rejilla tbody tr:last-child td { border-bottom: none; }
 
-  table.rejilla .idx { width: 36px; color: var(--texto-3); font-variant-numeric: tabular-nums;
+  table.rejilla .idx { width: 36px; min-width: 36px; max-width: 36px;
+    color: var(--texto-3); font-variant-numeric: tabular-nums;
     position: sticky; left: 0; z-index: 1; font-size: 12px; }
+  /* iOS deja una rendija subpixel entre las dos columnas fijas al hacer scroll
+     horizontal (se ve pasar el contenido por debajo). Se tapa pintando 2px de
+     más, con el MISMO fondo de la celda, justo tras su borde derecho. */
+  table.rejilla .idx::after { content: ''; position: absolute; top: 0; bottom: 0;
+    right: -2px; width: 2px; background: inherit; }
   table.rejilla thead .idx { z-index: 3; }
   table.rejilla .esq { text-align: left; position: sticky; left: 36px; z-index: 1;
     font-weight: 500; color: var(--texto); }

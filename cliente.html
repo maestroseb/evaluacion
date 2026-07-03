@@ -1124,9 +1124,10 @@ var App = (function () {
   function pintarUnidadActual() {
     setTitulo('Clases');
     document.getElementById('unidad-titulo').textContent = rejilla.unidad.nombre;
+    // Qué clase y qué grupo se están evaluando (los recuentos de alumnos y
+    // actividades no aportaban y ocupaban el sitio en el móvil).
     document.getElementById('unidad-meta').textContent =
-      evalActual.area + ' · ' + rejilla.alumnos.length + ' alumnos/as · ' +
-      rejilla.actividades.length + ' actividades';
+      tituloEval(evalActual) + ' · ' + evalActual.clase.nombre;
     pintarRejilla();
   }
 
