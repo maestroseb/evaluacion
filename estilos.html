@@ -486,7 +486,9 @@
   label.crit .crit-txt b { color: var(--texto); font-weight: 600; }
   label.crit.pendiente { background: #fff8e9; }
   label.crit.pendiente:hover { background: #fdf1d6; }
-  .tag-pend { display: inline-block; margin-left: 6px; font-size: 10px; font-weight: 600;
+  /* Sin margen izquierdo: en la misma línea separa el espacio normal del texto,
+     y si salta de línea queda alineada con el título de su criterio. */
+  .tag-pend { display: inline-block; margin: 2px 0 0; font-size: 10px; font-weight: 600;
     color: #9a6a00; background: #fde8b8; border-radius: 5px; padding: 1px 6px;
     vertical-align: middle; }
 
@@ -539,7 +541,9 @@
   /* ---------- celdas por tipo de columna ---------- */
   table.rejilla td.celda-check { cursor: pointer; min-width: 44px; user-select: none;
     color: var(--texto-3); }
-  table.rejilla td.celda-check .svg-ico { width: 14px; height: 14px; vertical-align: -2px; }
+  /* Check/cruz grandes y gruesos: que se vean como los números de las otras celdas. */
+  table.rejilla td.celda-check .svg-ico { width: 20px; height: 20px; vertical-align: -4px;
+    stroke-width: 3; }
   table.rejilla td.celda-check.si { color: var(--g-top-tx); }
   table.rejilla td.celda-check.no { color: var(--peligro); }
   table.rejilla td.celda-cont { white-space: nowrap; padding: 4px 6px; }

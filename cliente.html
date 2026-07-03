@@ -1212,7 +1212,7 @@ var App = (function () {
 
   /**
    * Construye la lista de criterios con casillas. Marca los que aún NO están
-   * asignados a ninguna actividad de ninguna unidad de la clase ("sin asignar").
+   * asignados a ninguna actividad de ninguna unidad de la clase ("no evaluado").
    */
   function listaCriteriosHtml(sel) {
     sel = sel || [];
@@ -1227,7 +1227,7 @@ var App = (function () {
       return '<label class="crit' + (noAsig ? ' pendiente' : '') + '" title="' + esc(c.completo) + '">' +
         '<input type="checkbox" value="' + esc(cod) + '"' + marcado + '>' +
         '<span class="crit-txt"><b>' + esc(cod) + '</b> ' + esc(c.texto) +
-        (noAsig ? ' <span class="tag-pend">sin asignar</span>' : '') + '</span></label>';
+        (noAsig ? ' <span class="tag-pend">no evaluado</span>' : '') + '</span></label>';
     }).join('');
     return { html: html || '<i>No hay criterios para esta área.</i>', pendientes: pendientes };
   }
@@ -1242,7 +1242,7 @@ var App = (function () {
 
   function notaPendientes(p) {
     return p > 0
-      ? '<p class="ayuda">Quedan <b>' + p + '</b> criterios sin asignar en la clase (marcados como «sin asignar»).</p>'
+      ? '<p class="ayuda">Quedan <b>' + p + '</b> criterios sin evaluar en la clase (marcados como «no evaluado»).</p>'
       : '<p class="ayuda">' + svgUI('check') + ' Todos los criterios de la clase están ya asignados a alguna actividad.</p>';
   }
 
@@ -1276,7 +1276,7 @@ var App = (function () {
         (act && act.numItems ? act.numItems : '') + '"></label>' +
       '<label class="check check-suelto"><input type="checkbox" id="f-act-info"' +
         (esInformativa ? ' checked' : '') + ' onchange="App.tipoActCambiado()"> ' +
-        'Columna informativa (no cuenta para la nota)</label>' +
+        'Columna informativa (no cuenta para nota)</label>' +
       '<div id="bloque-crit" class="campo-crit"><span class="etq">Criterios asociados</span>' +
       notaPendientes(lista.pendientes) +
       '<div class="lista-crit">' + lista.html + '</div></div>' +
@@ -1311,7 +1311,9 @@ var App = (function () {
             cerrarModal(); pintarRejilla();
           });
         }
-      });
+      },
+      // Al editar, sin foco inicial: que el móvil no abra el teclado solo.
+      { sinFoco: !!act });
     tipoActCambiado(); // ajusta campos visibles al tipo inicial
   }
 
@@ -2282,7 +2284,7 @@ var App = (function () {
       '<select id="f-nivel-destino">' + optNiveles + '</select></label>' +
       '<p class="ayuda">Si el alumnado <b>sube de nivel</b> (p. ej. de ' + esc(nivelActual) +
       ' al siguiente), los criterios se reasignan al nivel nuevo (LCL.4.4.1 → LCL.5.4.1). ' +
-      'Los que no tengan equivalente quedan <b>sin asignar</b> para que los revises.</p>',
+      'Los que no tengan equivalente quedan marcados como <b>no evaluados</b> para que los revises.</p>',
       'Promocionar',
       function () {
         var destino = val('f-curso-acad').trim();
@@ -2359,7 +2361,7 @@ var App = (function () {
 
   // ---------- modal ----------
   var accionModal = null;
-  function abrirModal(titulo, cuerpoHtml, textoAceptar, onAceptar) {
+  function abrirModal(titulo, cuerpoHtml, textoAceptar, onAceptar, opts) {
     document.getElementById('modal-titulo').textContent = titulo;
     document.getElementById('modal-cuerpo').innerHTML = cuerpoHtml;
     var b = document.getElementById('modal-aceptar');
@@ -2368,6 +2370,9 @@ var App = (function () {
     b.onclick = function () { if (accionModal) accionModal(); };
     document.getElementById('modal-fondo').hidden = false;
     // Lleva el foco al primer campo del modal (o al botón de aceptar).
+    // Con sinFoco no se enfoca nada: en el móvil, enfocar un campo de texto
+    // abre el teclado (molesto p. ej. al editar una actividad ya creada).
+    if (opts && opts.sinFoco) return;
     var f = document.querySelector('#modal-cuerpo input, #modal-cuerpo select, #modal-cuerpo textarea');
     (f || b).focus();
   }
