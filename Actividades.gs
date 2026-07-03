@@ -200,16 +200,22 @@ var Actividades = (function () {
       actividades: actividades,
       criteriosInfo: criteriosInfo,
       items: items,
-      // Criterios ya asignados a alguna actividad en CUALQUIER unidad de la clase
-      // (cobertura; no depende de que tengan nota).
-      asignados: criteriosAsignadosEval_(ss, unidad.evalId, datosAct)
+      // Criterios asignados en las DEMÁS unidades de la clase. Los de ESTA
+      // unidad los calcula el cliente en vivo desde sus actividades: así, al
+      // quitar un criterio de la única actividad que lo usaba, recupera la
+      // etiqueta «no evaluado» sin volver al servidor.
+      asignadosFuera: criteriosAsignadosEval_(ss, unidad.evalId, datosAct, unidadId)
     };
   }
 
-  /** Conjunto de criterios asignados a alguna actividad en toda la evaluación. */
-  function criteriosAsignadosEval_(ss, evalId, datos) {
+  /**
+   * Conjunto de criterios asignados a alguna actividad de la evaluación,
+   * opcionalmente excluyendo una unidad.
+   */
+  function criteriosAsignadosEval_(ss, evalId, datos, excluirUnidadId) {
     var setU = {};
     Unidades.listar_(ss, evalId).forEach(function (u) { setU[u.unidadId] = true; });
+    if (excluirUnidadId) delete setU[excluirUnidadId];
     datos = datos || hojaA_(ss).getDataRange().getValues();
     var set = {};
     for (var i = 1; i < datos.length; i++) {

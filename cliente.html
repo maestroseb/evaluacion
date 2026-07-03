@@ -1217,12 +1217,12 @@ var App = (function () {
   function listaCriteriosHtml(sel) {
     sel = sel || [];
     var info = rejilla.criteriosInfo;
-    var asignados = rejilla.asignados || [];
+    var asignados = criteriosAsignados();
     var pendientes = 0;
     var html = Object.keys(info).sort(cmpCodigo).map(function (cod) {
       var c = infoCrit(cod);
       var marcado = sel.indexOf(cod) >= 0 ? ' checked' : '';
-      var noAsig = asignados.indexOf(cod) < 0;
+      var noAsig = !asignados[cod];
       if (noAsig) pendientes++;
       return '<label class="crit' + (noAsig ? ' pendiente' : '') + '" title="' + esc(c.completo) + '">' +
         '<input type="checkbox" value="' + esc(cod) + '"' + marcado + '>' +
@@ -1232,12 +1232,19 @@ var App = (function () {
     return { html: html || '<i>No hay criterios para esta área.</i>', pendientes: pendientes };
   }
 
-  /** Une criterios al conjunto de asignados de la clase (en memoria). */
-  function marcarAsignados(criterios) {
-    rejilla.asignados = rejilla.asignados || [];
-    (criterios || []).forEach(function (c) {
-      if (rejilla.asignados.indexOf(c) < 0) rejilla.asignados.push(c);
+  /**
+   * Criterios cubiertos AHORA: los asignados en otras unidades (los manda el
+   * servidor) más los de las actividades de esta unidad, calculados en vivo.
+   * Al quitar un criterio de la única actividad que lo usaba, vuelve a salir
+   * como «no evaluado» sin tocar el servidor.
+   */
+  function criteriosAsignados() {
+    var set = {};
+    (rejilla.asignadosFuera || []).forEach(function (c) { set[c] = true; });
+    (rejilla.actividades || []).forEach(function (a) {
+      (a.criterios || []).forEach(function (c) { set[c] = true; });
     });
+    return set;
   }
 
   function notaPendientes(p) {
@@ -1301,13 +1308,11 @@ var App = (function () {
           llamar('editarActividad', [act.actividadId, payload], function () {
             act.nombre = nombre; act.criterios = criterios;
             act.numItems = numItems; act.tipo = tipo;
-            marcarAsignados(criterios);
             cerrarModal(); pintarRejilla();
           });
         } else {
           llamar('crearActividad', [rejilla.unidad.unidadId, payload], function (nueva) {
             rejilla.actividades.push(nueva);
-            marcarAsignados(nueva.criterios);
             cerrarModal(); pintarRejilla();
           });
         }
@@ -1347,7 +1352,6 @@ var App = (function () {
     botonModalCargando('Duplicando…');
     llamar('duplicarActividad', [id], function (nueva) {
       rejilla.actividades.push(nueva);
-      marcarAsignados(nueva.criterios);
       cerrarModal(); pintarRejilla();
     });
   }
@@ -1396,7 +1400,6 @@ var App = (function () {
         botonModalCargando('Creando ' + lista.length + '…');
         llamar('crearActividades', [rejilla.unidad.unidadId, lista], function (nuevas) {
           nuevas.forEach(function (a) { rejilla.actividades.push(a); });
-          marcarAsignados(criterios);
           cerrarModal(); pintarRejilla();
         });
       });
