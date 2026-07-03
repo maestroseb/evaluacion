@@ -110,9 +110,12 @@ var Resumen = (function () {
     var fila = items[act.actividadId];
     var v = fila && fila[alId] != null ? fila[alId] : null;
     if (v == null) return null;
+    // Cadenas = observaciones (o restos de un cambio de tipo): nunca puntúan.
+    if (typeof v === 'string') return null;
     switch (act.tipo || 'items') {
       case 'nota':  return Math.max(0, Math.min(10, v));
       case 'check': return v ? 10 : 0;
+      case 'texto': return null; // observación: nunca puntúa
       case 'escala': case 'escalaInf':
         var eq = NOTAS_ESCALA[act.tipo][Math.round(v) - 1];
         return eq == null ? null : eq;

@@ -31,7 +31,8 @@ function getExportacion() {
     evaluaciones: filas(HOJAS.EVALUACIONES),
     unidades: filas(HOJAS.UNIDADES),
     actividades: filas(HOJAS.ACTIVIDADES),
-    notas: filas(HOJAS.NOTAS)
+    // Observaciones en claro (como los nombres): al importar se re-cifran.
+    notas: filas(HOJAS.NOTAS).map(function (r) { return [r[0], Notas.jsonEnClaro_(r[1])]; })
   };
 }
 
@@ -66,7 +67,12 @@ function importarDatos(datos) {
   escribir(HOJAS.EVALUACIONES, datos.evaluaciones || []);
   escribir(HOJAS.UNIDADES, datos.unidades || []);
   escribir(HOJAS.ACTIVIDADES, datos.actividades || []);
-  escribir(HOJAS.NOTAS, datos.notas || []);
+  var notasRows = (datos.notas || []).map(function (r) {
+    var items = {};
+    try { items = JSON.parse(r[1] || '{}') || {}; } catch (e) {}
+    return [r[0], JSON.stringify(Notas.cifrarTextos_(items))];
+  });
+  escribir(HOJAS.NOTAS, notasRows);
   // Los backups antiguos podían traer datos.items (_items legado): se ignora.
   // Una copia antigua puede traer filas sin cursoAcademico: reactivar el backfill.
   Cursos.invalidarBackfill_();

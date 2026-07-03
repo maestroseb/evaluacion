@@ -83,18 +83,33 @@ var Datos = (function () {
     setMeta_(ss, 'creado', new Date().toISOString());
     setMeta_(ss, 'dueno', Session.getActiveUser().getEmail());
     if (defecto && ESQUEMA[defecto.getName()] === undefined) ss.deleteSheet(defecto);
+    // Recién creado = esquema al día: evita la verificación completa en la
+    // siguiente llamada (ver asegurarEsquema_).
+    PropertiesService.getUserProperties()
+      .setProperty('esquemaOk', CONFIG.ESQUEMA_VERSION + ':' + ss.getId());
   }
 
   /**
    * Crea las pestañas que falten y, en las existentes, añade las columnas nuevas
    * del esquema (migración no destructiva para cuadernos antiguos).
+   *
+   * La verificación completa cuesta ~15 accesos a la hoja, así que solo se hace
+   * UNA vez por versión del esquema: al terminar se apunta en las propiedades
+   * del usuario y las llamadas siguientes salen sin tocar la hoja. Al subir
+   * ESQUEMA_VERSION (o cambiar de cuaderno) la marca deja de coincidir y la
+   * verificación vuelve a ejecutarse.
    */
   function asegurarEsquema_(ss) {
+    var props = PropertiesService.getUserProperties();
+    var marca = CONFIG.ESQUEMA_VERSION + ':' + ss.getId();
+    if (props.getProperty('esquemaOk') === marca) return;
     Object.keys(ESQUEMA).forEach(function (nombre) {
       var sh = ss.getSheetByName(nombre);
       if (!sh) { crearHoja_(ss, nombre, ESQUEMA[nombre]); return; }
       asegurarColumnas_(sh, ESQUEMA[nombre]);
     });
+    setMeta_(ss, 'esquemaVersion', CONFIG.ESQUEMA_VERSION);
+    props.setProperty('esquemaOk', marca);
   }
 
   /** Añade al final las cabeceras del esquema que aún no estén en la hoja. */

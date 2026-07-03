@@ -43,6 +43,7 @@ var App = (function () {
           else irAEvaluaciones();
         });
       } catch (err) { irAEvaluaciones(); }
+      precargarEvaluaciones(); // en 2º plano: abrir cada clase será instantáneo
       // Copia de seguridad automática en 2º plano (no retrasa el arranque).
       llamarSilencioso('respaldoAutomatico', [], function () {});
     });
@@ -140,7 +141,7 @@ var App = (function () {
     if (!evalId) { if (evalActual) cb(); else irAEvaluaciones(); return; }
     if (evalActual && evalActual.evalId === evalId) return cb();
     if (evalCache[evalId]) { evalActual = evalCache[evalId]; return cb(); }
-    llamarSilencioso('obtenerEvaluacion', [evalId], function (ev) {
+    llamarSilencioso('getEvaluacionCompleta', [evalId], function (ev) {
       evalCache[evalId] = ev;
       evalActual = ev;
       cb();
@@ -178,6 +179,7 @@ var App = (function () {
       invalidarCaches();
       pintarSelectorCurso();
       irAEvaluaciones(); // vuelve a la lista de clases del curso elegido
+      precargarEvaluaciones();
     });
   }
 
@@ -194,9 +196,20 @@ var App = (function () {
   /** Título visible de una clase: su nombre propio o, si no, el área. */
   function tituloEval(ev) { return (ev && ev.nombre) ? ev.nombre : (ev ? ev.area : ''); }
 
-  function invalidarCaches() { evalCache = {}; rejillaCache = {}; claseCache = {}; }
+  function invalidarCaches() { evalCache = {}; rejillaCache = {}; claseCache = {}; enVuelo = {}; }
 
-  // ---------- prefetch al pasar el ratón (carga anticipada) ----------
+  /**
+   * Descarta de la caché las evaluaciones de una clase (tras editar su nombre
+   * o su alumnado): al abrirlas se volverán a pedir ya actualizadas.
+   */
+  function invalidarEvalsDeClase(claseId) {
+    Object.keys(evalCache).forEach(function (id) {
+      var ev = evalCache[id];
+      if (ev && ev.clase && ev.clase.claseId === claseId) delete evalCache[id];
+    });
+  }
+
+  // ---------- carga anticipada (prefetch) ----------
   /** Llamada al backend que ignora errores (para prefetch en 2º plano). */
   function llamarSilencioso(fn, args, ok) {
     google.script.run.withSuccessHandler(ok).withFailureHandler(function () {})
@@ -207,9 +220,36 @@ var App = (function () {
     enVuelo[id] = 1;
     llamarSilencioso(fn, [id], function (r) { cache[id] = r; delete enVuelo[id]; });
   }
-  function prefetchEval(id) { prefetch_(id, 'obtenerEvaluacion', evalCache); }
+  function prefetchEval(id) { prefetch_(id, 'getEvaluacionCompleta', evalCache); }
   function prefetchClase(id) { prefetch_(id, 'obtenerClase', claseCache); }
   function prefetchRejilla(id) { if (!arrastreAct && !arrastre) prefetch_(id, 'getRejilla', rejillaCache); }
+
+  /**
+   * Precarga en 2º plano las clases del curso (evaluación + unidades) para que
+   * abrirlas sea instantáneo. En el móvil no hay "pasar el ratón", así que el
+   * prefetch por hover nunca se dispara: esta precarga escalonada (una petición
+   * cada 400 ms, para no acaparar el cupo de llamadas) es la que hace el trabajo.
+   */
+  function precargarEvaluaciones() {
+    var ids = ((estado && estado.evaluaciones) || []).slice(0, 10)
+      .map(function (ev) { return ev.evalId; })
+      .filter(function (id) { return id && !evalCache[id] && !enVuelo[id]; });
+    ids.forEach(function (id, i) {
+      setTimeout(function () { prefetchEval(id); }, 400 * i);
+    });
+  }
+
+  /** Precarga las rejillas de las unidades de la evaluación abierta. */
+  function precargarRejillas() {
+    var ids = ((evalActual && evalActual.unidades) || []).slice(0, 8)
+      .map(function (u) { return u.unidadId; })
+      .filter(function (id) { return id && !rejillaCache[id] && !enVuelo[id]; });
+    ids.forEach(function (id, i) {
+      setTimeout(function () {
+        if (!arrastreAct && !arrastre) prefetch_(id, 'getRejilla', rejillaCache);
+      }, 400 * i);
+    });
+  }
 
   /**
    * Ajusta la altura de las tablas de notas (rejilla y resumen) al hueco REAL
@@ -612,17 +652,16 @@ var App = (function () {
   function abrirEvaluacion(evalId) {
     evalActiva = evalId;
     if (evalCache[evalId]) {
-      abrirEvaluacionCargada(evalCache[evalId]);     // instantáneo desde caché
-    } else {
-      mostrar('vista-evaluacion');
-      document.getElementById('eval-titulo').textContent = '';
-      document.getElementById('eval-meta').textContent = '';
-      document.getElementById('lista-unidades').innerHTML = spinner();
+      // Instantáneo desde caché (precarga o visita anterior), sin ir al servidor.
+      abrirEvaluacionCargada(evalCache[evalId]);
+      return;
     }
-    llamar('obtenerEvaluacion', [evalId], function (ev) {
-      // Conserva las unidades ya cargadas para no parpadear.
-      var prev = evalCache[evalId];
-      if (prev && prev.unidades) ev.unidades = prev.unidades;
+    mostrar('vista-evaluacion');
+    document.getElementById('eval-titulo').textContent = '';
+    document.getElementById('eval-meta').textContent = '';
+    document.getElementById('lista-unidades').innerHTML = spinner();
+    // Evaluación + unidades en UNA llamada (antes eran dos viajes secuenciales).
+    llamar('getEvaluacionCompleta', [evalId], function (ev) {
       evalCache[evalId] = ev;
       // Si ya navegaste a otro sitio (u otra clase), la respuesta tardía solo
       // actualiza la caché: NUNCA debe devolverte a esta vista.
@@ -632,6 +671,8 @@ var App = (function () {
   }
   function abrirEvaluacionCargada(ev) {
     registrarHistorial({ v: 'evaluacion', id: ev.evalId });
+    if (!ev.unidades) ev.unidades = [];
+    evalCache[ev.evalId] = ev; // p. ej. al llegar desde "crear evaluación"
     evalActual = ev;
     setTitulo('Clases');
     mostrar('vista-evaluacion');
@@ -641,16 +682,8 @@ var App = (function () {
     ico.style.background = ev.color || '';
     document.getElementById('eval-meta').textContent =
       ev.clase.nombre + ' · ' + ev.curso + ' · ' + ev.clase.alumnos.length + ' alumnos/as';
-    cargarUnidades();
-  }
-
-  function cargarUnidades() {
-    if (!evalActual.unidades) document.getElementById('lista-unidades').innerHTML = spinner();
-    else pintarUnidades();
-    llamar('listarUnidades', [evalActual.evalId], function (uds) {
-      evalActual.unidades = uds;
-      pintarUnidades();
-    });
+    pintarUnidades();
+    precargarRejillas(); // las unidades se abrirán al instante
   }
   function pintarUnidades() {
     var cont = document.getElementById('lista-unidades');
@@ -1252,7 +1285,7 @@ var App = (function () {
       function () {
         var nombre = val('f-act-nombre').trim();
         var tipo = tipoActElegido();
-        var informativa = document.getElementById('f-act-info').checked;
+        var informativa = document.getElementById('f-act-info').checked || tipo === 'texto';
         var numItems = Number(val('f-act-items')) || 0;
         var criterios = informativa ? [] : [].slice.call(
           document.querySelectorAll('.lista-crit input:checked')
@@ -1300,6 +1333,11 @@ var App = (function () {
     }
     var info = document.getElementById('f-act-info');
     var bloque = document.getElementById('bloque-crit');
+    if (info) {
+      // Una observación nunca puntúa: informativa fija y sin desmarcar.
+      if (tipo === 'texto') { info.checked = true; info.disabled = true; }
+      else info.disabled = false;
+    }
     if (bloque && info) bloque.classList.toggle('apagado', info.checked);
   }
 
@@ -1516,6 +1554,7 @@ var App = (function () {
       tipo === 'check' ? '✓/✗' :
       tipo === 'escala' ? 'IN-SB' :
       tipo === 'escalaInf' ? 'POC-EXC' :
+      tipo === 'texto' ? 'texto' :
       (a.numItems > 0 ? '± /' + a.numItems : '±');
     return parte + ' · ' + (a.criterios.length ? a.criterios.join(', ') : 'informativa');
   }
@@ -1539,6 +1578,14 @@ var App = (function () {
         ' tabindex="0" role="button" aria-label="Elegir nivel" ' +
         'title="' + (niv ? esc(niv.nombre) : 'Sin valorar') + '" ' +
         'onclick="App.abrirSelectorNivel(this)">' + (niv ? niv.cod : '·') + '</td>';
+    }
+    if (tipo === 'texto') {
+      var t = v == null ? '' : String(v);
+      var corto = t.length > 14 ? t.slice(0, 14) + '…' : t;
+      return '<td class="celda celda-texto' + (t ? '' : ' vacia') + '" ' + comun +
+        ' tabindex="0" role="button" aria-label="Editar observación" ' +
+        'title="' + esc(t) + '" ' +
+        'onclick="App.abrirEditorTexto(this)">' + (t ? esc(corto) : svgUI('lapiz')) + '</td>';
     }
     if (tipo === 'contador') {
       return '<td class="celda celda-cont" ' + comun + '>' +
@@ -1626,6 +1673,32 @@ var App = (function () {
     td.textContent = niv ? niv.cod : '·';
     actualizarNotasFila(alId);
     programarGuardadoNotas();
+  }
+
+  /** Modal para escribir la observación (columna de texto) de un alumno/a. */
+  function abrirEditorTexto(td) {
+    var actId = td.dataset.act, alId = td.dataset.al;
+    var act = actDe(actId);
+    var al = null;
+    (rejilla.alumnos || []).forEach(function (a) { if (a.id === alId) al = a; });
+    var v = valorItem(actId, alId);
+    abrirModal(act ? act.nombre : 'Observación',
+      (al ? '<p class="ayuda">' + esc(al.nombre) + '</p>' : '') +
+      '<label>Observación' +
+      '<textarea id="f-obs" rows="4" maxlength="500" ' +
+      'placeholder="Escribe la observación…">' +
+      (v == null ? '' : esc(String(v))) + '</textarea></label>',
+      'Guardar',
+      function () {
+        var t = document.getElementById('f-obs').value.trim().slice(0, 500);
+        fijarValor(actId, alId, t || null);
+        var corto = t.length > 14 ? t.slice(0, 14) + '…' : t;
+        td.classList.toggle('vacia', !t);
+        td.title = t;
+        td.innerHTML = t ? esc(corto) : svgUI('lapiz');
+        cerrarModal();
+        programarGuardadoNotas();
+      });
   }
 
   /** Contador con − y +: parte de 0; con máximo definido, no lo supera. */
@@ -1826,7 +1899,8 @@ var App = (function () {
       { cod: 'REG', nombre: 'Regular',   nota: 4 },
       { cod: 'ADE', nombre: 'Adecuado',  nota: 6 },
       { cod: 'BUE', nombre: 'Bueno',     nota: 8 },
-      { cod: 'EXC', nombre: 'Excelente', nota: 10 } ] }
+      { cod: 'EXC', nombre: 'Excelente', nota: 10 } ] },
+    texto:     { etiqueta: 'Observación' } // texto libre; siempre informativa
   };
   function tipoDe(act) { return act && TIPOS_ACT[act.tipo] ? act.tipo : 'items'; }
 
@@ -1834,10 +1908,13 @@ var App = (function () {
   function notaActividad(act, alumnoId) {
     var v = valorItem(act.actividadId, alumnoId);
     if (v == null) return null;
+    // Cadenas = observaciones (o restos de un cambio de tipo): nunca puntúan.
+    if (typeof v === 'string') return null;
     var tipo = tipoDe(act);
     switch (tipo) {
       case 'nota':  return Math.max(0, Math.min(10, v));
       case 'check': return v ? 10 : 0;
+      case 'texto': return null;
       case 'escala': case 'escalaInf':
         var niv = TIPOS_ACT[tipo].niveles[Math.round(v) - 1];
         return niv ? niv.nota : null;
@@ -2084,6 +2161,7 @@ var App = (function () {
         llamar('actualizarAlumnosClase', [claseActual.claseId, nuevos], function (cl) {
           var c = claseDe(cl.claseId); if (c) c.numAlumnos = cl.alumnos.length;
           claseCache[cl.claseId] = cl;
+          invalidarEvalsDeClase(cl.claseId); // el nº de alumnos cambió
           cerrarModal();
           abrirClaseCargada(cl);
         });
@@ -2106,6 +2184,7 @@ var App = (function () {
         botonModalCargando('Guardando…');
         llamar('editarClase', [cl.claseId, payload], function (act) {
           claseCache[cl.claseId] = act;
+          invalidarEvalsDeClase(cl.claseId); // el nombre del grupo cambió
           estado.clases.forEach(function (c) {
             if (c.claseId === cl.claseId) { c.nombre = act.nombre; c.color = act.color; c.icono = act.icono; }
           });
@@ -2339,7 +2418,7 @@ var App = (function () {
       if (e.key !== 'Enter' && e.key !== ' ') return;
       var t = e.target;
       if (t && t.matches &&
-          t.matches('a.item-lat, a.tab, a.volver-icono, .clase-card, .tarjeta-unidad, td.celda-check, td.celda-escala')) {
+          t.matches('a.item-lat, a.tab, a.volver-icono, .clase-card, .tarjeta-unidad, td.celda-check, td.celda-escala, td.celda-texto')) {
         e.preventDefault(); // evita el scroll de Espacio
         t.click();
       }
@@ -2430,6 +2509,7 @@ var App = (function () {
     pintarRejilla: pintarRejilla, actDown: actDown,
     ciclarCheck: ciclarCheck, sumarContador: sumarContador, tipoActCambiado: tipoActCambiado,
     abrirSelectorNivel: abrirSelectorNivel, elegirNivel: elegirNivel,
+    abrirEditorTexto: abrirEditorTexto,
     prefetchEval: prefetchEval, prefetchClase: prefetchClase, prefetchRejilla: prefetchRejilla,
     nuevaClase: nuevaClase, copiarDeClase: copiarDeClase,
     abrirClase: abrirClase, editarClaseUI: editarClaseUI, editarAlumnos: editarAlumnos,
