@@ -52,10 +52,13 @@
     <div class="area-principal">
       <header class="topbar">
         <button class="hamburguesa" title="Menú" onclick="App.toggleSidebar()"><svg class="svg-ico" viewBox="0 0 24 24" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+        <!-- En móvil la marca sustituye al título de sección (la tab bar ya
+             dice dónde estás); en escritorio la marca vive en la sidebar. -->
+        <span class="topbar-marca"><?!= CONFIG.NOMBRE_APP ?></span>
         <h2 class="topbar-titulo" id="topbar-titulo">Mis clases</h2>
         <label class="curso-chip" title="Curso académico">
           <span class="curso-chip-ico"><svg class="svg-ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
-          <select id="curso-activo" aria-label="Curso académico"
+          <select class="curso-select" aria-label="Curso académico"
             onchange="App.cambiarCurso(this.value)"></select>
         </label>
         <div class="buscador">
@@ -72,7 +75,13 @@
     <section id="vista-evaluaciones" hidden>
       <div class="cabecera-seccion">
         <h1>Mis clases</h1>
-        <button class="btn primario" onclick="App.nuevaEvaluacion()">+ Nueva clase</button>
+        <span class="acciones-seccion">
+          <label class="curso-chip curso-chip-lista" title="Curso académico">
+            <select class="curso-select" aria-label="Curso académico"
+              onchange="App.cambiarCurso(this.value)"></select>
+          </label>
+          <button class="btn primario" onclick="App.nuevaEvaluacion()">+ Nueva clase</button>
+        </span>
       </div>
       <div id="lista-evaluaciones" class="tarjetas"></div>
     </section>
@@ -81,7 +90,13 @@
     <section id="vista-clases" hidden>
       <div class="cabecera-seccion">
         <h1>Mis grupos</h1>
-        <button class="btn primario" onclick="App.nuevaClase()">+ Nuevo grupo</button>
+        <span class="acciones-seccion">
+          <label class="curso-chip curso-chip-lista" title="Curso académico">
+            <select class="curso-select" aria-label="Curso académico"
+              onchange="App.cambiarCurso(this.value)"></select>
+          </label>
+          <button class="btn primario" onclick="App.nuevaClase()">+ Nuevo grupo</button>
+        </span>
       </div>
       <div id="lista-clases" class="tarjetas"></div>
     </section>
