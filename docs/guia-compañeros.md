@@ -11,6 +11,17 @@ hacer copias: solo entrar con tu enlace.
 2. La primera vez, Google te pedirá **autorizar permisos** (para crear tu
    cuaderno de notas en tu Drive). Acepta. Tus datos son **tuyos y privados**.
 
+### Llévala como una app (recomendado en el móvil)
+
+Guarda el enlace en la pantalla de inicio y se abrirá como una app más:
+
+- **iPhone / iPad**: abre el enlace en **Safari** → botón **Compartir** →
+  **Añadir a pantalla de inicio**.
+- **Android**: ábrelo en **Chrome** → menú **⋮** → **Añadir a pantalla de
+  inicio**.
+- **Ordenador**: en Chrome, menú **⋮** → *Guardar y compartir* → **Crear
+  acceso directo** (marca «abrir en ventana nueva»).
+
 ## 2. Conceptos
 
 - **Grupo**: tu lista de alumnado (p. ej. "3º A"). Se crea **una vez** y se
