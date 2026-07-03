@@ -1,0 +1,48 @@
+# Sincroniza el código con el proyecto de Apps Script en cada merge a main.
+#
+# Con esto, probar desde el móvil es: fusionar el PR → esperar ~1 min → abrir
+# la app (la URL /dev sirve el último código; si además se define
+# GAS_DEPLOYMENT_ID, también se actualiza la implementación de producción).
+#
+# Necesita tres secretos del repositorio (ver docs/despliegue-automatico.md):
+#   CLASPRC_JSON      contenido de ~/.clasprc.json tras `clasp login`
+#   GAS_SCRIPT_ID     ID del proyecto de Apps Script
+#   GAS_DEPLOYMENT_ID (opcional) ID de la implementación a actualizar
+# Sin secretos, el workflow termina sin hacer nada (no falla).
+name: Sincronizar con Apps Script
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+jobs:
+  clasp-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Push (y despliegue opcional) con clasp
+        env:
+          CLASPRC: ${{ secrets.CLASPRC_JSON }}
+          SCRIPT_ID: ${{ secrets.GAS_SCRIPT_ID }}
+          DEPLOYMENT_ID: ${{ secrets.GAS_DEPLOYMENT_ID }}
+        run: |
+          if [ -z "$CLASPRC" ] || [ -z "$SCRIPT_ID" ]; then
+            echo "Secretos CLASPRC_JSON / GAS_SCRIPT_ID sin configurar: se omite."
+            exit 0
+          fi
+          npm install -g @google/clasp@2.4.2
+          printf '%s' "$CLASPRC" > ~/.clasprc.json
+          printf '{"scriptId":"%s","rootDir":"."}' "$SCRIPT_ID" > .clasp.json
+          clasp push -f
+          echo "Código subido al proyecto (la URL /dev ya lo sirve)."
+          if [ -n "$DEPLOYMENT_ID" ]; then
+            clasp deploy --deploymentId "$DEPLOYMENT_ID" \
+              --description "Auto ${GITHUB_SHA::7}"
+            echo "Implementación de producción actualizada."
+          fi

@@ -58,6 +58,7 @@ cliente.html      JS de cliente
 docs/
   mapa-curricular.md  Cómo montar el mapa central (Fase 0)
   despliegue.md       Sincronización con GitHub Assistant y despliegue
+  despliegue-automatico.md  Merge a main → Apps Script solo (probar desde el móvil)
   guia-compañeros.md  Guía de uso para el profesorado (g.educaand.es)
   autohospedaje.md    Montar una instancia propia (otros dominios)
 ```

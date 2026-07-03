@@ -1,0 +1,5 @@
+# Solo el código de la app viaja a Apps Script: .gs, .html y el manifiesto.
+**/**
+!*.gs
+!*.html
+!appsscript.json
