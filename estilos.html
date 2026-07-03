@@ -426,6 +426,9 @@
     outline: none; border-color: var(--acento); box-shadow: 0 0 0 3px var(--acento-suave);
   }
   .modal textarea { resize: vertical; }
+  /* Campos numéricos cortos (nº de ítems): con 2-3 dígitos basta, nada de
+     ocupar el modal entero. display:block para que no herede el ancho del label. */
+  .modal input.campo-corto { display: block; width: 96px; }
   .modal p.mensaje { margin: 0 0 4px; font-size: 14px; line-height: 1.5; color: var(--texto); }
   .ayuda { font-size: 12px; color: var(--texto-3); margin: -8px 0 4px; }
   /* Dos párrafos de ayuda seguidos: el margen negativo del segundo los pegaba. */

@@ -1289,52 +1289,72 @@ var App = (function () {
   function editarActividadUI(id) { modalActividad(actDe(id)); }
 
   /**
-   * Construye la lista de criterios con casillas. Marca los que aún NO están
-   * asignados a ninguna actividad de ninguna unidad de la clase ("no evaluado").
+   * Criterios cubiertos por OTRAS actividades/unidades (sin contar la actividad
+   * en edición: su estado lo dictan las casillas del modal, EN VIVO). Se guarda
+   * al construir la lista para que criterioCambiado() actualice las etiquetas.
    */
-  function listaCriteriosHtml(sel) {
+  var critCubiertosBase = {};
+
+  /**
+   * Construye la lista de criterios con casillas. Etiqueta como «no evaluado»
+   * los que no cubre nadie más NI están marcados; marcar/desmarcar una casilla
+   * actualiza la etiqueta al momento (criterioCambiado).
+   */
+  function listaCriteriosHtml(sel, excluirActId) {
     sel = sel || [];
     var info = rejilla.criteriosInfo;
-    var asignados = criteriosAsignados();
+    critCubiertosBase = {};
+    (rejilla.asignadosFuera || []).forEach(function (c) { critCubiertosBase[c] = true; });
+    (rejilla.actividades || []).forEach(function (a) {
+      if (excluirActId && a.actividadId === excluirActId) return;
+      (a.criterios || []).forEach(function (c) { critCubiertosBase[c] = true; });
+    });
     var pendientes = 0;
     var html = Object.keys(info).sort(cmpCodigo).map(function (cod) {
       var c = infoCrit(cod);
-      var marcado = sel.indexOf(cod) >= 0 ? ' checked' : '';
-      var noAsig = !asignados[cod];
+      var marcado = sel.indexOf(cod) >= 0;
+      var noAsig = !critCubiertosBase[cod] && !marcado;
       if (noAsig) pendientes++;
       return '<label class="crit' + (noAsig ? ' pendiente' : '') + '" title="' + esc(c.completo) + '">' +
-        '<input type="checkbox" value="' + esc(cod) + '"' + marcado + '>' +
+        '<input type="checkbox" value="' + esc(cod) + '"' + (marcado ? ' checked' : '') +
+        ' onchange="App.criterioCambiado(this)">' +
         '<span class="crit-txt"><b>' + esc(cod) + '</b> ' + esc(c.texto) +
         (noAsig ? ' <span class="tag-pend">no evaluado</span>' : '') + '</span></label>';
     }).join('');
     return { html: html || '<i>No hay criterios para esta área.</i>', pendientes: pendientes };
   }
 
-  /**
-   * Criterios cubiertos AHORA: los asignados en otras unidades (los manda el
-   * servidor) más los de las actividades de esta unidad, calculados en vivo.
-   * Al quitar un criterio de la única actividad que lo usaba, vuelve a salir
-   * como «no evaluado» sin tocar el servidor.
-   */
-  function criteriosAsignados() {
-    var set = {};
-    (rejilla.asignadosFuera || []).forEach(function (c) { set[c] = true; });
-    (rejilla.actividades || []).forEach(function (a) {
-      (a.criterios || []).forEach(function (c) { set[c] = true; });
-    });
-    return set;
+  /** Al (des)marcar una casilla de criterio: etiqueta y contador al momento. */
+  function criterioCambiado(input) {
+    var lab = input.closest('label.crit');
+    if (!lab) return;
+    var pend = !input.checked && !critCubiertosBase[input.value];
+    lab.classList.toggle('pendiente', pend);
+    var chip = lab.querySelector('.tag-pend');
+    if (pend && !chip) {
+      lab.querySelector('.crit-txt').insertAdjacentHTML('beforeend',
+        ' <span class="tag-pend">no evaluado</span>');
+    } else if (!pend && chip) {
+      chip.remove();
+    }
+    var n = document.querySelectorAll('.lista-crit label.crit.pendiente').length;
+    var p = document.getElementById('nota-pendientes');
+    if (p) p.innerHTML = notaPendientesTxt_(n);
   }
 
   function notaPendientes(p) {
+    return '<p class="ayuda" id="nota-pendientes">' + notaPendientesTxt_(p) + '</p>';
+  }
+  function notaPendientesTxt_(p) {
     return p > 0
-      ? '<p class="ayuda">Quedan <b>' + p + '</b> criterios sin evaluar en la clase (marcados como «no evaluado»).</p>'
-      : '<p class="ayuda">' + svgUI('check') + ' Todos los criterios de la clase están ya asignados a alguna actividad.</p>';
+      ? 'Quedan <b>' + p + '</b> criterios sin evaluar en la clase (marcados como «no evaluado»).'
+      : svgUI('check') + ' Todos los criterios de la clase están ya asignados a alguna actividad.';
   }
 
   /** Modal compartido para crear o editar una actividad. act=null → crear. */
   function modalActividad(act) {
     var sel = act ? act.criterios : [];
-    var lista = listaCriteriosHtml(sel);
+    var lista = listaCriteriosHtml(sel, act && act.actividadId);
     var tipoSel = act ? tipoDe(act) : 'items';
     var esInformativa = !!(act && !(act.criterios || []).length);
     var opcionesTipo = Object.keys(TIPOS_ACT).map(function (id) {
@@ -1357,8 +1377,8 @@ var App = (function () {
       '<div class="campo-crit"><span class="etq">Tipo de columna</span>' +
       '<div class="tipos-act">' + opcionesTipo + '</div></div>' +
       '<label id="l-act-items"><span id="l-act-items-txt">Nº de ítems a evaluar</span>' +
-      '<input id="f-act-items" type="number" min="0" step="0.5" placeholder="Ej.: 10" value="' +
-        (act && act.numItems ? act.numItems : '') + '"></label>' +
+      '<input id="f-act-items" class="campo-corto" type="number" min="0" step="0.5" ' +
+      'placeholder="10" value="' + (act && act.numItems ? act.numItems : '') + '"></label>' +
       '<label class="check check-suelto"><input type="checkbox" id="f-act-info"' +
         (esInformativa ? ' checked' : '') + ' onchange="App.tipoActCambiado()"> ' +
         'Columna informativa (no cuenta para nota)</label>' +
@@ -1397,13 +1417,16 @@ var App = (function () {
       },
       // Al editar, sin foco inicial: que el móvil no abra el teclado solo.
       { sinFoco: !!act });
-    tipoActCambiado(); // ajusta campos visibles al tipo inicial
+    tipoActPrevio = null;  // modal recién abierto: sin arrastre del anterior
+    tipoActCambiado();     // ajusta campos visibles al tipo inicial
   }
 
   function tipoActElegido() {
     var m = document.querySelector('input[name="f-act-tipo"]:checked');
     return m ? m.value : 'items';
   }
+
+  var tipoActPrevio = null; // último tipo visto en el modal (para el check informativa)
 
   /** Adapta el modal al tipo elegido: campo de ítems/máximo y bloque de criterios. */
   function tipoActCambiado() {
@@ -1419,10 +1442,17 @@ var App = (function () {
     var info = document.getElementById('f-act-info');
     var bloque = document.getElementById('bloque-crit');
     if (info) {
-      // Una observación nunca puntúa: informativa fija y sin desmarcar.
-      if (tipo === 'texto') { info.checked = true; info.disabled = true; }
-      else info.disabled = false;
+      if (tipo === 'texto') {
+        // Una observación nunca puntúa: informativa fija y sin desmarcar.
+        info.checked = true; info.disabled = true;
+      } else {
+        info.disabled = false;
+        // Al salir de Observación se desmarca: lo normal es que la columna
+        // cuente, salvo que el docente la marque expresamente.
+        if (tipoActPrevio === 'texto') info.checked = false;
+      }
     }
+    tipoActPrevio = tipo;
     if (bloque && info) bloque.classList.toggle('apagado', info.checked);
   }
 
@@ -2624,6 +2654,7 @@ var App = (function () {
     anadirFilaAct: anadirFilaAct, quitarFilaAct: quitarFilaAct,
     pintarRejilla: pintarRejilla, actDown: actDown,
     ciclarCheck: ciclarCheck, sumarContador: sumarContador, tipoActCambiado: tipoActCambiado,
+    criterioCambiado: criterioCambiado,
     abrirSelectorNivel: abrirSelectorNivel, elegirNivel: elegirNivel,
     abrirEditorTexto: abrirEditorTexto,
     prefetchEval: prefetchEval, prefetchClase: prefetchClase, prefetchRejilla: prefetchRejilla,
