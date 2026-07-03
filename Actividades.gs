@@ -65,7 +65,8 @@ var Actividades = (function () {
       if (f[0] && f[1] === unidadId) {
         out.push({
           actividadId: f[0], unidadId: f[1], nombre: f[2],
-          criterios: parseLista_(f[3]), numItems: Number(f[4]) || 0, orden: f[5]
+          criterios: parseLista_(f[3]), numItems: Number(f[4]) || 0, orden: f[5],
+          tipo: f[6] || 'items'
         });
       }
     }
@@ -82,7 +83,8 @@ var Actividades = (function () {
       if (!f[0]) continue;
       (out[f[1]] || (out[f[1]] = [])).push({
         actividadId: f[0], unidadId: f[1], nombre: f[2],
-        criterios: parseLista_(f[3]), numItems: Number(f[4]) || 0, orden: f[5]
+        criterios: parseLista_(f[3]), numItems: Number(f[4]) || 0, orden: f[5],
+        tipo: f[6] || 'items'
       });
     }
     Object.keys(out).forEach(function (u) {
@@ -91,17 +93,21 @@ var Actividades = (function () {
     return out;
   }
 
+  // (el 4º parámetro se conserva por compatibilidad de llamadas; ya no se usa:
+  // los criterios pueden ir vacíos en cualquier actividad = columna informativa)
   function crear_(ss, unidadId, p, permitirSinCriterios, ordenDado) {
-    validarActividad_(p, permitirSinCriterios);
+    validarActividad_(p);
     var id = Datos.nuevoId_('act');
+    var tipo = p.tipo || 'items';
     // ordenDado evita releer la hoja en bucles (crear varias / clonar / promocionar).
     var orden = ordenDado != null ? ordenDado : Datos.siguienteOrden_(listar_(ss, unidadId));
     hojaA_(ss).appendRow([
-      id, unidadId, p.nombre.trim(), JSON.stringify(p.criterios),
-      Number(p.numItems), orden
+      id, unidadId, p.nombre.trim(), JSON.stringify(p.criterios || []),
+      Number(p.numItems) || 0, orden, tipo
     ]);
     return { actividadId: id, unidadId: unidadId, nombre: p.nombre.trim(),
-      criterios: p.criterios, numItems: Number(p.numItems), orden: orden };
+      criterios: p.criterios || [], numItems: Number(p.numItems) || 0,
+      orden: orden, tipo: tipo };
   }
 
   function editar_(ss, actividadId, p) {
@@ -110,8 +116,9 @@ var Actividades = (function () {
     var fila = Datos.filaDeId_(sh, actividadId);
     if (fila < 0) throw new Error('Actividad no encontrada.');
     sh.getRange(fila, 3, 1, 3).setValues([[
-      p.nombre.trim(), JSON.stringify(p.criterios), Number(p.numItems)
+      p.nombre.trim(), JSON.stringify(p.criterios || []), Number(p.numItems) || 0
     ]]);
+    sh.getRange(fila, 7).setValue(p.tipo || 'items'); // col 7 = tipo (no toca orden)
     return { ok: true };
   }
 
@@ -144,20 +151,24 @@ var Actividades = (function () {
     var sh = hojaA_(ss);
     var fila = Datos.filaDeId_(sh, actividadId);
     if (fila < 0) throw new Error('Actividad no encontrada.');
-    var f = sh.getRange(fila, 1, 1, 6).getValues()[0];
+    var f = sh.getRange(fila, 1, 1, 7).getValues()[0];
     return crear_(ss, f[1], {
-      nombre: f[2] + ' (copia)', criterios: parseLista_(f[3]), numItems: Number(f[4]) || 0
+      nombre: f[2] + ' (copia)', criterios: parseLista_(f[3]),
+      numItems: Number(f[4]) || 0, tipo: f[6] || 'items'
     });
   }
 
-  function validarActividad_(p, permitirSinCriterios) {
+  function validarActividad_(p) {
     if (!p || !p.nombre || !p.nombre.trim()) throw new Error('Falta el nombre de la actividad.');
-    // Al promocionar de nivel, una actividad puede quedar sin criterios con
-    // correspondencia; se crea vacía para que el profe la revincule después.
-    if (!permitirSinCriterios && (!p.criterios || !p.criterios.length)) {
-      throw new Error('Asocia al menos un criterio.');
+    var tipo = p.tipo || 'items';
+    // Los criterios pueden ir vacíos (columna informativa): la interfaz guía,
+    // pero el servidor lo admite en cualquier tipo.
+    if (tipo === 'items' && !(Number(p.numItems) > 0)) {
+      throw new Error('El nº de ítems debe ser mayor que 0.');
     }
-    if (!(Number(p.numItems) > 0)) throw new Error('El nº de ítems debe ser mayor que 0.');
+    if (tipo === 'contador' && Number(p.numItems) < 0) {
+      throw new Error('El máximo del contador no puede ser negativo.');
+    }
   }
 
   // ---------- rejilla ----------

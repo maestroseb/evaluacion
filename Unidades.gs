@@ -86,7 +86,7 @@ var Unidades = (function () {
     // orden es el índice de cada actividad (evita releer la hoja en cada crear_).
     Actividades.listar_(ss, unidadId).forEach(function (a, idx) {
       Actividades.crear_(ss, nueva.unidadId, {
-        nombre: a.nombre, criterios: a.criterios, numItems: a.numItems
+        nombre: a.nombre, criterios: a.criterios, numItems: a.numItems, tipo: a.tipo
       }, false, idx + 1);
     });
     return nueva;

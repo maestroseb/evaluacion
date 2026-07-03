@@ -96,7 +96,7 @@ var Promocion = (function () {
             // criterios (la actividad original pudo quedarse sin ellos en una
             // promoción anterior; si no, la copia fallaría a medias).
             Actividades.crear_(ss, nu.unidadId, {
-              nombre: a.nombre, criterios: criterios, numItems: a.numItems
+              nombre: a.nombre, criterios: criterios, numItems: a.numItems, tipo: a.tipo
             }, true, ai + 1);
           });
         });
