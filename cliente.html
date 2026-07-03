@@ -350,6 +350,50 @@ var App = (function () {
     try { return new Date(iso).toLocaleString('es-ES'); } catch (e) { return iso; }
   }
 
+  // ---------- menú "Más" (móvil) y Acerca de ----------
+  /** Nombre visible de la app (configurable en Config.gs → NOMBRE_APP). */
+  function nombreApp_() {
+    var m = document.querySelector('.marca-txt');
+    return (m && m.textContent.trim()) || 'la aplicación';
+  }
+
+  /** En el móvil, Papelera / Copia / Acerca de viven bajo la pestaña "Más". */
+  function abrirMas() {
+    abrirModal('Más',
+      '<div class="acciones-modal acciones-mas">' +
+      '<button type="button" class="btn" onclick="App.cerrarModal();App.irAPapelera()">' +
+        svgUI('papelera') + ' Papelera</button>' +
+      '<button type="button" class="btn" onclick="App.abrirCopia()">' +
+        svgUI('guardar') + ' Copia de seguridad</button>' +
+      '<button type="button" class="btn" onclick="App.abrirAcercaDe()">' +
+        svgUI('info') + ' Acerca de</button>' +
+      '</div>',
+      'Cerrar', cerrarModal);
+  }
+
+  /** Qué es la app, dónde está el proyecto y quién lo hace. */
+  function abrirAcercaDe() {
+    var repo = 'https://github.com/maestroseb/evaluacion';
+    abrirModal('Acerca de ' + nombreApp_(),
+      '<p class="mensaje"><b>' + esc(nombreApp_()) + '</b> es un cuaderno del profesorado para ' +
+      '<b>evaluar por criterios</b> (LOMLOE): clases, unidades y actividades con las notas ' +
+      'de criterio calculadas al momento y listas para llevar a Séneca.</p>' +
+      '<p class="mensaje">Tus datos viven <b>en tu propio Drive</b>, con los nombres del ' +
+      'alumnado y las observaciones <b>cifrados</b>. Es un proyecto abierto, creado por ' +
+      '<b>maestroSeb</b> para el profesorado andaluz (y adaptable a otras comunidades).</p>' +
+      '<div class="acciones-modal acciones-mas">' +
+      '<a class="btn" href="' + repo + '/blob/main/docs/guia-compa%C3%B1eros.md" target="_blank" rel="noopener">' +
+        svgUI('info') + ' Guía de uso ↗</a>' +
+      '<a class="btn" href="' + repo + '" target="_blank" rel="noopener">' +
+        svgUI('duplicar') + ' El proyecto en GitHub ↗</a>' +
+      '<a class="btn" href="https://github.com/maestroseb" target="_blank" rel="noopener">' +
+        svgUI('lapiz') + ' maestroSeb ↗</a>' +
+      '</div>' +
+      (estado && estado.esquemaVersion
+        ? '<p class="ayuda">Esquema de datos v' + estado.esquemaVersion + '.</p>' : ''),
+      'Cerrar', cerrarModal);
+  }
+
   // ---------- copia de seguridad (exportar / importar) y traspaso ----------
   function abrirCopia() {
     abrirModal('Copia de seguridad',
@@ -588,7 +632,9 @@ var App = (function () {
     equis:     '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
     check:     '<polyline points="20 6 9 17 4 12"/>',
     descargar: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
-    restaurar: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>'
+    restaurar: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>',
+    guardar:   '<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>',
+    info:      '<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>'
   };
   /** Icono SVG de interfaz por id. */
   function svgUI(id) {
@@ -2500,6 +2546,7 @@ var App = (function () {
     toggleSidebar: toggleSidebar, cerrarSidebar: cerrarSidebar, filtrar: filtrar,
     irAPapelera: irAPapelera, restaurarItem: restaurarItem, vaciarPapeleraUI: vaciarPapeleraUI,
     abrirCopia: abrirCopia, exportarDatos: exportarDatos, pedirImportar: pedirImportar,
+    abrirMas: abrirMas, abrirAcercaDe: abrirAcercaDe,
     compartirGruposUI: compartirGruposUI, recibirGruposUI: recibirGruposUI,
     nuevaEvaluacion: nuevaEvaluacion, claseCambiada: claseCambiada,
     elegirColor: elegirColor, elegirIcono: elegirIcono,

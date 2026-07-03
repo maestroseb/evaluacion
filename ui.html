@@ -34,13 +34,16 @@
           <span class="item-ico"><svg class="svg-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></span><span class="item-txt">Clases</span></a>
         <a id="nav-clases" class="item-lat" tabindex="0" role="button" data-nav="clases" onclick="App.irAClases()" title="Grupos">
           <span class="item-ico"><svg class="svg-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M2.6 20a6.4 6.4 0 0 1 12.8 0"/><path d="M16.5 5.3a3.2 3.2 0 0 1 0 5.4"/><path d="M18 13.4A6.4 6.4 0 0 1 21.4 20"/></svg></span><span class="item-txt">Grupos</span></a>
-        <a id="nav-papelera" class="item-lat" tabindex="0" role="button" data-nav="papelera" onclick="App.irAPapelera()" title="Papelera">
-          <span class="item-ico"><svg class="svg-ico" viewBox="0 0 24 24" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></span><span class="item-txt">Papelera</span></a>
       </nav>
 
+      <!-- Utilidades: un escalón por debajo de Clases/Grupos. -->
       <div class="menu-lat menu-lat-pie">
+        <a id="nav-papelera" class="item-lat" tabindex="0" role="button" data-nav="papelera" onclick="App.irAPapelera()" title="Papelera">
+          <span class="item-ico"><svg class="svg-ico" viewBox="0 0 24 24" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></span><span class="item-txt">Papelera</span></a>
         <a class="item-lat" tabindex="0" role="button" onclick="App.abrirCopia()" title="Copia de seguridad">
           <span class="item-ico"><svg class="svg-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg></span><span class="item-txt">Copia de seguridad</span></a>
+        <a class="item-lat" tabindex="0" role="button" onclick="App.abrirAcercaDe()" title="Acerca de">
+          <span class="item-ico"><svg class="svg-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span><span class="item-txt">Acerca de</span></a>
       </div>
     </aside>
     <div id="velo" class="velo" onclick="App.cerrarSidebar()"></div>
@@ -188,10 +191,8 @@
         <span class="tab-ico"><svg class="svg-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></span><span>Clases</span></a>
       <a class="tab" tabindex="0" role="button" data-nav="clases" onclick="App.irAClases()">
         <span class="tab-ico"><svg class="svg-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M2.6 20a6.4 6.4 0 0 1 12.8 0"/><path d="M16.5 5.3a3.2 3.2 0 0 1 0 5.4"/><path d="M18 13.4A6.4 6.4 0 0 1 21.4 20"/></svg></span><span>Grupos</span></a>
-      <a class="tab" tabindex="0" role="button" data-nav="papelera" onclick="App.irAPapelera()">
-        <span class="tab-ico"><svg class="svg-ico" viewBox="0 0 24 24" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></span><span>Papelera</span></a>
-      <a class="tab" tabindex="0" role="button" onclick="App.abrirCopia()">
-        <span class="tab-ico"><svg class="svg-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg></span><span>Copia</span></a>
+      <a class="tab" tabindex="0" role="button" data-nav="papelera" onclick="App.abrirMas()">
+        <span class="tab-ico"><svg class="svg-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></span><span>Más</span></a>
     </nav>
   </div>
 
