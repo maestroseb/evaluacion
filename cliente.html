@@ -56,6 +56,7 @@ var App = (function () {
     flushNotas(); // guarda notas pendientes de la unidad al cambiar de vista
     vistaActual = id;
     SECCIONES.forEach(function (s) { document.getElementById(s).hidden = (s !== id); });
+    cerrarSelectorNivel(); // ningún selector flotante entre vistas
     document.getElementById('app').scrollTop = 0; // cada vista empieza arriba
     // (además estabiliza la medición de ajustarAltoRejillas)
     // Resalta la sección activa en barra lateral y tab bar (por data-nav).
@@ -1265,7 +1266,8 @@ var App = (function () {
         botonModalCargando('Guardando…');
         if (act) {
           llamar('editarActividad', [act.actividadId, payload], function () {
-            act.nombre = nombre; act.criterios = criterios; act.numItems = numItems;
+            act.nombre = nombre; act.criterios = criterios;
+            act.numItems = numItems; act.tipo = tipo;
             marcarAsignados(criterios);
             cerrarModal(); pintarRejilla();
           });
@@ -1534,9 +1536,9 @@ var App = (function () {
       var niv = TIPOS_ACT[tipo].niveles[Math.round(v) - 1] || null;
       var g = niv ? claseNota(niv.nota) : '';
       return '<td class="celda celda-escala' + (g ? ' ' + g : '') + '" ' + comun +
-        ' tabindex="0" role="button" aria-label="Cambiar nivel" ' +
+        ' tabindex="0" role="button" aria-label="Elegir nivel" ' +
         'title="' + (niv ? esc(niv.nombre) : 'Sin valorar') + '" ' +
-        'onclick="App.ciclarEscala(this)">' + (niv ? niv.cod : '·') + '</td>';
+        'onclick="App.abrirSelectorNivel(this)">' + (niv ? niv.cod : '·') + '</td>';
     }
     if (tipo === 'contador') {
       return '<td class="celda celda-cont" ' + comun + '>' +
@@ -1575,14 +1577,49 @@ var App = (function () {
     programarGuardadoNotas();
   }
 
-  /** Escala por niveles: cada toque sube un nivel; tras el último, vacía. */
-  function ciclarEscala(td) {
-    var actId = td.dataset.act, alId = td.dataset.al, act = actDe(actId);
+  // ---------- selector flotante de nivel (escalas): cualquier nivel a 2 toques ----------
+  var popNivelTd = null; // celda que tiene el selector abierto
+
+  /** Abre junto a la celda los niveles de su escala (+ vaciar). */
+  function abrirSelectorNivel(td) {
+    var act = actDe(td.dataset.act);
     var niveles = TIPOS_ACT[tipoDe(act)].niveles;
-    var v = valorItem(actId, alId);
-    var nuevo = (v == null) ? 1 : (Math.round(v) >= niveles.length ? null : Math.round(v) + 1);
-    fijarValor(actId, alId, nuevo);
-    var niv = nuevo != null ? niveles[nuevo - 1] : null;
+    var v = valorItem(td.dataset.act, td.dataset.al);
+    var pop = document.getElementById('pop-nivel');
+    popNivelTd = td;
+    pop.innerHTML = niveles.map(function (niv, i) {
+      var g = claseNota(niv.nota);
+      return '<button type="button" class="pop-nivel-opt' +
+        (Math.round(v) === i + 1 ? ' sel' : '') + (g ? ' ' + g : '') +
+        '" title="' + esc(niv.nombre) + '" onclick="App.elegirNivel(' + (i + 1) + ')">' +
+        niv.cod + '</button>';
+    }).join('') +
+    '<button type="button" class="pop-nivel-opt vaciar" title="Sin valorar" ' +
+      'onclick="App.elegirNivel(null)">·</button>';
+    pop.hidden = false;
+    // Centrado sobre la celda; si no cabe arriba, debajo; siempre dentro de pantalla.
+    var r = td.getBoundingClientRect(), pr = pop.getBoundingClientRect();
+    var x = Math.min(Math.max(8, r.left + r.width / 2 - pr.width / 2),
+      window.innerWidth - pr.width - 8);
+    var y = r.top - pr.height - 6;
+    if (y < 8) y = r.bottom + 6;
+    pop.style.left = x + 'px';
+    pop.style.top = y + 'px';
+  }
+
+  function cerrarSelectorNivel() {
+    document.getElementById('pop-nivel').hidden = true;
+    popNivelTd = null;
+  }
+
+  /** Aplica el nivel elegido (null = vaciar) a la celda que abrió el selector. */
+  function elegirNivel(nivel) {
+    var td = popNivelTd;
+    cerrarSelectorNivel();
+    if (!td || !rejilla) return;
+    var actId = td.dataset.act, alId = td.dataset.al, act = actDe(actId);
+    fijarValor(actId, alId, nivel);
+    var niv = nivel != null ? TIPOS_ACT[tipoDe(act)].niveles[nivel - 1] : null;
     td.className = td.className.replace(/\bg-\w+/g, '').trim();
     if (niv) { var g = claseNota(niv.nota); if (g) td.classList.add(g); }
     td.title = niv ? niv.nombre : 'Sin valorar';
@@ -2281,7 +2318,18 @@ var App = (function () {
    * tarjetas con tabindex).
    */
   function setupTeclado() {
+    // El selector de nivel se cierra tocando fuera de él.
+    document.addEventListener('pointerdown', function (e) {
+      var pop = document.getElementById('pop-nivel');
+      if (pop.hidden) return;
+      if (pop.contains(e.target)) return;
+      if (popNivelTd && popNivelTd.contains(e.target)) return; // la propia celda
+      cerrarSelectorNivel();
+    });
     document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && !document.getElementById('pop-nivel').hidden) {
+        cerrarSelectorNivel(); e.preventDefault(); return;
+      }
       var modalAbierto = !document.getElementById('modal-fondo').hidden;
       if (modalAbierto) {
         if (e.key === 'Escape') { cerrarModal(); e.preventDefault(); }
@@ -2381,7 +2429,7 @@ var App = (function () {
     anadirFilaAct: anadirFilaAct, quitarFilaAct: quitarFilaAct,
     pintarRejilla: pintarRejilla, actDown: actDown,
     ciclarCheck: ciclarCheck, sumarContador: sumarContador, tipoActCambiado: tipoActCambiado,
-    ciclarEscala: ciclarEscala,
+    abrirSelectorNivel: abrirSelectorNivel, elegirNivel: elegirNivel,
     prefetchEval: prefetchEval, prefetchClase: prefetchClase, prefetchRejilla: prefetchRejilla,
     nuevaClase: nuevaClase, copiarDeClase: copiarDeClase,
     abrirClase: abrirClase, editarClaseUI: editarClaseUI, editarAlumnos: editarAlumnos,

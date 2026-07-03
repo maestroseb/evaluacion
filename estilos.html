@@ -545,6 +545,20 @@
   table.rejilla td.celda-cont { white-space: nowrap; padding: 4px 6px; }
   table.rejilla td.celda-escala { cursor: pointer; min-width: 46px; user-select: none;
     font-weight: 600; font-size: 11px; letter-spacing: .02em; color: var(--texto-3); }
+  /* Selector flotante de nivel (escalas): los 5 niveles + vaciar, a un toque. */
+  .pop-nivel { position: fixed; z-index: 60; display: flex; gap: 4px; padding: 6px;
+    background: var(--surface); border: 1px solid var(--borde-fuerte);
+    border-radius: 10px; box-shadow: var(--sombra-3); }
+  .pop-nivel-opt { min-width: 42px; height: 36px; border: 1px solid var(--borde);
+    border-radius: 8px; background: var(--bg); font-weight: 700; font-size: 11px;
+    letter-spacing: .02em; cursor: pointer; padding: 0 8px; color: var(--texto-2); }
+  .pop-nivel-opt.g-susp  { background: var(--g-susp-bg);  color: var(--g-susp-tx); }
+  .pop-nivel-opt.g-baja  { background: var(--g-baja-bg);  color: var(--g-baja-tx); }
+  .pop-nivel-opt.g-media { background: var(--g-media-bg); color: var(--g-media-tx); }
+  .pop-nivel-opt.g-alta  { background: var(--g-alta-bg);  color: var(--g-alta-tx); }
+  .pop-nivel-opt.g-top   { background: var(--g-top-bg);   color: var(--g-top-tx); }
+  .pop-nivel-opt.sel { outline: 2px solid var(--acento); outline-offset: 1px; }
+  .pop-nivel-opt.vaciar { color: var(--texto-3); }
   .cont-btn { width: 26px; height: 26px; border: 1px solid var(--borde-fuerte); border-radius: 7px;
     background: var(--surface); cursor: pointer; font-size: 15px; line-height: 1;
     color: var(--texto-2); padding: 0; vertical-align: middle; }
@@ -661,6 +675,12 @@
      por ancho, para que tampoco aparezca en tablets grandes. */
   @media (hover: none), (pointer: coarse) {
     .solo-escritorio { display: none !important; }
+
+    /* iOS Safari hace zoom automático al enfocar campos con letra <16px:
+       en táctil, todos los campos de texto van a 16px para evitarlo. */
+    .modal input, .modal select, .modal textarea,
+    .buscador input, .curso-chip select,
+    table.rejilla td input { font-size: 16px; }
   }
 
   /* ---------- Foco visible (navegación por teclado) ---------- */
