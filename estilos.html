@@ -287,6 +287,35 @@
   .cc-meta { font-size: 13px; color: var(--texto-2); }
   .cc-meta b { color: var(--texto); font-weight: 600; }
 
+  /* ---------- Tarjeta de grupo (horizontal y clara; ≠ tarjeta de clase) ---------- */
+  .grupo-card {
+    position: relative; display: flex; align-items: center; gap: 12px;
+    padding: 12px 14px; cursor: pointer;
+    background: var(--surface); border: 1px solid var(--borde);
+    border-left: 5px solid var(--c, var(--acento));
+    border-radius: var(--radio); box-shadow: var(--sombra-1);
+    transition: transform .14s ease, box-shadow .14s ease, border-color .14s;
+  }
+  .grupo-card:hover { transform: translateY(-2px); box-shadow: var(--sombra-3);
+    border-color: var(--borde-fuerte); border-left-color: var(--c, var(--acento)); }
+  .grupo-card.arrastrando { z-index: 5; opacity: .97; cursor: grabbing;
+    box-shadow: 0 14px 30px rgba(16,18,24,.20); transition: none; }
+  .gc-avatar { flex: 0 0 auto; width: 38px; height: 38px; border-radius: 50%;
+    background: var(--c, var(--acento)); color: #fff;
+    display: inline-flex; align-items: center; justify-content: center; }
+  .gc-avatar svg { width: 20px; height: 20px; stroke: #fff; fill: none; }
+  .gc-info { flex: 1 1 auto; min-width: 0; }
+  .gc-info h3 { margin: 0; font-size: 15px; font-weight: 650; letter-spacing: -.01em;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .gc-meta { font-size: 12.5px; color: var(--texto-3); }
+  /* El asa en línea (no flotando sobre cabecera de color como en clase-card). */
+  .gc-grip { position: static; color: var(--texto-3); }
+  .gc-grip:hover { color: var(--texto); background: var(--bg); }
+  /* Título de cada sección de curso en Mis grupos. */
+  .seccion-curso { margin: 24px 0 10px; font-size: 12.5px; font-weight: 600;
+    color: var(--texto-3); text-transform: uppercase; letter-spacing: .07em; }
+  #lista-clases > .seccion-curso:first-child { margin-top: 0; }
+
   /* ---------- Selector de iconos (modal) ---------- */
   .iconos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(46px, 1fr));
     gap: 8px; max-height: 176px; overflow: auto; padding: 2px; }
@@ -446,6 +475,10 @@
      queda SIEMPRE en la misma fila que la flecha de volver y encoge/envuelve. */
   .titulo-bloque { flex: 1 1 0; min-width: 0; }
   .cabecera-rejilla h1, .cabecera-clase h1 { font-size: 20px; line-height: 1.15; }
+  /* Título de la unidad ("Clase | Unidad"): SIEMPRE en una línea, recortado
+     con puntos suspensivos si no cabe (el bloque ya cede ancho con min-width:0). */
+  #unidad-titulo { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sep-titulo { color: var(--texto-3); font-weight: 400; padding: 0 2px; }
   .cabecera-rejilla .meta, .cabecera-clase .meta { margin: 2px 0 0; font-size: 13px;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   /* Icono cuadrado de color con la inicial (identidad de la clase/grupo). */
@@ -733,7 +766,7 @@
   }
 
   /* ---------- Foco visible (navegación por teclado) ---------- */
-  .clase-card:focus-visible, .tarjeta-unidad:focus-visible,
+  .clase-card:focus-visible, .grupo-card:focus-visible, .tarjeta-unidad:focus-visible,
   .item-lat:focus-visible, .tab:focus-visible, .volver-icono:focus-visible {
     outline: 2px solid var(--acento); outline-offset: 2px;
   }
