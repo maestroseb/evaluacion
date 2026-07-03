@@ -1382,12 +1382,14 @@ var App = (function () {
       '<label class="check check-suelto"><input type="checkbox" id="f-act-info"' +
         (esInformativa ? ' checked' : '') + ' onchange="App.tipoActCambiado()"> ' +
         'Columna informativa (no cuenta para nota)</label>' +
+      '<div id="bloque-crit" class="campo-crit"><span class="etq">Criterios asociados</span>' +
+      notaPendientes(lista.pendientes) +
+      '<div class="lista-crit">' + lista.html + '</div>' +
+      // Debajo de la lista: la opción depende de los criterios que marques.
       '<label class="check check-suelto" id="l-act-desglose"><input type="checkbox" ' +
         'id="f-act-desglose"' + (act && act.desglose ? ' checked' : '') + '> ' +
         'Nota independiente por criterio (si marcas varios)</label>' +
-      '<div id="bloque-crit" class="campo-crit"><span class="etq">Criterios asociados</span>' +
-      notaPendientes(lista.pendientes) +
-      '<div class="lista-crit">' + lista.html + '</div></div>' +
+      '</div>' +
       borrar,
       act ? 'Guardar cambios' : 'Crear actividad',
       function () {
