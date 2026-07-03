@@ -136,6 +136,11 @@
   .buscador input:focus { outline: none; border-color: var(--acento);
     box-shadow: 0 0 0 3px var(--acento-suave); }
 
+  /* Marca de la app en la barra superior: solo se ve en móvil (en escritorio
+     la marca vive en la barra lateral). */
+  .topbar-marca { display: none; font-weight: 700; font-size: 17px;
+    letter-spacing: -.02em; color: var(--texto); white-space: nowrap; }
+
   /* Selector de curso académico en la barra superior */
   .curso-chip { display: inline-flex; align-items: center; gap: 6px;
     padding: 5px 10px 5px 11px; border: 1px solid var(--borde-fuerte); border-radius: 999px;
@@ -145,6 +150,9 @@
   .curso-chip select { border: none; background: transparent; font-family: inherit;
     font-size: 13px; font-weight: 600; color: var(--texto); cursor: pointer;
     padding: 0 2px; margin: 0; outline: none; }
+  /* Réplica del selector en las cabeceras de Clases/Grupos: solo móvil. */
+  .curso-chip-lista { display: none; }
+  .acciones-seccion { display: flex; align-items: center; gap: 10px; }
 
   /* Velo para sidebar en móvil */
   .velo { display: none; position: fixed; inset: 0; background: rgba(20,22,28,.4);
@@ -637,11 +645,17 @@
     .sidebar, .velo, .hamburguesa { display: none !important; }
     .area-principal { height: 100dvh; }
 
+    /* Barra superior: la MARCA fija a la izquierda + buscador. El título de
+       sección lo da la tab bar, y el curso baja a las listas de Clases/Grupos
+       (solo hace falta al elegir grupo o clase). */
     .topbar { padding: 0 16px; gap: 10px; }
-    .topbar-titulo { font-size: 16px; }
-    .buscador { width: auto; flex: 0 1 140px; }
+    .topbar-marca { display: block; margin-right: auto; }
+    .topbar-titulo { display: none; }
+    .topbar > .curso-chip { display: none; }
+    .buscador { width: auto; flex: 0 1 170px; }
     .curso-chip { padding: 5px 8px; }
     .curso-chip-ico { display: none; }
+    .curso-chip-lista { display: inline-flex; }
 
     main { padding: 16px 16px calc(74px + env(safe-area-inset-bottom, 0px)); }
 

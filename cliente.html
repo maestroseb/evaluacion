@@ -149,15 +149,21 @@ var App = (function () {
   }
 
   // ---------- curso académico (multi-curso en un solo cuaderno) ----------
-  /** Rellena el selector de curso de la barra superior con los cursos con datos. */
+  /**
+   * Rellena los selectores de curso con los cursos con datos. Hay más de uno:
+   * el de la barra superior (escritorio) y los de las cabeceras de Clases y
+   * Grupos (móvil); se pintan todos a la vez para que siempre coincidan.
+   */
   function pintarSelectorCurso() {
-    var sel = document.getElementById('curso-activo');
-    if (!sel || !estado.cursos) return;
+    if (!estado || !estado.cursos) return;
     var c = estado.cursos;
-    sel.innerHTML = (c.lista || []).map(function (x) {
+    var html = (c.lista || []).map(function (x) {
       return '<option value="' + esc(x) + '"' + (x === c.activo ? ' selected' : '') +
         '>' + esc(x) + '</option>';
     }).join('');
+    [].forEach.call(document.querySelectorAll('.curso-select'), function (sel) {
+      sel.innerHTML = html;
+    });
   }
 
   /** Cambia el curso activo: recarga Clases y Grupos ya filtrados del servidor. */
