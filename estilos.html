@@ -69,14 +69,13 @@
     background: linear-gradient(135deg, var(--acento), #7a7af0); color: #fff;
     box-shadow: var(--sombra-1);
   }
-  .marca-txt { font-weight: 700; font-size: 16px; letter-spacing: -.02em; color: var(--texto);
+  /* Logotipo tipográfico (sidebar y topbar móvil): Outfit 800, tinta índigo
+     oscura y acento verde en la parte final ("Anda"), que marca
+     decorarMarca() en el cliente. */
+  .marca-txt { font-family: 'Outfit', 'Inter', sans-serif; font-weight: 800;
+    font-size: 19px; letter-spacing: -.02em; color: #1e1b4b;
     white-space: nowrap; overflow: hidden; }
-  /* Logotipo tipográfico: la parte final de la marca ("Anda") en degradado
-     índigo → verde Andalucía. Lo aplica decorarMarca() en el cliente. */
-  .marca-grad {
-    background: linear-gradient(94deg, var(--acento) 0%, #3b82f6 48%, #0aa06e 100%);
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-  }
+  .marca-acento { color: #059669; }
 
   .perfil {
     display: flex; align-items: center; gap: 10px; padding: 8px;
@@ -143,9 +142,10 @@
     box-shadow: 0 0 0 3px var(--acento-suave); }
 
   /* Marca de la app en la barra superior: solo se ve en móvil (en escritorio
-     la marca vive en la barra lateral). */
-  .topbar-marca { display: none; font-weight: 700; font-size: 17px;
-    letter-spacing: -.02em; color: var(--texto); white-space: nowrap; }
+     la marca vive en la barra lateral). Misma tipografía de logo que .marca-txt. */
+  .topbar-marca { display: none; font-family: 'Outfit', 'Inter', sans-serif;
+    font-weight: 800; font-size: 23px; letter-spacing: -.02em; color: #1e1b4b;
+    white-space: nowrap; }
 
   /* Selector de curso académico en la barra superior */
   .curso-chip { display: inline-flex; align-items: center; gap: 6px;
@@ -662,6 +662,14 @@
     .curso-chip { padding: 5px 8px; }
     .curso-chip-ico { display: none; }
     .curso-chip-lista { display: inline-flex; }
+
+    /* Cabecera de las listas (Mis clases / Mis grupos) en UNA sola línea:
+       título compacto que cede espacio y acciones que no se parten. */
+    .cabecera-seccion { flex-wrap: nowrap; }
+    .cabecera-seccion h1 { font-size: 19px; flex: 0 1 auto; min-width: 0;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .acciones-seccion { flex: 0 0 auto; gap: 8px; }
+    .acciones-seccion .btn { padding: 8px 10px; white-space: nowrap; }
 
     main { padding: 16px 16px calc(74px + env(safe-area-inset-bottom, 0px)); }
 
