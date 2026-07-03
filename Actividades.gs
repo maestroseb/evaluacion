@@ -66,7 +66,7 @@ var Actividades = (function () {
         out.push({
           actividadId: f[0], unidadId: f[1], nombre: f[2],
           criterios: parseLista_(f[3]), numItems: Number(f[4]) || 0, orden: f[5],
-          tipo: f[6] || 'items'
+          tipo: f[6] || 'items', desglose: !!f[7]
         });
       }
     }
@@ -84,7 +84,7 @@ var Actividades = (function () {
       (out[f[1]] || (out[f[1]] = [])).push({
         actividadId: f[0], unidadId: f[1], nombre: f[2],
         criterios: parseLista_(f[3]), numItems: Number(f[4]) || 0, orden: f[5],
-        tipo: f[6] || 'items'
+        tipo: f[6] || 'items', desglose: !!f[7]
       });
     }
     Object.keys(out).forEach(function (u) {
@@ -103,11 +103,11 @@ var Actividades = (function () {
     var orden = ordenDado != null ? ordenDado : Datos.siguienteOrden_(listar_(ss, unidadId));
     hojaA_(ss).appendRow([
       id, unidadId, p.nombre.trim(), JSON.stringify(p.criterios || []),
-      Number(p.numItems) || 0, orden, tipo
+      Number(p.numItems) || 0, orden, tipo, p.desglose ? 1 : ''
     ]);
     return { actividadId: id, unidadId: unidadId, nombre: p.nombre.trim(),
       criterios: p.criterios || [], numItems: Number(p.numItems) || 0,
-      orden: orden, tipo: tipo };
+      orden: orden, tipo: tipo, desglose: !!p.desglose };
   }
 
   function editar_(ss, actividadId, p) {
@@ -118,7 +118,8 @@ var Actividades = (function () {
     sh.getRange(fila, 3, 1, 3).setValues([[
       p.nombre.trim(), JSON.stringify(p.criterios || []), Number(p.numItems) || 0
     ]]);
-    sh.getRange(fila, 7).setValue(p.tipo || 'items'); // col 7 = tipo (no toca orden)
+    // cols 7-8 = tipo y desglose (no tocan el orden, col 6)
+    sh.getRange(fila, 7, 1, 2).setValues([[p.tipo || 'items', p.desglose ? 1 : '']]);
     return { ok: true };
   }
 
@@ -154,7 +155,7 @@ var Actividades = (function () {
     var f = sh.getRange(fila, 1, 1, 7).getValues()[0];
     return crear_(ss, f[1], {
       nombre: f[2] + ' (copia)', criterios: parseLista_(f[3]),
-      numItems: Number(f[4]) || 0, tipo: f[6] || 'items'
+      numItems: Number(f[4]) || 0, tipo: f[6] || 'items', desglose: !!f[7]
     });
   }
 
@@ -172,6 +173,10 @@ var Actividades = (function () {
     // Una observación (texto libre) nunca puntúa: sin criterios, pase lo que
     // pase en el cliente.
     if (tipo === 'texto') p.criterios = [];
+    // Nota por criterio: solo tiene sentido con 2+ criterios y en tipos cuyo
+    // valor es una nota puntual (fuera contador y texto).
+    p.desglose = !!p.desglose && (p.criterios || []).length > 1 &&
+      tipo !== 'contador' && tipo !== 'texto';
   }
 
   // ---------- rejilla ----------
