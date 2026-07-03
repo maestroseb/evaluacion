@@ -13,11 +13,27 @@ var App = (function () {
   var claseCache = {};      // claseId -> grupo completo (con alumnado)
   var enVuelo = {};         // ids con un prefetch en curso (evita duplicados)
 
+  /**
+   * Logotipo tipográfico: en la marca (sidebar y topbar móvil), la última
+   * palabra interna en mayúscula se pinta con degradado ("Evalu|Anda"). Es
+   * genérico: otra instancia ("EvaluMur"…) hereda el efecto sin tocar nada;
+   * un nombre sin mayúscula interna lleva el degradado completo.
+   */
+  function decorarMarca() {
+    [].forEach.call(document.querySelectorAll('.marca-txt, .topbar-marca'), function (el) {
+      var t = el.textContent.trim();
+      var m = /^(.*[a-záéíóúüñ0-9])([A-ZÁÉÍÓÚÜÑ][\wáéíóúüñ]*)$/.exec(t);
+      if (m) el.innerHTML = esc(m[1]) + '<span class="marca-grad">' + esc(m[2]) + '</span>';
+      else el.innerHTML = '<span class="marca-grad">' + esc(t) + '</span>';
+    });
+  }
+
   // ---------- arranque ----------
   function iniciar() {
     setupModalNoScroll();
     setupTeclado();
     restaurarSidebar();
+    decorarMarca();
     window.addEventListener('resize', ajustarAltoRejillas); // giro / cambio de tamaño
     // Guardado de última hora: intenta persistir y, si quedan cambios en vuelo,
     // pide confirmación al navegador para dar tiempo a que la petición llegue.
@@ -149,6 +165,11 @@ var App = (function () {
   }
 
   // ---------- curso académico (multi-curso en un solo cuaderno) ----------
+  /** "2025-2026" → "2025-26" (solo para MOSTRAR; el valor guarda el completo). */
+  function cursoCorto_(acad) {
+    return String(acad || '').replace(/^(\d{4})-\d{2}(\d{2})$/, '$1-$2');
+  }
+
   /**
    * Rellena los selectores de curso con los cursos con datos. Hay más de uno:
    * el de la barra superior (escritorio) y los de las cabeceras de Clases y
@@ -159,7 +180,7 @@ var App = (function () {
     var c = estado.cursos;
     var html = (c.lista || []).map(function (x) {
       return '<option value="' + esc(x) + '"' + (x === c.activo ? ' selected' : '') +
-        '>' + esc(x) + '</option>';
+        '>' + esc(cursoCorto_(x)) + '</option>';
     }).join('');
     [].forEach.call(document.querySelectorAll('.curso-select'), function (sel) {
       sel.innerHTML = html;
