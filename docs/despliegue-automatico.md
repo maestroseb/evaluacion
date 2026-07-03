@@ -23,11 +23,13 @@ Guarda las dos en el móvil: pruebas en `/dev`, uso real en `/exec`.
 
 2. **Credenciales de clasp**: en una terminal,
    ```bash
-   npm install -g @google/clasp
-   clasp login
+   npx @google/clasp login
    ```
-   (abre el navegador; inicia sesión con la cuenta dueña del proyecto).
-   Copia el contenido del archivo `~/.clasprc.json` que se acaba de crear.
+   (`npx` lo ejecuta sin instalar nada globalmente — evita el error EACCES de
+   permisos en macOS. Abre el navegador; inicia sesión con la cuenta dueña del
+   proyecto.)
+   Copia el contenido del archivo `~/.clasprc.json` que se acaba de crear;
+   en Mac, lo más cómodo: `open -e ~/.clasprc.json` y copiar desde TextEdit.
 
 3. **ID del proyecto**: editor de Apps Script → ⚙️ *Configuración del
    proyecto* → **ID de secuencia de comandos**.
