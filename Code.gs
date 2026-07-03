@@ -11,7 +11,7 @@
 function doGet() {
   return HtmlService.createTemplateFromFile('ui')
     .evaluate()
-    .setTitle('Evaluación por Criterios')
+    .setTitle(CONFIG.NOMBRE_APP)
     .addMetaTag('viewport', 'width=device-width, initial-scale=1')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }

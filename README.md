@@ -1,7 +1,10 @@
-# Evaluación por Criterios
+# EvaluAnda — Evaluación por Criterios
 
-Web App (Google Apps Script) para evaluar por criterios de evaluación al estilo
-de iDoceo, pensada para usarse por todo el dominio **g.educaand.es**.
+**EvaluAnda** es una Web App (Google Apps Script) para evaluar por criterios de
+evaluación al estilo de iDoceo, pensada para usarse por todo el dominio
+**g.educaand.es**. El nombre visible es configurable (`Config.gs` →
+`NOMBRE_APP`): otras comunidades o centros pueden montar su instancia con su
+propia marca (ver `docs/autohospedaje.md`).
 
 Sustituye a la hoja de cálculo con fórmulas: el profe ya **no toca celdas**, así
 que no puede romper nada sin querer. La lógica y el mapa curricular están
