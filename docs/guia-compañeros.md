@@ -28,7 +28,7 @@ hacer copias: solo entrar con tu enlace.
 2. **Clases → + Nueva clase**: elige el grupo, el área y un color.
 3. Entra en la clase → **+ Nueva unidad**.
 4. Dentro de la unidad → **+ Nueva actividad** (o **+ Varias**): nombre, nº de
-   ítems y criterios. Los criterios **sin asignar** aún en la clase aparecen
+   ítems y criterios. Los criterios aún **no evaluados** en la clase aparecen
    marcados.
 5. Rellena la **rejilla** (ítems conseguidos). Las notas se calculan solas.
    - Te mueves con las **flechas** del teclado y **Enter**.
