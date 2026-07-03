@@ -388,6 +388,11 @@
   /* Dos párrafos de ayuda seguidos: el margen negativo del segundo los pegaba. */
   .ayuda + .ayuda { margin-top: 8px; }
   .acciones-modal { display: flex; gap: 16px; }
+  /* Variante en columna para menús (pestaña "Más", Acerca de): botones a lo
+     ancho, alineados a la izquierda y con el icono delante. */
+  .acciones-mas { flex-direction: column; gap: 10px; }
+  .acciones-mas .btn { display: flex; align-items: center; gap: 10px;
+    justify-content: flex-start; text-decoration: none; }
   .link, .link-peligro { background: none; border: none; cursor: pointer;
     font-size: 13px; font-weight: 500; padding: 4px 0; }
   .link { color: var(--acento-fuerte); }
