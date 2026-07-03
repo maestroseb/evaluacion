@@ -1,6 +1,6 @@
 # Guía rápida para el profesorado
 
-Esta aplicación sirve para **evaluar por criterios** (estilo iDoceo) desde el
+**EvaluAnda** sirve para **evaluar por criterios** (estilo iDoceo) desde el
 navegador, con tu cuenta de **g.educaand.es**. No tienes que instalar nada ni
 hacer copias: solo entrar con tu enlace.
 

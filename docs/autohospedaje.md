@@ -21,17 +21,20 @@ datos de cada profe en su propio Drive.
 2. Con el **GitHub Assistant**, haz **Pull** de este repositorio
    (`maestroseb/evaluacion`, rama indicada) con los archivos en la **raíz**.
    Activa la sincronización del manifiesto `appsscript.json`.
-3. **Mapa curricular**: por defecto, `Config.gs` → `MAPA_JSON_URLS` apunta a
+3. **Nombre de tu instancia**: `Config.gs` → `NOMBRE_APP`. Por defecto es
+   «EvaluAnda» (la instancia andaluza); cámbialo por el nombre de tu comunidad
+   o centro y se aplicará al título, la barra lateral y el cuaderno de Drive.
+4. **Mapa curricular**: por defecto, `Config.gs` → `MAPA_JSON_URLS` apunta a
    los JSON públicos de este repo (Infantil/Primaria y Secundaria), así que
    **no necesitas crear tu propio mapa**.
    - Si quieres mantener tu propio mapa, haz un *fork* del repo, edita los
      ficheros de `data/` y apunta `MAPA_JSON_URLS` a tu fork (público).
-4. **Despliega** como Web App (*Implementar → Nueva implementación → Aplicación
+5. **Despliega** como Web App (*Implementar → Nueva implementación → Aplicación
    web*):
    - *Ejecutar como*: **Usuario que accede a la aplicación web**.
    - *Quién tiene acceso*: **tu dominio** (o "Cualquiera con el enlace" si lo
      quieres abrir).
-5. Comparte **tu** URL con tu profesorado.
+6. Comparte **tu** URL con tu profesorado.
 
 ## Actualizaciones
 

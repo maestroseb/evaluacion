@@ -4,8 +4,10 @@
  * IMPORTANTE: este es el ÚNICO sitio donde hay que tocar valores al desplegar.
  */
 var CONFIG = {
-  // Nombre del cuaderno personal que se crea en el Drive de cada profe.
-  NOMBRE_CUADERNO: 'Evaluación por Criterios — Cuaderno',
+  // Nombre visible de la aplicación: título de la pestaña, marca de la barra
+  // lateral y nombre del cuaderno de Drive. Quien monte una instancia para
+  // otra comunidad o centro solo tiene que cambiar esta línea (y el mapa).
+  NOMBRE_APP: 'EvaluAnda',
 
   // Mapa curricular servido como JSON público desde GitHub. Es la fuente
   // principal: no requiere permisos de Drive y se sirve igual a toda la
@@ -42,6 +44,11 @@ var CONFIG = {
   //      vacíos en cualquier tipo (columna informativa: no cuenta).
   ESQUEMA_VERSION: 10
 };
+
+// Nombre del cuaderno personal que se crea en el Drive de cada profe. Deriva
+// del nombre de la app; los cuadernos ya creados conservan su nombre (la app
+// los localiza por id, no por nombre).
+CONFIG.NOMBRE_CUADERNO = CONFIG.NOMBRE_APP + ' — Cuaderno';
 
 /**
  * Nombres internos de las pestañas del cuaderno personal de cada profe.
