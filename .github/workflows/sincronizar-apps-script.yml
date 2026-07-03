@@ -52,23 +52,12 @@ jobs:
           printf '%s' "$CLASPRC" > ~/.clasprc.json
 
           # Valida el formato ANTES de llamar a clasp: si el login se hizo con
-          # otra versión, aquí sale un mensaje claro en vez del error críptico
-          # de Node ("Cannot read properties of undefined (reading
+          # otra versión, sale un mensaje claro en vez del error críptico de
+          # Node ("Cannot read properties of undefined (reading
           # 'access_token')") que da clasp cuando no reconoce el formato.
-          node -e '
-            var d;
-            try { d = JSON.parse(require("fs").readFileSync(process.env.HOME + "/.clasprc.json", "utf8")); }
-            catch (e) { console.error("El secreto CLASPRC_JSON no es JSON válido."); process.exit(1); }
-            if (!d || !d.token || !d.token.access_token) {
-              console.error(
-                "CLASPRC_JSON no tiene el formato esperado por clasp " + process.env.CLASP_VERSION + ".\n" +
-                "Suele pasar si el login (npx @google/clasp login) se hizo con OTRA versión de clasp.\n" +
-                "Solución: en local, ejecuta 'npx @google/clasp@" + process.env.CLASP_VERSION + " login', " +
-                "copia el ~/.clasprc.json resultante y actualiza el secreto CLASPRC_JSON en GitHub."
-              );
-              process.exit(1);
-            }
-          '
+          # En fichero aparte (no inline) para no pelear con el escapado de
+          # comillas del bloque `run` de YAML.
+          node .github/workflows/validar-clasprc.js
 
           printf '{"scriptId":"%s","rootDir":"."}' "$SCRIPT_ID" > .clasp.json
           clasp push -f
