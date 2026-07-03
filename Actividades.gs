@@ -169,6 +169,9 @@ var Actividades = (function () {
     if (tipo === 'contador' && Number(p.numItems) < 0) {
       throw new Error('El máximo del contador no puede ser negativo.');
     }
+    // Una observación (texto libre) nunca puntúa: sin criterios, pase lo que
+    // pase en el cliente.
+    if (tipo === 'texto') p.criterios = [];
   }
 
   // ---------- rejilla ----------

@@ -36,8 +36,10 @@ var CONFIG = {
   //     cifrado). Si se re-añade a alguien con el mismo nombre, recupera su id
   //     y con él todas sus notas (reincorporación).
   // v10: columna "tipo" en _actividades: tipos de columna en la rejilla
-  //      (items = actual, nota directa, check, contador). Los criterios pueden
-  //      ir vacíos en cualquier tipo (columna informativa: no cuenta).
+  //      (items = actual, nota directa, check, contador, escalas IN-SB y
+  //      POC-EXC, y "texto" = observación libre, siempre informativa; el blob
+  //      de _notas admite cadenas para ese tipo). Los criterios pueden ir
+  //      vacíos en cualquier tipo (columna informativa: no cuenta).
   ESQUEMA_VERSION: 10
 };
 

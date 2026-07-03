@@ -54,7 +54,10 @@ var Traspaso = (function () {
     var setU = {};
     unidades.forEach(function (r) { setU[r[0]] = true; });
     var actividades = filas_(ss, HOJAS.ACTIVIDADES).filter(function (r) { return setU[r[1]]; });
-    var notas = filas_(ss, HOJAS.NOTAS).filter(function (r) { return setU[r[0]]; });
+    // Observaciones en claro en el archivo (como los nombres): quien recibe
+    // las re-cifra con su propia clave.
+    var notas = filas_(ss, HOJAS.NOTAS).filter(function (r) { return setU[r[0]]; })
+      .map(function (r) { return [r[0], Notas.jsonEnClaro_(r[1])]; });
 
     return {
       tipo: 'traspaso',
@@ -128,7 +131,8 @@ var Traspaso = (function () {
             });
             out[mapa[actId]] = mm;
           });
-          return [mapa[r[0]], JSON.stringify(out)];
+          // Re-cifra las observaciones con la clave de quien recibe.
+          return [mapa[r[0]], JSON.stringify(Notas.cifrarTextos_(out))];
         });
 
       anexar_(ss, HOJAS.CLASES, filasC);

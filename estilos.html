@@ -545,6 +545,12 @@
   table.rejilla td.celda-cont { white-space: nowrap; padding: 4px 6px; }
   table.rejilla td.celda-escala { cursor: pointer; min-width: 46px; user-select: none;
     font-weight: 600; font-size: 11px; letter-spacing: .02em; color: var(--texto-3); }
+  /* Observación (texto libre): extracto con puntos suspensivos; tocar para editar. */
+  table.rejilla td.celda-texto { cursor: pointer; user-select: none; max-width: 140px;
+    overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+    text-align: left; font-size: 12px; padding: 4px 8px; }
+  table.rejilla td.celda-texto.vacia { text-align: center; color: var(--texto-3); }
+  table.rejilla td.celda-texto.vacia .svg-ico { width: 13px; height: 13px; vertical-align: -2px; }
   /* Selector flotante de nivel (escalas): los 5 niveles + vaciar, a un toque. */
   .pop-nivel { position: fixed; z-index: 60; display: flex; gap: 4px; padding: 6px;
     background: var(--surface); border: 1px solid var(--borde-fuerte);

@@ -32,7 +32,7 @@ var Notas = (function () {
     var sh = hoja_(ss);
     var fila = fila_(sh, unidadId);
     if (fila < 0) return {};
-    return parse_(sh.getRange(fila, 2).getValue());
+    return descifrarTextos_(parse_(sh.getRange(fila, 2).getValue()));
   }
 
   /** Todos los bloques de notas indexados por unidadId (una sola lectura). */
@@ -40,7 +40,7 @@ var Notas = (function () {
     var datos = hoja_(ss).getDataRange().getValues();
     var out = {};
     for (var i = 1; i < datos.length; i++) {
-      if (datos[i][0]) out[datos[i][0]] = parse_(datos[i][1]);
+      if (datos[i][0]) out[datos[i][0]] = descifrarTextos_(parse_(datos[i][1]));
     }
     return out;
   }
@@ -52,7 +52,7 @@ var Notas = (function () {
     catch (e) { throw new Error('No se pudieron guardar las notas (ocupado). Reintenta.'); }
     try {
       var sh = hoja_(ss);
-      var json = JSON.stringify(limpiar_(items));
+      var json = JSON.stringify(cifrarTextos_(limpiar_(items)));
       var fila = fila_(sh, unidadId);
       if (fila < 0) sh.appendRow([unidadId, json]);
       else sh.getRange(fila, 2).setValue(json);
@@ -95,16 +95,18 @@ var Notas = (function () {
     return sh.getRange(fila, 1, 1, 2).getValues()[0];
   }
 
-  /** Normaliza: descarta valores vacíos/no numéricos y actividades sin notas. */
+  /** Normaliza: números como número, textos (observaciones) acotados, resto fuera. */
   function limpiar_(items) {
     var out = {};
     Object.keys(items || {}).forEach(function (actId) {
       var m = items[actId] || {}, mm = {};
       Object.keys(m).forEach(function (alId) {
         var v = m[alId];
-        if (v === '' || v == null) return;
+        if (v == null) return;
+        if (typeof v === 'string' && !v.trim()) return; // '' o solo espacios
         var n = Number(v);
-        if (!isNaN(n)) mm[alId] = n;
+        if (!isNaN(n)) { mm[alId] = n; return; }
+        mm[alId] = String(v).trim().slice(0, 500);
       });
       if (Object.keys(mm).length) out[actId] = mm;
     });
@@ -116,8 +118,32 @@ var Notas = (function () {
     try { return JSON.parse(json) || {}; } catch (e) { return {}; }
   }
 
+  /**
+   * Cifrado de las observaciones: los valores de TEXTO del blob se guardan
+   * cifrados (como los nombres del alumnado); los números van tal cual.
+   * quitarActividad_ trabaja con el blob crudo, así que no re-escribe en claro.
+   */
+  function mapaTextos_(items, fn) {
+    var out = {};
+    Object.keys(items || {}).forEach(function (actId) {
+      var m = items[actId] || {}, mm = {};
+      Object.keys(m).forEach(function (alId) {
+        var v = m[alId];
+        mm[alId] = (typeof v === 'string') ? fn(v) : v;
+      });
+      out[actId] = mm;
+    });
+    return out;
+  }
+  function cifrarTextos_(items) { return mapaTextos_(items, Cripto.cifrar); }
+  function descifrarTextos_(items) { return mapaTextos_(items, Cripto.descifrar); }
+  /** JSON del blob con los textos en claro (para copias y traspasos). */
+  function jsonEnClaro_(json) { return JSON.stringify(descifrarTextos_(parse_(json))); }
+
   return {
     leer_: leer_, todas_: todas_, guardar_: guardar_, borrar_: borrar_,
-    quitarActividad_: quitarActividad_, filaCruda_: filaCruda_
+    quitarActividad_: quitarActividad_, filaCruda_: filaCruda_,
+    cifrarTextos_: cifrarTextos_, descifrarTextos_: descifrarTextos_,
+    jsonEnClaro_: jsonEnClaro_
   };
 })();

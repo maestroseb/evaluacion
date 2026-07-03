@@ -20,6 +20,17 @@ function obtenerEvaluacion(evalId) {
   return Evaluaciones.obtener_(abrirCuaderno_(), evalId);
 }
 
+/**
+ * Evaluación + sus unidades en UNA sola llamada: abrir una clase pasa de dos
+ * viajes secuenciales al servidor (evaluación → unidades) a uno.
+ */
+function getEvaluacionCompleta(evalId) {
+  var ss = abrirCuaderno_();
+  var ev = Evaluaciones.obtener_(ss, evalId);
+  ev.unidades = Unidades.listar_(ss, evalId);
+  return ev;
+}
+
 function eliminarEvaluacion(evalId) {
   return Evaluaciones.eliminar_(abrirCuaderno_(), evalId);
 }
