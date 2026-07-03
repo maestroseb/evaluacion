@@ -23,11 +23,19 @@ Guarda las dos en el móvil: pruebas en `/dev`, uso real en `/exec`.
 
 2. **Credenciales de clasp**: en una terminal,
    ```bash
-   npx @google/clasp login
+   npx @google/clasp@2.4.2 login
    ```
-   (`npx` lo ejecuta sin instalar nada globalmente — evita el error EACCES de
+   **Importante: fija la versión con `@2.4.2` tal cual**, sin dejar que `npx`
+   traiga "la última". clasp cambió el formato de sus credenciales entre
+   versiones mayores; el workflow tiene fijada la 2.4.2, y si el login se hace
+   con otra, `clasp push` falla en GitHub Actions con un error de token
+   aunque el secreto esté bien copiado. (Si más adelante se actualiza la
+   versión en `.github/workflows/sincronizar-apps-script.yml`, hay que
+   repetir el login con esa misma versión y renovar el secreto.)
+
+   `npx` lo ejecuta sin instalar nada globalmente — evita el error EACCES de
    permisos en macOS. Abre el navegador; inicia sesión con la cuenta dueña del
-   proyecto.)
+   proyecto.
    Copia el contenido del archivo `~/.clasprc.json` que se acaba de crear;
    en Mac, lo más cómodo: `open -e ~/.clasprc.json` y copiar desde TextEdit.
 
@@ -65,3 +73,8 @@ configuración antes de completar los pasos.
 - Las credenciales de `clasp login` caducan si pasan meses sin usarse; si el
   workflow empieza a fallar con error de autenticación, repite el paso 2 y
   actualiza el secreto.
+- Si `clasp-push` falla con *"CLASPRC_JSON no tiene el formato esperado"* (o,
+  en un run antiguo, *"Cannot read properties of undefined (reading
+  'access_token')"*): el login se hizo con una versión de clasp distinta a la
+  del workflow. Repite el paso 2 con `npx @google/clasp@2.4.2 login` (la
+  versión exacta) y renueva el secreto `CLASPRC_JSON`.
