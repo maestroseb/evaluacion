@@ -124,6 +124,17 @@ var Notas = (function () {
       Object.keys(m).forEach(function (alId) {
         var v = m[alId];
         if (v == null) return;
+        // Desglose por criterio: objeto {codigo: valor numérico}.
+        if (typeof v === 'object') {
+          var d = {};
+          Object.keys(v).forEach(function (cod) {
+            if (v[cod] === '' || v[cod] == null) return;
+            var nd = Number(v[cod]);
+            if (!isNaN(nd)) d[String(cod).slice(0, 40)] = nd;
+          });
+          if (Object.keys(d).length) mm[alId] = d;
+          return;
+        }
         if (typeof v === 'string' && !v.trim()) return; // '' o solo espacios
         var n = Number(v);
         if (!isNaN(n)) { mm[alId] = n; return; }

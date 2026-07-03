@@ -17,7 +17,7 @@ var ESQUEMA = {
   _clases: ['claseId', 'nombre', 'curso', 'creado', 'alumnos', 'color', 'icono', 'orden', 'cursoAcademico', 'bajas'],
   _evaluaciones: ['evalId', 'claseId', 'area', 'creado', 'color', 'icono', 'nombre', 'orden', 'cursoAcademico'],
   _unidades: ['unidadId', 'evalId', 'nombre', 'orden'],
-  _actividades: ['actividadId', 'unidadId', 'nombre', 'criterios', 'numItems', 'orden', 'tipo'],
+  _actividades: ['actividadId', 'unidadId', 'nombre', 'criterios', 'numItems', 'orden', 'tipo', 'desglose'],
   _notas: ['unidadId', 'items'],
   _papelera: ['papeleraId', 'tipo', 'etiqueta', 'fecha', 'contenido']
 };

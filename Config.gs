@@ -42,7 +42,10 @@ var CONFIG = {
   //      POC-EXC, y "texto" = observación libre, siempre informativa; el blob
   //      de _notas admite cadenas para ese tipo). Los criterios pueden ir
   //      vacíos en cualquier tipo (columna informativa: no cuenta).
-  ESQUEMA_VERSION: 10
+  // v11: columna "desglose" en _actividades: con varios criterios, la actividad
+  //      puede llevar nota independiente por criterio; el blob de _notas guarda
+  //      entonces un objeto {criterio: valor} en vez de un número.
+  ESQUEMA_VERSION: 11
 };
 
 // Nombre del cuaderno personal que se crea en el Drive de cada profe. Deriva

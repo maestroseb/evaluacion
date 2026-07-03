@@ -1382,6 +1382,9 @@ var App = (function () {
       '<label class="check check-suelto"><input type="checkbox" id="f-act-info"' +
         (esInformativa ? ' checked' : '') + ' onchange="App.tipoActCambiado()"> ' +
         'Columna informativa (no cuenta para nota)</label>' +
+      '<label class="check check-suelto" id="l-act-desglose"><input type="checkbox" ' +
+        'id="f-act-desglose"' + (act && act.desglose ? ' checked' : '') + '> ' +
+        'Nota independiente por criterio (si marcas varios)</label>' +
       '<div id="bloque-crit" class="campo-crit"><span class="etq">Criterios asociados</span>' +
       notaPendientes(lista.pendientes) +
       '<div class="lista-crit">' + lista.html + '</div></div>' +
@@ -1400,12 +1403,17 @@ var App = (function () {
         if (!informativa && !criterios.length) {
           return aviso('Marca al menos un criterio, o marca la actividad como informativa.');
         }
-        var payload = { nombre: nombre, criterios: criterios, numItems: numItems, tipo: tipo };
+        // Nota por criterio: solo con 2+ criterios y tipos que puntúan por valor.
+        var desglose = !informativa && tipo !== 'contador' && tipo !== 'texto' &&
+          criterios.length > 1 &&
+          !!(document.getElementById('f-act-desglose') || {}).checked;
+        var payload = { nombre: nombre, criterios: criterios, numItems: numItems,
+          tipo: tipo, desglose: desglose };
         botonModalCargando('Guardando…');
         if (act) {
           llamar('editarActividad', [act.actividadId, payload], function () {
             act.nombre = nombre; act.criterios = criterios;
-            act.numItems = numItems; act.tipo = tipo;
+            act.numItems = numItems; act.tipo = tipo; act.desglose = desglose;
             cerrarModal(); pintarRejilla();
           });
         } else {
@@ -1454,6 +1462,12 @@ var App = (function () {
     }
     tipoActPrevio = tipo;
     if (bloque && info) bloque.classList.toggle('apagado', info.checked);
+    // El desglose por criterio solo aplica a tipos que puntúan por valor y
+    // a columnas que cuentan para la nota.
+    var desg = document.getElementById('l-act-desglose');
+    if (desg) {
+      desg.hidden = (tipo === 'contador' || tipo === 'texto' || (info && info.checked));
+    }
   }
 
   function duplicarActividadUI(id) {
@@ -1669,7 +1683,30 @@ var App = (function () {
       tipo === 'escalaInf' ? 'POC-EXC' :
       tipo === 'texto' ? 'texto' :
       (a.numItems > 0 ? '± /' + a.numItems : '±');
+    if (a.desglose) parte += ' · por criterio';
     return parte + ' · ' + (a.criterios.length ? a.criterios.join(', ') : 'informativa');
+  }
+
+  /** Extracto de una celda con desglose: el valor de cada criterio, en orden. */
+  function resumenDesglose_(a, v) {
+    var vals = (v && typeof v === 'object') ? v : {};
+    var tipo = tipoDe(a);
+    return (a.criterios || []).map(function (cod) {
+      var x = vals[cod];
+      if (x == null) return '·';
+      if (tipo === 'check') return x ? '✓' : '✗';
+      if (tipo === 'escala' || tipo === 'escalaInf') {
+        var niv = TIPOS_ACT[tipo].niveles[Math.round(x) - 1];
+        return niv ? niv.cod : '·';
+      }
+      return fmt(x);
+    }).join(' | ');
+  }
+  function tituloDesglose_(a, v) {
+    var vals = (v && typeof v === 'object') ? v : {};
+    return (a.criterios || []).map(function (cod) {
+      return cod + ': ' + (vals[cod] != null ? vals[cod] : '—');
+    }).join(' · ');
   }
 
   /** Celda de valor según el tipo de la actividad. */
@@ -1678,6 +1715,14 @@ var App = (function () {
     var comun = 'data-r="' + r + '" data-c="' + c + '" data-act="' + a.actividadId +
       '" data-al="' + alId + '"';
     var tipo = tipoDe(a);
+    if (a.desglose) {
+      return '<td class="celda celda-desglose" ' + comun +
+        ' tabindex="0" role="button" aria-label="Nota por criterio" ' +
+        'title="' + esc(tituloDesglose_(a, v)) + '" ' +
+        'onclick="App.abrirEditorDesglose(this)">' + esc(resumenDesglose_(a, v)) + '</td>';
+    }
+    // Un objeto residual (la actividad dejó de tener desglose) no se pinta.
+    if (v != null && typeof v === 'object') v = null;
     if (tipo === 'check') {
       var cls = v === 1 ? ' si' : (v === 0 ? ' no' : '');
       return '<td class="celda celda-check' + cls + '" ' + comun +
@@ -1812,6 +1857,70 @@ var App = (function () {
         cerrarModal();
         programarGuardadoNotas();
       });
+  }
+
+  /** Modal para poner nota independiente a cada criterio de una actividad. */
+  function abrirEditorDesglose(td) {
+    var actId = td.dataset.act, alId = td.dataset.al;
+    var act = actDe(actId);
+    if (!act) return;
+    var al = null;
+    (rejilla.alumnos || []).forEach(function (a) { if (a.id === alId) al = a; });
+    var v = valorItem(actId, alId);
+    var vals = (v && typeof v === 'object') ? v : {};
+    var tipo = tipoDe(act);
+
+    function control_(cod) {
+      var x = vals[cod];
+      if (tipo === 'check') {
+        return '<select class="d-val" data-cod="' + esc(cod) + '">' +
+          '<option value=""' + (x == null ? ' selected' : '') + '>—</option>' +
+          '<option value="1"' + (x === 1 ? ' selected' : '') + '>✓ Conseguido</option>' +
+          '<option value="0"' + (x === 0 ? ' selected' : '') + '>✗ No conseguido</option>' +
+          '</select>';
+      }
+      if (tipo === 'escala' || tipo === 'escalaInf') {
+        return '<select class="d-val" data-cod="' + esc(cod) + '">' +
+          '<option value=""' + (x == null ? ' selected' : '') + '>— Sin valorar</option>' +
+          TIPOS_ACT[tipo].niveles.map(function (niv, i) {
+            return '<option value="' + (i + 1) + '"' + (Math.round(x) === i + 1 ? ' selected' : '') +
+              '>' + niv.cod + ' — ' + esc(niv.nombre) + '</option>';
+          }).join('') + '</select>';
+      }
+      var tope = tipo === 'nota' ? 10 : (act.numItems > 0 ? act.numItems : '');
+      return '<input type="number" class="campo-corto d-val" data-cod="' + esc(cod) + '" ' +
+        'min="0" step="0.5"' + (tope !== '' ? ' max="' + tope + '"' : '') +
+        ' value="' + (x == null ? '' : fmt(x)) + '">';
+    }
+
+    abrirModal(act.nombre + ' — nota por criterio',
+      (al ? '<p class="ayuda">' + esc(al.nombre) + '</p>' : '') +
+      act.criterios.map(function (cod) {
+        var c = infoCrit(cod);
+        return '<label><b>' + esc(cod) + '</b> <span class="ayuda-inline">' +
+          esc(c.texto) + '</span>' + control_(cod) + '</label>';
+      }).join(''),
+      'Guardar',
+      function () {
+        var obj = {};
+        [].forEach.call(document.querySelectorAll('#modal-cuerpo .d-val'), function (el) {
+          var raw = String(el.value).trim();
+          if (raw === '') return;
+          var n = Number(raw.replace(',', '.'));
+          if (isNaN(n) || n < 0) return;
+          var tope = tipo === 'nota' ? 10 : (tipo === 'items' && act.numItems > 0 ? act.numItems : null);
+          if (tope != null && n > tope) n = tope;
+          obj[el.dataset.cod] = n;
+        });
+        fijarValor(actId, alId, Object.keys(obj).length ? obj : null);
+        var nuevo = Object.keys(obj).length ? obj : null;
+        td.textContent = resumenDesglose_(act, nuevo);
+        td.title = tituloDesglose_(act, nuevo);
+        cerrarModal();
+        actualizarNotasFila(alId);
+        programarGuardadoNotas();
+      },
+      { sinFoco: true }); // en el móvil, que no salte el teclado al abrir
   }
 
   /** Contador con − y +: parte de 0; con máximo definido, no lo supera. */
@@ -2017,12 +2126,12 @@ var App = (function () {
   };
   function tipoDe(act) { return act && TIPOS_ACT[act.tipo] ? act.tipo : 'items'; }
 
-  /** Nota 0-10 de una actividad según su tipo (espejo de Resumen.gs). */
-  function notaActividad(act, alumnoId) {
-    var v = valorItem(act.actividadId, alumnoId);
+  /** Convierte UN valor a nota 0-10 según el tipo (espejo de Resumen.gs). */
+  function notaDeValor_(act, v) {
     if (v == null) return null;
-    // Cadenas = observaciones (o restos de un cambio de tipo): nunca puntúan.
-    if (typeof v === 'string') return null;
+    // Cadenas (observaciones) y objetos sueltos (restos de un cambio de
+    // configuración) nunca puntúan.
+    if (typeof v === 'string' || typeof v === 'object') return null;
     var tipo = tipoDe(act);
     switch (tipo) {
       case 'nota':  return Math.max(0, Math.min(10, v));
@@ -2036,11 +2145,31 @@ var App = (function () {
         return Math.max(0, Math.min(10, v / act.numItems * 10));
     }
   }
+  /** Nota de una actividad PARA un criterio (con desglose, el valor de ese cod). */
+  function notaActividadCrit(act, alumnoId, cod) {
+    var v = valorItem(act.actividadId, alumnoId);
+    if (act.desglose && v != null && typeof v === 'object') {
+      v = v[cod] != null ? v[cod] : null;
+    }
+    return notaDeValor_(act, v);
+  }
+  /** Nota global de una actividad (con desglose, media de sus criterios). */
+  function notaActividad(act, alumnoId) {
+    if (act.desglose) {
+      var notas = [];
+      (act.criterios || []).forEach(function (cod) {
+        var n = notaActividadCrit(act, alumnoId, cod);
+        if (n != null) notas.push(n);
+      });
+      return media(notas);
+    }
+    return notaDeValor_(act, valorItem(act.actividadId, alumnoId));
+  }
   function notaCriterio(alumnoId, cod) {
     var notas = [];
     rejilla.actividades.forEach(function (a) {
       if (a.criterios.indexOf(cod) < 0) return;
-      var n = notaActividad(a, alumnoId);
+      var n = notaActividadCrit(a, alumnoId, cod);
       if (n != null) notas.push(n);
     });
     return media(notas);
@@ -2563,7 +2692,7 @@ var App = (function () {
       if (e.key !== 'Enter' && e.key !== ' ') return;
       var t = e.target;
       if (t && t.matches &&
-          t.matches('a.item-lat, a.tab, a.volver-icono, .clase-card, .grupo-card, .tarjeta-unidad, td.celda-check, td.celda-escala, td.celda-texto')) {
+          t.matches('a.item-lat, a.tab, a.volver-icono, .clase-card, .grupo-card, .tarjeta-unidad, td.celda-check, td.celda-escala, td.celda-texto, td.celda-desglose')) {
         e.preventDefault(); // evita el scroll de Espacio
         t.click();
       }
@@ -2656,7 +2785,7 @@ var App = (function () {
     ciclarCheck: ciclarCheck, sumarContador: sumarContador, tipoActCambiado: tipoActCambiado,
     criterioCambiado: criterioCambiado,
     abrirSelectorNivel: abrirSelectorNivel, elegirNivel: elegirNivel,
-    abrirEditorTexto: abrirEditorTexto,
+    abrirEditorTexto: abrirEditorTexto, abrirEditorDesglose: abrirEditorDesglose,
     prefetchEval: prefetchEval, prefetchClase: prefetchClase, prefetchRejilla: prefetchRejilla,
     nuevaClase: nuevaClase, copiarDeClase: copiarDeClase,
     abrirClase: abrirClase, editarClaseUI: editarClaseUI, editarAlumnos: editarAlumnos,

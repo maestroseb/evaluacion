@@ -55,9 +55,11 @@ var Resumen = (function () {
       alumnos.forEach(function (al) {
         var porCrit = {}; // cod -> [notas de actividad en esta unidad]
         acts.forEach(function (a) {
-          var n = notaActividad_(items, a, al.id);
-          if (n == null) return;
+          // Por criterio: con desglose cada criterio recibe SU valor; sin él,
+          // todos comparten la misma nota de la actividad.
           a.criterios.forEach(function (cod) {
+            var n = notaActividad_(items, a, al.id, cod);
+            if (n == null) return;
             (porCrit[cod] || (porCrit[cod] = [])).push(n);
           });
         });
@@ -105,10 +107,19 @@ var Resumen = (function () {
     escalaInf: [2, 4, 6, 8, 10]        // POC, REG, ADE, BUE, EXC (rúbrica /5)
   };
 
-  /** Nota 0-10 de una actividad según su tipo (espejo del cliente). */
-  function notaActividad_(items, act, alId) {
+  /**
+   * Nota 0-10 de una actividad según su tipo (espejo del cliente). Con
+   * desglose por criterio, `cod` selecciona el valor de ESE criterio dentro
+   * del objeto {codigo: valor}.
+   */
+  function notaActividad_(items, act, alId, cod) {
     var fila = items[act.actividadId];
     var v = fila && fila[alId] != null ? fila[alId] : null;
+    // Desglose: el valor es un objeto {codigo: valor}; sin desglose, un objeto
+    // sería un resto de un cambio de configuración y no puntúa.
+    if (v != null && typeof v === 'object') {
+      v = (act.desglose && cod != null && v[cod] != null) ? v[cod] : null;
+    }
     if (v == null) return null;
     // Cadenas = observaciones (o restos de un cambio de tipo): nunca puntúan.
     if (typeof v === 'string') return null;
