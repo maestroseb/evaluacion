@@ -87,6 +87,27 @@ var Notas = (function () {
     }
   }
 
+  /**
+   * Vuelve a poner las notas de una actividad en el bloque de su unidad
+   * (restaurar desde la papelera). Trabaja con el blob CRUDO: las observaciones
+   * llegan tal como se guardaron (cifradas) y no se re-cifran ni se exponen.
+   */
+  function reponerActividad_(ss, unidadId, actividadId, grades) {
+    var lock = LockService.getUserLock();
+    try { lock.waitLock(20000); } catch (e) { return; }
+    try {
+      var sh = hoja_(ss);
+      var fila = fila_(sh, unidadId);
+      var items = fila < 0 ? {} : parse_(sh.getRange(fila, 2).getValue());
+      items[actividadId] = grades || {};
+      var json = JSON.stringify(items);
+      if (fila < 0) sh.appendRow([unidadId, json]);
+      else sh.getRange(fila, 2).setValue(json);
+    } finally {
+      lock.releaseLock();
+    }
+  }
+
   /** Devuelve la fila cruda [unidadId, json] de una unidad, o null (para papelera). */
   function filaCruda_(ss, unidadId) {
     var sh = hoja_(ss);
@@ -142,7 +163,8 @@ var Notas = (function () {
 
   return {
     leer_: leer_, todas_: todas_, guardar_: guardar_, borrar_: borrar_,
-    quitarActividad_: quitarActividad_, filaCruda_: filaCruda_,
+    quitarActividad_: quitarActividad_, reponerActividad_: reponerActividad_,
+    filaCruda_: filaCruda_,
     cifrarTextos_: cifrarTextos_, descifrarTextos_: descifrarTextos_,
     jsonEnClaro_: jsonEnClaro_
   };

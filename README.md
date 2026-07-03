@@ -41,17 +41,24 @@ nota_final     = media de las notas de criterio en las unidades elegidas
 
 ```
 appsscript.json   Manifiesto (web app + scopes)
-Config.gs         Único sitio a configurar (ID del mapa, nombres)
+Config.gs         Único sitio a configurar (URLs del mapa, nombres, versión de esquema)
 Code.gs           Entrada de la Web App (doGet) y estado inicial
-Curriculo.gs      Lectura del Mapa Curricular central
+Curriculo.gs      Lectura del Mapa Curricular central (JSON públicos, con caché)
 Datos.gs          Cuaderno personal de cada profe (esquema + utilidades)
-Clases.gs         Clases: alumnado + curso (reutilizable)
-Evaluaciones.gs   Evaluaciones: una clase aplicada a un área
-Unidades.gs       Unidades de cada evaluación
-Actividades.gs    Actividades, ítems y datos de la rejilla
+Clases.gs         Grupos: alumnado + curso (reutilizable), con bajas/reincorporación
+Evaluaciones.gs   Clases: un grupo aplicado a un área
+Unidades.gs       Unidades de cada clase
+Actividades.gs    Actividades (tipos de columna) y datos de la rejilla
+Notas.gs          Notas por unidad (blob JSON; observaciones cifradas)
 Resumen.gs        Resumen global de la clase (criterios agregados + nota final)
-Exportador.gs     Regenera data/mapa-curricular.json desde la hoja completa
+Cursos.gs         Cursos académicos (multi-curso en un solo cuaderno)
+Promocion.gs      Promocionar un grupo al curso siguiente (remapeo de criterios)
+Papelera.gs       Papelera de borrados (restaurables 30 días)
+Cripto.gs         Cifrado en reposo de datos personales (nombres, observaciones)
+Respaldo.gs       Copia de seguridad automática diaria en el Drive del profe
+Portabilidad.gs   Exportar/importar la copia personal completa (JSON)
 Traspaso.gs       Traspaso de grupos elegidos entre docentes (aditivo)
+Exportador.gs     Regenera data/mapa-curricular.json desde la hoja completa
 ui.html           Interfaz
 estilos.html      CSS
 cliente.html      JS de cliente
@@ -63,8 +70,9 @@ docs/
   autohospedaje.md    Montar una instancia propia (otros dominios)
 ```
 
-> Sincronización: se usa **Google Apps Script GitHub Assistant** (no clasp).
-> El editor de Apps Script hace *Pull* de este repo (archivos en la raíz).
+> Sincronización: cada merge a `main` sube el código a Apps Script con **clasp**
+> vía GitHub Actions (`docs/despliegue-automatico.md`). El **GitHub Assistant**
+> (Pull manual desde el editor) sigue sirviendo como camino alternativo.
 
 ## Estado / hoja de ruta
 

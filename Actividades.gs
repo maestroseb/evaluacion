@@ -176,8 +176,25 @@ var Actividades = (function () {
 
   // ---------- rejilla ----------
   function rejilla_(ss, unidadId) {
-    var unidad = Unidades.obtener_(ss, unidadId);
+    // Una sola lectura de _unidades da la unidad Y el conjunto de sus hermanas
+    // (antes: localizar la fila + leerla + relistar la hoja entera).
+    var datosU = ss.getSheetByName(HOJAS.UNIDADES).getDataRange().getValues();
+    var unidad = null;
+    for (var i = 1; i < datosU.length; i++) {
+      if (datosU[i][0] === unidadId) {
+        unidad = { unidadId: datosU[i][0], evalId: datosU[i][1],
+          nombre: datosU[i][2], orden: datosU[i][3] };
+        break;
+      }
+    }
     if (!unidad) throw new Error('Unidad no encontrada.');
+    // Las DEMÁS unidades de la misma evaluación (para asignadosFuera).
+    var setU = {};
+    for (i = 1; i < datosU.length; i++) {
+      if (datosU[i][1] === unidad.evalId && datosU[i][0] !== unidadId) {
+        setU[datosU[i][0]] = true;
+      }
+    }
     var ev = Evaluaciones.obtener_(ss, unidad.evalId);
     // Una sola lectura de _actividades sirve para esta unidad y para el conjunto
     // de criterios asignados en toda la evaluación.
@@ -204,19 +221,12 @@ var Actividades = (function () {
       // unidad los calcula el cliente en vivo desde sus actividades: así, al
       // quitar un criterio de la única actividad que lo usaba, recupera la
       // etiqueta «no evaluado» sin volver al servidor.
-      asignadosFuera: criteriosAsignadosEval_(ss, unidad.evalId, datosAct, unidadId)
+      asignadosFuera: criteriosEnUnidades_(datosAct, setU)
     };
   }
 
-  /**
-   * Conjunto de criterios asignados a alguna actividad de la evaluación,
-   * opcionalmente excluyendo una unidad.
-   */
-  function criteriosAsignadosEval_(ss, evalId, datos, excluirUnidadId) {
-    var setU = {};
-    Unidades.listar_(ss, evalId).forEach(function (u) { setU[u.unidadId] = true; });
-    if (excluirUnidadId) delete setU[excluirUnidadId];
-    datos = datos || hojaA_(ss).getDataRange().getValues();
+  /** Conjunto de criterios asignados a actividades de las unidades dadas. */
+  function criteriosEnUnidades_(datos, setU) {
     var set = {};
     for (var i = 1; i < datos.length; i++) {
       if (setU[datos[i][1]]) {

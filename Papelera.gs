@@ -43,13 +43,12 @@ var Papelera = (function () {
     var contenido = {};
     try { contenido = JSON.parse(sh.getRange(fila, 5).getValue()); } catch (e) {}
     Object.keys(contenido).forEach(function (clave) {
-      // Caso especial: notas de UNA actividad → se funden en el blob de su unidad.
+      // Caso especial: notas de UNA actividad → se funden en el blob de su
+      // unidad EN CRUDO (las observaciones vuelven cifradas tal como estaban).
       if (clave === '_notasAct') {
         var na = contenido[clave] || {};
         if (na.unidadId && na.actividadId) {
-          var blob = Notas.leer_(ss, na.unidadId);
-          blob[na.actividadId] = na.grades || {};
-          Notas.guardar_(ss, na.unidadId, blob);
+          Notas.reponerActividad_(ss, na.unidadId, na.actividadId, na.grades);
         }
         return;
       }
@@ -123,13 +122,19 @@ var Papelera = (function () {
     guardar_(ss, 'unidad', 'Unidad: ' + uRow[2], contenido);
   }
 
-  /** Guarda una actividad con sus notas (subconjunto del blob) antes de borrarla. */
+  /**
+   * Guarda una actividad con sus notas (subconjunto del blob) antes de
+   * borrarla. El blob se toma CRUDO (sin descifrar): las observaciones quedan
+   * cifradas también dentro de la papelera.
+   */
   function papelearActividad_(ss, actividadId) {
     var shA = ss.getSheetByName(HOJAS.ACTIVIDADES);
     var aRow = filaPorId_(shA, actividadId);
     if (!aRow) return;
     var unidadId = aRow[1]; // col unidadId
-    var blob = Notas.leer_(ss, unidadId);
+    var raw = Notas.filaCruda_(ss, unidadId); // [unidadId, json] o null
+    var blob = {};
+    try { blob = JSON.parse((raw && raw[1]) || '{}') || {}; } catch (e) {}
     guardar_(ss, 'actividad', 'Actividad: ' + aRow[2],
       { _actividades: [aRow],
         _notasAct: { unidadId: unidadId, actividadId: actividadId, grades: blob[actividadId] || {} } });
