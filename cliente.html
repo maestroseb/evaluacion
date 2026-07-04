@@ -1889,10 +1889,10 @@ var App = (function () {
               '>' + niv.cod + ' — ' + esc(niv.nombre) + '</option>';
           }).join('') + '</select>';
       }
-      var tope = tipo === 'nota' ? 10 : (act.numItems > 0 ? act.numItems : '');
-      return '<input type="number" class="campo-corto d-val" data-cod="' + esc(cod) + '" ' +
-        'min="0" step="0.5"' + (tope !== '' ? ' max="' + tope + '"' : '') +
-        ' value="' + (x == null ? '' : fmt(x)) + '">';
+      // type=text + inputmode decimal (como la rejilla): un type=number rechaza
+      // en silencio los decimales con coma ("8,5") y la nota se perdería.
+      return '<input type="text" inputmode="decimal" class="campo-corto d-val" ' +
+        'data-cod="' + esc(cod) + '" value="' + (x == null ? '' : fmt(x)) + '">';
     }
 
     abrirModal(act.nombre + ' — nota por criterio',
