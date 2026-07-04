@@ -140,9 +140,18 @@ var Papelera = (function () {
         _notasAct: { unidadId: unidadId, actividadId: actividadId, grades: blob[actividadId] || {} } });
   }
 
+  /** Guarda una rúbrica del banco antes de borrarla (restaurable como el resto). */
+  function papelearRubrica_(ss, rubricaId) {
+    var sh = ss.getSheetByName(HOJAS.RUBRICAS);
+    var row = filaPorId_(sh, rubricaId);
+    if (!row) return;
+    guardar_(ss, 'rubrica', 'Rúbrica: ' + row[1], { _rubricas: [row] });
+  }
+
   return {
     listar_: listar_, restaurar_: restaurar_, vaciar_: vaciar_,
     papelearGrupo_: papelearGrupo_, papelearClase_: papelearClase_,
-    papelearUnidad_: papelearUnidad_, papelearActividad_: papelearActividad_
+    papelearUnidad_: papelearUnidad_, papelearActividad_: papelearActividad_,
+    papelearRubrica_: papelearRubrica_
   };
 })();
