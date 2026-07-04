@@ -279,6 +279,15 @@ var Curriculo = (function () {
 })();
 
 /**
+ * Criterios de evaluación de un curso + área. Lo usa el banco de rúbricas para
+ * asociar criterios a una rúbrica. Devuelve datos públicos del mapa (sin datos
+ * personales), así que no necesita más protección que la sesión del dominio.
+ */
+function getCriterios(curso, area) {
+  return Curriculo.criteriosDe(curso, area);
+}
+
+/**
  * Ejecuta esta función desde el editor de Apps Script (selecciona
  * "refrescarMapa" y pulsa ▶) para vaciar la caché tras actualizar el mapa.
  */

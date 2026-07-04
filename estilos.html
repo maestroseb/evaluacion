@@ -549,6 +549,47 @@
     color: #9a6a00; background: #fde8b8; border-radius: 5px; padding: 1px 6px;
     vertical-align: middle; }
 
+  /* ---------- Rúbricas (banco) ---------- */
+  .rubrica-card { background: var(--surface); border: 1px solid var(--borde);
+    border-radius: var(--radio); padding: 14px 16px; display: flex; flex-direction: column;
+    gap: 10px; transition: transform .1s, box-shadow .12s, border-color .12s; }
+  .rubrica-card:hover { border-color: var(--borde-fuerte); box-shadow: var(--sombra-3); }
+  .rubrica-card.arrastrando { z-index: 5; opacity: .97; cursor: grabbing;
+    box-shadow: 0 14px 30px rgba(16,18,24,.20); border-color: var(--borde-fuerte); }
+  .rc-head { display: flex; align-items: center; gap: 10px; }
+  .rc-head h3 { margin: 0; font-size: 15px; font-weight: 650; flex: 1 1 auto; min-width: 0;
+    letter-spacing: -.01em; }
+  .rc-grip { flex: 0 0 auto; cursor: grab; color: var(--texto-3); font-size: 14px;
+    padding: 2px 6px; border-radius: 6px; line-height: 1; }
+  .rc-grip:hover { background: var(--bg); color: var(--texto-2); }
+  .rc-grip:active { cursor: grabbing; }
+  .rc-meta { color: var(--texto-2); font-size: 13px; }
+  .rc-crits { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip-crit { display: inline-flex; align-items: center; gap: 4px; font-size: 11px;
+    font-weight: 600; color: var(--acento-fuerte); background: var(--acento-suave);
+    border-radius: 999px; padding: 2px 9px; }
+  .chip-x { border: 0; background: transparent; color: var(--acento-fuerte); cursor: pointer;
+    font-size: 13px; line-height: 1; padding: 0; }
+  .rc-acciones { display: flex; gap: 8px; margin-top: 2px; }
+  .rc-acciones .btn { padding: 6px 10px; font-size: 13px; }
+
+  /* Editor de rúbrica (modal) */
+  .rub-editor { display: flex; flex-direction: column; gap: 14px; }
+  .rub-pegar summary { cursor: pointer; font-size: 13px; font-weight: 600; color: var(--texto-2); }
+  .rub-pegar textarea { width: 100%; margin-top: 8px; }
+  .niveles-editor, .indicadores-editor { display: flex; flex-direction: column; gap: 8px;
+    margin: 8px 0; }
+  .nivel-row, .indicador-row { display: flex; gap: 8px; align-items: center; }
+  .nivel-row .nivel-etq, .indicador-row .ind-txt { flex: 1 1 auto; min-width: 0; }
+  .nivel-row .nivel-val, .indicador-row .ind-peso { width: 78px; flex: 0 0 auto; }
+  .mini-x { flex: 0 0 auto; border: 1px solid var(--borde); background: var(--surface);
+    color: var(--texto-2); border-radius: 7px; width: 32px; height: 34px; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center; }
+  .mini-x:hover { background: var(--bg); color: var(--texto); }
+  .rub-add { align-self: flex-start; }
+  .rub-crit-sels { display: flex; gap: 8px; margin: 8px 0; }
+  .rub-crit-sels select { flex: 1 1 auto; min-width: 0; }
+
   /* ---------- Rejilla ---------- */
   .rejilla-cont { overflow: auto; background: var(--surface);
     max-height: calc(100vh - var(--topbar-alto) - 96px);
