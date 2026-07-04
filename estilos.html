@@ -575,20 +575,34 @@
 
   /* Editor de rúbrica (modal) */
   .rub-editor { display: flex; flex-direction: column; gap: 14px; }
-  .rub-pegar summary { cursor: pointer; font-size: 13px; font-weight: 600; color: var(--texto-2); }
-  .rub-pegar textarea { width: 100%; margin-top: 8px; }
-  .niveles-editor, .indicadores-editor { display: flex; flex-direction: column; gap: 8px;
-    margin: 8px 0; }
-  .nivel-row, .indicador-row { display: flex; gap: 8px; align-items: center; }
-  .nivel-row .nivel-etq, .indicador-row .ind-txt { flex: 1 1 auto; min-width: 0; }
-  .nivel-row .nivel-val, .indicador-row .ind-peso { width: 78px; flex: 0 0 auto; }
+  .rub-pegar-acc { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: -6px; }
   .mini-x { flex: 0 0 auto; border: 1px solid var(--borde); background: var(--surface);
-    color: var(--texto-2); border-radius: 7px; width: 32px; height: 34px; cursor: pointer;
-    display: inline-flex; align-items: center; justify-content: center; }
+    color: var(--texto-2); border-radius: 7px; min-width: 30px; height: 30px; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center; font-size: 15px; }
   .mini-x:hover { background: var(--bg); color: var(--texto); }
   .rub-add { align-self: flex-start; }
   .rub-crit-sels { display: flex; gap: 8px; margin: 8px 0; }
   .rub-crit-sels select { flex: 1 1 auto; min-width: 0; }
+
+  /* Rejilla editable de la rúbrica (indicadores × niveles) */
+  .rg-scroll { overflow-x: auto; margin: 8px 0; border: 1px solid var(--borde);
+    border-radius: var(--radio); }
+  .rubrica-grid { border-collapse: collapse; width: 100%; font-size: 13px; }
+  .rubrica-grid th, .rubrica-grid td { border: 1px solid var(--borde); padding: 5px;
+    vertical-align: top; text-align: left; }
+  .rubrica-grid thead th { background: var(--bg); }
+  .rubrica-grid .rg-corner { min-width: 150px; color: var(--texto-3); font-weight: 600; }
+  .rubrica-grid .rg-nivel { min-width: 150px; }
+  .rubrica-grid .rg-ind { min-width: 160px; background: var(--surface); }
+  .rubrica-grid .rg-add { width: 40px; text-align: center; vertical-align: middle; }
+  .rubrica-grid textarea { width: 100%; min-width: 130px; resize: vertical; border: 1px solid var(--borde);
+    border-radius: 6px; padding: 5px 7px; font: inherit; color: var(--texto); background: var(--surface); }
+  .rubrica-grid .nivel-etq { width: 100%; font-weight: 600; border: 1px solid var(--borde);
+    border-radius: 6px; padding: 5px 7px; font: inherit; }
+  .rg-sub { display: flex; align-items: center; gap: 6px; margin-top: 5px; }
+  .rubrica-grid .nivel-val, .rubrica-grid .ind-peso { width: 62px; border: 1px solid var(--borde);
+    border-radius: 6px; padding: 4px 6px; font: inherit; }
+  .rg-peso { font-size: 11px; color: var(--texto-3); display: inline-flex; align-items: center; gap: 4px; }
 
   /* ---------- Rejilla ---------- */
   .rejilla-cont { overflow: auto; background: var(--surface);

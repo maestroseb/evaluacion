@@ -391,13 +391,8 @@ var App = (function () {
 
   /** En el móvil, Papelera / Copia / Acerca de viven bajo la pestaña "Más". */
   function abrirMas() {
-    var rubricas = (estado && estado.flags && estado.flags.rubricas)
-      ? '<button type="button" class="btn" onclick="App.cerrarModal();App.irARubricas()">' +
-        svgUI('lapiz') + ' Rúbricas</button>'
-      : '';
     abrirModal('Más',
       '<div class="acciones-modal acciones-mas">' +
-      rubricas +
       '<button type="button" class="btn" onclick="App.cerrarModal();App.irAPapelera()">' +
         svgUI('papelera') + ' Papelera</button>' +
       '<button type="button" class="btn" onclick="App.abrirCopia()">' +
@@ -2851,64 +2846,100 @@ var App = (function () {
     return etqs.map(function (e, i) { return { etiqueta: e, valor: vals[i] }; });
   }
 
-  // ---------- importar pegando (ChatGPT / Excel / Sheets / Markdown) ----------
+  // ---------- importar pegando (ChatGPT / Excel / Sheets / Markdown / CSV) ----------
+  /** Separador de una tabla pegada: tabulador, «|», «;» o coma (en ese orden). */
+  function detectarSep_(linea) {
+    if (linea.indexOf('\t') >= 0) return '\t';
+    if (linea.indexOf('|') >= 0) return '|';
+    if (linea.indexOf(';') >= 0) return ';';
+    if (linea.indexOf(',') >= 0) return ',';
+    return '\t';
+  }
   /**
-   * Lee una tabla pegada y la convierte en {niveles, indicadores}. La 1ª columna
-   * son los indicadores; la fila de cabecera, las etiquetas de nivel; el resto de
-   * celdas, la descripción de cada indicador en cada nivel. Detecta separador por
-   * tabulador (Excel/Sheets) o por «|» (tablas Markdown/HTML pegadas como texto).
+   * Notas de los niveles. Si la cabecera trae puntos entre paréntesis
+   * («Excelente (4)») se respetan, escalados a 0–10 (el máximo → 10); los huecos
+   * se interpolan de forma uniforme. Sin puntos, reparto uniforme 0–10.
+   */
+  function valoresNiveles_(puntos, hayPuntos, n) {
+    if (!hayPuntos) return valoresUniformes(n);
+    var maxP = 0;
+    puntos.forEach(function (p) { if (p != null && p > maxP) maxP = p; });
+    if (!(maxP > 0)) return valoresUniformes(n);
+    return puntos.map(function (p, i) {
+      return (p != null)
+        ? Math.round((p / maxP) * 1000) / 100
+        : Math.round((i / (n - 1)) * 1000) / 100;
+    });
+  }
+  /**
+   * Convierte una tabla pegada en {niveles, indicadores}. La 1ª columna son los
+   * indicadores; la fila de cabecera, las etiquetas de nivel (con posible «(nota)»);
+   * el resto de celdas, la descripción de cada indicador en cada nivel.
    */
   function parsearRubricaPegada(texto) {
     var lineas = String(texto || '').split(/\r?\n/)
       .map(function (l) { return l.replace(/\s+$/, ''); })
       .filter(function (l) { return l.trim().length; });
     if (!lineas.length) return null;
-    var usaPipe = lineas[0].indexOf('|') >= 0 && lineas[0].indexOf('\t') < 0;
+    var sep = detectarSep_(lineas[0]);
     function celdas(l) {
-      if (usaPipe) {
-        return l.replace(/^\s*\|/, '').replace(/\|\s*$/, '')
-          .split('|').map(function (c) { return c.trim(); });
+      if (sep === '|') {
+        return l.replace(/^\s*\|/, '').replace(/\|\s*$/, '').split('|')
+          .map(function (c) { return c.trim(); });
       }
-      return l.split('\t').map(function (c) { return c.trim(); });
+      return l.split(sep).map(function (c) { return c.trim(); });
     }
     // Fuera las filas separadoras de Markdown (---, :--:).
     var filas = lineas.map(celdas).filter(function (cs) {
       return !cs.every(function (c) { return c === '' || /^:?-{2,}:?$/.test(c); });
     });
     if (filas.length < 2) return null;
-    var cab = filas[0];
-    var etiquetas = cab.slice(1).filter(function (c) { return c !== ''; });
-    if (etiquetas.length < 2) return null;
-    var vals = valoresUniformes(etiquetas.length);
+    var cols = filas[0].slice(1).filter(function (c) { return c !== ''; });
+    if (cols.length < 2) return null;
+    var etiquetas = [], puntos = [], hayPuntos = false;
+    cols.forEach(function (c) {
+      var m = /^(.*?)\s*\(\s*([\d.,]+)\s*\)\s*$/.exec(c);
+      if (m) { etiquetas.push(m[1].trim()); puntos.push(Number(m[2].replace(',', '.'))); hayPuntos = true; }
+      else { etiquetas.push(c); puntos.push(null); }
+    });
+    var vals = valoresNiveles_(puntos, hayPuntos, etiquetas.length);
     var niveles = etiquetas.map(function (et, i) { return { etiqueta: et, valor: vals[i] }; });
     var indicadores = filas.slice(1).map(function (f) {
-      return { texto: f[0] || '', peso: 1, criterios: [],
-        celdas: f.slice(1, 1 + etiquetas.length) };
+      var celdasF = f.slice(1, 1 + etiquetas.length);
+      while (celdasF.length < etiquetas.length) celdasF.push('');
+      return { texto: f[0] || '', peso: 1, criterios: [], celdas: celdasF };
     }).filter(function (ind) { return ind.texto; });
     if (!indicadores.length) return null;
     return { niveles: niveles, indicadores: indicadores };
   }
 
-  function detectarRubricaPegada() {
+  /** Carga en la rejilla la tabla pegada. silencioso=true: si no hay tabla, no avisa. */
+  function detectarRubricaPegada(silencioso) {
     var ta = document.getElementById('rub-pegar-ta');
     var parsed = parsearRubricaPegada(ta && ta.value);
     if (!parsed) {
-      return aviso('No he podido leer una tabla. Pega filas con columnas separadas ' +
-        'por tabulador o por «|».');
+      if (silencioso !== true) {
+        aviso('No he podido leer una tabla. Pega filas con columnas separadas por ' +
+          'tabulador, «|», «;» o coma.');
+      }
+      return;
     }
-    leerRubCuerpo_();
+    leerRubGrid_();
     rubricaEnEdicion.niveles = parsed.niveles;
     rubricaEnEdicion.indicadores = parsed.indicadores;
-    renderRubCuerpo_();
-    avisoOk('Tabla detectada: ' + parsed.indicadores.length + ' indicadores, ' +
-      parsed.niveles.length + ' niveles.');
+    if (ta) ta.value = ''; // la tabla ya vive en la rejilla editable de abajo
+    renderRubGrid_();
+    avisoOk('Rúbrica cargada: ' + parsed.indicadores.length + ' indicadores, ' +
+      parsed.niveles.length + ' niveles. Ajusta lo que quieras.');
   }
 
-  // ---------- crear / editar ----------
+  // ---------- crear / editar (rejilla editable) ----------
   function nuevaRubrica() {
+    var niveles = nivelesPorDefecto_();
     rubricaEnEdicion = {
-      nombre: '', niveles: nivelesPorDefecto_(),
-      indicadores: [{ texto: '', peso: 1, criterios: [], celdas: [] }],
+      nombre: '', niveles: niveles,
+      indicadores: [{ texto: '', peso: 1, criterios: [],
+        celdas: niveles.map(function () { return ''; }) }],
       criterios: []
     };
     abrirModalRubrica_('Nueva rúbrica', 'Crear rúbrica', null);
@@ -2916,14 +2947,16 @@ var App = (function () {
 
   function editarRubricaUI(id) {
     llamar('obtenerRubrica', [id], function (r) {
+      var niveles = (r.niveles || []).map(function (n) {
+        return { etiqueta: n.etiqueta, valor: n.valor };
+      });
       rubricaEnEdicion = {
-        nombre: r.nombre,
-        niveles: (r.niveles || []).map(function (n) {
-          return { etiqueta: n.etiqueta, valor: n.valor };
-        }),
+        nombre: r.nombre, niveles: niveles,
         indicadores: (r.indicadores || []).map(function (ind) {
+          var celdas = (ind.celdas || []).slice(0, niveles.length);
+          while (celdas.length < niveles.length) celdas.push('');
           return { texto: ind.texto, peso: ind.peso || 1,
-            criterios: ind.criterios || [], celdas: ind.celdas || [] };
+            criterios: ind.criterios || [], celdas: celdas };
         }),
         criterios: (r.criterios || []).slice()
       };
@@ -2937,101 +2970,124 @@ var App = (function () {
         '<label>Nombre de la rúbrica' +
         '<input id="rub-nombre" type="text" placeholder="Ej.: Exposición oral" value="' +
           esc(rubricaEnEdicion.nombre) + '"></label>' +
-        '<details class="rub-pegar"><summary>Pegar desde una tabla ' +
-          '(ChatGPT, Excel, Sheets, Markdown)</summary>' +
-          '<textarea id="rub-pegar-ta" rows="5" placeholder="Pega aquí tu rúbrica en tabla…"></textarea>' +
-          '<button type="button" class="btn rub-add" onclick="App.detectarRubricaPegada()">' +
-            'Detectar tabla</button>' +
-          '<p class="ayuda">La primera columna serán los indicadores y la fila de cabecera, ' +
-            'los niveles. Las notas se reparten de 0 a 10; puedes ajustarlas después.</p>' +
-        '</details>' +
-        '<div id="rub-cuerpo"></div>' +
+        '<label>Pegar rúbrica (ChatGPT, Excel, Sheets, Markdown, CSV)' +
+          '<textarea id="rub-pegar-ta" rows="4" placeholder="Pega aquí una tabla y se ' +
+            'cargará sola en la rejilla de abajo…"></textarea></label>' +
+        '<div class="rub-pegar-acc">' +
+          '<button type="button" class="btn" onclick="App.detectarRubricaPegada(false)">' +
+            'Cargar tabla pegada</button>' +
+          '<span class="ayuda">La 1ª columna → indicadores; la cabecera → niveles. Si pones la ' +
+            'nota entre paréntesis («Excelente (4)») se respeta, escalada a 0–10; si no, se ' +
+            'reparte 0–10.</span>' +
+        '</div>' +
+        '<div id="rub-grid"></div>' +
         '<div id="rub-crits-cont"></div>' +
       '</div>',
       textoAceptar,
       function () { guardarRubrica_(id); },
       { sinFoco: !!id });
-    renderRubCuerpo_();
+    renderRubGrid_();
     renderRubCrits_();
+    // Autodetección al pegar: el valor del textarea está tras el evento paste.
+    var ta = document.getElementById('rub-pegar-ta');
+    if (ta) ta.addEventListener('paste', function () {
+      setTimeout(function () { detectarRubricaPegada(true); }, 0);
+    });
   }
 
-  /** Vuelca los campos del editor (nombre, niveles, indicadores) al borrador. */
-  function leerRubCuerpo_() {
+  /** Vuelca la rejilla (nombre, niveles y celdas de cada indicador) al borrador. */
+  function leerRubGrid_() {
     var e = rubricaEnEdicion;
     var nom = document.getElementById('rub-nombre');
     if (nom) e.nombre = nom.value;
-    var etqs = document.querySelectorAll('#rub-cuerpo .nivel-etq');
-    var vals = document.querySelectorAll('#rub-cuerpo .nivel-val');
-    e.niveles = [].map.call(etqs, function (el, i) {
-      return { etiqueta: el.value, valor: Number(vals[i] && vals[i].value) || 0 };
+    var niveles = [].map.call(document.querySelectorAll('#rub-grid .nivel-etq'), function (el) {
+      var j = Number(el.dataset.j);
+      var v = document.querySelector('#rub-grid .nivel-val[data-j="' + j + '"]');
+      return { etiqueta: el.value, valor: Number(v && v.value) || 0 };
     });
-    var txts = document.querySelectorAll('#rub-cuerpo .ind-txt');
-    var pesos = document.querySelectorAll('#rub-cuerpo .ind-peso');
-    e.indicadores = [].map.call(txts, function (el, i) {
+    var indicadores = [].map.call(document.querySelectorAll('#rub-grid .ind-txt'), function (el) {
+      var i = Number(el.dataset.i);
+      var peso = document.querySelector('#rub-grid .ind-peso[data-i="' + i + '"]');
       var prev = e.indicadores[i] || {};
-      return { texto: el.value, peso: Number(pesos[i] && pesos[i].value) || 1,
-        criterios: prev.criterios || [], celdas: prev.celdas || [] };
+      var celdas = niveles.map(function (_, j) {
+        var c = document.querySelector('#rub-grid .celda[data-i="' + i + '"][data-j="' + j + '"]');
+        return c ? c.value : '';
+      });
+      return { texto: el.value, peso: Number(peso && peso.value) || 1,
+        criterios: prev.criterios || [], celdas: celdas };
     });
+    e.niveles = niveles;
+    e.indicadores = indicadores;
   }
 
-  function renderRubCuerpo_() {
+  function renderRubGrid_() {
     var e = rubricaEnEdicion;
-    var niveles = '<div class="campo-crit"><span class="etq">Niveles y su nota (0–10)</span>' +
-      '<div class="niveles-editor">' + e.niveles.map(function (n, i) {
-        return '<div class="nivel-row">' +
-          '<input class="nivel-etq" type="text" placeholder="Nivel" value="' + esc(n.etiqueta) + '">' +
-          '<input class="nivel-val" type="number" step="0.1" min="0" max="10" value="' +
-            esc(n.valor) + '">' +
-          '<button type="button" class="mini-x" title="Quitar nivel" ' +
-            'onclick="App.rubQuitarNivel(' + i + ')">' + svgUI('equis') + '</button>' +
-        '</div>';
-      }).join('') + '</div>' +
+    var cab = '<tr><th class="rg-corner">Indicador · peso</th>' +
+      e.niveles.map(function (n, j) {
+        return '<th class="rg-nivel">' +
+          '<input class="nivel-etq" data-j="' + j + '" type="text" placeholder="Nivel" value="' +
+            esc(n.etiqueta) + '">' +
+          '<div class="rg-sub">' +
+            '<input class="nivel-val" data-j="' + j + '" type="number" step="0.1" min="0" ' +
+              'max="10" title="Nota del nivel" value="' + esc(n.valor) + '">' +
+            '<button type="button" class="mini-x" title="Quitar nivel" ' +
+              'onclick="App.rubQuitarNivel(' + j + ')">' + svgUI('equis') + '</button>' +
+          '</div></th>';
+      }).join('') +
+      '<th class="rg-add"><button type="button" class="mini-x" title="Añadir nivel" ' +
+        'onclick="App.rubAnadirNivel()">+</button></th></tr>';
+    var cuerpo = e.indicadores.map(function (ind, i) {
+      var celdas = e.niveles.map(function (n, j) {
+        return '<td><textarea class="celda" data-i="' + i + '" data-j="' + j + '" rows="2" ' +
+          'placeholder="Descripción">' + esc((ind.celdas && ind.celdas[j]) || '') + '</textarea></td>';
+      }).join('');
+      return '<tr><th class="rg-ind">' +
+        '<textarea class="ind-txt" data-i="' + i + '" rows="2" placeholder="Indicador">' +
+          esc(ind.texto) + '</textarea>' +
+        '<div class="rg-sub"><label class="rg-peso">peso ' +
+          '<input class="ind-peso" data-i="' + i + '" type="number" step="0.5" min="0.5" value="' +
+            esc(ind.peso || 1) + '"></label>' +
+          '<button type="button" class="mini-x" title="Quitar indicador" ' +
+            'onclick="App.rubQuitarIndicador(' + i + ')">' + svgUI('equis') + '</button>' +
+        '</div></th>' + celdas + '<td></td></tr>';
+    }).join('');
+    document.getElementById('rub-grid').innerHTML =
+      '<div class="campo-crit"><span class="etq">Rúbrica</span>' +
+      '<div class="rg-scroll"><table class="rubrica-grid"><thead>' + cab + '</thead>' +
+      '<tbody>' + cuerpo + '</tbody></table></div>' +
       '<div class="acciones-modal"><button type="button" class="btn rub-add" ' +
-        'onclick="App.rubAnadirNivel()">+ Añadir nivel</button>' +
+        'onclick="App.rubAnadirIndicador()">+ Añadir indicador</button>' +
       '<button type="button" class="link" onclick="App.rubRepartirNotas()">' +
         'Repartir notas 0–10</button></div>' +
       '</div>';
-    var inds = '<div class="campo-crit"><span class="etq">Indicadores</span>' +
-      '<div class="indicadores-editor">' + e.indicadores.map(function (ind, i) {
-        return '<div class="indicador-row">' +
-          '<input class="ind-txt" type="text" placeholder="Indicador a evaluar" value="' +
-            esc(ind.texto) + '">' +
-          '<input class="ind-peso" type="number" step="0.5" min="0.5" title="Peso" value="' +
-            esc(ind.peso || 1) + '">' +
-          '<button type="button" class="mini-x" title="Quitar indicador" ' +
-            'onclick="App.rubQuitarIndicador(' + i + ')">' + svgUI('equis') + '</button>' +
-        '</div>';
-      }).join('') + '</div>' +
-      '<button type="button" class="btn rub-add" onclick="App.rubAnadirIndicador()">' +
-        '+ Añadir indicador</button>' +
-      '</div>';
-    document.getElementById('rub-cuerpo').innerHTML = niveles + inds;
   }
 
   function rubAnadirNivel() {
-    leerRubCuerpo_(); rubricaEnEdicion.niveles.push({ etiqueta: '', valor: 0 }); renderRubCuerpo_();
+    leerRubGrid_();
+    rubricaEnEdicion.niveles.push({ etiqueta: '', valor: 0 });
+    rubricaEnEdicion.indicadores.forEach(function (ind) { ind.celdas.push(''); });
+    renderRubGrid_();
   }
-  function rubQuitarNivel(i) {
-    leerRubCuerpo_();
-    rubricaEnEdicion.niveles.splice(i, 1);
-    rubricaEnEdicion.indicadores.forEach(function (ind) {
-      if (ind.celdas) ind.celdas.splice(i, 1);
-    });
-    renderRubCuerpo_();
+  function rubQuitarNivel(j) {
+    leerRubGrid_();
+    rubricaEnEdicion.niveles.splice(j, 1);
+    rubricaEnEdicion.indicadores.forEach(function (ind) { ind.celdas.splice(j, 1); });
+    renderRubGrid_();
   }
   function rubRepartirNotas() {
-    leerRubCuerpo_();
+    leerRubGrid_();
     var vals = valoresUniformes(rubricaEnEdicion.niveles.length);
     rubricaEnEdicion.niveles.forEach(function (n, i) { n.valor = vals[i]; });
-    renderRubCuerpo_();
+    renderRubGrid_();
   }
   function rubAnadirIndicador() {
-    leerRubCuerpo_();
-    rubricaEnEdicion.indicadores.push({ texto: '', peso: 1, criterios: [], celdas: [] });
-    renderRubCuerpo_();
+    leerRubGrid_();
+    rubricaEnEdicion.indicadores.push({ texto: '', peso: 1, criterios: [],
+      celdas: rubricaEnEdicion.niveles.map(function () { return ''; }) });
+    renderRubGrid_();
   }
   function rubQuitarIndicador(i) {
-    leerRubCuerpo_(); rubricaEnEdicion.indicadores.splice(i, 1); renderRubCuerpo_();
+    leerRubGrid_(); rubricaEnEdicion.indicadores.splice(i, 1); renderRubGrid_();
   }
 
   // ---------- asociar criterios (rúbrica completa) ----------
@@ -3100,7 +3156,7 @@ var App = (function () {
 
   // ---------- guardar / duplicar / eliminar ----------
   function guardarRubrica_(id) {
-    leerRubCuerpo_();
+    leerRubGrid_();
     var e = rubricaEnEdicion;
     var nombre = (e.nombre || '').trim();
     if (!nombre) return aviso('Pon un nombre a la rúbrica.');
