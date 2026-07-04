@@ -706,14 +706,21 @@
   /* position sticky (y no relative): si no, esta regla —más específica— anularía
      el sticky de "thead th" y las columnas de actividades no se quedarían fijas
      al hacer scroll. Sticky también sirve de contenedor para grip/edit (absolute). */
-  table.rejilla th.act { position: sticky; cursor: grab; font-weight: 600; padding: 7px 22px; }
+  table.rejilla th.act { position: sticky; cursor: default; font-weight: 600; padding: 7px 22px; }
+  table.rejilla th.act.act-rub-col { cursor: pointer; } /* la cabecera de rúbrica se toca para expandir */
   table.rejilla th.act.arrastrando-col { opacity: .45; }
   table.rejilla th.act.soltar-antes { box-shadow: inset 3px 0 0 var(--acento); }
   table.rejilla th.act.soltar-despues { box-shadow: inset -3px 0 0 var(--acento); }
-  table.rejilla .grip-act { position: absolute; top: 3px; left: 4px; color: var(--texto-3);
-    touch-action: none; user-select: none;
-    font-size: 11px; line-height: 1; opacity: 0; transition: opacity .12s; pointer-events: none; }
-  table.rejilla th.act:hover .grip-act { opacity: .65; }
+  /* Asa de arrastre: SIEMPRE visible e interactiva (el arrastre nace solo aquí). */
+  table.rejilla .grip-act { position: absolute; top: 2px; left: 3px; color: var(--texto-3);
+    touch-action: none; user-select: none; font-size: 11px; line-height: 1; opacity: .4;
+    transition: opacity .12s; pointer-events: auto; cursor: grab; padding: 2px; z-index: 1; }
+  table.rejilla th.act:hover .grip-act { opacity: 1; }
+  table.rejilla .grip-act:active { cursor: grabbing; }
+  /* Chevron que indica que una columna rúbrica se puede desplegar. */
+  table.rejilla .rub-exp-ico { position: absolute; bottom: 3px; right: 5px; color: var(--acento);
+    opacity: .7; pointer-events: none; }
+  table.rejilla .rub-exp-ico .svg-ico { width: 11px; height: 11px; display: block; }
   table.rejilla th.act .act-nom { display: block; }
   table.rejilla th.act small { display: block; font-weight: 400; color: var(--texto-3); font-size: 10px; }
   table.rejilla .edit-act { position: absolute; top: 4px; right: 4px; border: none;
@@ -740,8 +747,18 @@
     color: var(--texto-3); }
   table.rejilla td.celda-rub-ind { cursor: pointer; min-width: 46px; user-select: none;
     font-weight: 600; font-size: 11px; letter-spacing: .02em; color: var(--texto-3); }
-  table.rejilla th.act.act-sub { background: var(--acento-suave); }
+  /* Rúbrica expandida como árbol: banda de la rúbrica (padre) sobre sus
+     indicadores (ramas). Un borde superior de acento agrupa las sub-columnas y
+     un corchete (izq/dcha) marca el principio y el final del grupo. */
+  table.rejilla th.act.act-sub { background: var(--acento-suave);
+    border-top: 3px solid var(--acento); }
+  table.rejilla th.act.act-sub-ini { border-left: 2px solid var(--acento); }
+  table.rejilla th.act.act-sub-fin { border-right: 2px solid var(--acento); }
   table.rejilla th.act.act-sub small { color: var(--acento-fuerte); }
+  table.rejilla .rub-padre { display: block; min-height: 11px; font-size: 9px; font-weight: 700;
+    color: var(--acento-fuerte); text-transform: uppercase; letter-spacing: .03em;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
+  table.rejilla th.act .rub-rama { font-weight: 600; }
   /* Observación (texto libre): extracto con puntos suspensivos; tocar para editar. */
   table.rejilla td.celda-texto { cursor: pointer; user-select: none; max-width: 140px;
     overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
