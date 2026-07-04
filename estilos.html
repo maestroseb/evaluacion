@@ -661,6 +661,10 @@
     color: var(--texto-3); cursor: pointer; font-size: 17px; line-height: 1; border-radius: 5px;
     padding: 0; }
   .rg-x:hover { background: var(--bg); color: var(--texto); }
+  /* Vista de solo lectura de una rúbrica (previsualizar): celdas como texto. */
+  .rubrica-ver td { white-space: pre-wrap; overflow-wrap: anywhere; color: var(--texto); }
+  .rubrica-ver th { white-space: normal; }
+  .ver-pts { color: var(--texto-3); font-weight: 400; }
 
   /* ---------- Rejilla ---------- */
   .rejilla-cont { overflow: auto; background: var(--surface);
