@@ -666,7 +666,8 @@ var App = (function () {
     descargar: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
     restaurar: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>',
     guardar:   '<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>',
-    info:      '<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>'
+    info:      '<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>',
+    ojo:       '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>'
   };
   /** Icono SVG de interfaz por id. */
   function svgUI(id) {
@@ -2881,9 +2882,6 @@ var App = (function () {
   }
 
   function tarjetaRubrica_(r) {
-    var chips = (r.criterios || []).map(function (c) {
-      return '<span class="chip-crit">' + esc(c) + '</span>';
-    }).join('');
     return '<div class="rubrica-card" data-id="' + r.rubricaId + '">' +
       '<div class="rc-head">' +
         '<h3>' + esc(r.nombre) + '</h3>' +
@@ -2891,8 +2889,9 @@ var App = (function () {
         'onpointerdown="App.dragRubrica(event)">⠿</span>' +
       '</div>' +
       '<div class="rc-meta">' + r.numIndicadores + ' indicador(es) · ' + r.numNiveles + ' niveles</div>' +
-      (chips ? '<div class="rc-crits">' + chips + '</div>' : '') +
       '<div class="rc-acciones">' +
+        '<button class="btn btn-icono" title="Previsualizar" ' +
+          'onclick="App.previsualizarRubrica(\'' + r.rubricaId + '\')">' + svgUI('ojo') + '</button>' +
         '<button class="btn" onclick="App.editarRubricaUI(\'' + r.rubricaId + '\')">' +
           svgUI('lapiz') + ' Editar</button>' +
         '<button class="btn" onclick="App.duplicarRubricaUI(\'' + r.rubricaId + '\')">' +
@@ -2901,6 +2900,27 @@ var App = (function () {
           'onclick="App.eliminarRubricaUI(\'' + r.rubricaId + '\')">' + svgUI('papelera') + '</button>' +
       '</div>' +
     '</div>';
+  }
+
+  /** Vista de solo lectura de una rúbrica (indicadores × niveles), sin editar. */
+  function previsualizarRubrica(id) {
+    llamar('obtenerRubrica', [id], function (r) {
+      var niveles = r.niveles || [];
+      var cab = '<tr><th class="rg-corner">Indicador · peso</th>' + niveles.map(function (n) {
+        return '<th>' + esc(n.etiqueta) + ' <span class="ver-pts">(' + esc(n.valor) + ')</span></th>';
+      }).join('') + '</tr>';
+      var cuerpo = (r.indicadores || []).map(function (ind) {
+        var celdas = niveles.map(function (n, j) {
+          return '<td>' + esc((ind.celdas && ind.celdas[j]) || '') + '</td>';
+        }).join('');
+        return '<tr><th class="rg-ind">' + esc(ind.texto) +
+          ' <span class="rg-peso">' + pesoEntero_(ind.peso) + '%</span></th>' + celdas + '</tr>';
+      }).join('');
+      abrirModal(r.nombre,
+        '<div class="rg-scroll"><table class="rubrica-grid rubrica-ver"><thead>' + cab +
+        '</thead><tbody>' + cuerpo + '</tbody></table></div>',
+        'Cerrar', cerrarModal, { ancho: true, sinFoco: true });
+    });
   }
 
   function dragRubrica(e) {
@@ -3416,6 +3436,7 @@ var App = (function () {
     cambiarCurso: cambiarCurso,
     irARubricas: irARubricas, nuevaRubrica: nuevaRubrica,
     editarRubricaUI: editarRubricaUI, duplicarRubricaUI: duplicarRubricaUI,
+    previsualizarRubrica: previsualizarRubrica,
     eliminarRubricaUI: eliminarRubricaUI, dragRubrica: dragRubrica,
     detectarRubricaPegada: detectarRubricaPegada,
     empezarRubricaEnBlanco: empezarRubricaEnBlanco, limpiarRubrica: limpiarRubrica,

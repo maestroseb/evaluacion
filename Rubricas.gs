@@ -171,6 +171,7 @@ var Rubricas = (function () {
         return {
           texto: String((ind && ind.texto) || '').trim(),
           peso: pesoValido_(ind && ind.peso),
+          celdas: celdas_(ind && ind.celdas),       // descripción de cada nivel
           criterios: codigos_(ind && ind.criterios) // reservado (asociación por indicador)
         };
       })
@@ -188,6 +189,13 @@ var Rubricas = (function () {
       nombre: nombre, indicadores: indicadores, niveles: niveles,
       criterios: codigos_(payload.criterios) // asociación a la rúbrica completa
     };
+  }
+
+  /** Descripciones de cada nivel de un indicador: cadenas acotadas (una por nivel). */
+  function celdas_(lista) {
+    return (Array.isArray(lista) ? lista : []).map(function (c) {
+      return String(c == null ? '' : c).slice(0, 2000);
+    });
   }
 
   /** Peso del indicador (porcentaje 0–100). Se admite 0; los negativos → 0. */
