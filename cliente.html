@@ -49,6 +49,7 @@ var App = (function () {
       document.getElementById('usuario').title = e.usuario;
       document.getElementById('perfil-avatar').textContent = iniciales(e.usuario);
       document.getElementById('cargando').hidden = true;
+      activarRubricasSiFlag_(); // revela el módulo de rúbricas si el usuario lo tiene
       pintarSelectorCurso();
       // Si la URL trae una vista (recarga o enlace copiado), se restaura;
       // si no, se abre la lista de clases como siempre.
@@ -67,7 +68,7 @@ var App = (function () {
 
   // ---------- navegación ----------
   var SECCIONES = ['vista-evaluaciones', 'vista-clases', 'vista-clase',
-    'vista-evaluacion', 'vista-unidad', 'vista-resumen', 'vista-papelera'];
+    'vista-evaluacion', 'vista-unidad', 'vista-resumen', 'vista-papelera', 'vista-rubricas'];
   var vistaActual = null; // vista visible: descarta respuestas tardías del servidor
   function mostrar(id) {
     flushNotas(); // guarda notas pendientes de la unidad al cambiar de vista
@@ -80,9 +81,10 @@ var App = (function () {
     var clave =
       (id === 'vista-clases' || id === 'vista-clase') ? 'clases' :
       (id === 'vista-papelera') ? 'papelera' :
+      (id === 'vista-rubricas') ? 'rubricas' :
       (id === 'vista-evaluaciones' || id === 'vista-evaluacion' ||
        id === 'vista-unidad' || id === 'vista-resumen') ? 'eval' : '';
-    ['eval', 'clases', 'papelera'].forEach(function (k) {
+    ['eval', 'clases', 'papelera', 'rubricas'].forEach(function (k) {
       [].forEach.call(document.querySelectorAll('[data-nav="' + k + '"]'), function (el) {
         el.classList.toggle('activo', k === clave);
       });
@@ -138,6 +140,9 @@ var App = (function () {
       switch (st.v) {
         case 'clases': irAClases(); break;
         case 'papelera': irAPapelera(); break;
+        case 'rubricas':
+          if (estado.flags && estado.flags.rubricas) irARubricas(); else irAEvaluaciones();
+          break;
         case 'clase':
           if (claseCache[st.id] || claseDe(st.id)) abrirClase(st.id);
           else irAClases(); // ya no existe (borrado / otro curso)
@@ -386,8 +391,13 @@ var App = (function () {
 
   /** En el móvil, Papelera / Copia / Acerca de viven bajo la pestaña "Más". */
   function abrirMas() {
+    var rubricas = (estado && estado.flags && estado.flags.rubricas)
+      ? '<button type="button" class="btn" onclick="App.cerrarModal();App.irARubricas()">' +
+        svgUI('lapiz') + ' Rúbricas</button>'
+      : '';
     abrirModal('Más',
       '<div class="acciones-modal acciones-mas">' +
+      rubricas +
       '<button type="button" class="btn" onclick="App.cerrarModal();App.irAPapelera()">' +
         svgUI('papelera') + ' Papelera</button>' +
       '<button type="button" class="btn" onclick="App.abrirCopia()">' +
@@ -2761,6 +2771,391 @@ var App = (function () {
       .replace(/"/g, '&quot;').replace(/'/g, '&#39;'); // también en atributos con comillas
   }
 
+  // ================= RÚBRICAS (banco) =================
+  // Todo este módulo solo es alcanzable si estado.flags.rubricas es true: la
+  // entrada de la sidebar nace oculta y solo se revela para quien tenga la
+  // bandera. El resto del profesorado no ve nada.
+  var rubricasCache = null;    // lista ligera del banco (null = aún no cargada)
+  var rubricaEnEdicion = null; // borrador del editor {nombre, niveles, indicadores, criterios}
+
+  /** Revela la entrada de Rúbricas si el usuario tiene la bandera. */
+  function activarRubricasSiFlag_() {
+    if (!estado || !estado.flags || !estado.flags.rubricas) return;
+    [].forEach.call(document.querySelectorAll('.solo-rubricas'), function (el) {
+      el.hidden = false;
+    });
+  }
+
+  function irARubricas() {
+    registrarHistorial({ v: 'rubricas' });
+    setTitulo('Rúbricas');
+    mostrar('vista-rubricas');
+    if (rubricasCache) { pintarRubricas(); return; }
+    document.getElementById('lista-rubricas').innerHTML = spinner();
+    llamar('listarRubricas', [], function (lista) {
+      rubricasCache = lista || []; pintarRubricas();
+    });
+  }
+
+  function pintarRubricas() {
+    var cont = document.getElementById('lista-rubricas');
+    if (!rubricasCache || !rubricasCache.length) {
+      cont.innerHTML = '<div class="vacio">Aún no tienes rúbricas. Crea una y podrás usarla ' +
+        'en las unidades como columna de tipo «rúbrica».</div>';
+      return;
+    }
+    cont.innerHTML = rubricasCache.map(tarjetaRubrica_).join('');
+  }
+
+  function tarjetaRubrica_(r) {
+    var chips = (r.criterios || []).map(function (c) {
+      return '<span class="chip-crit">' + esc(c) + '</span>';
+    }).join('');
+    return '<div class="rubrica-card" data-id="' + r.rubricaId + '">' +
+      '<div class="rc-head">' +
+        '<h3>' + esc(r.nombre) + '</h3>' +
+        '<span class="rc-grip" title="Arrastra para reordenar" ' +
+        'onpointerdown="App.dragRubrica(event)">⠿</span>' +
+      '</div>' +
+      '<div class="rc-meta">' + r.numIndicadores + ' indicador(es) · ' + r.numNiveles + ' niveles</div>' +
+      (chips ? '<div class="rc-crits">' + chips + '</div>' : '') +
+      '<div class="rc-acciones">' +
+        '<button class="btn" onclick="App.editarRubricaUI(\'' + r.rubricaId + '\')">' +
+          svgUI('lapiz') + ' Editar</button>' +
+        '<button class="btn" onclick="App.duplicarRubricaUI(\'' + r.rubricaId + '\')">' +
+          svgUI('duplicar') + ' Duplicar</button>' +
+        '<button class="btn peligro btn-icono" title="Eliminar" ' +
+          'onclick="App.eliminarRubricaUI(\'' + r.rubricaId + '\')">' + svgUI('papelera') + '</button>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function dragRubrica(e) {
+    dragInicio(e, '.rubrica-card', function (ids) {
+      reordenarArray_(rubricasCache, ids, 'rubricaId');
+      llamar('reordenarRubricas', [ids], function () {});
+    });
+  }
+
+  // ---------- escala de niveles ----------
+  /** Reparte n valores de forma uniforme entre 0 y 10 (2 decimales). */
+  function valoresUniformes(n) {
+    if (n <= 1) return [10];
+    var out = [];
+    for (var i = 0; i < n; i++) out.push(Math.round((i / (n - 1)) * 1000) / 100);
+    return out;
+  }
+  function nivelesPorDefecto_() {
+    var etqs = ['Insuficiente', 'Suficiente', 'Bien', 'Excelente'];
+    var vals = valoresUniformes(etqs.length);
+    return etqs.map(function (e, i) { return { etiqueta: e, valor: vals[i] }; });
+  }
+
+  // ---------- importar pegando (ChatGPT / Excel / Sheets / Markdown) ----------
+  /**
+   * Lee una tabla pegada y la convierte en {niveles, indicadores}. La 1ª columna
+   * son los indicadores; la fila de cabecera, las etiquetas de nivel; el resto de
+   * celdas, la descripción de cada indicador en cada nivel. Detecta separador por
+   * tabulador (Excel/Sheets) o por «|» (tablas Markdown/HTML pegadas como texto).
+   */
+  function parsearRubricaPegada(texto) {
+    var lineas = String(texto || '').split(/\r?\n/)
+      .map(function (l) { return l.replace(/\s+$/, ''); })
+      .filter(function (l) { return l.trim().length; });
+    if (!lineas.length) return null;
+    var usaPipe = lineas[0].indexOf('|') >= 0 && lineas[0].indexOf('\t') < 0;
+    function celdas(l) {
+      if (usaPipe) {
+        return l.replace(/^\s*\|/, '').replace(/\|\s*$/, '')
+          .split('|').map(function (c) { return c.trim(); });
+      }
+      return l.split('\t').map(function (c) { return c.trim(); });
+    }
+    // Fuera las filas separadoras de Markdown (---, :--:).
+    var filas = lineas.map(celdas).filter(function (cs) {
+      return !cs.every(function (c) { return c === '' || /^:?-{2,}:?$/.test(c); });
+    });
+    if (filas.length < 2) return null;
+    var cab = filas[0];
+    var etiquetas = cab.slice(1).filter(function (c) { return c !== ''; });
+    if (etiquetas.length < 2) return null;
+    var vals = valoresUniformes(etiquetas.length);
+    var niveles = etiquetas.map(function (et, i) { return { etiqueta: et, valor: vals[i] }; });
+    var indicadores = filas.slice(1).map(function (f) {
+      return { texto: f[0] || '', peso: 1, criterios: [],
+        celdas: f.slice(1, 1 + etiquetas.length) };
+    }).filter(function (ind) { return ind.texto; });
+    if (!indicadores.length) return null;
+    return { niveles: niveles, indicadores: indicadores };
+  }
+
+  function detectarRubricaPegada() {
+    var ta = document.getElementById('rub-pegar-ta');
+    var parsed = parsearRubricaPegada(ta && ta.value);
+    if (!parsed) {
+      return aviso('No he podido leer una tabla. Pega filas con columnas separadas ' +
+        'por tabulador o por «|».');
+    }
+    leerRubCuerpo_();
+    rubricaEnEdicion.niveles = parsed.niveles;
+    rubricaEnEdicion.indicadores = parsed.indicadores;
+    renderRubCuerpo_();
+    avisoOk('Tabla detectada: ' + parsed.indicadores.length + ' indicadores, ' +
+      parsed.niveles.length + ' niveles.');
+  }
+
+  // ---------- crear / editar ----------
+  function nuevaRubrica() {
+    rubricaEnEdicion = {
+      nombre: '', niveles: nivelesPorDefecto_(),
+      indicadores: [{ texto: '', peso: 1, criterios: [], celdas: [] }],
+      criterios: []
+    };
+    abrirModalRubrica_('Nueva rúbrica', 'Crear rúbrica', null);
+  }
+
+  function editarRubricaUI(id) {
+    llamar('obtenerRubrica', [id], function (r) {
+      rubricaEnEdicion = {
+        nombre: r.nombre,
+        niveles: (r.niveles || []).map(function (n) {
+          return { etiqueta: n.etiqueta, valor: n.valor };
+        }),
+        indicadores: (r.indicadores || []).map(function (ind) {
+          return { texto: ind.texto, peso: ind.peso || 1,
+            criterios: ind.criterios || [], celdas: ind.celdas || [] };
+        }),
+        criterios: (r.criterios || []).slice()
+      };
+      abrirModalRubrica_('Editar rúbrica', 'Guardar cambios', id);
+    });
+  }
+
+  function abrirModalRubrica_(titulo, textoAceptar, id) {
+    abrirModal(titulo,
+      '<div class="rub-editor">' +
+        '<label>Nombre de la rúbrica' +
+        '<input id="rub-nombre" type="text" placeholder="Ej.: Exposición oral" value="' +
+          esc(rubricaEnEdicion.nombre) + '"></label>' +
+        '<details class="rub-pegar"><summary>Pegar desde una tabla ' +
+          '(ChatGPT, Excel, Sheets, Markdown)</summary>' +
+          '<textarea id="rub-pegar-ta" rows="5" placeholder="Pega aquí tu rúbrica en tabla…"></textarea>' +
+          '<button type="button" class="btn rub-add" onclick="App.detectarRubricaPegada()">' +
+            'Detectar tabla</button>' +
+          '<p class="ayuda">La primera columna serán los indicadores y la fila de cabecera, ' +
+            'los niveles. Las notas se reparten de 0 a 10; puedes ajustarlas después.</p>' +
+        '</details>' +
+        '<div id="rub-cuerpo"></div>' +
+        '<div id="rub-crits-cont"></div>' +
+      '</div>',
+      textoAceptar,
+      function () { guardarRubrica_(id); },
+      { sinFoco: !!id });
+    renderRubCuerpo_();
+    renderRubCrits_();
+  }
+
+  /** Vuelca los campos del editor (nombre, niveles, indicadores) al borrador. */
+  function leerRubCuerpo_() {
+    var e = rubricaEnEdicion;
+    var nom = document.getElementById('rub-nombre');
+    if (nom) e.nombre = nom.value;
+    var etqs = document.querySelectorAll('#rub-cuerpo .nivel-etq');
+    var vals = document.querySelectorAll('#rub-cuerpo .nivel-val');
+    e.niveles = [].map.call(etqs, function (el, i) {
+      return { etiqueta: el.value, valor: Number(vals[i] && vals[i].value) || 0 };
+    });
+    var txts = document.querySelectorAll('#rub-cuerpo .ind-txt');
+    var pesos = document.querySelectorAll('#rub-cuerpo .ind-peso');
+    e.indicadores = [].map.call(txts, function (el, i) {
+      var prev = e.indicadores[i] || {};
+      return { texto: el.value, peso: Number(pesos[i] && pesos[i].value) || 1,
+        criterios: prev.criterios || [], celdas: prev.celdas || [] };
+    });
+  }
+
+  function renderRubCuerpo_() {
+    var e = rubricaEnEdicion;
+    var niveles = '<div class="campo-crit"><span class="etq">Niveles y su nota (0–10)</span>' +
+      '<div class="niveles-editor">' + e.niveles.map(function (n, i) {
+        return '<div class="nivel-row">' +
+          '<input class="nivel-etq" type="text" placeholder="Nivel" value="' + esc(n.etiqueta) + '">' +
+          '<input class="nivel-val" type="number" step="0.1" min="0" max="10" value="' +
+            esc(n.valor) + '">' +
+          '<button type="button" class="mini-x" title="Quitar nivel" ' +
+            'onclick="App.rubQuitarNivel(' + i + ')">' + svgUI('equis') + '</button>' +
+        '</div>';
+      }).join('') + '</div>' +
+      '<div class="acciones-modal"><button type="button" class="btn rub-add" ' +
+        'onclick="App.rubAnadirNivel()">+ Añadir nivel</button>' +
+      '<button type="button" class="link" onclick="App.rubRepartirNotas()">' +
+        'Repartir notas 0–10</button></div>' +
+      '</div>';
+    var inds = '<div class="campo-crit"><span class="etq">Indicadores</span>' +
+      '<div class="indicadores-editor">' + e.indicadores.map(function (ind, i) {
+        return '<div class="indicador-row">' +
+          '<input class="ind-txt" type="text" placeholder="Indicador a evaluar" value="' +
+            esc(ind.texto) + '">' +
+          '<input class="ind-peso" type="number" step="0.5" min="0.5" title="Peso" value="' +
+            esc(ind.peso || 1) + '">' +
+          '<button type="button" class="mini-x" title="Quitar indicador" ' +
+            'onclick="App.rubQuitarIndicador(' + i + ')">' + svgUI('equis') + '</button>' +
+        '</div>';
+      }).join('') + '</div>' +
+      '<button type="button" class="btn rub-add" onclick="App.rubAnadirIndicador()">' +
+        '+ Añadir indicador</button>' +
+      '</div>';
+    document.getElementById('rub-cuerpo').innerHTML = niveles + inds;
+  }
+
+  function rubAnadirNivel() {
+    leerRubCuerpo_(); rubricaEnEdicion.niveles.push({ etiqueta: '', valor: 0 }); renderRubCuerpo_();
+  }
+  function rubQuitarNivel(i) {
+    leerRubCuerpo_();
+    rubricaEnEdicion.niveles.splice(i, 1);
+    rubricaEnEdicion.indicadores.forEach(function (ind) {
+      if (ind.celdas) ind.celdas.splice(i, 1);
+    });
+    renderRubCuerpo_();
+  }
+  function rubRepartirNotas() {
+    leerRubCuerpo_();
+    var vals = valoresUniformes(rubricaEnEdicion.niveles.length);
+    rubricaEnEdicion.niveles.forEach(function (n, i) { n.valor = vals[i]; });
+    renderRubCuerpo_();
+  }
+  function rubAnadirIndicador() {
+    leerRubCuerpo_();
+    rubricaEnEdicion.indicadores.push({ texto: '', peso: 1, criterios: [], celdas: [] });
+    renderRubCuerpo_();
+  }
+  function rubQuitarIndicador(i) {
+    leerRubCuerpo_(); rubricaEnEdicion.indicadores.splice(i, 1); renderRubCuerpo_();
+  }
+
+  // ---------- asociar criterios (rúbrica completa) ----------
+  function renderRubCrits_() {
+    var optC = '<option value="">— Curso —</option>' + cursosDisponibles().map(function (c) {
+      return '<option value="' + esc(c) + '">' + esc(c) + '</option>';
+    }).join('');
+    document.getElementById('rub-crits-cont').innerHTML =
+      '<div class="campo-crit"><span class="etq">Criterios de evaluación (opcional)</span>' +
+      '<p class="ayuda">Asócialos si quieres que, al usar la rúbrica en una unidad de esa ' +
+        'área, se rellenen solos los criterios de la columna.</p>' +
+      '<div class="rub-crit-sels">' +
+        '<select id="rub-crit-curso" onchange="App.rubCursoCambiado()">' + optC + '</select>' +
+        '<select id="rub-crit-area" onchange="App.rubAreaCambiada()">' +
+          '<option value="">— Área —</option></select>' +
+      '</div>' +
+      '<div id="rub-crit-lista" class="lista-crit"></div>' +
+      '<div id="rub-crit-sel" class="rc-crits"></div>' +
+      '</div>';
+    renderRubCritSeleccionados_();
+  }
+  function rubCursoCambiado() {
+    var curso = document.getElementById('rub-crit-curso').value;
+    document.getElementById('rub-crit-area').innerHTML = opcionesAreas(curso);
+    document.getElementById('rub-crit-lista').innerHTML = '';
+  }
+  function rubAreaCambiada() {
+    var curso = document.getElementById('rub-crit-curso').value;
+    var area = document.getElementById('rub-crit-area').value;
+    var cont = document.getElementById('rub-crit-lista');
+    if (!curso || !area) { cont.innerHTML = ''; return; }
+    cont.innerHTML = spinner();
+    llamar('getCriterios', [curso, area], function (crits) {
+      if (!crits || !crits.length) { cont.innerHTML = '<i>No hay criterios para esta área.</i>'; return; }
+      cont.innerHTML = crits.map(function (c) {
+        var marcado = rubricaEnEdicion.criterios.indexOf(c.codigo) >= 0;
+        return '<label class="crit" title="' + esc(c.codigo + ' ' + (c.descripcion || c.texto)) + '">' +
+          '<input type="checkbox" value="' + esc(c.codigo) + '"' + (marcado ? ' checked' : '') +
+          ' onchange="App.rubCriterioCambiado(this)">' +
+          '<span class="crit-txt"><b>' + esc(c.codigo) + '</b> ' + esc(c.texto) + '</span></label>';
+      }).join('');
+    });
+  }
+  function rubCriterioCambiado(input) {
+    var arr = rubricaEnEdicion.criterios, i = arr.indexOf(input.value);
+    if (input.checked && i < 0) arr.push(input.value);
+    else if (!input.checked && i >= 0) arr.splice(i, 1);
+    renderRubCritSeleccionados_();
+  }
+  function renderRubCritSeleccionados_() {
+    var cont = document.getElementById('rub-crit-sel');
+    if (!cont) return;
+    cont.innerHTML = rubricaEnEdicion.criterios.map(function (c) {
+      return '<span class="chip-crit">' + esc(c) +
+        ' <button type="button" class="chip-x" title="Quitar" ' +
+        'onclick="App.rubQuitarCrit(\'' + esc(c) + '\')">×</button></span>';
+    }).join('');
+  }
+  function rubQuitarCrit(cod) {
+    var arr = rubricaEnEdicion.criterios, i = arr.indexOf(cod);
+    if (i >= 0) arr.splice(i, 1);
+    var box = document.querySelector('#rub-crit-lista input[value="' + cod + '"]');
+    if (box) box.checked = false;
+    renderRubCritSeleccionados_();
+  }
+
+  // ---------- guardar / duplicar / eliminar ----------
+  function guardarRubrica_(id) {
+    leerRubCuerpo_();
+    var e = rubricaEnEdicion;
+    var nombre = (e.nombre || '').trim();
+    if (!nombre) return aviso('Pon un nombre a la rúbrica.');
+    var indicadores = e.indicadores.filter(function (ind) { return (ind.texto || '').trim(); });
+    if (!indicadores.length) return aviso('Añade al menos un indicador.');
+    var niveles = e.niveles.filter(function (n) { return (n.etiqueta || '').trim(); });
+    if (niveles.length < 2) return aviso('La escala necesita al menos dos niveles.');
+    // Alinea las celdas de cada indicador con el nº de niveles (evita descuadres
+    // si se añadieron/quitaron niveles tras pegar una tabla).
+    indicadores.forEach(function (ind) { ind.celdas = (ind.celdas || []).slice(0, niveles.length); });
+    var payload = { nombre: nombre, indicadores: indicadores, niveles: niveles,
+      criterios: e.criterios };
+    botonModalCargando('Guardando…');
+    if (id) {
+      llamar('editarRubrica', [id, payload], function (r) {
+        actualizarRubricaCache_(r); cerrarModal(); pintarRubricas(); avisoOk('Rúbrica guardada.');
+      });
+    } else {
+      llamar('crearRubrica', [payload], function (r) {
+        if (!rubricasCache) rubricasCache = [];
+        rubricasCache.push(ligera_(r)); cerrarModal(); pintarRubricas(); avisoOk('Rúbrica creada.');
+      });
+    }
+  }
+  /** Convierte una rúbrica completa a la forma ligera de la lista del banco. */
+  function ligera_(r) {
+    return { rubricaId: r.rubricaId, nombre: r.nombre,
+      numIndicadores: (r.indicadores || []).length, numNiveles: (r.niveles || []).length,
+      criterios: r.criterios || [], creado: r.creado, orden: r.orden };
+  }
+  function actualizarRubricaCache_(r) {
+    if (!rubricasCache) { rubricasCache = [ligera_(r)]; return; }
+    for (var i = 0; i < rubricasCache.length; i++) {
+      if (rubricasCache[i].rubricaId === r.rubricaId) { rubricasCache[i] = ligera_(r); return; }
+    }
+    rubricasCache.push(ligera_(r));
+  }
+  function duplicarRubricaUI(id) {
+    llamar('duplicarRubrica', [id], function (r) {
+      if (!rubricasCache) rubricasCache = [];
+      rubricasCache.push(ligera_(r)); pintarRubricas(); avisoOk('Rúbrica duplicada.');
+    });
+  }
+  function eliminarRubricaUI(id) {
+    var r = (rubricasCache || []).filter(function (x) { return x.rubricaId === id; })[0];
+    confirmar('Eliminar rúbrica',
+      'La rúbrica «' + ((r && r.nombre) || '') + '» irá a la papelera. ¿Continuar?',
+      'Eliminar', function () {
+        llamar('eliminarRubrica', [id], function () {
+          rubricasCache = (rubricasCache || []).filter(function (x) { return x.rubricaId !== id; });
+          pintarRubricas(); avisoOk('Rúbrica movida a la papelera.');
+        });
+      });
+  }
+
   return {
     iniciar: iniciar,
     irAEvaluaciones: irAEvaluaciones, irAClases: irAClases,
@@ -2793,6 +3188,15 @@ var App = (function () {
     abrirClase: abrirClase, editarClaseUI: editarClaseUI, editarAlumnos: editarAlumnos,
     eliminarClaseActual: eliminarClaseActual, promocionarGrupoUI: promocionarGrupoUI,
     cambiarCurso: cambiarCurso,
+    irARubricas: irARubricas, nuevaRubrica: nuevaRubrica,
+    editarRubricaUI: editarRubricaUI, duplicarRubricaUI: duplicarRubricaUI,
+    eliminarRubricaUI: eliminarRubricaUI, dragRubrica: dragRubrica,
+    detectarRubricaPegada: detectarRubricaPegada,
+    rubAnadirNivel: rubAnadirNivel, rubQuitarNivel: rubQuitarNivel,
+    rubRepartirNotas: rubRepartirNotas,
+    rubAnadirIndicador: rubAnadirIndicador, rubQuitarIndicador: rubQuitarIndicador,
+    rubCursoCambiado: rubCursoCambiado, rubAreaCambiada: rubAreaCambiada,
+    rubCriterioCambiado: rubCriterioCambiado, rubQuitarCrit: rubQuitarCrit,
     cerrarModal: cerrarModal, cerrarModalFuera: cerrarModalFuera
   };
 })();

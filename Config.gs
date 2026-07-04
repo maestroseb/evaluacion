@@ -45,7 +45,20 @@ var CONFIG = {
   // v11: columna "desglose" en _actividades: con varios criterios, la actividad
   //      puede llevar nota independiente por criterio; el blob de _notas guarda
   //      entonces un objeto {criterio: valor} en vez de un número.
-  ESQUEMA_VERSION: 11
+  // v12: pestaña "_rubricas": banco de rúbricas del profe (indicadores, niveles
+  //      y, opcionalmente, criterios de evaluación asociados). Migración no
+  //      destructiva: solo añade la pestaña; ningún dato existente se toca. La
+  //      superficie de UI va oculta tras la bandera FLAGS.rubricas.
+  ESQUEMA_VERSION: 12,
+
+  // Banderas de funcionalidad. Cada bandera es la lista de correos que la ven
+  // (o '*' para todo el profesorado). Sirve para lanzar módulos "ocultos": se
+  // despliega el código pero solo lo ve quien esté en la lista, hasta que se
+  // decida abrirlo a todos cambiando su valor por '*' (sin re-desplegar nada).
+  FLAGS: {
+    // Módulo de rúbricas: en pruebas. Para abrirlo a todo el mundo: rubricas: '*'
+    rubricas: ['sgirjim495@g.educaand.es']
+  }
 };
 
 // Nombre del cuaderno personal que se crea en el Drive de cada profe. Deriva
@@ -64,5 +77,6 @@ var HOJAS = {
   UNIDADES: '_unidades',  // unidades de cada evaluación
   ACTIVIDADES: '_actividades', // actividades de cada unidad y sus criterios
   NOTAS: '_notas',        // notas por unidad: un JSON {act:{alumno:valor}} por fila
-  PAPELERA: '_papelera'   // elementos borrados, restaurables un tiempo
+  PAPELERA: '_papelera',  // elementos borrados, restaurables un tiempo
+  RUBRICAS: '_rubricas'   // banco de rúbricas del profe (indicadores + niveles)
 };

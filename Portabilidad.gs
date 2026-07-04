@@ -31,6 +31,8 @@ function getExportacion() {
     evaluaciones: filas(HOJAS.EVALUACIONES),
     unidades: filas(HOJAS.UNIDADES),
     actividades: filas(HOJAS.ACTIVIDADES),
+    // Rúbricas: contenido pedagógico, sin datos personales → van en claro.
+    rubricas: filas(HOJAS.RUBRICAS),
     // Observaciones en claro (como los nombres): al importar se re-cifran.
     notas: filas(HOJAS.NOTAS).map(function (r) { return [r[0], Notas.jsonEnClaro_(r[1])]; })
   };
@@ -67,6 +69,9 @@ function importarDatos(datos) {
   escribir(HOJAS.EVALUACIONES, datos.evaluaciones || []);
   escribir(HOJAS.UNIDADES, datos.unidades || []);
   escribir(HOJAS.ACTIVIDADES, datos.actividades || []);
+  // Solo se tocan las rúbricas si la copia las trae: importar una copia antigua
+  // (anterior a v12) NO borra el banco de rúbricas actual.
+  if (datos.rubricas) escribir(HOJAS.RUBRICAS, datos.rubricas);
   var notasRows = (datos.notas || []).map(function (r) {
     var items = {};
     try { items = JSON.parse(r[1] || '{}') || {}; } catch (e) {}

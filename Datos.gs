@@ -19,7 +19,11 @@ var ESQUEMA = {
   _unidades: ['unidadId', 'evalId', 'nombre', 'orden'],
   _actividades: ['actividadId', 'unidadId', 'nombre', 'criterios', 'numItems', 'orden', 'tipo', 'desglose'],
   _notas: ['unidadId', 'items'],
-  _papelera: ['papeleraId', 'tipo', 'etiqueta', 'fecha', 'contenido']
+  _papelera: ['papeleraId', 'tipo', 'etiqueta', 'fecha', 'contenido'],
+  // Banco de rúbricas del profe (v12). 'indicadores' y 'niveles' son JSON; en
+  // cada indicador se reserva un campo 'criterios' para la futura asociación por
+  // indicador. 'criterios' (columna) = códigos asociados a la rúbrica completa.
+  _rubricas: ['rubricaId', 'nombre', 'indicadores', 'niveles', 'criterios', 'creado', 'orden']
 };
 
 /**
