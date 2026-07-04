@@ -2842,17 +2842,18 @@ var App = (function () {
   }
 
   // ---------- escala de niveles ----------
-  /** Reparte n valores de forma uniforme entre 0 y 10 (2 decimales). */
-  function valoresUniformes(n) {
-    if (n <= 1) return [10];
+  // La "nota" del nivel es su PUNTUACIÓN tal cual (la que trae la rúbrica, p. ej.
+  // 4, 3, 2, 1). No se reescala a 0–10 al crear: esa conversión se hace al
+  // evaluar en el cuaderno, según la puntuación global que sostenga la actividad.
+  /** Puntos por defecto ascendentes (1..n): mínimo abajo, máximo arriba. */
+  function puntosPorDefecto_(n) {
     var out = [];
-    for (var i = 0; i < n; i++) out.push(Math.round((i / (n - 1)) * 1000) / 100);
+    for (var i = 0; i < n; i++) out.push(i + 1);
     return out;
   }
   function nivelesPorDefecto_() {
     var etqs = ['Insuficiente', 'Suficiente', 'Bien', 'Excelente'];
-    var vals = valoresUniformes(etqs.length);
-    return etqs.map(function (e, i) { return { etiqueta: e, valor: vals[i] }; });
+    return etqs.map(function (e, i) { return { etiqueta: e, valor: i + 1 }; });
   }
 
   // ---------- importar pegando (portado de maestroseb/rubricas: smartParse) ----------
@@ -2942,29 +2943,26 @@ var App = (function () {
     var hay = clavePrimera || conPuntos || conNivel;
     return { hasHeader: hay, headerRow: hay ? first : null, dataRows: hay ? rows.slice(1) : rows };
   }
-  /** Extrae nombre y puntos de «Excelente (4)», «4 – Excelente», «1. Insuf» o solo nombre. */
+  /**
+   * Extrae nombre y puntos de la cabecera de un nivel. Admite «Excelente (4)»,
+   * «Excelente (4 pts)», «Excelente (4 puntos)», «4 – Excelente» y «1. Insuf».
+   */
   function parseLevelHeader_(cell) {
-    var mp = String(cell).match(/^(.+?)\s*\((\d+)\)\s*$/);
-    if (mp) return { name: mp[1].trim(), pts: parseInt(mp[2], 10) };
-    var mx = String(cell).match(/^(\d+)\s*[–—\-.]\s*(.+)$/);
-    if (mx) return { name: mx[2].trim(), pts: parseInt(mx[1], 10) };
-    return { name: String(cell).trim(), pts: null };
+    var s = String(cell).trim();
+    var mp = s.match(/^(.+?)\s*\(\s*(\d+(?:[.,]\d+)?)\s*(?:pts?|puntos?|points?|p)?\s*\)\s*$/i);
+    if (mp) return { name: mp[1].trim(), pts: parseFloat(mp[2].replace(',', '.')) };
+    var mx = s.match(/^(\d+(?:[.,]\d+)?)\s*[–—\-.]\s*(.+)$/);
+    if (mx) return { name: mx[2].trim(), pts: parseFloat(mx[1].replace(',', '.')) };
+    return { name: s, pts: null };
   }
   /**
-   * Notas de nivel para EvaluAnda (0–10). Si la cabecera trae puntos, se respetan
-   * escalados a 0–10 (máximo → 10); los huecos se interpolan uniformes. Sin
-   * puntos, reparto uniforme.
+   * Puntos de cada nivel TAL CUAL vienen en la rúbrica (no se reescala aquí: la
+   * conversión a nota /10 se hace al evaluar en el cuaderno). Los niveles sin
+   * puntos se rellenan con enteros descendentes; sin ningún punto, 1..n.
    */
-  function valoresNiveles_(puntos, hayPuntos, n) {
-    if (!hayPuntos) return valoresUniformes(n);
-    var maxP = 0;
-    puntos.forEach(function (p) { if (p != null && p > maxP) maxP = p; });
-    if (!(maxP > 0)) return valoresUniformes(n);
-    return puntos.map(function (p, i) {
-      return (p != null)
-        ? Math.round((p / maxP) * 1000) / 100
-        : Math.round((i / (n - 1)) * 1000) / 100;
-    });
+  function puntosNiveles_(puntos, hayPuntos, n) {
+    if (!hayPuntos) return puntosPorDefecto_(n);
+    return puntos.map(function (p, i) { return (p != null) ? p : (n - i); });
   }
   /** Tabla pegada → {niveles, indicadores}. null si no hay datos válidos. */
   function parsearRubricaPegada(texto) {
@@ -2986,7 +2984,7 @@ var App = (function () {
         puntos.push(pl.pts); if (pl.pts != null) hayPuntos = true;
       } else { etiquetas.push('Nivel ' + (i + 1)); puntos.push(null); }
     }
-    var vals = valoresNiveles_(puntos, hayPuntos, numLevels);
+    var vals = puntosNiveles_(puntos, hayPuntos, numLevels);
     var niveles = etiquetas.map(function (et, i2) { return { etiqueta: et, valor: vals[i2] }; });
     var indicadores = dh.dataRows.map(function (r) {
       var celdas = r.slice(1, 1 + numLevels);
@@ -3064,8 +3062,9 @@ var App = (function () {
         '<label>Pegar rúbrica (ChatGPT, Excel, Sheets, Markdown, CSV)' +
           '<textarea id="rub-pegar-ta" rows="4" placeholder="Pega aquí una tabla y se ' +
             'convierte sola abajo…"></textarea></label>' +
-        '<p class="ayuda">1ª columna → indicadores; cabecera → niveles. «Excelente (4)» ' +
-          'o «4 – Excelente» fija la nota (escalada a 0–10); si no, se reparte 0–10.</p>' +
+        '<p class="ayuda">1ª columna → indicadores; cabecera → niveles. Los puntos de cada ' +
+          'nivel se toman de la rúbrica («Excelente (4 pts)» o «4 – Excelente»); la nota /10 ' +
+          'se calcula al evaluar en el cuaderno.</p>' +
         '<div id="rub-grid"></div>' +
         '<div id="rub-crits-cont"></div>' +
       '</div>',
@@ -3142,9 +3141,9 @@ var App = (function () {
         return '<th class="rg-nivel">' +
           '<input class="nivel-etq" data-j="' + j + '" type="text" placeholder="Nivel" value="' +
             esc(n.etiqueta) + '">' +
-          '<div class="rg-sub">' +
-            '<input class="nivel-val" data-j="' + j + '" type="number" step="0.1" min="0" ' +
-              'max="10" title="Nota del nivel" value="' + esc(n.valor) + '">' +
+          '<div class="rg-sub"><label class="rg-peso">pts ' +
+            '<input class="nivel-val" data-j="' + j + '" type="number" step="1" min="0" ' +
+              'title="Puntos del nivel" value="' + esc(n.valor) + '"></label>' +
             '<button type="button" class="mini-x" title="Quitar nivel" ' +
               'onclick="App.rubQuitarNivel(' + j + ')">' + svgUI('equis') + '</button>' +
           '</div></th>';
@@ -3172,14 +3171,15 @@ var App = (function () {
       '<div class="rg-scroll"><table class="rubrica-grid"><thead>' + cab + '</thead>' +
       '<tbody>' + cuerpo + '</tbody></table></div>' +
       '<div class="acciones-modal"><button type="button" class="btn rub-add" ' +
-        'onclick="App.rubAnadirIndicador()">+ Añadir indicador</button>' +
-      '<button type="button" class="link" onclick="App.rubRepartirNotas()">' +
-        'Repartir notas 0–10</button></div>';
+        'onclick="App.rubAnadirIndicador()">+ Añadir indicador</button></div>';
   }
 
   function rubAnadirNivel() {
     leerRubGrid_();
-    rubricaEnEdicion.niveles.push({ etiqueta: '', valor: 0 });
+    // El nuevo nivel toma el punto siguiente al mayor existente.
+    var mx = 0;
+    rubricaEnEdicion.niveles.forEach(function (n) { if ((Number(n.valor) || 0) > mx) mx = Number(n.valor); });
+    rubricaEnEdicion.niveles.push({ etiqueta: '', valor: mx + 1 });
     rubricaEnEdicion.indicadores.forEach(function (ind) { ind.celdas.push(''); });
     renderRubGrid_();
   }
@@ -3187,12 +3187,6 @@ var App = (function () {
     leerRubGrid_();
     rubricaEnEdicion.niveles.splice(j, 1);
     rubricaEnEdicion.indicadores.forEach(function (ind) { ind.celdas.splice(j, 1); });
-    renderRubGrid_();
-  }
-  function rubRepartirNotas() {
-    leerRubGrid_();
-    var vals = valoresUniformes(rubricaEnEdicion.niveles.length);
-    rubricaEnEdicion.niveles.forEach(function (n, i) { n.valor = vals[i]; });
     renderRubGrid_();
   }
   function rubAnadirIndicador() {
@@ -3365,7 +3359,6 @@ var App = (function () {
     detectarRubricaPegada: detectarRubricaPegada,
     empezarRubricaEnBlanco: empezarRubricaEnBlanco, limpiarRubrica: limpiarRubrica,
     rubAnadirNivel: rubAnadirNivel, rubQuitarNivel: rubQuitarNivel,
-    rubRepartirNotas: rubRepartirNotas,
     rubAnadirIndicador: rubAnadirIndicador, rubQuitarIndicador: rubQuitarIndicador,
     rubCursoCambiado: rubCursoCambiado, rubAreaCambiada: rubAreaCambiada,
     rubCriterioCambiado: rubCriterioCambiado, rubQuitarCrit: rubQuitarCrit,
