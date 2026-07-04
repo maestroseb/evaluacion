@@ -1707,31 +1707,41 @@ var App = (function () {
     pintarRejilla();
   }
 
+  /** Asa de arrastre (⠿): el ÚNICO sitio desde el que se reordena la columna. */
+  function gripAct_(actId) {
+    return '<span class="grip-act" title="Arrastra para reordenar" ' +
+      'onpointerdown="App.actDown(event,\'' + actId + '\')" onclick="event.stopPropagation()">⠿</span>';
+  }
+  /** Botón de editar la actividad (no arrastra ni expande). */
+  function editAct_(actId) {
+    return '<button class="edit-act" title="Editar actividad" onpointerdown="event.stopPropagation()" ' +
+      'onclick="event.stopPropagation();App.editarActividadUI(\'' + actId + '\')">' + svgUI('lapiz') + '</button>';
+  }
+
   /** Cabecera de una actividad: 1 columna (normal/contraída) o N (expandida). */
   function cabeceraAct_(a) {
     if (esRubExp_(a)) {
-      var def = rubDef_(a);
+      var def = rubDef_(a), n = (def.indicadores || []).length;
+      // Rama expandida: cada indicador cuelga de la rúbrica (toca para contraer).
       return (def.indicadores || []).map(function (ind, k) {
-        var ini = (k === 0);
-        return '<th class="act act-sub' + (ini ? ' act-sub-ini' : '') + '" data-act="' + a.actividadId +
-          '" data-ind="' + k + '" title="' + esc(a.nombre + ' · ' + ind.texto) + '" ' +
-          'onpointerdown="App.actDown(event,\'' + a.actividadId + '\')">' +
-          (ini ? '<button class="edit-act" title="Contraer" onpointerdown="event.stopPropagation()" ' +
-            'onclick="App.toggleRubExpand(event,\'' + a.actividadId + '\')">' + svgUI('contraer') + '</button>' : '') +
-          '<span class="act-nom">' + esc(ind.texto) + '</span>' +
-          '<small>' + (ini ? esc(a.nombre) : (pesoEntero_(ind.peso) + '%')) + '</small></th>';
+        var ini = (k === 0), fin = (k === n - 1);
+        return '<th class="act act-sub' + (ini ? ' act-sub-ini' : '') + (fin ? ' act-sub-fin' : '') +
+          '" data-act="' + a.actividadId + '" data-ind="' + k + '" ' +
+          'title="' + esc(a.nombre + ' · ' + ind.texto) + '" ' +
+          'onclick="App.toggleRubExpand(event,\'' + a.actividadId + '\')">' +
+          (ini ? gripAct_(a.actividadId) + editAct_(a.actividadId) : '') +
+          '<span class="rub-padre">' + (ini ? esc(a.nombre) : '') + '</span>' +
+          '<span class="act-nom rub-rama">' + esc(ind.texto) + '</span>' +
+          '<small>' + pesoEntero_(ind.peso) + '%</small></th>';
       }).join('');
     }
-    var exp = (tipoDe(a) === 'rubrica' && rubDef_(a))
-      ? '<button class="edit-act" title="Expandir rúbrica" onpointerdown="event.stopPropagation()" ' +
-        'onclick="App.toggleRubExpand(event,\'' + a.actividadId + '\')">' + svgUI('expandir') + '</button>'
-      : '';
-    return '<th class="act" data-act="' + a.actividadId + '" title="' + esc(a.criterios.join(', ')) + '" ' +
-      'onpointerdown="App.actDown(event,\'' + a.actividadId + '\')">' +
-      '<span class="grip-act" title="Arrastra para reordenar">⠿</span>' +
-      '<button class="edit-act" title="Editar actividad" onpointerdown="event.stopPropagation()" ' +
-      'onclick="App.editarActividadUI(\'' + a.actividadId + '\')">' + svgUI('lapiz') + '</button>' +
-      exp +
+    var esRub = (tipoDe(a) === 'rubrica' && rubDef_(a));
+    // La cabecera de rúbrica se toca para expandir; el resto no lleva onclick.
+    return '<th class="act' + (esRub ? ' act-rub-col' : '') + '" data-act="' + a.actividadId + '" ' +
+      'title="' + esc(esRub ? (a.nombre + ' · toca para desplegar') : a.criterios.join(', ')) + '" ' +
+      (esRub ? 'onclick="App.toggleRubExpand(event,\'' + a.actividadId + '\')" ' : '') + '>' +
+      gripAct_(a.actividadId) + editAct_(a.actividadId) +
+      (esRub ? '<span class="rub-exp-ico">' + svgUI('expandir') + '</span>' : '') +
       '<span class="act-nom">' + esc(a.nombre) + '</span>' +
       '<small>' + esc(metaColumna(a)) + '</small></th>';
   }
@@ -1851,8 +1861,10 @@ var App = (function () {
   function actDown(e, actId) {
     if (e.button != null && e.button !== 0) return;
     e.preventDefault(); e.stopPropagation();
-    arrastreAct = { id: actId, th: e.currentTarget, moved: false, targetId: null, despues: false };
-    e.currentTarget.classList.add('arrastrando-col');
+    // El arrastre nace en el asa (⠿); localizamos su cabecera para las clases.
+    var th = (e.currentTarget.closest && e.currentTarget.closest('th.act')) || e.currentTarget;
+    arrastreAct = { id: actId, th: th, moved: false, targetId: null, despues: false };
+    th.classList.add('arrastrando-col');
     document.body.classList.add('reordenando');
     document.addEventListener('pointermove', actMove);
     document.addEventListener('pointerup', actUp, true);
