@@ -665,6 +665,10 @@
   .rubrica-ver td { white-space: pre-wrap; overflow-wrap: anywhere; color: var(--texto); }
   .rubrica-ver th { white-space: normal; }
   .ver-pts { color: var(--texto-3); font-weight: 400; }
+  /* Criterio por indicador al crear una actividad de rúbrica. */
+  .rub-ind-fila { display: flex; align-items: center; gap: 10px; margin: 6px 0; }
+  .rub-ind-nom { flex: 1 1 auto; min-width: 0; font-size: 13px; font-weight: 600; color: var(--texto-2); }
+  .rub-ind-fila select { flex: 0 0 auto; max-width: 55%; }
 
   /* ---------- Rejilla ---------- */
   .rejilla-cont { overflow: auto; background: var(--surface);
@@ -729,17 +733,21 @@
   table.rejilla td.celda-cont { white-space: nowrap; padding: 4px 6px; }
   table.rejilla td.celda-escala { cursor: pointer; min-width: 46px; user-select: none;
     font-weight: 600; font-size: 11px; letter-spacing: .02em; color: var(--texto-3); }
+  /* Rúbrica: celda contraída (nota global) y celdas de indicador (expandida). */
+  table.rejilla td.celda-rubrica { cursor: pointer; user-select: none; text-align: center;
+    font-weight: 600; color: var(--acento); }
+  table.rejilla td.celda-rubrica.vacia .svg-ico { width: 14px; height: 14px; vertical-align: -2px;
+    color: var(--texto-3); }
+  table.rejilla td.celda-rub-ind { cursor: pointer; min-width: 46px; user-select: none;
+    font-weight: 600; font-size: 11px; letter-spacing: .02em; color: var(--texto-3); }
+  table.rejilla th.act.act-sub { background: var(--acento-suave); }
+  table.rejilla th.act.act-sub small { color: var(--acento-fuerte); }
   /* Observación (texto libre): extracto con puntos suspensivos; tocar para editar. */
   table.rejilla td.celda-texto { cursor: pointer; user-select: none; max-width: 140px;
     overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
     text-align: left; font-size: 12px; padding: 4px 8px; }
   table.rejilla td.celda-texto.vacia { text-align: center; color: var(--texto-3); }
   table.rejilla td.celda-texto.vacia .svg-ico { width: 13px; height: 13px; vertical-align: -2px; }
-  /* Celda de tipo rúbrica: se toca para abrir el evaluador. */
-  table.rejilla td.celda-rubrica { cursor: pointer; user-select: none; text-align: center;
-    color: var(--acento); }
-  table.rejilla td.celda-rubrica.vacia { color: var(--texto-3); }
-  table.rejilla td.celda-rubrica .svg-ico { width: 14px; height: 14px; vertical-align: -2px; }
   /* Nota por criterio (desglose): extracto "7 | 5"; tocar para editar. */
   table.rejilla td.celda-desglose { cursor: pointer; user-select: none; min-width: 56px;
     font-size: 12px; font-weight: 600; color: var(--texto-2); letter-spacing: .01em; }

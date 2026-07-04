@@ -52,7 +52,12 @@ var CONFIG = {
   // v13: columna "rubricaId" en _actividades: una columna de tipo "rubrica" se
   //      engancha a una rúbrica del banco. El blob de _notas guarda, para ese
   //      tipo, el nivel elegido por indicador; la nota /10 se calcula al vuelo.
-  ESQUEMA_VERSION: 13,
+  // v14: columna "rubMap" en _actividades: mapa criterio↔indicador de una
+  //      columna rúbrica. Vacío = criterios globales (toda la rúbrica → los
+  //      criterios de la columna); con contenido = un criterio por indicador
+  //      (JSON: un código por posición de indicador). Así una misma rúbrica se
+  //      asocia a criterios distintos según el área de la clase.
+  ESQUEMA_VERSION: 14,
 
   // Banderas de funcionalidad. Cada bandera es la lista de correos que la ven
   // (o '*' para todo el profesorado). Sirve para lanzar módulos "ocultos": se
