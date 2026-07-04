@@ -190,10 +190,10 @@ var Rubricas = (function () {
     };
   }
 
-  /** Peso positivo; por defecto 1 (un indicador nunca pondera 0 ni negativo). */
+  /** Peso del indicador (porcentaje 0–100). Se admite 0; los negativos → 0. */
   function pesoValido_(v) {
     var p = Number(v);
-    return (isFinite(p) && p > 0) ? p : 1;
+    return (isFinite(p) && p >= 0) ? p : 0;
   }
 
   /** Lista de códigos de criterio: strings recortados, sin vacíos ni duplicados. */

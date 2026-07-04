@@ -2782,6 +2782,7 @@ var App = (function () {
   var rubricaEnEdicion = null; // borrador del editor {nombre, niveles, indicadores, criterios}
   var rubPegarTimer = null;    // debounce del textarea de pegar (convierte al vuelo)
   var rubCritsDisponibles = []; // criterios del curso+área elegido en el editor
+  var rubPesosManual = {};      // índices con peso fijado a mano (para rebalancear el resto)
 
   /** Revela la entrada de Rúbricas si el usuario tiene la bandera. */
   function activarRubricasSiFlag_() {
@@ -3021,6 +3022,7 @@ var App = (function () {
     }
     rubricaEnEdicion.niveles = parsed.niveles;
     rubricaEnEdicion.indicadores = parsed.indicadores;
+    equalizarPesos_(); // pesos iniciales a partes iguales (suman 100%)
     renderRubGrid_();
     if (silencioso !== true) {
       avisoOk('Rúbrica cargada: ' + parsed.indicadores.length + ' indicadores, ' +
@@ -3093,7 +3095,7 @@ var App = (function () {
   function empezarRubricaEnBlanco() {
     var e = rubricaEnEdicion;
     if (!e.niveles.length) e.niveles = nivelesPorDefecto_();
-    e.indicadores = [{ texto: '', peso: 1, criterios: [],
+    e.indicadores = [{ texto: '', peso: 100, criterios: [],
       celdas: e.niveles.map(function () { return ''; }) }];
     renderRubGrid_();
   }
@@ -3130,7 +3132,8 @@ var App = (function () {
       // Criterio por fila: si hay selector, su valor; si no, se conserva el previo.
       var critSel = document.querySelector('#rub-grid .ind-crit[data-i="' + i + '"]');
       var criterios = critSel ? (critSel.value ? [critSel.value] : []) : (prev.criterios || []);
-      return { texto: (el.textContent || '').trim(), peso: Number(peso && peso.value) || 1,
+      return { texto: (el.textContent || '').trim(),
+        peso: peso ? (Number(peso.value) || 0) : (prev.peso || 0),
         criterios: criterios, celdas: celdas };
     });
     e.niveles = niveles;
@@ -3161,6 +3164,7 @@ var App = (function () {
       '<th class="rg-add"><button type="button" class="mini-x" title="Añadir nivel" ' +
         'onclick="App.rubAnadirNivel()">+</button></th></tr>';
     var porIndicador = (e.criteriosModo === 'indicador' && rubCritsDisponibles.length);
+    rubPesosManual = {}; // rejilla reconstruida: todos los pesos vuelven a "auto"
     var cuerpo = e.indicadores.map(function (ind, i) {
       var celdas = e.niveles.map(function (n, j) {
         return '<td class="rg-celda"><div class="celda" contenteditable="true" data-i="' + i +
@@ -3172,13 +3176,19 @@ var App = (function () {
         : '';
       return '<tr><th class="rg-ind">' +
         '<div class="ind-txt" contenteditable="true" data-i="' + i + '">' + esc(ind.texto) + '</div>' +
-        '<div class="rg-sub"><label class="rg-peso">peso ' +
-          '<input class="ind-peso" data-i="' + i + '" type="number" step="0.5" min="0.5" value="' +
-            esc(ind.peso || 1) + '"></label>' +
-          '<button type="button" class="mini-x" title="Quitar indicador" ' +
-            'onclick="App.rubQuitarIndicador(' + i + ')">' + svgUI('equis') + '</button>' +
+        '<div class="rg-sub">' +
+          '<span class="ind-peso-wrap"><input class="ind-peso" data-i="' + i + '" type="number" ' +
+            'min="0" max="100" value="' + esc(pesoEntero_(ind.peso)) + '" ' +
+            'onchange="App.rubPesoCambiado(this)"><span class="ind-peso-pct">%</span></span>' +
+          '<button type="button" class="rg-x" title="Quitar indicador" ' +
+            'onclick="App.rubQuitarIndicador(' + i + ')">&times;</button>' +
         '</div>' + critFila + '</th>' + celdas + '<td></td></tr>';
     }).join('');
+    // Fila de total de pesos (verde al 100%, rojo si no).
+    var total = pesoTotal_();
+    cuerpo += '<tr class="rg-total-row"><th class="rg-ind"><div id="rub-peso-total" class="peso-total">' +
+      '<span class="peso-total-val ' + (total === 100 ? 'ok' : 'err') + '">' + total + '%</span>' +
+      '</div></th><td colspan="' + (e.niveles.length + 1) + '"></td></tr>';
     cont.innerHTML =
       '<div class="rg-top"><span class="etq">Rúbrica</span>' +
         '<button type="button" class="btn rub-limpiar" onclick="App.limpiarRubrica()">' +
@@ -3206,12 +3216,63 @@ var App = (function () {
   }
   function rubAnadirIndicador() {
     leerRubGrid_();
-    rubricaEnEdicion.indicadores.push({ texto: '', peso: 1, criterios: [],
+    rubricaEnEdicion.indicadores.push({ texto: '', peso: 0, criterios: [],
       celdas: rubricaEnEdicion.niveles.map(function () { return ''; }) });
+    equalizarPesos_();
     renderRubGrid_();
   }
   function rubQuitarIndicador(i) {
-    leerRubGrid_(); rubricaEnEdicion.indicadores.splice(i, 1); renderRubGrid_();
+    leerRubGrid_();
+    rubricaEnEdicion.indicadores.splice(i, 1);
+    equalizarPesos_();
+    renderRubGrid_();
+  }
+
+  // ---------- pesos por indicador (% sobre 100, estilo RubricApp) ----------
+  function pesoEntero_(p) { return Math.round(Number(p) || 0); }
+  function pesoTotal_() {
+    return rubricaEnEdicion.indicadores.reduce(function (s, ind) { return s + pesoEntero_(ind.peso); }, 0);
+  }
+  /** Reparte los pesos a partes iguales sumando 100 (el último absorbe el resto). */
+  function equalizarPesos_() {
+    var inds = rubricaEnEdicion.indicadores, n = inds.length;
+    if (!n) return;
+    var eq = Math.round(100 / n);
+    inds.forEach(function (ind, i) { ind.peso = (i === n - 1) ? (100 - eq * (n - 1)) : eq; });
+  }
+  /**
+   * Peso editado a mano (como RubricApp): se fija ese peso y el resto (los no
+   * fijados) reparten 100 − suma_manual a partes iguales. Actualiza el total en
+   * vivo sin repintar la rejilla (para no perder el foco).
+   */
+  function rubPesoCambiado(input) {
+    var idx = Number(input.dataset.i);
+    var inds = rubricaEnEdicion.indicadores;
+    var val = Math.max(0, Math.min(100, parseInt(input.value, 10) || 0));
+    input.value = val;
+    inds[idx].peso = val;
+    rubPesosManual[idx] = true;
+    var manualSum = 0;
+    Object.keys(rubPesosManual).forEach(function (k) { manualSum += pesoEntero_(inds[k] && inds[k].peso); });
+    var auto = inds.map(function (_, i) { return i; }).filter(function (i) { return !rubPesosManual[i]; });
+    if (auto.length) {
+      var restante = 100 - manualSum;
+      var cada = Math.floor(restante / auto.length);
+      var resto = restante - cada * auto.length;
+      auto.forEach(function (i, pos) {
+        var w = Math.max(0, cada + (pos === auto.length - 1 ? resto : 0));
+        inds[i].peso = w;
+        var el = document.querySelector('#rub-grid .ind-peso[data-i="' + i + '"]');
+        if (el) el.value = w;
+      });
+    }
+    actualizarPesoTotal_();
+  }
+  function actualizarPesoTotal_() {
+    var el = document.getElementById('rub-peso-total');
+    if (!el) return;
+    var total = pesoTotal_();
+    el.innerHTML = '<span class="peso-total-val ' + (total === 100 ? 'ok' : 'err') + '">' + total + '%</span>';
   }
 
   // ---------- asociar criterios (global o por indicador) ----------
@@ -3425,7 +3486,7 @@ var App = (function () {
     empezarRubricaEnBlanco: empezarRubricaEnBlanco, limpiarRubrica: limpiarRubrica,
     rubAnadirNivel: rubAnadirNivel, rubQuitarNivel: rubQuitarNivel,
     rubAnadirIndicador: rubAnadirIndicador, rubQuitarIndicador: rubQuitarIndicador,
-    rubCambiarModo: rubCambiarModo,
+    rubCambiarModo: rubCambiarModo, rubPesoCambiado: rubPesoCambiado,
     rubCursoCambiado: rubCursoCambiado, rubAreaCambiada: rubAreaCambiada,
     rubCriterioCambiado: rubCriterioCambiado, rubQuitarCrit: rubQuitarCrit,
     cerrarModal: cerrarModal, cerrarModalFuera: cerrarModalFuera
