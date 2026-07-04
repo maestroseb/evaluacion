@@ -2644,6 +2644,9 @@ var App = (function () {
     b.textContent = textoAceptar; b.disabled = false;
     accionModal = onAceptar;
     b.onclick = function () { if (accionModal) accionModal(); };
+    // Modal ancho (p. ej. el editor de rúbricas) en pantallas grandes.
+    var m = document.querySelector('.modal');
+    if (m) m.classList.toggle('modal-ancho', !!(opts && opts.ancho));
     document.getElementById('modal-fondo').hidden = false;
     // Lleva el foco al primer campo del modal (o al botón de aceptar).
     // Con sinFoco no se enfoca nada: en el móvil, enfocar un campo de texto
@@ -2726,7 +2729,12 @@ var App = (function () {
   function botonModalCargando(txt) {
     var b = document.getElementById('modal-aceptar'); b.disabled = true; b.textContent = txt;
   }
-  function cerrarModal() { document.getElementById('modal-fondo').hidden = true; accionModal = null; }
+  function cerrarModal() {
+    document.getElementById('modal-fondo').hidden = true;
+    accionModal = null;
+    var m = document.querySelector('.modal');
+    if (m) m.classList.remove('modal-ancho'); // el siguiente modal vuelve al ancho normal
+  }
   function cerrarModalFuera(ev) {
     if (ev.target === document.getElementById('modal-fondo')) cerrarModal();
   }
@@ -2846,19 +2854,105 @@ var App = (function () {
     return etqs.map(function (e, i) { return { etiqueta: e, valor: vals[i] }; });
   }
 
-  // ---------- importar pegando (ChatGPT / Excel / Sheets / Markdown / CSV) ----------
-  /** Separador de una tabla pegada: tabulador, «|», «;» o coma (en ese orden). */
-  function detectarSep_(linea) {
-    if (linea.indexOf('\t') >= 0) return '\t';
-    if (linea.indexOf('|') >= 0) return '|';
-    if (linea.indexOf(';') >= 0) return ';';
-    if (linea.indexOf(',') >= 0) return ',';
-    return '\t';
+  // ---------- importar pegando (portado de maestroseb/rubricas: smartParse) ----------
+  /** Quita marcas de negrita/cursiva de Markdown: **x**, *x*, __x__, _x_. */
+  function rubStripMd_(raw) {
+    return raw.replace(/\*\*(.+?)\*\*/g, '$1').replace(/\*(.+?)\*/g, '$1')
+      .replace(/__(.+?)__/g, '$1').replace(/(?<!\w)_(.+?)_(?!\w)/g, '$1');
+  }
+  /** Divide una línea CSV respetando comillas ("a, b" = una sola celda). */
+  function parseCSVLine_(line) {
+    var out = [], cur = '', q = false;
+    for (var i = 0; i < line.length; i++) {
+      var ch = line[i];
+      if (q) {
+        if (ch === '"' && line[i + 1] === '"') { cur += '"'; i++; }
+        else if (ch === '"') { q = false; }
+        else { cur += ch; }
+      } else if (ch === '"') { q = true; }
+      else if (ch === ',') { out.push(cur.trim()); cur = ''; }
+      else { cur += ch; }
+    }
+    out.push(cur.trim());
+    return out;
+  }
+  /** Divide una fila de tabla Markdown: | a | b | … (sin los bordes vacíos). */
+  function parsePipeLine_(line) {
+    return line.split('|').map(function (c) { return c.trim(); })
+      .filter(function (c, i, arr) {
+        if (i === 0 && c === '') return false;
+        if (i === arr.length - 1 && c === '') return false;
+        return true;
+      });
   }
   /**
-   * Notas de los niveles. Si la cabecera trae puntos entre paréntesis
-   * («Excelente (4)») se respetan, escalados a 0–10 (el máximo → 10); los huecos
-   * se interpolan de forma uniforme. Sin puntos, reparto uniforme 0–10.
+   * Texto concatenado (celdas pegadas sin separador, típico al copiar una tabla
+   * ya renderizada): corta donde un carácter de fin de celda pega con una
+   * mayúscula sin espacio (algo que no ocurre en prosa normal).
+   */
+  function tryParseConcatenated_(lines) {
+    var cellBound = /(?<=[a-záéíóúüñ.!?)\]"…0-9])(?=[A-ZÁÉÍÓÚÜÑ¿¡])/;
+    var work = lines;
+    if (lines.length === 1 && lines[0].length > 300) {
+      var parts = lines[0].split(/(?<=[.!?])(?=\d+[.)]\s)/);
+      if (parts.length >= 3) work = parts.map(function (s) { return s.trim(); }).filter(Boolean);
+    }
+    if (work.length < 2) return null;
+    var head = work[0].split(cellBound).map(function (s) { return s.trim(); }).filter(Boolean);
+    if (head.length < 3) return null;
+    var n = head.length, rows = [head];
+    for (var i = 1; i < work.length; i++) {
+      var p = work[i].split(cellBound).map(function (s) { return s.trim(); }).filter(Boolean);
+      if (p.length === n) rows.push(p);
+      else if (p.length > n) { var r = p.slice(0, n - 1); r.push(p.slice(n - 1).join('')); rows.push(r); }
+      else return null;
+    }
+    return rows.length >= 2 ? { rows: rows, separator: 'concatenado' } : null;
+  }
+  /** Detecta separador y devuelve {rows, separator}. Orden: tab, |, CSV, concatenado. */
+  function smartParse_(raw) {
+    raw = rubStripMd_(raw);
+    var lines = raw.split('\n').map(function (l) { return l.trim(); })
+      .filter(function (l) { return l && !/^[\s|:-]+$/.test(l); });
+    if (!lines.length) return { rows: [], separator: null };
+    if (lines[0].split('\t').length >= 3) {
+      return { rows: lines.map(function (l) { return l.split('\t').map(function (c) { return c.trim(); }); }), separator: 'tab' };
+    }
+    if (lines[0].indexOf('|') >= 0 && parsePipeLine_(lines[0]).length >= 3) {
+      return { rows: lines.map(parsePipeLine_), separator: 'markdown' };
+    }
+    if (parseCSVLine_(lines[0]).length >= 3) {
+      return { rows: lines.map(parseCSVLine_), separator: 'csv' };
+    }
+    var concat = tryParseConcatenated_(lines);
+    if (concat) return concat;
+    return { rows: lines.map(function (l) { return [l]; }), separator: null };
+  }
+  /** ¿La 1ª fila es cabecera? (heurística del repo: palabra clave, «(N)» o nivel). */
+  function detectHeader_(rows) {
+    if (rows.length < 2) return { hasHeader: false, headerRow: null, dataRows: rows };
+    var first = rows[0];
+    var clavePrimera = /^(criterio|criterion|categor|aspecto|indicador|dimensi)/i.test(first[0] || '');
+    var conPuntos = first.slice(1).some(function (c) { return /\(\d+\)/.test(c); });
+    var conNivel = first.slice(1).some(function (c) {
+      return /^(\d+\s*[–—-]\s*)?(excelente|sobresaliente|notable|bien|bueno|suficiente|insuficiente|regular|bajo|alto|medio|avanzado|competente|b[aá]sico|iniciado|en proceso|satisfactorio|conseguido|logrado|excellent|good|fair|poor|needs|beginning|developing|proficient|exemplary)/i
+        .test(String(c).replace(/\s*\(\d+\)\s*$/, ''));
+    });
+    var hay = clavePrimera || conPuntos || conNivel;
+    return { hasHeader: hay, headerRow: hay ? first : null, dataRows: hay ? rows.slice(1) : rows };
+  }
+  /** Extrae nombre y puntos de «Excelente (4)», «4 – Excelente», «1. Insuf» o solo nombre. */
+  function parseLevelHeader_(cell) {
+    var mp = String(cell).match(/^(.+?)\s*\((\d+)\)\s*$/);
+    if (mp) return { name: mp[1].trim(), pts: parseInt(mp[2], 10) };
+    var mx = String(cell).match(/^(\d+)\s*[–—\-.]\s*(.+)$/);
+    if (mx) return { name: mx[2].trim(), pts: parseInt(mx[1], 10) };
+    return { name: String(cell).trim(), pts: null };
+  }
+  /**
+   * Notas de nivel para EvaluAnda (0–10). Si la cabecera trae puntos, se respetan
+   * escalados a 0–10 (máximo → 10); los huecos se interpolan uniformes. Sin
+   * puntos, reparto uniforme.
    */
   function valoresNiveles_(puntos, hayPuntos, n) {
     if (!hayPuntos) return valoresUniformes(n);
@@ -2871,43 +2965,32 @@ var App = (function () {
         : Math.round((i / (n - 1)) * 1000) / 100;
     });
   }
-  /**
-   * Convierte una tabla pegada en {niveles, indicadores}. La 1ª columna son los
-   * indicadores; la fila de cabecera, las etiquetas de nivel (con posible «(nota)»);
-   * el resto de celdas, la descripción de cada indicador en cada nivel.
-   */
+  /** Tabla pegada → {niveles, indicadores}. null si no hay datos válidos. */
   function parsearRubricaPegada(texto) {
-    var lineas = String(texto || '').split(/\r?\n/)
-      .map(function (l) { return l.replace(/\s+$/, ''); })
-      .filter(function (l) { return l.trim().length; });
-    if (!lineas.length) return null;
-    var sep = detectarSep_(lineas[0]);
-    function celdas(l) {
-      if (sep === '|') {
-        return l.replace(/^\s*\|/, '').replace(/\|\s*$/, '').split('|')
-          .map(function (c) { return c.trim(); });
-      }
-      return l.split(sep).map(function (c) { return c.trim(); });
-    }
-    // Fuera las filas separadoras de Markdown (---, :--:).
-    var filas = lineas.map(celdas).filter(function (cs) {
-      return !cs.every(function (c) { return c === '' || /^:?-{2,}:?$/.test(c); });
-    });
-    if (filas.length < 2) return null;
-    var cols = filas[0].slice(1).filter(function (c) { return c !== ''; });
-    if (cols.length < 2) return null;
+    var raw = String(texto || '').trim();
+    if (!raw) return null;
+    var pr = smartParse_(raw);
+    if (!pr.rows.length || pr.rows[0].length < 2) return null;
+    var dh = detectHeader_(pr.rows);
+    if (!dh.dataRows.length) return null;
+    var maxCols = 0;
+    dh.dataRows.forEach(function (r) { if (r.length > maxCols) maxCols = r.length; });
+    var numLevels = maxCols - 1;
+    if (numLevels < 2) return null;
     var etiquetas = [], puntos = [], hayPuntos = false;
-    cols.forEach(function (c) {
-      var m = /^(.*?)\s*\(\s*([\d.,]+)\s*\)\s*$/.exec(c);
-      if (m) { etiquetas.push(m[1].trim()); puntos.push(Number(m[2].replace(',', '.'))); hayPuntos = true; }
-      else { etiquetas.push(c); puntos.push(null); }
-    });
-    var vals = valoresNiveles_(puntos, hayPuntos, etiquetas.length);
-    var niveles = etiquetas.map(function (et, i) { return { etiqueta: et, valor: vals[i] }; });
-    var indicadores = filas.slice(1).map(function (f) {
-      var celdasF = f.slice(1, 1 + etiquetas.length);
-      while (celdasF.length < etiquetas.length) celdasF.push('');
-      return { texto: f[0] || '', peso: 1, criterios: [], celdas: celdasF };
+    for (var i = 0; i < numLevels; i++) {
+      if (dh.headerRow) {
+        var pl = parseLevelHeader_(dh.headerRow[i + 1] || ('Nivel ' + (i + 1)));
+        etiquetas.push(pl.name || ('Nivel ' + (i + 1)));
+        puntos.push(pl.pts); if (pl.pts != null) hayPuntos = true;
+      } else { etiquetas.push('Nivel ' + (i + 1)); puntos.push(null); }
+    }
+    var vals = valoresNiveles_(puntos, hayPuntos, numLevels);
+    var niveles = etiquetas.map(function (et, i2) { return { etiqueta: et, valor: vals[i2] }; });
+    var indicadores = dh.dataRows.map(function (r) {
+      var celdas = r.slice(1, 1 + numLevels);
+      while (celdas.length < numLevels) celdas.push('');
+      return { texto: r[0] || '', peso: 1, criterios: [], celdas: celdas };
     }).filter(function (ind) { return ind.texto; });
     if (!indicadores.length) return null;
     return { niveles: niveles, indicadores: indicadores };
@@ -2919,29 +3002,22 @@ var App = (function () {
     var parsed = parsearRubricaPegada(ta && ta.value);
     if (!parsed) {
       if (silencioso !== true) {
-        aviso('No he podido leer una tabla. Pega filas con columnas separadas por ' +
-          'tabulador, «|», «;» o coma.');
+        aviso('No he podido leer una tabla. Pega filas con columnas (tabulador, «|», ' +
+          'coma) o una tabla copiada tal cual.');
       }
       return;
     }
-    leerRubGrid_();
     rubricaEnEdicion.niveles = parsed.niveles;
     rubricaEnEdicion.indicadores = parsed.indicadores;
-    if (ta) ta.value = ''; // la tabla ya vive en la rejilla editable de abajo
     renderRubGrid_();
     avisoOk('Rúbrica cargada: ' + parsed.indicadores.length + ' indicadores, ' +
       parsed.niveles.length + ' niveles. Ajusta lo que quieras.');
   }
 
-  // ---------- crear / editar (rejilla editable) ----------
+  // ---------- crear / editar (rejilla editable; tabla solo tras cargar datos) ----------
   function nuevaRubrica() {
-    var niveles = nivelesPorDefecto_();
-    rubricaEnEdicion = {
-      nombre: '', niveles: niveles,
-      indicadores: [{ texto: '', peso: 1, criterios: [],
-        celdas: niveles.map(function () { return ''; }) }],
-      criterios: []
-    };
+    // Sin indicadores → no se pinta tabla hasta pegar o «empezar en blanco».
+    rubricaEnEdicion = { nombre: '', niveles: nivelesPorDefecto_(), indicadores: [], criterios: [] };
     abrirModalRubrica_('Nueva rúbrica', 'Crear rúbrica', null);
   }
 
@@ -2972,34 +3048,53 @@ var App = (function () {
           esc(rubricaEnEdicion.nombre) + '"></label>' +
         '<label>Pegar rúbrica (ChatGPT, Excel, Sheets, Markdown, CSV)' +
           '<textarea id="rub-pegar-ta" rows="4" placeholder="Pega aquí una tabla y se ' +
-            'cargará sola en la rejilla de abajo…"></textarea></label>' +
+            'cargará sola abajo…"></textarea></label>' +
         '<div class="rub-pegar-acc">' +
           '<button type="button" class="btn" onclick="App.detectarRubricaPegada(false)">' +
             'Cargar tabla pegada</button>' +
-          '<span class="ayuda">La 1ª columna → indicadores; la cabecera → niveles. Si pones la ' +
-            'nota entre paréntesis («Excelente (4)») se respeta, escalada a 0–10; si no, se ' +
-            'reparte 0–10.</span>' +
+          '<span class="ayuda">1ª columna → indicadores; cabecera → niveles. «Excelente (4)» ' +
+            'o «4 – Excelente» fija la nota (escalada a 0–10); si no, se reparte 0–10.</span>' +
         '</div>' +
         '<div id="rub-grid"></div>' +
         '<div id="rub-crits-cont"></div>' +
       '</div>',
       textoAceptar,
       function () { guardarRubrica_(id); },
-      { sinFoco: !!id });
+      { sinFoco: !!id, ancho: true });
     renderRubGrid_();
     renderRubCrits_();
-    // Autodetección al pegar: el valor del textarea está tras el evento paste.
+    // Autodetección al pegar: el valor del textarea llega tras el evento paste.
     var ta = document.getElementById('rub-pegar-ta');
     if (ta) ta.addEventListener('paste', function () {
       setTimeout(function () { detectarRubricaPegada(true); }, 0);
     });
   }
 
-  /** Vuelca la rejilla (nombre, niveles y celdas de cada indicador) al borrador. */
+  /** Empieza una rúbrica vacía a mano (revela la rejilla con una fila). */
+  function empezarRubricaEnBlanco() {
+    var e = rubricaEnEdicion;
+    if (!e.niveles.length) e.niveles = nivelesPorDefecto_();
+    e.indicadores = [{ texto: '', peso: 1, criterios: [],
+      celdas: e.niveles.map(function () { return ''; }) }];
+    renderRubGrid_();
+  }
+
+  /** Botón «Limpiar datos»: vacía lo pegado y la rejilla, y vuelve al estado inicial. */
+  function limpiarRubrica() {
+    rubricaEnEdicion.niveles = nivelesPorDefecto_();
+    rubricaEnEdicion.indicadores = [];
+    var ta = document.getElementById('rub-pegar-ta');
+    if (ta) { ta.value = ''; }
+    renderRubGrid_();
+    if (ta) ta.focus();
+  }
+
+  /** Vuelca la rejilla al borrador. Si no hay tabla, solo lee el nombre. */
   function leerRubGrid_() {
     var e = rubricaEnEdicion;
     var nom = document.getElementById('rub-nombre');
     if (nom) e.nombre = nom.value;
+    if (!document.querySelector('#rub-grid table')) return; // estado sin datos
     var niveles = [].map.call(document.querySelectorAll('#rub-grid .nivel-etq'), function (el) {
       var j = Number(el.dataset.j);
       var v = document.querySelector('#rub-grid .nivel-val[data-j="' + j + '"]');
@@ -3011,9 +3106,9 @@ var App = (function () {
       var prev = e.indicadores[i] || {};
       var celdas = niveles.map(function (_, j) {
         var c = document.querySelector('#rub-grid .celda[data-i="' + i + '"][data-j="' + j + '"]');
-        return c ? c.value : '';
+        return c ? (c.textContent || '').trim() : '';
       });
-      return { texto: el.value, peso: Number(peso && peso.value) || 1,
+      return { texto: (el.textContent || '').trim(), peso: Number(peso && peso.value) || 1,
         criterios: prev.criterios || [], celdas: celdas };
     });
     e.niveles = niveles;
@@ -3022,6 +3117,14 @@ var App = (function () {
 
   function renderRubGrid_() {
     var e = rubricaEnEdicion;
+    var cont = document.getElementById('rub-grid');
+    // Sin datos: como en el repo, no se muestra ninguna tabla.
+    if (!e.indicadores.length) {
+      cont.innerHTML = '<div class="rub-vacio">Pega una rúbrica arriba y aparecerá aquí para ' +
+        'editarla. <button type="button" class="link" onclick="App.empezarRubricaEnBlanco()">' +
+        'o empezar en blanco</button></div>';
+      return;
+    }
     var cab = '<tr><th class="rg-corner">Indicador · peso</th>' +
       e.niveles.map(function (n, j) {
         return '<th class="rg-nivel">' +
@@ -3038,12 +3141,11 @@ var App = (function () {
         'onclick="App.rubAnadirNivel()">+</button></th></tr>';
     var cuerpo = e.indicadores.map(function (ind, i) {
       var celdas = e.niveles.map(function (n, j) {
-        return '<td><textarea class="celda" data-i="' + i + '" data-j="' + j + '" rows="2" ' +
-          'placeholder="Descripción">' + esc((ind.celdas && ind.celdas[j]) || '') + '</textarea></td>';
+        return '<td class="rg-celda"><div class="celda" contenteditable="true" data-i="' + i +
+          '" data-j="' + j + '">' + esc((ind.celdas && ind.celdas[j]) || '') + '</div></td>';
       }).join('');
       return '<tr><th class="rg-ind">' +
-        '<textarea class="ind-txt" data-i="' + i + '" rows="2" placeholder="Indicador">' +
-          esc(ind.texto) + '</textarea>' +
+        '<div class="ind-txt" contenteditable="true" data-i="' + i + '">' + esc(ind.texto) + '</div>' +
         '<div class="rg-sub"><label class="rg-peso">peso ' +
           '<input class="ind-peso" data-i="' + i + '" type="number" step="0.5" min="0.5" value="' +
             esc(ind.peso || 1) + '"></label>' +
@@ -3051,15 +3153,16 @@ var App = (function () {
             'onclick="App.rubQuitarIndicador(' + i + ')">' + svgUI('equis') + '</button>' +
         '</div></th>' + celdas + '<td></td></tr>';
     }).join('');
-    document.getElementById('rub-grid').innerHTML =
-      '<div class="campo-crit"><span class="etq">Rúbrica</span>' +
+    cont.innerHTML =
+      '<div class="rg-top"><span class="etq">Rúbrica</span>' +
+        '<button type="button" class="btn rub-limpiar" onclick="App.limpiarRubrica()">' +
+          svgUI('papelera') + ' Limpiar datos</button></div>' +
       '<div class="rg-scroll"><table class="rubrica-grid"><thead>' + cab + '</thead>' +
       '<tbody>' + cuerpo + '</tbody></table></div>' +
       '<div class="acciones-modal"><button type="button" class="btn rub-add" ' +
         'onclick="App.rubAnadirIndicador()">+ Añadir indicador</button>' +
       '<button type="button" class="link" onclick="App.rubRepartirNotas()">' +
-        'Repartir notas 0–10</button></div>' +
-      '</div>';
+        'Repartir notas 0–10</button></div>';
   }
 
   function rubAnadirNivel() {
@@ -3248,6 +3351,7 @@ var App = (function () {
     editarRubricaUI: editarRubricaUI, duplicarRubricaUI: duplicarRubricaUI,
     eliminarRubricaUI: eliminarRubricaUI, dragRubrica: dragRubrica,
     detectarRubricaPegada: detectarRubricaPegada,
+    empezarRubricaEnBlanco: empezarRubricaEnBlanco, limpiarRubrica: limpiarRubrica,
     rubAnadirNivel: rubAnadirNivel, rubQuitarNivel: rubQuitarNivel,
     rubRepartirNotas: rubRepartirNotas,
     rubAnadirIndicador: rubAnadirIndicador, rubQuitarIndicador: rubQuitarIndicador,
