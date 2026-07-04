@@ -591,6 +591,9 @@
   .rubrica-grid .ind-crit { display: block; margin-top: 6px; width: 100%; max-width: 240px;
     border: 1px solid var(--borde); border-radius: 6px; padding: 4px 6px;
     background: var(--surface); color: var(--texto); }
+  /* La caja de criterios y los chips no aparecen hasta que hay contenido
+     (es decir, hasta que se elige curso + área). */
+  .lista-crit:empty, .rc-crits:empty { display: none; }
 
   /* Editor de rúbrica: estado sin datos y barra superior */
   .rub-vacio { color: var(--texto-3); padding: 22px; text-align: center; font-size: 14px;
