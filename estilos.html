@@ -805,6 +805,11 @@
     .sidebar, .velo, .hamburguesa { display: none !important; }
     .area-principal { height: 100dvh; }
 
+    /* Editor de rúbricas: en móvil los criterios se apilan para que el modal
+       no tenga scroll horizontal (los radios y los selects no caben en fila). */
+    .rub-modo { flex-direction: column; gap: 8px; }
+    .rub-crit-sels { flex-direction: column; }
+
     /* Barra superior: la MARCA fija a la izquierda + buscador. El título de
        sección lo da la tab bar, y el curso baja a las listas de Clases/Grupos
        (solo hace falta al elegir grupo o clase). */
