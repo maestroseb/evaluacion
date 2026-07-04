@@ -584,8 +584,18 @@
   .rub-crit-sels { display: flex; gap: 8px; margin: 8px 0; }
   .rub-crit-sels select { flex: 1 1 auto; min-width: 0; }
 
-  /* Rejilla editable de la rúbrica (indicadores × niveles) */
-  .rg-scroll { overflow-x: auto; margin: 8px 0; border: 1px solid var(--borde);
+  /* Editor de rúbrica: estado sin datos y barra superior */
+  .rub-vacio { color: var(--texto-3); padding: 22px; text-align: center; font-size: 14px;
+    background: var(--surface); border: 1px dashed var(--borde-fuerte); border-radius: var(--radio); }
+  .rg-top { display: flex; align-items: center; justify-content: space-between; margin: 10px 0 6px; }
+  .rub-limpiar { padding: 5px 10px; font-size: 13px; }
+
+  /* Modal ancho (editor de rúbricas) en pantallas grandes */
+  .modal.modal-ancho { max-width: 900px; }
+
+  /* Rejilla editable de la rúbrica (indicadores × niveles). Las celdas son
+     contenteditable: la altura de cada fila se adapta sola al contenido. */
+  .rg-scroll { overflow-x: auto; margin: 4px 0 8px; border: 1px solid var(--borde);
     border-radius: var(--radio); }
   .rubrica-grid { border-collapse: collapse; width: 100%; font-size: 13px; }
   .rubrica-grid th, .rubrica-grid td { border: 1px solid var(--borde); padding: 5px;
@@ -595,8 +605,15 @@
   .rubrica-grid .rg-nivel { min-width: 150px; }
   .rubrica-grid .rg-ind { min-width: 160px; background: var(--surface); }
   .rubrica-grid .rg-add { width: 40px; text-align: center; vertical-align: middle; }
-  .rubrica-grid textarea { width: 100%; min-width: 130px; resize: vertical; border: 1px solid var(--borde);
-    border-radius: 6px; padding: 5px 7px; font: inherit; color: var(--texto); background: var(--surface); }
+  .rubrica-grid .celda, .rubrica-grid .ind-txt { min-width: 130px; min-height: 20px;
+    border: 1px solid var(--borde); border-radius: 6px; padding: 5px 7px; font: inherit;
+    color: var(--texto); background: var(--surface); outline: none; white-space: pre-wrap;
+    overflow-wrap: anywhere; }
+  .rubrica-grid .ind-txt { font-weight: 600; }
+  .rubrica-grid .celda:focus, .rubrica-grid .ind-txt:focus { border-color: var(--acento);
+    box-shadow: 0 0 0 2px var(--acento-suave); }
+  .rubrica-grid .celda:empty::before { content: 'Descripción'; color: var(--texto-3); }
+  .rubrica-grid .ind-txt:empty::before { content: 'Indicador'; color: var(--texto-3); }
   .rubrica-grid .nivel-etq { width: 100%; font-weight: 600; border: 1px solid var(--borde);
     border-radius: 6px; padding: 5px 7px; font: inherit; }
   .rg-sub { display: flex; align-items: center; gap: 6px; margin-top: 5px; }
