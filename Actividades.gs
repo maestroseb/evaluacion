@@ -66,7 +66,7 @@ var Actividades = (function () {
         out.push({
           actividadId: f[0], unidadId: f[1], nombre: f[2],
           criterios: parseLista_(f[3]), numItems: Number(f[4]) || 0, orden: f[5],
-          tipo: f[6] || 'items', desglose: !!f[7]
+          tipo: f[6] || 'items', desglose: !!f[7], rubricaId: f[8] || ''
         });
       }
     }
@@ -84,7 +84,7 @@ var Actividades = (function () {
       (out[f[1]] || (out[f[1]] = [])).push({
         actividadId: f[0], unidadId: f[1], nombre: f[2],
         criterios: parseLista_(f[3]), numItems: Number(f[4]) || 0, orden: f[5],
-        tipo: f[6] || 'items', desglose: !!f[7]
+        tipo: f[6] || 'items', desglose: !!f[7], rubricaId: f[8] || ''
       });
     }
     Object.keys(out).forEach(function (u) {
@@ -103,11 +103,11 @@ var Actividades = (function () {
     var orden = ordenDado != null ? ordenDado : Datos.siguienteOrden_(listar_(ss, unidadId));
     hojaA_(ss).appendRow([
       id, unidadId, p.nombre.trim(), JSON.stringify(p.criterios || []),
-      Number(p.numItems) || 0, orden, tipo, p.desglose ? 1 : ''
+      Number(p.numItems) || 0, orden, tipo, p.desglose ? 1 : '', p.rubricaId || ''
     ]);
     return { actividadId: id, unidadId: unidadId, nombre: p.nombre.trim(),
       criterios: p.criterios || [], numItems: Number(p.numItems) || 0,
-      orden: orden, tipo: tipo, desglose: !!p.desglose };
+      orden: orden, tipo: tipo, desglose: !!p.desglose, rubricaId: p.rubricaId || '' };
   }
 
   function editar_(ss, actividadId, p) {
@@ -118,8 +118,8 @@ var Actividades = (function () {
     sh.getRange(fila, 3, 1, 3).setValues([[
       p.nombre.trim(), JSON.stringify(p.criterios || []), Number(p.numItems) || 0
     ]]);
-    // cols 7-8 = tipo y desglose (no tocan el orden, col 6)
-    sh.getRange(fila, 7, 1, 2).setValues([[p.tipo || 'items', p.desglose ? 1 : '']]);
+    // cols 7-9 = tipo, desglose y rubricaId (no tocan el orden, col 6)
+    sh.getRange(fila, 7, 1, 3).setValues([[p.tipo || 'items', p.desglose ? 1 : '', p.rubricaId || '']]);
     return { ok: true };
   }
 
@@ -152,10 +152,11 @@ var Actividades = (function () {
     var sh = hojaA_(ss);
     var fila = Datos.filaDeId_(sh, actividadId);
     if (fila < 0) throw new Error('Actividad no encontrada.');
-    var f = sh.getRange(fila, 1, 1, 7).getValues()[0];
+    var f = sh.getRange(fila, 1, 1, 9).getValues()[0];
     return crear_(ss, f[1], {
       nombre: f[2] + ' (copia)', criterios: parseLista_(f[3]),
-      numItems: Number(f[4]) || 0, tipo: f[6] || 'items', desglose: !!f[7]
+      numItems: Number(f[4]) || 0, tipo: f[6] || 'items', desglose: !!f[7],
+      rubricaId: f[8] || ''
     });
   }
 
@@ -170,6 +171,11 @@ var Actividades = (function () {
     if (tipo === 'contador' && Number(p.numItems) < 0) {
       throw new Error('El máximo del contador no puede ser negativo.');
     }
+    if (tipo === 'rubrica' && !(p.rubricaId && String(p.rubricaId).trim())) {
+      throw new Error('Elige una rúbrica para la columna.');
+    }
+    // rubricaId solo tiene sentido en columnas de tipo rúbrica.
+    if (tipo !== 'rubrica') p.rubricaId = '';
     // Una observación (texto libre) nunca puntúa: sin criterios, pase lo que
     // pase en el cliente.
     if (tipo === 'texto') p.criterios = [];
@@ -215,6 +221,16 @@ var Actividades = (function () {
     // Notas de la unidad: un único bloque { actividadId: { alumnoId: valor } }.
     var items = Notas.leer_(ss, unidadId);
 
+    // Definiciones de las rúbricas usadas por columnas de tipo "rubrica": el
+    // evaluador y el cálculo /10 las necesitan (indicadores, niveles, pesos).
+    var rubricas = {};
+    actividades.forEach(function (a) {
+      if (a.tipo === 'rubrica' && a.rubricaId && !rubricas[a.rubricaId]) {
+        try { rubricas[a.rubricaId] = Rubricas.obtener_(ss, a.rubricaId); }
+        catch (e) { /* rúbrica borrada: la columna se queda sin definición */ }
+      }
+    });
+
     return {
       unidad: unidad,
       area: ev.area, curso: ev.curso,
@@ -222,6 +238,7 @@ var Actividades = (function () {
       actividades: actividades,
       criteriosInfo: criteriosInfo,
       items: items,
+      rubricas: rubricas,
       // Criterios asignados en las DEMÁS unidades de la clase. Los de ESTA
       // unidad los calcula el cliente en vivo desde sus actividades: así, al
       // quitar un criterio de la única actividad que lo usaba, recupera la

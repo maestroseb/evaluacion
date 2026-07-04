@@ -731,6 +731,11 @@
     text-align: left; font-size: 12px; padding: 4px 8px; }
   table.rejilla td.celda-texto.vacia { text-align: center; color: var(--texto-3); }
   table.rejilla td.celda-texto.vacia .svg-ico { width: 13px; height: 13px; vertical-align: -2px; }
+  /* Celda de tipo rúbrica: se toca para abrir el evaluador. */
+  table.rejilla td.celda-rubrica { cursor: pointer; user-select: none; text-align: center;
+    color: var(--acento); }
+  table.rejilla td.celda-rubrica.vacia { color: var(--texto-3); }
+  table.rejilla td.celda-rubrica .svg-ico { width: 14px; height: 14px; vertical-align: -2px; }
   /* Nota por criterio (desglose): extracto "7 | 5"; tocar para editar. */
   table.rejilla td.celda-desglose { cursor: pointer; user-select: none; min-width: 56px;
     font-size: 12px; font-weight: 600; color: var(--texto-2); letter-spacing: .01em; }
