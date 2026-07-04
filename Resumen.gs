@@ -31,6 +31,16 @@ var Resumen = (function () {
     var actsPorUnidad = Actividades.porUnidad_(ss);
     var notasPorUnidad = Notas.todas_(ss);
 
+    // Definiciones de las rúbricas usadas por columnas de tipo "rubrica".
+    var rubricas = {};
+    Object.keys(actsPorUnidad).forEach(function (u) {
+      actsPorUnidad[u].forEach(function (a) {
+        if (a.tipo === 'rubrica' && a.rubricaId && !rubricas[a.rubricaId]) {
+          try { rubricas[a.rubricaId] = Rubricas.obtener_(ss, a.rubricaId); } catch (e) {}
+        }
+      });
+    });
+
     // Notas de todas las unidades de esta evaluación (blobs por unidad).
     var items = {}; // map[actividadId][alumnoId] = conseguidos
     unidades.forEach(function (u) {
@@ -58,7 +68,7 @@ var Resumen = (function () {
           // Por criterio: con desglose cada criterio recibe SU valor; sin él,
           // todos comparten la misma nota de la actividad.
           a.criterios.forEach(function (cod) {
-            var n = notaActividad_(items, a, al.id, cod);
+            var n = notaActividad_(items, rubricas, a, al.id, cod);
             if (n == null) return;
             (porCrit[cod] || (porCrit[cod] = [])).push(n);
           });
@@ -112,9 +122,16 @@ var Resumen = (function () {
    * desglose por criterio, `cod` selecciona el valor de ESE criterio dentro
    * del objeto {codigo: valor}.
    */
-  function notaActividad_(items, act, alId, cod) {
+  function notaActividad_(items, rubricas, act, alId, cod) {
     var fila = items[act.actividadId];
     var v = fila && fila[alId] != null ? fila[alId] : null;
+    // Rúbrica: el valor es la selección {indice: nivel}; se calcula /10 con la
+    // definición de la rúbrica (global o por indicador según rubMap).
+    if ((act.tipo || 'items') === 'rubrica') {
+      var def = rubricas && rubricas[act.rubricaId];
+      if (!def || v == null || typeof v !== 'object') return null;
+      return notaRubricaCrit_(def, act, v, cod);
+    }
     // Desglose: el valor es un objeto {codigo: valor}; sin desglose, un objeto
     // sería un resto de un cambio de configuración y no puntúa.
     if (v != null && typeof v === 'object') {
@@ -135,6 +152,34 @@ var Resumen = (function () {
         return Math.max(0, Math.min(10, v / act.numItems * 10));
     }
   }
+  // --- rúbrica: trasvase de la selección {indice: nivel} a nota /10 (espejo del cliente) ---
+  function rubMax_(def) {
+    var m = 0;
+    (def.niveles || []).forEach(function (n) { var v = Number(n.valor) || 0; if (v > m) m = v; });
+    return m;
+  }
+  function notaRub_(def, picks, filtro) {
+    var maxP = rubMax_(def);
+    if (!(maxP > 0)) return null;
+    var niveles = def.niveles || [], sumW = 0, sum = 0;
+    (def.indicadores || []).forEach(function (ind, i) {
+      if (filtro && !filtro(i)) return;
+      var lvl = picks[i];
+      if (lvl == null) return;
+      var niv = niveles[Math.round(lvl) - 1];
+      if (!niv) return;
+      var w = Number(ind.peso) || 0;
+      sum += (Number(niv.valor) || 0) / maxP * w;
+      sumW += w;
+    });
+    return sumW > 0 ? (sum / sumW) * 10 : null;
+  }
+  function notaRubricaCrit_(def, act, picks, cod) {
+    var mapa = act.rubMap || [];
+    if (mapa.length) return notaRub_(def, picks, function (i) { return (mapa[i] || '') === cod; });
+    return notaRub_(def, picks, null);
+  }
+
   function media_(arr) {
     if (!arr || !arr.length) return null;
     var s = arr.reduce(function (a, b) { return a + b; }, 0);

@@ -667,7 +667,9 @@ var App = (function () {
     restaurar: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>',
     guardar:   '<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>',
     info:      '<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>',
-    ojo:       '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>'
+    ojo:       '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>',
+    expandir:  '<polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/>',
+    contraer:  '<polyline points="11 17 6 12 11 7"/><polyline points="18 17 13 12 18 7"/>'
   };
   /** Icono SVG de interfaz por id. */
   function svgUI(id) {
@@ -1611,10 +1613,6 @@ var App = (function () {
     renderRubActCrit_();
   }
 
-  /** (C1) Placeholder del evaluador de rúbrica; el evaluador real llega en C2. */
-  function abrirEvaluadorRubrica(td) {
-    avisoOk('El evaluador de rúbricas llega en la próxima entrega.');
-  }
 
   function duplicarActividadUI(id) {
     botonModalCargando('Duplicando…');
@@ -1691,6 +1689,119 @@ var App = (function () {
    * Pinta la tabla alumnos × actividades. Orden de columnas:
    * # | Alumno | actividades… | Nota (global) | criterios (resumen, a la derecha).
    */
+  // ---------- columnas rúbrica expandibles (estilo iDoceo) ----------
+  var rubExpandido = {}; // actividadId -> true si la columna rúbrica está expandida
+  function esRubExp_(a) {
+    return tipoDe(a) === 'rubrica' && rubExpandido[a.actividadId] && rubDef_(a);
+  }
+  /** Abreviatura corta de un nivel para la celda/selector (2 letras o su valor). */
+  function nivAbbr_(niv) {
+    var e = String(niv.etiqueta || '').trim();
+    return e ? e.slice(0, 2).toUpperCase() : String(niv.valor);
+  }
+  function toggleRubExpand(e, actId) {
+    if (e) e.stopPropagation();
+    var a = actDe(actId);
+    if (!a || tipoDe(a) !== 'rubrica' || !rubDef_(a)) return;
+    rubExpandido[actId] = !rubExpandido[actId];
+    pintarRejilla();
+  }
+
+  /** Cabecera de una actividad: 1 columna (normal/contraída) o N (expandida). */
+  function cabeceraAct_(a) {
+    if (esRubExp_(a)) {
+      var def = rubDef_(a);
+      return (def.indicadores || []).map(function (ind, k) {
+        var ini = (k === 0);
+        return '<th class="act act-sub' + (ini ? ' act-sub-ini' : '') + '" data-act="' + a.actividadId +
+          '" data-ind="' + k + '" title="' + esc(a.nombre + ' · ' + ind.texto) + '" ' +
+          'onpointerdown="App.actDown(event,\'' + a.actividadId + '\')">' +
+          (ini ? '<button class="edit-act" title="Contraer" onpointerdown="event.stopPropagation()" ' +
+            'onclick="App.toggleRubExpand(event,\'' + a.actividadId + '\')">' + svgUI('contraer') + '</button>' : '') +
+          '<span class="act-nom">' + esc(ind.texto) + '</span>' +
+          '<small>' + (ini ? esc(a.nombre) : (pesoEntero_(ind.peso) + '%')) + '</small></th>';
+      }).join('');
+    }
+    var exp = (tipoDe(a) === 'rubrica' && rubDef_(a))
+      ? '<button class="edit-act" title="Expandir rúbrica" onpointerdown="event.stopPropagation()" ' +
+        'onclick="App.toggleRubExpand(event,\'' + a.actividadId + '\')">' + svgUI('expandir') + '</button>'
+      : '';
+    return '<th class="act" data-act="' + a.actividadId + '" title="' + esc(a.criterios.join(', ')) + '" ' +
+      'onpointerdown="App.actDown(event,\'' + a.actividadId + '\')">' +
+      '<span class="grip-act" title="Arrastra para reordenar">⠿</span>' +
+      '<button class="edit-act" title="Editar actividad" onpointerdown="event.stopPropagation()" ' +
+      'onclick="App.editarActividadUI(\'' + a.actividadId + '\')">' + svgUI('lapiz') + '</button>' +
+      exp +
+      '<span class="act-nom">' + esc(a.nombre) + '</span>' +
+      '<small>' + esc(metaColumna(a)) + '</small></th>';
+  }
+
+  /** Celdas de una actividad para un alumno: 1 (normal) o N (rúbrica expandida). */
+  function celdasAct_(a, c, r, alId) {
+    if (esRubExp_(a)) {
+      var def = rubDef_(a), maxP = rubMaxPts_(def);
+      var picks = valorItem(a.actividadId, alId);
+      if (!picks || typeof picks !== 'object') picks = {};
+      return (def.indicadores || []).map(function (ind, k) {
+        var lvl = picks[k];
+        var niv = (lvl != null) ? (def.niveles || [])[Math.round(lvl) - 1] : null;
+        var g = niv ? claseNota((Number(niv.valor) || 0) / maxP * 10) : '';
+        return '<td class="celda celda-rub-ind' + (g ? ' ' + g : '') + '" data-act="' + a.actividadId +
+          '" data-al="' + alId + '" data-ind="' + k + '" tabindex="0" role="button" ' +
+          'aria-label="Elegir nivel" title="' + (niv ? esc(niv.etiqueta) : 'Sin valorar') + '" ' +
+          'onclick="App.abrirSelectorNivelRub(this)">' + (niv ? esc(nivAbbr_(niv)) : '·') + '</td>';
+      }).join('');
+    }
+    return celdaValor(a, c, r, alId);
+  }
+
+  /** Selector de nivel para una celda de indicador de rúbrica. */
+  function abrirSelectorNivelRub(td) {
+    var act = actDe(td.dataset.act), def = rubDef_(act);
+    if (!def) return;
+    var k = Number(td.dataset.ind), niveles = def.niveles || [], maxP = rubMaxPts_(def);
+    var picks = valorItem(td.dataset.act, td.dataset.al);
+    var cur = (picks && typeof picks === 'object') ? picks[k] : null;
+    var pop = document.getElementById('pop-nivel');
+    popNivelTd = td;
+    pop.innerHTML = niveles.map(function (niv, i) {
+      var g = claseNota((Number(niv.valor) || 0) / maxP * 10);
+      return '<button type="button" class="pop-nivel-opt' + (Math.round(cur) === i + 1 ? ' sel' : '') +
+        (g ? ' ' + g : '') + '" title="' + esc(niv.etiqueta + ' (' + niv.valor + ')') + '" ' +
+        'onclick="App.elegirNivelRub(' + (i + 1) + ')">' + esc(nivAbbr_(niv)) + '</button>';
+    }).join('') +
+      '<button type="button" class="pop-nivel-opt vaciar" title="Sin valorar" ' +
+      'onclick="App.elegirNivelRub(null)">·</button>';
+    pop.hidden = false;
+    var rc = td.getBoundingClientRect(), pr = pop.getBoundingClientRect();
+    var x = Math.min(Math.max(8, rc.left + rc.width / 2 - pr.width / 2), window.innerWidth - pr.width - 8);
+    var y = rc.top - pr.height - 6; if (y < 8) y = rc.bottom + 6;
+    pop.style.left = x + 'px'; pop.style.top = y + 'px';
+  }
+
+  /** Aplica el nivel elegido a la celda de indicador (null = vaciar ese indicador). */
+  function elegirNivelRub(nivel) {
+    var td = popNivelTd;
+    cerrarSelectorNivel();
+    if (!td || !rejilla) return;
+    var actId = td.dataset.act, alId = td.dataset.al, k = Number(td.dataset.ind);
+    var act = actDe(actId), def = rubDef_(act);
+    var prev = valorItem(actId, alId);
+    var picks = {};
+    if (prev && typeof prev === 'object') Object.keys(prev).forEach(function (kk) { picks[kk] = prev[kk]; });
+    if (nivel == null) delete picks[k]; else picks[k] = nivel;
+    var vacio = !Object.keys(picks).length;
+    fijarValor(actId, alId, vacio ? null : picks);
+    var niv = (nivel != null && def) ? (def.niveles || [])[nivel - 1] : null;
+    var maxP = def ? rubMaxPts_(def) : 0;
+    td.className = td.className.replace(/\bg-\w+/g, '').trim();
+    if (niv && maxP > 0) { var g = claseNota((Number(niv.valor) || 0) / maxP * 10); if (g) td.classList.add(g); }
+    td.title = niv ? niv.etiqueta : 'Sin valorar';
+    td.textContent = niv ? nivAbbr_(niv) : '·';
+    actualizarNotasFila(alId);
+    programarGuardadoNotas();
+  }
+
   function pintarRejilla() {
     ajustarAltoRejillas(); // la cabecera ya está pintada: mide el hueco real
     var cont = document.getElementById('rejilla-cont');
@@ -1704,16 +1815,7 @@ var App = (function () {
 
     var h = '<table class="rejilla"><thead><tr>' +
       '<th class="idx">#</th><th class="esq">Alumno/a</th><th class="al-corto"></th>';
-    rejilla.actividades.forEach(function (a) {
-      h += '<th class="act" data-act="' + a.actividadId + '" ' +
-        'title="' + esc(a.criterios.join(', ')) + '" ' +
-        'onpointerdown="App.actDown(event,\'' + a.actividadId + '\')">' +
-        '<span class="grip-act" title="Arrastra para reordenar">⠿</span>' +
-        '<button class="edit-act" title="Editar actividad" onpointerdown="event.stopPropagation()" ' +
-        'onclick="App.editarActividadUI(\'' + a.actividadId + '\')">' + svgUI('lapiz') + '</button>' +
-        '<span class="act-nom">' + esc(a.nombre) + '</span>' +
-        '<small>' + esc(metaColumna(a)) + '</small></th>';
-    });
+    rejilla.actividades.forEach(function (a) { h += cabeceraAct_(a); });
     h += '<th class="nota sep">NOTA</th>';
     crits.forEach(function (cod) {
       h += '<th class="crit-col" title="' + esc(infoCrit(cod).completo) + '">' + esc(cod) + '</th>';
@@ -1723,7 +1825,7 @@ var App = (function () {
     rejilla.alumnos.forEach(function (al, i) {
       h += '<tr><td class="idx">' + (i + 1) + '</td>' + celdaAlumno(al.nombre);
       rejilla.actividades.forEach(function (a, c) {
-        h += celdaValor(a, c, i, al.id);
+        h += celdasAct_(a, c, i, al.id);
       });
       h += celdaNota('nota-' + al.id, notaUnidad(al.id), ' nota sep');
       crits.forEach(function (cod) {
@@ -1863,11 +1965,13 @@ var App = (function () {
       '" data-al="' + alId + '"';
     var tipo = tipoDe(a);
     if (tipo === 'rubrica') {
-      var evaluado = v != null && typeof v === 'object';
-      return '<td class="celda celda-rubrica' + (evaluado ? '' : ' vacia') + '" ' + comun +
-        ' tabindex="0" role="button" aria-label="Evaluar con rúbrica" ' +
-        'onclick="App.abrirEvaluadorRubrica(this)">' +
-        (evaluado ? svgUI('check') : svgUI('lapiz')) + '</td>';
+      // Columna contraída: muestra la nota global /10; tocar la expande.
+      var ng = notaRubricaGlobal_(a, alId);
+      return '<td class="celda celda-rubrica' + (ng == null ? ' vacia' : '') + '" ' + comun +
+        ' tabindex="0" role="button" aria-label="Expandir rúbrica" ' +
+        'title="Tocar para evaluar por indicadores" ' +
+        'onclick="App.toggleRubExpand(event,\'' + a.actividadId + '\')">' +
+        (ng == null ? svgUI('expandir') : fmtNota(ng, evalActual && evalActual.curso)) + '</td>';
     }
     if (a.desglose) {
       return '<td class="celda celda-desglose" ' + comun +
@@ -2300,8 +2404,55 @@ var App = (function () {
         return Math.max(0, Math.min(10, v / act.numItems * 10));
     }
   }
+  // ---------- cálculo de columnas rúbrica (picks = {indice: nivel 1-based}) ----------
+  /** Definición de la rúbrica enganchada a una columna (o null). */
+  function rubDef_(act) { return (rejilla.rubricas || {})[act.rubricaId] || null; }
+  /** Máxima puntuación entre los niveles de una rúbrica. */
+  function rubMaxPts_(def) {
+    var m = 0;
+    (def.niveles || []).forEach(function (n) { var v = Number(n.valor) || 0; if (v > m) m = v; });
+    return m;
+  }
+  /**
+   * Nota /10 de una selección: media PONDERADA por peso de (puntos/máx)×10 sobre
+   * los indicadores que pasan el filtro (filtro null = todos los evaluados). Así
+   * la puntuación global de la rúbrica se trasvasa a base 10.
+   */
+  function notaRubrica_(def, picks, filtro) {
+    var maxP = rubMaxPts_(def);
+    if (!(maxP > 0)) return null;
+    var niveles = def.niveles || [];
+    var sumW = 0, sum = 0;
+    (def.indicadores || []).forEach(function (ind, i) {
+      if (filtro && !filtro(i)) return;
+      var lvl = picks[i];
+      if (lvl == null) return;
+      var niv = niveles[Math.round(lvl) - 1];
+      if (!niv) return;
+      var w = Number(ind.peso) || 0;
+      sum += (Number(niv.valor) || 0) / maxP * w;
+      sumW += w;
+    });
+    return sumW > 0 ? (sum / sumW) * 10 : null;
+  }
+  function notaRubricaGlobal_(act, alumnoId) {
+    var def = rubDef_(act), picks = valorItem(act.actividadId, alumnoId);
+    if (!def || !picks || typeof picks !== 'object') return null;
+    return notaRubrica_(def, picks, null);
+  }
+  function notaRubricaCrit_(act, alumnoId, cod) {
+    var def = rubDef_(act), picks = valorItem(act.actividadId, alumnoId);
+    if (!def || !picks || typeof picks !== 'object') return null;
+    var mapa = act.rubMap || [];
+    if (mapa.length) { // por indicador: solo los mapeados a ese criterio
+      return notaRubrica_(def, picks, function (i) { return (mapa[i] || '') === cod; });
+    }
+    return notaRubrica_(def, picks, null); // global: la nota alimenta todos sus criterios
+  }
+
   /** Nota de una actividad PARA un criterio (con desglose, el valor de ese cod). */
   function notaActividadCrit(act, alumnoId, cod) {
+    if (tipoDe(act) === 'rubrica') return notaRubricaCrit_(act, alumnoId, cod);
     var v = valorItem(act.actividadId, alumnoId);
     if (act.desglose && v != null && typeof v === 'object') {
       v = v[cod] != null ? v[cod] : null;
@@ -2310,6 +2461,7 @@ var App = (function () {
   }
   /** Nota global de una actividad (con desglose, media de sus criterios). */
   function notaActividad(act, alumnoId) {
+    if (tipoDe(act) === 'rubrica') return notaRubricaGlobal_(act, alumnoId);
     if (act.desglose) {
       var notas = [];
       (act.criterios || []).forEach(function (cod) {
@@ -2850,7 +3002,7 @@ var App = (function () {
       if (e.key !== 'Enter' && e.key !== ' ') return;
       var t = e.target;
       if (t && t.matches &&
-          t.matches('a.item-lat, a.tab, a.volver-icono, .clase-card, .grupo-card, .tarjeta-unidad, td.celda-check, td.celda-escala, td.celda-texto, td.celda-desglose, td.celda-rubrica')) {
+          t.matches('a.item-lat, a.tab, a.volver-icono, .clase-card, .grupo-card, .tarjeta-unidad, td.celda-check, td.celda-escala, td.celda-texto, td.celda-desglose, td.celda-rubrica, td.celda-rub-ind')) {
         e.preventDefault(); // evita el scroll de Espacio
         t.click();
       }
@@ -3506,7 +3658,8 @@ var App = (function () {
     ciclarCheck: ciclarCheck, sumarContador: sumarContador, tipoActCambiado: tipoActCambiado,
     criterioCambiado: criterioCambiado,
     rubricaActCambiada: rubricaActCambiada, rubActModoCambiado: rubActModoCambiado,
-    abrirEvaluadorRubrica: abrirEvaluadorRubrica,
+    toggleRubExpand: toggleRubExpand, abrirSelectorNivelRub: abrirSelectorNivelRub,
+    elegirNivelRub: elegirNivelRub,
     abrirSelectorNivel: abrirSelectorNivel, elegirNivel: elegirNivel,
     abrirEditorTexto: abrirEditorTexto, abrirEditorDesglose: abrirEditorDesglose,
     prefetchEval: prefetchEval, prefetchClase: prefetchClase, prefetchRejilla: prefetchRejilla,
