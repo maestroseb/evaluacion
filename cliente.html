@@ -2781,6 +2781,7 @@ var App = (function () {
   var rubricasCache = null;    // lista ligera del banco (null = aún no cargada)
   var rubricaEnEdicion = null; // borrador del editor {nombre, niveles, indicadores, criterios}
   var rubPegarTimer = null;    // debounce del textarea de pegar (convierte al vuelo)
+  var rubCritsDisponibles = []; // criterios del curso+área elegido en el editor
 
   /** Revela la entrada de Rúbricas si el usuario tiene la bandera. */
   function activarRubricasSiFlag_() {
@@ -3030,7 +3031,9 @@ var App = (function () {
   // ---------- crear / editar (rejilla editable; tabla solo tras cargar datos) ----------
   function nuevaRubrica() {
     // Sin indicadores → no se pinta tabla hasta pegar o «empezar en blanco».
-    rubricaEnEdicion = { nombre: '', niveles: nivelesPorDefecto_(), indicadores: [], criterios: [] };
+    rubricaEnEdicion = { nombre: '', niveles: nivelesPorDefecto_(), indicadores: [],
+      criterios: [], criteriosModo: 'global', critCurso: '', critArea: '' };
+    rubCritsDisponibles = [];
     abrirModalRubrica_('Nueva rúbrica', 'Crear rúbrica', null);
   }
 
@@ -3039,16 +3042,21 @@ var App = (function () {
       var niveles = (r.niveles || []).map(function (n) {
         return { etiqueta: n.etiqueta, valor: n.valor };
       });
+      var indicadores = (r.indicadores || []).map(function (ind) {
+        var celdas = (ind.celdas || []).slice(0, niveles.length);
+        while (celdas.length < niveles.length) celdas.push('');
+        return { texto: ind.texto, peso: ind.peso || 1,
+          criterios: ind.criterios || [], celdas: celdas };
+      });
+      // El modo se deduce: si algún indicador trae criterio, es «por indicador».
+      var modo = indicadores.some(function (ind) { return (ind.criterios || []).length; })
+        ? 'indicador' : 'global';
       rubricaEnEdicion = {
-        nombre: r.nombre, niveles: niveles,
-        indicadores: (r.indicadores || []).map(function (ind) {
-          var celdas = (ind.celdas || []).slice(0, niveles.length);
-          while (celdas.length < niveles.length) celdas.push('');
-          return { texto: ind.texto, peso: ind.peso || 1,
-            criterios: ind.criterios || [], celdas: celdas };
-        }),
-        criterios: (r.criterios || []).slice()
+        nombre: r.nombre, niveles: niveles, indicadores: indicadores,
+        criterios: (r.criterios || []).slice(),
+        criteriosModo: modo, critCurso: '', critArea: ''
       };
+      rubCritsDisponibles = [];
       abrirModalRubrica_('Editar rúbrica', 'Guardar cambios', id);
     });
   }
@@ -3119,8 +3127,11 @@ var App = (function () {
         var c = document.querySelector('#rub-grid .celda[data-i="' + i + '"][data-j="' + j + '"]');
         return c ? (c.textContent || '').trim() : '';
       });
+      // Criterio por fila: si hay selector, su valor; si no, se conserva el previo.
+      var critSel = document.querySelector('#rub-grid .ind-crit[data-i="' + i + '"]');
+      var criterios = critSel ? (critSel.value ? [critSel.value] : []) : (prev.criterios || []);
       return { texto: (el.textContent || '').trim(), peso: Number(peso && peso.value) || 1,
-        criterios: prev.criterios || [], celdas: celdas };
+        criterios: criterios, celdas: celdas };
     });
     e.niveles = niveles;
     e.indicadores = indicadores;
@@ -3138,23 +3149,27 @@ var App = (function () {
     }
     var cab = '<tr><th class="rg-corner">Indicador · peso</th>' +
       e.niveles.map(function (n, j) {
-        return '<th class="rg-nivel">' +
+        return '<th class="rg-nivel"><div class="rg-nivel-row">' +
           '<input class="nivel-etq" data-j="' + j + '" type="text" placeholder="Nivel" value="' +
             esc(n.etiqueta) + '">' +
-          '<div class="rg-sub"><label class="rg-peso">pts ' +
-            '<input class="nivel-val" data-j="' + j + '" type="number" step="1" min="0" ' +
-              'title="Puntos del nivel" value="' + esc(n.valor) + '"></label>' +
-            '<button type="button" class="mini-x" title="Quitar nivel" ' +
-              'onclick="App.rubQuitarNivel(' + j + ')">' + svgUI('equis') + '</button>' +
+          '<input class="nivel-val" data-j="' + j + '" type="number" step="1" min="0" ' +
+            'title="Puntos del nivel" value="' + esc(n.valor) + '">' +
+          '<button type="button" class="rg-x" title="Quitar nivel" ' +
+            'onclick="App.rubQuitarNivel(' + j + ')">&times;</button>' +
           '</div></th>';
       }).join('') +
       '<th class="rg-add"><button type="button" class="mini-x" title="Añadir nivel" ' +
         'onclick="App.rubAnadirNivel()">+</button></th></tr>';
+    var porIndicador = (e.criteriosModo === 'indicador' && rubCritsDisponibles.length);
     var cuerpo = e.indicadores.map(function (ind, i) {
       var celdas = e.niveles.map(function (n, j) {
         return '<td class="rg-celda"><div class="celda" contenteditable="true" data-i="' + i +
           '" data-j="' + j + '">' + esc((ind.celdas && ind.celdas[j]) || '') + '</div></td>';
       }).join('');
+      var critFila = porIndicador
+        ? '<select class="ind-crit" data-i="' + i + '">' +
+            opcionesCritFila_((ind.criterios || [])[0] || '') + '</select>'
+        : '';
       return '<tr><th class="rg-ind">' +
         '<div class="ind-txt" contenteditable="true" data-i="' + i + '">' + esc(ind.texto) + '</div>' +
         '<div class="rg-sub"><label class="rg-peso">peso ' +
@@ -3162,7 +3177,7 @@ var App = (function () {
             esc(ind.peso || 1) + '"></label>' +
           '<button type="button" class="mini-x" title="Quitar indicador" ' +
             'onclick="App.rubQuitarIndicador(' + i + ')">' + svgUI('equis') + '</button>' +
-        '</div></th>' + celdas + '<td></td></tr>';
+        '</div>' + critFila + '</th>' + celdas + '<td></td></tr>';
     }).join('');
     cont.innerHTML =
       '<div class="rg-top"><span class="etq">Rúbrica</span>' +
@@ -3199,46 +3214,85 @@ var App = (function () {
     leerRubGrid_(); rubricaEnEdicion.indicadores.splice(i, 1); renderRubGrid_();
   }
 
-  // ---------- asociar criterios (rúbrica completa) ----------
+  // ---------- asociar criterios (global o por indicador) ----------
   function renderRubCrits_() {
+    var e = rubricaEnEdicion;
+    var modo = e.criteriosModo || 'global';
     var optC = '<option value="">— Curso —</option>' + cursosDisponibles().map(function (c) {
-      return '<option value="' + esc(c) + '">' + esc(c) + '</option>';
+      return '<option value="' + esc(c) + '"' + (c === e.critCurso ? ' selected' : '') + '>' +
+        esc(c) + '</option>';
     }).join('');
     document.getElementById('rub-crits-cont').innerHTML =
       '<div class="campo-crit"><span class="etq">Criterios de evaluación (opcional)</span>' +
-      '<p class="ayuda">Asócialos si quieres que, al usar la rúbrica en una unidad de esa ' +
-        'área, se rellenen solos los criterios de la columna.</p>' +
+      '<div class="rub-modo">' +
+        '<label><input type="radio" name="rub-modo" value="global"' +
+          (modo === 'global' ? ' checked' : '') + ' onchange="App.rubCambiarModo(\'global\')"> ' +
+          'Global (toda la rúbrica)</label>' +
+        '<label><input type="radio" name="rub-modo" value="indicador"' +
+          (modo === 'indicador' ? ' checked' : '') + ' onchange="App.rubCambiarModo(\'indicador\')"> ' +
+          'Por indicador</label>' +
+      '</div>' +
       '<div class="rub-crit-sels">' +
         '<select id="rub-crit-curso" onchange="App.rubCursoCambiado()">' + optC + '</select>' +
-        '<select id="rub-crit-area" onchange="App.rubAreaCambiada()">' +
-          '<option value="">— Área —</option></select>' +
+        '<select id="rub-crit-area" onchange="App.rubAreaCambiada()"></select>' +
       '</div>' +
-      '<div id="rub-crit-lista" class="lista-crit"></div>' +
-      '<div id="rub-crit-sel" class="rc-crits"></div>' +
+      (modo === 'global'
+        ? '<div id="rub-crit-lista" class="lista-crit"></div><div id="rub-crit-sel" class="rc-crits"></div>'
+        : '<p class="ayuda">Elige curso y área; luego asigna a cada fila su criterio en la ' +
+          'tabla de arriba.</p>') +
       '</div>';
-    renderRubCritSeleccionados_();
+    var selArea = document.getElementById('rub-crit-area');
+    selArea.innerHTML = opcionesAreas(e.critCurso);
+    if (e.critArea) selArea.value = e.critArea;
+    if (modo === 'global') renderRubCritSeleccionados_();
+    if (e.critCurso && e.critArea) cargarCriteriosArea_();
   }
+
+  function rubCambiarModo(modo) {
+    leerRubGrid_();
+    rubricaEnEdicion.criteriosModo = modo;
+    renderRubCrits_();
+    renderRubGrid_(); // muestra u oculta el selector de criterio por fila
+  }
+
   function rubCursoCambiado() {
-    var curso = document.getElementById('rub-crit-curso').value;
-    document.getElementById('rub-crit-area').innerHTML = opcionesAreas(curso);
-    document.getElementById('rub-crit-lista').innerHTML = '';
+    rubricaEnEdicion.critCurso = document.getElementById('rub-crit-curso').value;
+    rubricaEnEdicion.critArea = '';
+    rubCritsDisponibles = [];
+    document.getElementById('rub-crit-area').innerHTML = opcionesAreas(rubricaEnEdicion.critCurso);
+    var lista = document.getElementById('rub-crit-lista');
+    if (lista) lista.innerHTML = '';
+    if (rubricaEnEdicion.criteriosModo === 'indicador') { leerRubGrid_(); renderRubGrid_(); }
   }
   function rubAreaCambiada() {
-    var curso = document.getElementById('rub-crit-curso').value;
-    var area = document.getElementById('rub-crit-area').value;
-    var cont = document.getElementById('rub-crit-lista');
-    if (!curso || !area) { cont.innerHTML = ''; return; }
-    cont.innerHTML = spinner();
-    llamar('getCriterios', [curso, area], function (crits) {
-      if (!crits || !crits.length) { cont.innerHTML = '<i>No hay criterios para esta área.</i>'; return; }
-      cont.innerHTML = crits.map(function (c) {
-        var marcado = rubricaEnEdicion.criterios.indexOf(c.codigo) >= 0;
-        return '<label class="crit" title="' + esc(c.codigo + ' ' + (c.descripcion || c.texto)) + '">' +
-          '<input type="checkbox" value="' + esc(c.codigo) + '"' + (marcado ? ' checked' : '') +
-          ' onchange="App.rubCriterioCambiado(this)">' +
-          '<span class="crit-txt"><b>' + esc(c.codigo) + '</b> ' + esc(c.texto) + '</span></label>';
-      }).join('');
+    rubricaEnEdicion.critArea = document.getElementById('rub-crit-area').value;
+    cargarCriteriosArea_();
+  }
+
+  /** Carga los criterios del curso+área elegidos y refresca según el modo. */
+  function cargarCriteriosArea_() {
+    var e = rubricaEnEdicion;
+    if (!e.critCurso || !e.critArea) { rubCritsDisponibles = []; return; }
+    var lista = document.getElementById('rub-crit-lista');
+    if (e.criteriosModo === 'global' && lista) lista.innerHTML = spinner();
+    llamar('getCriterios', [e.critCurso, e.critArea], function (crits) {
+      rubCritsDisponibles = crits || [];
+      if (e.criteriosModo === 'global') renderRubCritChecks_();
+      else { leerRubGrid_(); renderRubGrid_(); }
     });
+  }
+
+  function renderRubCritChecks_() {
+    var cont = document.getElementById('rub-crit-lista');
+    if (!cont) return;
+    if (!rubCritsDisponibles.length) { cont.innerHTML = '<i>No hay criterios para esta área.</i>'; return; }
+    cont.innerHTML = rubCritsDisponibles.map(function (c) {
+      var marcado = rubricaEnEdicion.criterios.indexOf(c.codigo) >= 0;
+      return '<label class="crit" title="' + esc(c.codigo + ' ' + (c.descripcion || c.texto)) + '">' +
+        '<input type="checkbox" value="' + esc(c.codigo) + '"' + (marcado ? ' checked' : '') +
+        ' onchange="App.rubCriterioCambiado(this)">' +
+        '<span class="crit-txt"><b>' + esc(c.codigo) + '</b> ' + esc(c.texto) + '</span></label>';
+    }).join('');
   }
   function rubCriterioCambiado(input) {
     var arr = rubricaEnEdicion.criterios, i = arr.indexOf(input.value);
@@ -3262,6 +3316,13 @@ var App = (function () {
     if (box) box.checked = false;
     renderRubCritSeleccionados_();
   }
+  /** Opciones del <select> de criterio de una fila (modo por indicador). */
+  function opcionesCritFila_(sel) {
+    return '<option value="">— Criterio —</option>' + rubCritsDisponibles.map(function (c) {
+      return '<option value="' + esc(c.codigo) + '"' + (c.codigo === sel ? ' selected' : '') +
+        '>' + esc(c.codigo) + ' · ' + esc(c.texto) + '</option>';
+    }).join('');
+  }
 
   // ---------- guardar / duplicar / eliminar ----------
   function guardarRubrica_(id) {
@@ -3276,6 +3337,10 @@ var App = (function () {
     // Alinea las celdas de cada indicador con el nº de niveles (evita descuadres
     // si se añadieron/quitaron niveles tras pegar una tabla).
     indicadores.forEach(function (ind) { ind.celdas = (ind.celdas || []).slice(0, niveles.length); });
+    // Según el modo, solo se conserva un tipo de asociación (el otro se limpia),
+    // para que al reabrir se deduzca bien el modo.
+    if (e.criteriosModo === 'indicador') e.criterios = [];
+    else indicadores.forEach(function (ind) { ind.criterios = []; });
     var payload = { nombre: nombre, indicadores: indicadores, niveles: niveles,
       criterios: e.criterios };
     botonModalCargando('Guardando…');
@@ -3360,6 +3425,7 @@ var App = (function () {
     empezarRubricaEnBlanco: empezarRubricaEnBlanco, limpiarRubrica: limpiarRubrica,
     rubAnadirNivel: rubAnadirNivel, rubQuitarNivel: rubQuitarNivel,
     rubAnadirIndicador: rubAnadirIndicador, rubQuitarIndicador: rubQuitarIndicador,
+    rubCambiarModo: rubCambiarModo,
     rubCursoCambiado: rubCursoCambiado, rubAreaCambiada: rubAreaCambiada,
     rubCriterioCambiado: rubCriterioCambiado, rubQuitarCrit: rubQuitarCrit,
     cerrarModal: cerrarModal, cerrarModalFuera: cerrarModalFuera

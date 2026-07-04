@@ -582,6 +582,12 @@
   .rub-add { align-self: flex-start; }
   .rub-crit-sels { display: flex; gap: 8px; margin: 8px 0; }
   .rub-crit-sels select { flex: 1 1 auto; min-width: 0; }
+  .rub-modo { display: flex; gap: 18px; margin: 6px 0 10px; flex-wrap: wrap; }
+  .rub-modo label { display: inline-flex; align-items: center; gap: 6px; margin: 0;
+    font-size: 13px; font-weight: 600; color: var(--texto-2); }
+  .rubrica-grid .ind-crit { display: block; margin-top: 6px; width: 100%; max-width: 240px;
+    border: 1px solid var(--borde); border-radius: 6px; padding: 4px 6px;
+    background: var(--surface); color: var(--texto); }
 
   /* Editor de rúbrica: estado sin datos y barra superior */
   .rub-vacio { color: var(--texto-3); padding: 22px; text-align: center; font-size: 14px;
@@ -625,9 +631,21 @@
   .rubrica-grid .celda:empty::before { content: 'Descripción'; color: var(--texto-3); }
   .rubrica-grid .ind-txt:empty::before { content: 'Indicador'; color: var(--texto-3); }
   .rg-sub { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
-  .rubrica-grid .nivel-val, .rubrica-grid .ind-peso { width: 58px; border: 1px solid var(--borde);
+  .rubrica-grid .ind-peso { width: 52px; border: 1px solid var(--borde);
     border-radius: 6px; padding: 3px 6px; font: inherit; color: var(--texto-2); background: var(--surface); }
   .rg-peso { font-size: 11px; color: var(--texto-3); display: inline-flex; align-items: center; gap: 4px; }
+  /* Cabecera de nivel compacta: nombre + cajita de puntos + × pequeña, en una línea. */
+  .rg-nivel-row { display: flex; align-items: center; gap: 5px; }
+  .rg-nivel-row .nivel-etq { flex: 1 1 auto; min-width: 0; }
+  .rubrica-grid .nivel-val { flex: 0 0 auto; width: 38px; text-align: center; padding: 4px 2px;
+    border: 1px solid var(--borde); border-radius: 6px; font: inherit; color: var(--texto-2);
+    background: var(--surface); -moz-appearance: textfield; appearance: textfield; }
+  .rubrica-grid .nivel-val::-webkit-outer-spin-button,
+  .rubrica-grid .nivel-val::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .rg-x { flex: 0 0 auto; width: 20px; height: 20px; border: 0; background: transparent;
+    color: var(--texto-3); cursor: pointer; font-size: 17px; line-height: 1; border-radius: 5px;
+    padding: 0; }
+  .rg-x:hover { background: var(--bg); color: var(--texto); }
 
   /* ---------- Rejilla ---------- */
   .rejilla-cont { overflow: auto; background: var(--surface);
