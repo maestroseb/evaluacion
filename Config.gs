@@ -49,7 +49,10 @@ var CONFIG = {
   //      y, opcionalmente, criterios de evaluación asociados). Migración no
   //      destructiva: solo añade la pestaña; ningún dato existente se toca. La
   //      superficie de UI va oculta tras la bandera FLAGS.rubricas.
-  ESQUEMA_VERSION: 12,
+  // v13: columna "rubricaId" en _actividades: una columna de tipo "rubrica" se
+  //      engancha a una rúbrica del banco. El blob de _notas guarda, para ese
+  //      tipo, el nivel elegido por indicador; la nota /10 se calcula al vuelo.
+  ESQUEMA_VERSION: 13,
 
   // Banderas de funcionalidad. Cada bandera es la lista de correos que la ven
   // (o '*' para todo el profesorado). Sirve para lanzar módulos "ocultos": se

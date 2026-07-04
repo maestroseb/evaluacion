@@ -1362,7 +1362,12 @@ var App = (function () {
     var lista = listaCriteriosHtml(sel, act && act.actividadId);
     var tipoSel = act ? tipoDe(act) : 'items';
     var esInformativa = !!(act && !(act.criterios || []).length);
-    var opcionesTipo = Object.keys(TIPOS_ACT).map(function (id) {
+    rubActSelId_ = act ? (act.rubricaId || '') : '';
+    // La opción "Rúbrica" solo aparece para quien tenga la bandera.
+    var conRubrica = !!(estado.flags && estado.flags.rubricas);
+    var opcionesTipo = Object.keys(TIPOS_ACT).filter(function (id) {
+      return id !== 'rubrica' || conRubrica;
+    }).map(function (id) {
       return '<label class="tipo-opt"><input type="radio" name="f-act-tipo" value="' + id + '"' +
         (id === tipoSel ? ' checked' : '') + ' onchange="App.tipoActCambiado()">' +
         TIPOS_ACT[id].etiqueta + '</label>';
@@ -1384,6 +1389,9 @@ var App = (function () {
       '<label id="l-act-items"><span id="l-act-items-txt">Nº de ítems a evaluar</span>' +
       '<input id="f-act-items" class="campo-corto" type="number" min="0" step="0.5" ' +
       'placeholder="10" value="' + (act && act.numItems ? act.numItems : '') + '"></label>' +
+      '<label id="l-act-rubrica" hidden>Rúbrica' +
+      '<select id="f-act-rubrica" onchange="App.rubricaActCambiada()">' +
+        '<option value="">— Elegir rúbrica —</option></select></label>' +
       '<label class="check check-suelto"><input type="checkbox" id="f-act-info"' +
         (esInformativa ? ' checked' : '') + ' onchange="App.tipoActCambiado()"> ' +
         'Columna informativa (no cuenta para nota)</label>' +
@@ -1405,22 +1413,27 @@ var App = (function () {
         var criterios = informativa ? [] : [].slice.call(
           document.querySelectorAll('.lista-crit input:checked')
         ).map(function (c) { return c.value; });
+        var rubricaId = tipo === 'rubrica' ? val('f-act-rubrica') : '';
         if (!nombre) return aviso('Pon nombre a la actividad.');
         if (tipo === 'items' && !(numItems > 0)) return aviso('El nº de ítems debe ser mayor que 0.');
-        if (!informativa && !criterios.length) {
+        if (tipo === 'rubrica' && !rubricaId) return aviso('Elige una rúbrica para la columna.');
+        // La rúbrica puede no llevar criterios (informativa); el resto sí los exige.
+        if (!informativa && !criterios.length && tipo !== 'rubrica') {
           return aviso('Marca al menos un criterio, o marca la actividad como informativa.');
         }
         // Nota por criterio: solo con 2+ criterios y tipos que puntúan por valor.
-        var desglose = !informativa && tipo !== 'contador' && tipo !== 'texto' &&
+        // La rúbrica gestiona lo suyo aparte (global / por indicador), sin desglose.
+        var desglose = !informativa && tipo !== 'contador' && tipo !== 'texto' && tipo !== 'rubrica' &&
           criterios.length > 1 &&
           !!(document.getElementById('f-act-desglose') || {}).checked;
         var payload = { nombre: nombre, criterios: criterios, numItems: numItems,
-          tipo: tipo, desglose: desglose };
+          tipo: tipo, desglose: desglose, rubricaId: rubricaId };
         botonModalCargando('Guardando…');
         if (act) {
           llamar('editarActividad', [act.actividadId, payload], function () {
             act.nombre = nombre; act.criterios = criterios;
             act.numItems = numItems; act.tipo = tipo; act.desglose = desglose;
+            act.rubricaId = rubricaId;
             cerrarModal(); pintarRejilla();
           });
         } else {
@@ -1454,6 +1467,12 @@ var App = (function () {
         ? 'Máximo del contador (opcional: con máximo y criterios cuenta como nota)'
         : 'Nº de ítems a evaluar';
     }
+    // Selector de rúbrica: solo en tipo "rubrica". Al mostrarlo, se puebla del banco.
+    var rub = document.getElementById('l-act-rubrica');
+    if (rub) {
+      rub.hidden = (tipo !== 'rubrica');
+      if (tipo === 'rubrica') poblarRubricasActSelect_(rubActSelId_);
+    }
     var info = document.getElementById('f-act-info');
     var bloque = document.getElementById('bloque-crit');
     if (info) {
@@ -1473,8 +1492,48 @@ var App = (function () {
     // a columnas que cuentan para la nota.
     var desg = document.getElementById('l-act-desglose');
     if (desg) {
-      desg.hidden = (tipo === 'contador' || tipo === 'texto' || (info && info.checked));
+      desg.hidden = (tipo === 'contador' || tipo === 'texto' || tipo === 'rubrica' || (info && info.checked));
     }
+  }
+
+  var rubActSelId_ = ''; // rúbrica elegida en el editor de columna (para preseleccionar)
+  /** Puebla el <select> de rúbricas del editor (carga el banco si hace falta). */
+  function poblarRubricasActSelect_(selId) {
+    var sel = document.getElementById('f-act-rubrica');
+    if (!sel) return;
+    function fill(list) {
+      sel.innerHTML = '<option value="">— Elegir rúbrica —</option>' + (list || []).map(function (r) {
+        return '<option value="' + r.rubricaId + '"' + (r.rubricaId === selId ? ' selected' : '') +
+          '>' + esc(r.nombre) + '</option>';
+      }).join('');
+    }
+    if (rubricasCache) fill(rubricasCache);
+    else llamar('listarRubricas', [], function (list) { rubricasCache = list || []; fill(rubricasCache); });
+  }
+  /** Al elegir una rúbrica, prerrellena los criterios de la columna con los suyos. */
+  function rubricaActCambiada() {
+    var id = val('f-act-rubrica');
+    rubActSelId_ = id;
+    if (!id) return;
+    llamar('obtenerRubrica', [id], function (r) {
+      var porInd = (r.indicadores || []).some(function (ind) { return (ind.criterios || []).length; });
+      var cods = {};
+      if (porInd) {
+        (r.indicadores || []).forEach(function (ind) {
+          (ind.criterios || []).forEach(function (c) { cods[c] = true; });
+        });
+      } else {
+        (r.criterios || []).forEach(function (c) { cods[c] = true; });
+      }
+      [].forEach.call(document.querySelectorAll('.lista-crit input'), function (cb) {
+        if (cods[cb.value] && !cb.checked) { cb.checked = true; criterioCambiado(cb); }
+      });
+    });
+  }
+
+  /** (C1) Placeholder del evaluador de rúbrica; el evaluador real llega en C2. */
+  function abrirEvaluadorRubrica(td) {
+    avisoOk('El evaluador de rúbricas llega en la próxima entrega.');
   }
 
   function duplicarActividadUI(id) {
@@ -1689,6 +1748,7 @@ var App = (function () {
       tipo === 'escala' ? 'IN-SB' :
       tipo === 'escalaInf' ? 'POC-EXC' :
       tipo === 'texto' ? 'texto' :
+      tipo === 'rubrica' ? 'rúbrica' :
       (a.numItems > 0 ? '± /' + a.numItems : '±');
     if (a.desglose) parte += ' · por criterio';
     return parte + ' · ' + (a.criterios.length ? a.criterios.join(', ') : 'informativa');
@@ -1722,6 +1782,13 @@ var App = (function () {
     var comun = 'data-r="' + r + '" data-c="' + c + '" data-act="' + a.actividadId +
       '" data-al="' + alId + '"';
     var tipo = tipoDe(a);
+    if (tipo === 'rubrica') {
+      var evaluado = v != null && typeof v === 'object';
+      return '<td class="celda celda-rubrica' + (evaluado ? '' : ' vacia') + '" ' + comun +
+        ' tabindex="0" role="button" aria-label="Evaluar con rúbrica" ' +
+        'onclick="App.abrirEvaluadorRubrica(this)">' +
+        (evaluado ? svgUI('check') : svgUI('lapiz')) + '</td>';
+    }
     if (a.desglose) {
       return '<td class="celda celda-desglose" ' + comun +
         ' tabindex="0" role="button" aria-label="Nota por criterio" ' +
@@ -2129,7 +2196,8 @@ var App = (function () {
       { cod: 'ADE', nombre: 'Adecuado',  nota: 6 },
       { cod: 'BUE', nombre: 'Bueno',     nota: 8 },
       { cod: 'EXC', nombre: 'Excelente', nota: 10 } ] },
-    texto:     { etiqueta: 'Observación' } // texto libre; siempre informativa
+    texto:     { etiqueta: 'Observación' }, // texto libre; siempre informativa
+    rubrica:   { etiqueta: 'Rúbrica' }      // se evalúa con una rúbrica del banco
   };
   function tipoDe(act) { return act && TIPOS_ACT[act.tipo] ? act.tipo : 'items'; }
 
@@ -2702,7 +2770,7 @@ var App = (function () {
       if (e.key !== 'Enter' && e.key !== ' ') return;
       var t = e.target;
       if (t && t.matches &&
-          t.matches('a.item-lat, a.tab, a.volver-icono, .clase-card, .grupo-card, .tarjeta-unidad, td.celda-check, td.celda-escala, td.celda-texto, td.celda-desglose')) {
+          t.matches('a.item-lat, a.tab, a.volver-icono, .clase-card, .grupo-card, .tarjeta-unidad, td.celda-check, td.celda-escala, td.celda-texto, td.celda-desglose, td.celda-rubrica')) {
         e.preventDefault(); // evita el scroll de Espacio
         t.click();
       }
@@ -3494,6 +3562,7 @@ var App = (function () {
     pintarRejilla: pintarRejilla, actDown: actDown,
     ciclarCheck: ciclarCheck, sumarContador: sumarContador, tipoActCambiado: tipoActCambiado,
     criterioCambiado: criterioCambiado,
+    rubricaActCambiada: rubricaActCambiada, abrirEvaluadorRubrica: abrirEvaluadorRubrica,
     abrirSelectorNivel: abrirSelectorNivel, elegirNivel: elegirNivel,
     abrirEditorTexto: abrirEditorTexto, abrirEditorDesglose: abrirEditorDesglose,
     prefetchEval: prefetchEval, prefetchClase: prefetchClase, prefetchRejilla: prefetchRejilla,
