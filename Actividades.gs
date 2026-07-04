@@ -66,7 +66,8 @@ var Actividades = (function () {
         out.push({
           actividadId: f[0], unidadId: f[1], nombre: f[2],
           criterios: parseLista_(f[3]), numItems: Number(f[4]) || 0, orden: f[5],
-          tipo: f[6] || 'items', desglose: !!f[7], rubricaId: f[8] || ''
+          tipo: f[6] || 'items', desglose: !!f[7], rubricaId: f[8] || '',
+          rubMap: parseLista_(f[9])
         });
       }
     }
@@ -84,7 +85,8 @@ var Actividades = (function () {
       (out[f[1]] || (out[f[1]] = [])).push({
         actividadId: f[0], unidadId: f[1], nombre: f[2],
         criterios: parseLista_(f[3]), numItems: Number(f[4]) || 0, orden: f[5],
-        tipo: f[6] || 'items', desglose: !!f[7], rubricaId: f[8] || ''
+        tipo: f[6] || 'items', desglose: !!f[7], rubricaId: f[8] || '',
+        rubMap: parseLista_(f[9])
       });
     }
     Object.keys(out).forEach(function (u) {
@@ -103,11 +105,13 @@ var Actividades = (function () {
     var orden = ordenDado != null ? ordenDado : Datos.siguienteOrden_(listar_(ss, unidadId));
     hojaA_(ss).appendRow([
       id, unidadId, p.nombre.trim(), JSON.stringify(p.criterios || []),
-      Number(p.numItems) || 0, orden, tipo, p.desglose ? 1 : '', p.rubricaId || ''
+      Number(p.numItems) || 0, orden, tipo, p.desglose ? 1 : '', p.rubricaId || '',
+      JSON.stringify(p.rubMap || [])
     ]);
     return { actividadId: id, unidadId: unidadId, nombre: p.nombre.trim(),
       criterios: p.criterios || [], numItems: Number(p.numItems) || 0,
-      orden: orden, tipo: tipo, desglose: !!p.desglose, rubricaId: p.rubricaId || '' };
+      orden: orden, tipo: tipo, desglose: !!p.desglose, rubricaId: p.rubricaId || '',
+      rubMap: p.rubMap || [] };
   }
 
   function editar_(ss, actividadId, p) {
@@ -118,8 +122,10 @@ var Actividades = (function () {
     sh.getRange(fila, 3, 1, 3).setValues([[
       p.nombre.trim(), JSON.stringify(p.criterios || []), Number(p.numItems) || 0
     ]]);
-    // cols 7-9 = tipo, desglose y rubricaId (no tocan el orden, col 6)
-    sh.getRange(fila, 7, 1, 3).setValues([[p.tipo || 'items', p.desglose ? 1 : '', p.rubricaId || '']]);
+    // cols 7-10 = tipo, desglose, rubricaId y rubMap (no tocan el orden, col 6)
+    sh.getRange(fila, 7, 1, 4).setValues([[
+      p.tipo || 'items', p.desglose ? 1 : '', p.rubricaId || '', JSON.stringify(p.rubMap || [])
+    ]]);
     return { ok: true };
   }
 
@@ -152,11 +158,11 @@ var Actividades = (function () {
     var sh = hojaA_(ss);
     var fila = Datos.filaDeId_(sh, actividadId);
     if (fila < 0) throw new Error('Actividad no encontrada.');
-    var f = sh.getRange(fila, 1, 1, 9).getValues()[0];
+    var f = sh.getRange(fila, 1, 1, 10).getValues()[0];
     return crear_(ss, f[1], {
       nombre: f[2] + ' (copia)', criterios: parseLista_(f[3]),
       numItems: Number(f[4]) || 0, tipo: f[6] || 'items', desglose: !!f[7],
-      rubricaId: f[8] || ''
+      rubricaId: f[8] || '', rubMap: parseLista_(f[9])
     });
   }
 
@@ -174,8 +180,8 @@ var Actividades = (function () {
     if (tipo === 'rubrica' && !(p.rubricaId && String(p.rubricaId).trim())) {
       throw new Error('Elige una rúbrica para la columna.');
     }
-    // rubricaId solo tiene sentido en columnas de tipo rúbrica.
-    if (tipo !== 'rubrica') p.rubricaId = '';
+    // rubricaId y rubMap solo tienen sentido en columnas de tipo rúbrica.
+    if (tipo !== 'rubrica') { p.rubricaId = ''; p.rubMap = []; }
     // Una observación (texto libre) nunca puntúa: sin criterios, pase lo que
     // pase en el cliente.
     if (tipo === 'texto') p.criterios = [];

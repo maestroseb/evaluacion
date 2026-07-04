@@ -1364,6 +1364,9 @@ var App = (function () {
     var tipoSel = act ? tipoDe(act) : 'items';
     var esInformativa = !!(act && !(act.criterios || []).length);
     rubActSelId_ = act ? (act.rubricaId || '') : '';
+    rubActMap_ = (act && act.rubMap) ? act.rubMap.slice() : [];
+    rubActModo_ = rubActMap_.length ? 'indicador' : 'global';
+    rubActDef_ = null;
     // La opción "Rúbrica" solo aparece para quien tenga la bandera.
     var conRubrica = !!(estado.flags && estado.flags.rubricas);
     var opcionesTipo = Object.keys(TIPOS_ACT).filter(function (id) {
@@ -1393,6 +1396,15 @@ var App = (function () {
       '<label id="l-act-rubrica" hidden>Rúbrica' +
       '<select id="f-act-rubrica" onchange="App.rubricaActCambiada()">' +
         '<option value="">— Elegir rúbrica —</option></select></label>' +
+      '<div id="l-act-rub-modo" class="campo-crit" hidden>' +
+        '<span class="etq">Criterios de la rúbrica</span>' +
+        '<div class="rub-modo">' +
+          '<label><input type="radio" name="f-rub-modo" value="global" ' +
+            'onchange="App.rubActModoCambiado()"> Global (toda la rúbrica)</label>' +
+          '<label><input type="radio" name="f-rub-modo" value="indicador" ' +
+            'onchange="App.rubActModoCambiado()"> Por indicador</label>' +
+        '</div></div>' +
+      '<div id="l-act-rub-ind" class="campo-crit" hidden></div>' +
       '<label class="check check-suelto"><input type="checkbox" id="f-act-info"' +
         (esInformativa ? ' checked' : '') + ' onchange="App.tipoActCambiado()"> ' +
         'Columna informativa (no cuenta para nota)</label>' +
@@ -1415,6 +1427,15 @@ var App = (function () {
           document.querySelectorAll('.lista-crit input:checked')
         ).map(function (c) { return c.value; });
         var rubricaId = tipo === 'rubrica' ? val('f-act-rubrica') : '';
+        // Criterios de la rúbrica: global (lista marcada) o por indicador
+        // (un criterio por fila → rubMap; los criterios de la columna son los
+        // distintos no vacíos).
+        var rubMap = [];
+        if (tipo === 'rubrica' && rubActModoElegido_() === 'indicador') {
+          rubMap = [].map.call(document.querySelectorAll('#l-act-rub-ind .f-ind-crit'),
+            function (s) { return s.value || ''; });
+          criterios = rubMap.filter(function (c, i, a) { return c && a.indexOf(c) === i; });
+        }
         if (!nombre) return aviso('Pon nombre a la actividad.');
         if (tipo === 'items' && !(numItems > 0)) return aviso('El nº de ítems debe ser mayor que 0.');
         if (tipo === 'rubrica' && !rubricaId) return aviso('Elige una rúbrica para la columna.');
@@ -1428,13 +1449,13 @@ var App = (function () {
           criterios.length > 1 &&
           !!(document.getElementById('f-act-desglose') || {}).checked;
         var payload = { nombre: nombre, criterios: criterios, numItems: numItems,
-          tipo: tipo, desglose: desglose, rubricaId: rubricaId };
+          tipo: tipo, desglose: desglose, rubricaId: rubricaId, rubMap: rubMap };
         botonModalCargando('Guardando…');
         if (act) {
           llamar('editarActividad', [act.actividadId, payload], function () {
             act.nombre = nombre; act.criterios = criterios;
             act.numItems = numItems; act.tipo = tipo; act.desglose = desglose;
-            act.rubricaId = rubricaId;
+            act.rubricaId = rubricaId; act.rubMap = rubMap;
             cerrarModal(); pintarRejilla();
           });
         } else {
@@ -1474,6 +1495,18 @@ var App = (function () {
       rub.hidden = (tipo !== 'rubrica');
       if (tipo === 'rubrica') poblarRubricasActSelect_(rubActSelId_);
     }
+    // Modo de criterios de la rúbrica (global / por indicador) y su bloque.
+    var rubModo = document.getElementById('l-act-rub-modo');
+    if (rubModo) rubModo.hidden = (tipo !== 'rubrica');
+    if (tipo === 'rubrica') {
+      asegurarRubActDef_();
+      renderRubActCrit_();
+    } else {
+      var ri = document.getElementById('l-act-rub-ind');
+      if (ri) { ri.hidden = true; ri.innerHTML = ''; }
+      var bq = document.getElementById('bloque-crit');
+      if (bq) bq.hidden = false;
+    }
     var info = document.getElementById('f-act-info');
     var bloque = document.getElementById('bloque-crit');
     if (info) {
@@ -1498,6 +1531,10 @@ var App = (function () {
   }
 
   var rubActSelId_ = ''; // rúbrica elegida en el editor de columna (para preseleccionar)
+  var rubActDef_ = null; // definición completa de esa rúbrica (indicadores, niveles…)
+  var rubActMap_ = [];   // criterio por indicador (modo por indicador)
+  var rubActModo_ = 'global'; // 'global' | 'indicador'
+
   /** Puebla el <select> de rúbricas del editor (carga el banco si hace falta). */
   function poblarRubricasActSelect_(selId) {
     var sel = document.getElementById('f-act-rubrica');
@@ -1511,25 +1548,67 @@ var App = (function () {
     if (rubricasCache) fill(rubricasCache);
     else llamar('listarRubricas', [], function (list) { rubricasCache = list || []; fill(rubricasCache); });
   }
-  /** Al elegir una rúbrica, prerrellena los criterios de la columna con los suyos. */
-  function rubricaActCambiada() {
-    var id = val('f-act-rubrica');
-    rubActSelId_ = id;
-    if (!id) return;
+
+  /** Carga la definición de la rúbrica elegida (si aún no está) y repinta. */
+  function asegurarRubActDef_() {
+    var id = rubActSelId_;
+    if (!id) { rubActDef_ = null; return; }
+    if (rubActDef_ && rubActDef_.rubricaId === id) return;
     llamar('obtenerRubrica', [id], function (r) {
-      var porInd = (r.indicadores || []).some(function (ind) { return (ind.criterios || []).length; });
-      var cods = {};
-      if (porInd) {
-        (r.indicadores || []).forEach(function (ind) {
-          (ind.criterios || []).forEach(function (c) { cods[c] = true; });
-        });
-      } else {
-        (r.criterios || []).forEach(function (c) { cods[c] = true; });
-      }
-      [].forEach.call(document.querySelectorAll('.lista-crit input'), function (cb) {
-        if (cods[cb.value] && !cb.checked) { cb.checked = true; criterioCambiado(cb); }
-      });
+      rubActDef_ = r;
+      var n = (r.indicadores || []).length;
+      while (rubActMap_.length < n) rubActMap_.push('');
+      rubActMap_ = rubActMap_.slice(0, n);
+      if (tipoActElegido() === 'rubrica') renderRubActCrit_();
     });
+  }
+
+  function rubActModoElegido_() {
+    var m = document.querySelector('input[name="f-rub-modo"]:checked');
+    return m ? m.value : 'global';
+  }
+  function rubActModoCambiado() {
+    rubActModo_ = rubActModoElegido_();
+    renderRubActCrit_();
+  }
+
+  /** Opciones de criterio del área de la clase (para el modo por indicador). */
+  function opcionesCritArea_(sel) {
+    var cods = Object.keys(rejilla.criteriosInfo || {}).sort(cmpCodigo);
+    return '<option value="">— Criterio —</option>' + cods.map(function (cod) {
+      var c = infoCrit(cod);
+      return '<option value="' + esc(cod) + '"' + (cod === sel ? ' selected' : '') + '>' +
+        esc(cod) + ' · ' + esc(c.texto) + '</option>';
+    }).join('');
+  }
+
+  /** Pinta el bloque de criterios de la rúbrica según el modo elegido. */
+  function renderRubActCrit_() {
+    var bloque = document.getElementById('bloque-crit');
+    var indCont = document.getElementById('l-act-rub-ind');
+    var esInd = (rubActModo_ === 'indicador');
+    var radio = document.querySelector('input[name="f-rub-modo"][value="' + rubActModo_ + '"]');
+    if (radio) radio.checked = true;
+    if (bloque) bloque.hidden = esInd; // en global se usa la lista de siempre
+    if (!indCont) return;
+    indCont.hidden = !esInd;
+    if (!esInd) { indCont.innerHTML = ''; return; }
+    if (!rubActDef_) { indCont.innerHTML = '<p class="ayuda">Cargando indicadores…</p>'; return; }
+    indCont.innerHTML = '<span class="etq">Criterio de cada indicador</span>' +
+      (rubActDef_.indicadores || []).map(function (ind, i) {
+        return '<div class="rub-ind-fila"><span class="rub-ind-nom">' + esc(ind.texto) + '</span>' +
+          '<select class="f-ind-crit" data-i="' + i + '">' +
+          opcionesCritArea_(rubActMap_[i] || '') + '</select></div>';
+      }).join('');
+  }
+
+  /** Al elegir una rúbrica, se carga su definición; el mapa por indicador se limpia. */
+  function rubricaActCambiada() {
+    rubActSelId_ = val('f-act-rubrica');
+    rubActDef_ = null;
+    rubActMap_ = [];
+    asegurarRubActDef_();
+    renderRubActCrit_();
   }
 
   /** (C1) Placeholder del evaluador de rúbrica; el evaluador real llega en C2. */
@@ -3426,7 +3505,8 @@ var App = (function () {
     pintarRejilla: pintarRejilla, actDown: actDown,
     ciclarCheck: ciclarCheck, sumarContador: sumarContador, tipoActCambiado: tipoActCambiado,
     criterioCambiado: criterioCambiado,
-    rubricaActCambiada: rubricaActCambiada, abrirEvaluadorRubrica: abrirEvaluadorRubrica,
+    rubricaActCambiada: rubricaActCambiada, rubActModoCambiado: rubActModoCambiado,
+    abrirEvaluadorRubrica: abrirEvaluadorRubrica,
     abrirSelectorNivel: abrirSelectorNivel, elegirNivel: elegirNivel,
     abrirEditorTexto: abrirEditorTexto, abrirEditorDesglose: abrirEditorDesglose,
     prefetchEval: prefetchEval, prefetchClase: prefetchClase, prefetchRejilla: prefetchRejilla,
