@@ -575,7 +575,6 @@
 
   /* Editor de rúbrica (modal) */
   .rub-editor { display: flex; flex-direction: column; gap: 14px; }
-  .rub-pegar-acc { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: -6px; }
   .mini-x { flex: 0 0 auto; border: 1px solid var(--borde); background: var(--surface);
     color: var(--texto-2); border-radius: 7px; min-width: 30px; height: 30px; cursor: pointer;
     display: inline-flex; align-items: center; justify-content: center; font-size: 15px; }
@@ -593,32 +592,41 @@
   /* Modal ancho (editor de rúbricas) en pantallas grandes */
   .modal.modal-ancho { max-width: 900px; }
 
-  /* Rejilla editable de la rúbrica (indicadores × niveles). Las celdas son
-     contenteditable: la altura de cada fila se adapta sola al contenido. */
+  /* Rejilla editable (indicadores × niveles). Estética tipo RubricApp: las celdas
+     parecen texto normal y solo revelan que son editables al enfocarlas. La altura
+     de cada fila se adapta sola (contenteditable, sin textarea de altura fija). */
   .rg-scroll { overflow-x: auto; margin: 4px 0 8px; border: 1px solid var(--borde);
     border-radius: var(--radio); }
   .rubrica-grid { border-collapse: collapse; width: 100%; font-size: 13px; }
-  .rubrica-grid th, .rubrica-grid td { border: 1px solid var(--borde); padding: 5px;
-    vertical-align: top; text-align: left; }
-  .rubrica-grid thead th { background: var(--bg); }
+  .rubrica-grid thead th { background: var(--bg); text-align: left; font-weight: 600;
+    color: var(--texto); padding: 10px 12px; vertical-align: bottom;
+    border-bottom: 1px solid var(--borde-fuerte); }
+  .rubrica-grid tbody th, .rubrica-grid tbody td { padding: 6px 8px; vertical-align: top;
+    text-align: left; border-bottom: 1px solid var(--borde); }
+  .rubrica-grid tbody tr:last-child th, .rubrica-grid tbody tr:last-child td { border-bottom: none; }
+  .rubrica-grid tbody tr:nth-child(even) th,
+  .rubrica-grid tbody tr:nth-child(even) td { background: var(--bg); }
   .rubrica-grid .rg-corner { min-width: 150px; color: var(--texto-3); font-weight: 600; }
-  .rubrica-grid .rg-nivel { min-width: 150px; }
-  .rubrica-grid .rg-ind { min-width: 160px; background: var(--surface); }
+  .rubrica-grid .rg-nivel { min-width: 160px; }
+  .rubrica-grid .rg-ind { min-width: 160px; }
   .rubrica-grid .rg-add { width: 40px; text-align: center; vertical-align: middle; }
-  .rubrica-grid .celda, .rubrica-grid .ind-txt { min-width: 130px; min-height: 20px;
-    border: 1px solid var(--borde); border-radius: 6px; padding: 5px 7px; font: inherit;
-    color: var(--texto); background: var(--surface); outline: none; white-space: pre-wrap;
-    overflow-wrap: anywhere; }
+  /* Editable pero con aspecto de texto: borde transparente en reposo. */
+  .rubrica-grid .celda, .rubrica-grid .ind-txt, .rubrica-grid .nivel-etq {
+    min-width: 130px; min-height: 22px; border: 1px solid transparent; border-radius: 7px;
+    padding: 6px 8px; font: inherit; color: var(--texto); background: transparent; outline: none;
+    white-space: pre-wrap; overflow-wrap: anywhere; cursor: text;
+    transition: background .1s, border-color .1s, box-shadow .1s; }
+  .rubrica-grid .nivel-etq { width: 100%; min-width: 0; font-weight: 600; }
   .rubrica-grid .ind-txt { font-weight: 600; }
-  .rubrica-grid .celda:focus, .rubrica-grid .ind-txt:focus { border-color: var(--acento);
-    box-shadow: 0 0 0 2px var(--acento-suave); }
+  .rubrica-grid .celda:hover, .rubrica-grid .ind-txt:hover, .rubrica-grid .nivel-etq:hover {
+    background: var(--surface); border-color: var(--borde); }
+  .rubrica-grid .celda:focus, .rubrica-grid .ind-txt:focus, .rubrica-grid .nivel-etq:focus {
+    background: var(--surface); border-color: var(--acento); box-shadow: 0 0 0 2px var(--acento-suave); }
   .rubrica-grid .celda:empty::before { content: 'Descripción'; color: var(--texto-3); }
   .rubrica-grid .ind-txt:empty::before { content: 'Indicador'; color: var(--texto-3); }
-  .rubrica-grid .nivel-etq { width: 100%; font-weight: 600; border: 1px solid var(--borde);
-    border-radius: 6px; padding: 5px 7px; font: inherit; }
-  .rg-sub { display: flex; align-items: center; gap: 6px; margin-top: 5px; }
-  .rubrica-grid .nivel-val, .rubrica-grid .ind-peso { width: 62px; border: 1px solid var(--borde);
-    border-radius: 6px; padding: 4px 6px; font: inherit; }
+  .rg-sub { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
+  .rubrica-grid .nivel-val, .rubrica-grid .ind-peso { width: 58px; border: 1px solid var(--borde);
+    border-radius: 6px; padding: 3px 6px; font: inherit; color: var(--texto-2); background: var(--surface); }
   .rg-peso { font-size: 11px; color: var(--texto-3); display: inline-flex; align-items: center; gap: 4px; }
 
   /* ---------- Rejilla ---------- */

@@ -2780,6 +2780,7 @@ var App = (function () {
   // bandera. El resto del profesorado no ve nada.
   var rubricasCache = null;    // lista ligera del banco (null = aún no cargada)
   var rubricaEnEdicion = null; // borrador del editor {nombre, niveles, indicadores, criterios}
+  var rubPegarTimer = null;    // debounce del textarea de pegar (convierte al vuelo)
 
   /** Revela la entrada de Rúbricas si el usuario tiene la bandera. */
   function activarRubricasSiFlag_() {
@@ -2996,10 +2997,22 @@ var App = (function () {
     return { niveles: niveles, indicadores: indicadores };
   }
 
-  /** Carga en la rejilla la tabla pegada. silencioso=true: si no hay tabla, no avisa. */
+  /**
+   * Convierte lo pegado en la rejilla. Se llama al vuelo (evento input), así que
+   * es silencioso: si aún no hay tabla válida, deja la rejilla como está; si el
+   * textarea queda vacío, la tabla desaparece (como en el repo).
+   */
   function detectarRubricaPegada(silencioso) {
     var ta = document.getElementById('rub-pegar-ta');
-    var parsed = parsearRubricaPegada(ta && ta.value);
+    var txt = ta ? ta.value : '';
+    if (!txt.trim()) {
+      if (rubricaEnEdicion.indicadores.length) {
+        rubricaEnEdicion.indicadores = [];
+        renderRubGrid_();
+      }
+      return;
+    }
+    var parsed = parsearRubricaPegada(txt);
     if (!parsed) {
       if (silencioso !== true) {
         aviso('No he podido leer una tabla. Pega filas con columnas (tabulador, «|», ' +
@@ -3010,8 +3023,10 @@ var App = (function () {
     rubricaEnEdicion.niveles = parsed.niveles;
     rubricaEnEdicion.indicadores = parsed.indicadores;
     renderRubGrid_();
-    avisoOk('Rúbrica cargada: ' + parsed.indicadores.length + ' indicadores, ' +
-      parsed.niveles.length + ' niveles. Ajusta lo que quieras.');
+    if (silencioso !== true) {
+      avisoOk('Rúbrica cargada: ' + parsed.indicadores.length + ' indicadores, ' +
+        parsed.niveles.length + ' niveles.');
+    }
   }
 
   // ---------- crear / editar (rejilla editable; tabla solo tras cargar datos) ----------
@@ -3048,13 +3063,9 @@ var App = (function () {
           esc(rubricaEnEdicion.nombre) + '"></label>' +
         '<label>Pegar rúbrica (ChatGPT, Excel, Sheets, Markdown, CSV)' +
           '<textarea id="rub-pegar-ta" rows="4" placeholder="Pega aquí una tabla y se ' +
-            'cargará sola abajo…"></textarea></label>' +
-        '<div class="rub-pegar-acc">' +
-          '<button type="button" class="btn" onclick="App.detectarRubricaPegada(false)">' +
-            'Cargar tabla pegada</button>' +
-          '<span class="ayuda">1ª columna → indicadores; cabecera → niveles. «Excelente (4)» ' +
-            'o «4 – Excelente» fija la nota (escalada a 0–10); si no, se reparte 0–10.</span>' +
-        '</div>' +
+            'convierte sola abajo…"></textarea></label>' +
+        '<p class="ayuda">1ª columna → indicadores; cabecera → niveles. «Excelente (4)» ' +
+          'o «4 – Excelente» fija la nota (escalada a 0–10); si no, se reparte 0–10.</p>' +
         '<div id="rub-grid"></div>' +
         '<div id="rub-crits-cont"></div>' +
       '</div>',
@@ -3063,10 +3074,11 @@ var App = (function () {
       { sinFoco: !!id, ancho: true });
     renderRubGrid_();
     renderRubCrits_();
-    // Autodetección al pegar: el valor del textarea llega tras el evento paste.
+    // Se convierte al pegar o teclear (sin botón), con un pequeño debounce.
     var ta = document.getElementById('rub-pegar-ta');
-    if (ta) ta.addEventListener('paste', function () {
-      setTimeout(function () { detectarRubricaPegada(true); }, 0);
+    if (ta) ta.addEventListener('input', function () {
+      clearTimeout(rubPegarTimer);
+      rubPegarTimer = setTimeout(function () { detectarRubricaPegada(true); }, 200);
     });
   }
 
