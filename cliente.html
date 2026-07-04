@@ -391,7 +391,7 @@ var App = (function () {
       '<button type="button" class="btn" onclick="App.cerrarModal();App.irAPapelera()">' +
         svgUI('papelera') + ' Papelera</button>' +
       '<button type="button" class="btn" onclick="App.abrirCopia()">' +
-        svgUI('guardar') + ' Copia de seguridad</button>' +
+        svgUI('descargar') + ' Exportar e importar</button>' +
       '<button type="button" class="btn" onclick="App.abrirAcercaDe()">' +
         svgUI('info') + ' Acerca de</button>' +
       '</div>',
@@ -423,20 +423,25 @@ var App = (function () {
 
   // ---------- copia de seguridad (exportar / importar) y traspaso ----------
   function abrirCopia() {
-    abrirModal('Copia de seguridad',
-      '<p class="mensaje">La app guarda una <b>copia automática</b> de tus datos a diario en tu Drive ' +
-      '(las últimas 7). Además puedes descargar una copia o restaurarla:</p>' +
+    abrirModal('Exportar e importar',
+      '<span class="etq">Todos tus datos</span>' +
+      '<p class="mensaje">Descarga <b>todo tu cuaderno</b> en un archivo (grupos, clases, ' +
+      'unidades, actividades y notas) o recupéralo desde uno. La app, además, guarda una ' +
+      '<b>copia automática</b> a diario en tu Drive (las últimas 7).</p>' +
       '<div class="acciones-modal">' +
-      '<button type="button" class="btn" onclick="App.exportarDatos()">' + svgUI('descargar') + ' Descargar copia (JSON)</button>' +
+      '<button type="button" class="btn" onclick="App.exportarDatos()">' + svgUI('descargar') + ' Descargar mis datos</button>' +
       '<button type="button" class="btn" onclick="App.pedirImportar()">' + svgUI('restaurar') + ' Restaurar desde archivo</button>' +
       '</div>' +
-      '<p class="mensaje" style="margin-top:14px"><b>Traspaso entre docentes</b>: pasa grupos elegidos ' +
-      '(con sus clases, unidades y notas) a otra persona —p. ej. a quien te sustituya—. ' +
-      'Al recibirlos se <b>añaden</b> a su cuaderno sin tocar los grupos que ya tenga.</p>' +
+      '<span class="etq" style="margin-top:16px;display:block">Pasar grupos a otra persona</span>' +
+      '<p class="mensaje">Exporta los <b>grupos que elijas</b> (con sus clases, unidades y notas) ' +
+      'para dárselos a otro docente —p. ej. a quien te sustituya—. Al recibirlos se <b>añaden</b> ' +
+      'a su cuaderno sin tocar los suyos.</p>' +
       '<div class="acciones-modal">' +
       '<button type="button" class="btn" onclick="App.compartirGruposUI()">' + svgUI('descargar') + ' Pasar grupos a otra persona</button>' +
       '<button type="button" class="btn" onclick="App.recibirGruposUI()">' + svgUI('restaurar') + ' Recibir grupos</button>' +
-      '</div>',
+      '</div>' +
+      '<p class="ayuda" style="margin-top:14px">¿Buscas pasar las notas a <b>Séneca</b>? ' +
+      'Usa <b>«Copiar para Séneca»</b> dentro de una unidad o del Resumen (desde el ordenador).</p>',
       'Cerrar', cerrarModal);
   }
 
@@ -502,7 +507,7 @@ var App = (function () {
     abrirModal('Pasar grupos a otra persona',
       '<p class="mensaje">Elige los grupos a traspasar. Se descargará un archivo con esos grupos ' +
       'completos (alumnado, clases, unidades, actividades y notas) para que la otra persona lo ' +
-      'reciba desde su app con <b>Copia de seguridad → Recibir grupos</b>. ' +
+      'reciba desde su app con <b>Exportar e importar → Recibir grupos</b>. ' +
       'Tus datos <b>no se modifican</b>.</p>' +
       '<div class="lista-crit">' + lista + '</div>' +
       '<p class="ayuda">El archivo lleva los nombres del alumnado en claro: entrégalo por un medio ' +
