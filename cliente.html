@@ -3034,7 +3034,7 @@ var App = (function () {
   function nuevaRubrica() {
     // Sin indicadores → no se pinta tabla hasta pegar o «empezar en blanco».
     rubricaEnEdicion = { nombre: '', niveles: nivelesPorDefecto_(), indicadores: [],
-      criterios: [], criteriosModo: 'global', critCurso: '', critArea: '' };
+      criterios: [], criteriosOn: false, criteriosModo: 'global', critCurso: '', critArea: '' };
     rubCritsDisponibles = [];
     abrirModalRubrica_('Nueva rúbrica', 'Crear rúbrica', null);
   }
@@ -3051,12 +3051,13 @@ var App = (function () {
           criterios: ind.criterios || [], celdas: celdas };
       });
       // El modo se deduce: si algún indicador trae criterio, es «por indicador».
-      var modo = indicadores.some(function (ind) { return (ind.criterios || []).length; })
-        ? 'indicador' : 'global';
+      var porInd = indicadores.some(function (ind) { return (ind.criterios || []).length; });
+      var hayGlobal = (r.criterios || []).length > 0;
       rubricaEnEdicion = {
         nombre: r.nombre, niveles: niveles, indicadores: indicadores,
         criterios: (r.criterios || []).slice(),
-        criteriosModo: modo, critCurso: '', critArea: ''
+        criteriosOn: porInd || hayGlobal, // el check nace activo si ya había criterios
+        criteriosModo: porInd ? 'indicador' : 'global', critCurso: '', critArea: ''
       };
       rubCritsDisponibles = [];
       abrirModalRubrica_('Editar rúbrica', 'Guardar cambios', id);
@@ -3163,7 +3164,7 @@ var App = (function () {
       }).join('') +
       '<th class="rg-add"><button type="button" class="mini-x" title="Añadir nivel" ' +
         'onclick="App.rubAnadirNivel()">+</button></th></tr>';
-    var porIndicador = (e.criteriosModo === 'indicador' && rubCritsDisponibles.length);
+    var porIndicador = (e.criteriosOn && e.criteriosModo === 'indicador' && rubCritsDisponibles.length);
     rubPesosManual = {}; // rejilla reconstruida: todos los pesos vuelven a "auto"
     var cuerpo = e.indicadores.map(function (ind, i) {
       var celdas = e.niveles.map(function (n, j) {
@@ -3275,38 +3276,53 @@ var App = (function () {
     el.innerHTML = '<span class="peso-total-val ' + (total === 100 ? 'ok' : 'err') + '">' + total + '%</span>';
   }
 
-  // ---------- asociar criterios (global o por indicador) ----------
+  // ---------- asociar criterios (opcional; global o por indicador) ----------
   function renderRubCrits_() {
     var e = rubricaEnEdicion;
+    var on = !!e.criteriosOn;
     var modo = e.criteriosModo || 'global';
-    var optC = '<option value="">— Curso —</option>' + cursosDisponibles().map(function (c) {
-      return '<option value="' + esc(c) + '"' + (c === e.critCurso ? ' selected' : '') + '>' +
-        esc(c) + '</option>';
-    }).join('');
+    var interior = '';
+    if (on) {
+      var optC = '<option value="">— Curso —</option>' + cursosDisponibles().map(function (c) {
+        return '<option value="' + esc(c) + '"' + (c === e.critCurso ? ' selected' : '') + '>' +
+          esc(c) + '</option>';
+      }).join('');
+      interior =
+        '<div class="rub-modo">' +
+          '<label><input type="radio" name="rub-modo" value="global"' +
+            (modo === 'global' ? ' checked' : '') + ' onchange="App.rubCambiarModo(\'global\')"> ' +
+            'Global (toda la rúbrica)</label>' +
+          '<label><input type="radio" name="rub-modo" value="indicador"' +
+            (modo === 'indicador' ? ' checked' : '') + ' onchange="App.rubCambiarModo(\'indicador\')"> ' +
+            'Por indicador</label>' +
+        '</div>' +
+        '<div class="rub-crit-sels">' +
+          '<select id="rub-crit-curso" onchange="App.rubCursoCambiado()">' + optC + '</select>' +
+          '<select id="rub-crit-area" onchange="App.rubAreaCambiada()"></select>' +
+        '</div>' +
+        (modo === 'global'
+          ? '<div id="rub-crit-lista" class="lista-crit"></div><div id="rub-crit-sel" class="rc-crits"></div>'
+          : '<p class="ayuda">Elige curso y área; luego asigna a cada fila su criterio en la ' +
+            'tabla de arriba.</p>');
+    }
     document.getElementById('rub-crits-cont').innerHTML =
-      '<div class="campo-crit"><span class="etq">Criterios de evaluación (opcional)</span>' +
-      '<div class="rub-modo">' +
-        '<label><input type="radio" name="rub-modo" value="global"' +
-          (modo === 'global' ? ' checked' : '') + ' onchange="App.rubCambiarModo(\'global\')"> ' +
-          'Global (toda la rúbrica)</label>' +
-        '<label><input type="radio" name="rub-modo" value="indicador"' +
-          (modo === 'indicador' ? ' checked' : '') + ' onchange="App.rubCambiarModo(\'indicador\')"> ' +
-          'Por indicador</label>' +
-      '</div>' +
-      '<div class="rub-crit-sels">' +
-        '<select id="rub-crit-curso" onchange="App.rubCursoCambiado()">' + optC + '</select>' +
-        '<select id="rub-crit-area" onchange="App.rubAreaCambiada()"></select>' +
-      '</div>' +
-      (modo === 'global'
-        ? '<div id="rub-crit-lista" class="lista-crit"></div><div id="rub-crit-sel" class="rc-crits"></div>'
-        : '<p class="ayuda">Elige curso y área; luego asigna a cada fila su criterio en la ' +
-          'tabla de arriba.</p>') +
-      '</div>';
+      '<label class="check check-suelto"><input type="checkbox" id="rub-crit-on"' +
+        (on ? ' checked' : '') + ' onchange="App.rubToggleCriterios(this)"> ' +
+        'Asociar criterios de evaluación (opcional)</label>' +
+      (on ? '<div class="campo-crit">' + interior + '</div>' : '');
+    if (!on) return;
     var selArea = document.getElementById('rub-crit-area');
     selArea.innerHTML = opcionesAreas(e.critCurso);
     if (e.critArea) selArea.value = e.critArea;
     if (modo === 'global') renderRubCritSeleccionados_();
     if (e.critCurso && e.critArea) cargarCriteriosArea_();
+  }
+
+  function rubToggleCriterios(input) {
+    leerRubGrid_();
+    rubricaEnEdicion.criteriosOn = input.checked;
+    renderRubCrits_();
+    renderRubGrid_(); // el selector de criterio por fila depende del check
   }
 
   function rubCambiarModo(modo) {
@@ -3398,10 +3414,16 @@ var App = (function () {
     // Alinea las celdas de cada indicador con el nº de niveles (evita descuadres
     // si se añadieron/quitaron niveles tras pegar una tabla).
     indicadores.forEach(function (ind) { ind.celdas = (ind.celdas || []).slice(0, niveles.length); });
-    // Según el modo, solo se conserva un tipo de asociación (el otro se limpia),
-    // para que al reabrir se deduzca bien el modo.
-    if (e.criteriosModo === 'indicador') e.criterios = [];
-    else indicadores.forEach(function (ind) { ind.criterios = []; });
+    // Si el check está apagado, no se guarda ningún criterio. Si está activo,
+    // solo se conserva la asociación del modo elegido (para deducir bien el modo).
+    if (!e.criteriosOn) {
+      e.criterios = [];
+      indicadores.forEach(function (ind) { ind.criterios = []; });
+    } else if (e.criteriosModo === 'indicador') {
+      e.criterios = [];
+    } else {
+      indicadores.forEach(function (ind) { ind.criterios = []; });
+    }
     var payload = { nombre: nombre, indicadores: indicadores, niveles: niveles,
       criterios: e.criterios };
     botonModalCargando('Guardando…');
@@ -3486,6 +3508,7 @@ var App = (function () {
     empezarRubricaEnBlanco: empezarRubricaEnBlanco, limpiarRubrica: limpiarRubrica,
     rubAnadirNivel: rubAnadirNivel, rubQuitarNivel: rubQuitarNivel,
     rubAnadirIndicador: rubAnadirIndicador, rubQuitarIndicador: rubQuitarIndicador,
+    rubToggleCriterios: rubToggleCriterios,
     rubCambiarModo: rubCambiarModo, rubPesoCambiado: rubPesoCambiado,
     rubCursoCambiado: rubCursoCambiado, rubAreaCambiada: rubAreaCambiada,
     rubCriterioCambiado: rubCriterioCambiado, rubQuitarCrit: rubQuitarCrit,
