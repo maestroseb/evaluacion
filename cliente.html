@@ -1731,8 +1731,7 @@ var App = (function () {
           '" data-act="' + a.actividadId + '" data-ind="' + k + '" ' +
           'title="' + esc(a.nombre + ' · ' + ind.texto) + '" ' +
           'onclick="App.toggleRubExpand(event,\'' + a.actividadId + '\')">' +
-          '<span class="rub-rama-vert">' + esc(ind.texto) + '</span>' +
-          '<small>' + pesoEntero_(ind.peso) + '%</small></th>';
+          '<span class="rub-rama-vert">' + esc(ind.texto) + '</span></th>';
       }).join('');
       return principal + subs;
     }
@@ -1744,7 +1743,8 @@ var App = (function () {
       gripAct_(a.actividadId) + editAct_(a.actividadId) +
       (esRub ? '<span class="rub-exp-ico">' + svgUI('expandir') + '</span>' : '') +
       '<span class="act-nom">' + esc(a.nombre) + '</span>' +
-      '<small>' + esc(metaColumna(a)) + '</small></th>';
+      '<small class="act-meta">' + esc(metaTipo_(a)) + '</small>' +
+      '<small class="act-crits">' + esc(metaCrits_(a)) + '</small></th>';
   }
 
   /** Celdas de una actividad para un alumno: 1 (normal) o global + N (rúbrica expandida). */
@@ -1948,10 +1948,10 @@ var App = (function () {
     }
   }
 
-  /** Texto pequeño de la cabecera de columna según el tipo. */
-  function metaColumna(a) {
+  /** Línea de tipo/ítems de una columna (nº de ítems máximo o el tipo). */
+  function metaTipo_(a) {
     var tipo = tipoDe(a);
-    var parte = tipo === 'items' ? '/' + a.numItems :
+    var parte = tipo === 'items' ? a.numItems + ' ítems' :
       tipo === 'nota' ? '0-10' :
       tipo === 'check' ? '✓/✗' :
       tipo === 'escala' ? 'IN-SB' :
@@ -1960,7 +1960,11 @@ var App = (function () {
       tipo === 'rubrica' ? 'rúbrica' :
       (a.numItems > 0 ? '± /' + a.numItems : '±');
     if (a.desglose) parte += ' · por criterio';
-    return parte + ' · ' + (a.criterios.length ? a.criterios.join(', ') : 'informativa');
+    return parte;
+  }
+  /** Línea de criterios de una columna (o «informativa» si no cuenta). */
+  function metaCrits_(a) {
+    return (a.criterios && a.criterios.length) ? a.criterios.join(', ') : 'informativa';
   }
 
   /** Extracto de una celda con desglose: el valor de cada criterio, en orden. */
