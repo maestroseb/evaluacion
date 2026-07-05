@@ -1694,11 +1694,6 @@ var App = (function () {
   function esRubExp_(a) {
     return tipoDe(a) === 'rubrica' && rubExpandido[a.actividadId] && rubDef_(a);
   }
-  /** Abreviatura corta de un nivel para la celda/selector (2 letras o su valor). */
-  function nivAbbr_(niv) {
-    var e = String(niv.etiqueta || '').trim();
-    return e ? e.slice(0, 2).toUpperCase() : String(niv.valor);
-  }
   function toggleRubExpand(e, actId) {
     if (e) e.stopPropagation();
     var a = actDe(actId);
@@ -1718,22 +1713,28 @@ var App = (function () {
       'onclick="event.stopPropagation();App.editarActividadUI(\'' + actId + '\')">' + svgUI('lapiz') + '</button>';
   }
 
-  /** Cabecera de una actividad: 1 columna (normal/contraída) o N (expandida). */
+  /** Cabecera de una actividad: 1 columna (normal/contraída) o principal + N (expandida). */
   function cabeceraAct_(a) {
     if (esRubExp_(a)) {
       var def = rubDef_(a), n = (def.indicadores || []).length;
-      // Rama expandida: cada indicador cuelga de la rúbrica (toca para contraer).
-      return (def.indicadores || []).map(function (ind, k) {
-        var ini = (k === 0), fin = (k === n - 1);
-        return '<th class="act act-sub' + (ini ? ' act-sub-ini' : '') + (fin ? ' act-sub-fin' : '') +
+      // Columna principal (la rúbrica): se queda con su nota global.
+      var principal = '<th class="act act-rub-col act-rub-prim" data-act="' + a.actividadId + '" ' +
+        'title="' + esc(a.nombre + ' · toca para plegar') + '" ' +
+        'onclick="App.toggleRubExpand(event,\'' + a.actividadId + '\')">' +
+        gripAct_(a.actividadId) + editAct_(a.actividadId) +
+        '<span class="act-nom rub-titulo">' + esc(a.nombre) + '</span>' +
+        '<small>rúbrica</small></th>';
+      // Sub-columnas: cada indicador como rama, con el nombre en VERTICAL.
+      var subs = (def.indicadores || []).map(function (ind, k) {
+        var fin = (k === n - 1);
+        return '<th class="act act-sub' + (k === 0 ? ' act-sub-ini' : '') + (fin ? ' act-sub-fin' : '') +
           '" data-act="' + a.actividadId + '" data-ind="' + k + '" ' +
           'title="' + esc(a.nombre + ' · ' + ind.texto) + '" ' +
           'onclick="App.toggleRubExpand(event,\'' + a.actividadId + '\')">' +
-          (ini ? gripAct_(a.actividadId) + editAct_(a.actividadId) : '') +
-          '<span class="rub-padre">' + (ini ? esc(a.nombre) : '') + '</span>' +
-          '<span class="act-nom rub-rama">' + esc(ind.texto) + '</span>' +
+          '<span class="rub-rama-vert">' + esc(ind.texto) + '</span>' +
           '<small>' + pesoEntero_(ind.peso) + '%</small></th>';
       }).join('');
+      return principal + subs;
     }
     var esRub = (tipoDe(a) === 'rubrica' && rubDef_(a));
     // La cabecera de rúbrica se toca para expandir; el resto no lleva onclick.
@@ -1746,21 +1747,30 @@ var App = (function () {
       '<small>' + esc(metaColumna(a)) + '</small></th>';
   }
 
-  /** Celdas de una actividad para un alumno: 1 (normal) o N (rúbrica expandida). */
+  /** Celdas de una actividad para un alumno: 1 (normal) o global + N (rúbrica expandida). */
   function celdasAct_(a, c, r, alId) {
     if (esRubExp_(a)) {
       var def = rubDef_(a), maxP = rubMaxPts_(def);
       var picks = valorItem(a.actividadId, alId);
       if (!picks || typeof picks !== 'object') picks = {};
-      return (def.indicadores || []).map(function (ind, k) {
+      // Columna principal: la nota global de la rúbrica (se queda al expandir).
+      var ng = notaRubricaGlobal_(a, alId), gCls = claseNota(ng);
+      var principal = '<td class="celda celda-rub-global' + (gCls ? ' ' + gCls : '') + '" data-act="' +
+        a.actividadId + '" data-al="' + alId + '" tabindex="0" role="button" ' +
+        'title="Nota global · toca para plegar" ' +
+        'onclick="App.toggleRubExpand(event,\'' + a.actividadId + '\')">' +
+        (ng == null ? '·' : fmtNota(ng, evalActual && evalActual.curso)) + '</td>';
+      // Sub-celdas: el VALOR (puntos) del nivel elegido en cada indicador.
+      var subs = (def.indicadores || []).map(function (ind, k) {
         var lvl = picks[k];
         var niv = (lvl != null) ? (def.niveles || [])[Math.round(lvl) - 1] : null;
         var g = niv ? claseNota((Number(niv.valor) || 0) / maxP * 10) : '';
         return '<td class="celda celda-rub-ind' + (g ? ' ' + g : '') + '" data-act="' + a.actividadId +
           '" data-al="' + alId + '" data-ind="' + k + '" tabindex="0" role="button" ' +
           'aria-label="Elegir nivel" title="' + (niv ? esc(niv.etiqueta) : 'Sin valorar') + '" ' +
-          'onclick="App.abrirSelectorNivelRub(this)">' + (niv ? esc(nivAbbr_(niv)) : '·') + '</td>';
+          'onclick="App.abrirSelectorNivelRub(this)">' + (niv ? esc(niv.valor) : '·') + '</td>';
       }).join('');
+      return principal + subs;
     }
     return celdaValor(a, c, r, alId);
   }
@@ -1778,7 +1788,7 @@ var App = (function () {
       var g = claseNota((Number(niv.valor) || 0) / maxP * 10);
       return '<button type="button" class="pop-nivel-opt' + (Math.round(cur) === i + 1 ? ' sel' : '') +
         (g ? ' ' + g : '') + '" title="' + esc(niv.etiqueta + ' (' + niv.valor + ')') + '" ' +
-        'onclick="App.elegirNivelRub(' + (i + 1) + ')">' + esc(nivAbbr_(niv)) + '</button>';
+        'onclick="App.elegirNivelRub(' + (i + 1) + ')">' + esc(niv.valor) + '</button>';
     }).join('') +
       '<button type="button" class="pop-nivel-opt vaciar" title="Sin valorar" ' +
       'onclick="App.elegirNivelRub(null)">·</button>';
@@ -1807,7 +1817,7 @@ var App = (function () {
     td.className = td.className.replace(/\bg-\w+/g, '').trim();
     if (niv && maxP > 0) { var g = claseNota((Number(niv.valor) || 0) / maxP * 10); if (g) td.classList.add(g); }
     td.title = niv ? niv.etiqueta : 'Sin valorar';
-    td.textContent = niv ? nivAbbr_(niv) : '·';
+    td.textContent = niv ? niv.valor : '·';
     actualizarNotasFila(alId);
     programarGuardadoNotas();
   }
@@ -1823,7 +1833,12 @@ var App = (function () {
     var verCrit = document.getElementById('ver-criterios').checked;
     var crits = verCrit ? criteriosUsados() : [];
 
-    var h = '<table class="rejilla"><thead><tr>' +
+    // Si la unidad tiene alguna columna rúbrica, el alto de cabecera se reserva
+    // (más alto) SIEMPRE, para que expandir/plegar no lo cambie.
+    var conRubrica = rejilla.actividades.some(function (a) {
+      return tipoDe(a) === 'rubrica' && rubDef_(a);
+    });
+    var h = '<table class="rejilla' + (conRubrica ? ' con-rubrica' : '') + '"><thead><tr>' +
       '<th class="idx">#</th><th class="esq">Alumno/a</th><th class="al-corto"></th>';
     rejilla.actividades.forEach(function (a) { h += cabeceraAct_(a); });
     h += '<th class="nota sep">NOTA</th>';
