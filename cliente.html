@@ -1972,9 +1972,14 @@ var App = (function () {
     [].forEach.call(els, function (el) {
       // Retardo invertido respecto al de apertura: la última rama pliega primero.
       var d = parseInt(el.style.getPropertyValue('--rub-d'), 10) || 0;
-      el.style.setProperty('--rub-dc', (max - d) + 'ms');
+      var dc = max - d;
+      el.style.setProperty('--rub-dc', dc + 'ms');
       el.style.width = el.offsetWidth + 'px'; // punto de partida del encogido
       el.classList.add('rub-plegando');
+      // Cada columna ENCOGE justo cuando acaba su propio desvanecido (no al
+      // final de todos): el repliegue avanza en onda de fuera adentro y las
+      // contiguas van entrando sin dejar un hueco blanco muerto.
+      setTimeout(function () { el.classList.add('rub-colapsando'); }, dc + 140);
     });
     // La banda de la columna principal se desvanece A LA VEZ que llega la
     // rama más cercana (no después, con el repintado): mismo retardo que ella.
@@ -1983,13 +1988,7 @@ var App = (function () {
       prim.style.transitionDelay = max + 'ms';
       prim.classList.add('rub-plegando-prim');
     }
-    // Fase 2: con las ramas ya desvanecidas, sus columnas se ENCOGEN a cero en
-    // transición para que las contiguas vuelvan deslizándose (el inverso del
-    // "empuje" al desplegar); el repintado final ya no mueve nada visible.
-    setTimeout(function () {
-      [].forEach.call(els, function (el) { el.classList.add('rub-colapsando'); });
-      setTimeout(fin, 210);
-    }, 200 + max);
+    setTimeout(fin, max + 140 + 210);
   }
 
   /** Asa de arrastre (⠿): el ÚNICO sitio desde el que se reordena la columna. */
