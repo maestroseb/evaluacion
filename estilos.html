@@ -425,6 +425,18 @@
   .modal input:focus, .modal select:focus, .modal textarea:focus {
     outline: none; border-color: var(--acento); box-shadow: 0 0 0 3px var(--acento-suave);
   }
+  /* Checks y radios: controles nativos. El ancho 100%, el relleno y el halo de
+     foco de los campos de texto los deformaban y hacían «parpadear» la casilla
+     al tocarla (halo animado + resaltado de toque de iOS). */
+  .modal input[type="checkbox"], .modal input[type="radio"] {
+    width: auto; margin: 0; padding: 0; box-shadow: none; transition: none;
+    flex: 0 0 auto; accent-color: var(--acento);
+  }
+  .modal input[type="checkbox"]:focus, .modal input[type="radio"]:focus { box-shadow: none; }
+  .modal input[type="checkbox"]:focus-visible, .modal input[type="radio"]:focus-visible {
+    outline: 2px solid var(--acento); outline-offset: 2px;
+  }
+  .modal label, .modal .check { -webkit-tap-highlight-color: transparent; }
   .modal textarea { resize: vertical; }
   /* Campos numéricos cortos (nº de ítems): con 2-3 dígitos basta, nada de
      ocupar el modal entero. display:block para que no herede el ancho del label. */
@@ -729,7 +741,8 @@
   /* Animación al desplegar/plegar la rúbrica: las sub-columnas aparecen suaves. */
   @keyframes rub-aparecer { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: none; } }
   table.rejilla th.act.act-sub, table.rejilla th.act.act-rub-prim,
-  table.rejilla td.celda-rub-ind, table.rejilla td.celda-rub-global { animation: rub-aparecer .18s ease; }
+  table.rejilla td.celda-rub-ind, table.rejilla td.celda-rub-global,
+  table.rejilla td.celda-sub { animation: rub-aparecer .18s ease; }
   table.rejilla .edit-act { position: absolute; top: 4px; right: 4px; border: none;
     background: transparent; color: var(--texto-3); cursor: pointer; font-size: 12px;
     padding: 2px; line-height: 1; z-index: 1; border-radius: 4px; }
@@ -778,9 +791,16 @@
     text-align: left; font-size: 12px; padding: 4px 8px; }
   table.rejilla td.celda-texto.vacia { text-align: center; color: var(--texto-3); }
   table.rejilla td.celda-texto.vacia .svg-ico { width: 13px; height: 13px; vertical-align: -2px; }
-  /* Nota por criterio (desglose): extracto "7 | 5"; tocar para editar. */
-  table.rejilla td.celda-desglose { cursor: pointer; user-select: none; min-width: 56px;
-    font-size: 12px; font-weight: 600; color: var(--texto-2); letter-spacing: .01em; }
+  /* Multinota (desglose) contraída: la media /10; tocar para desplegar. */
+  table.rejilla td.celda-desglose { cursor: pointer; user-select: none; text-align: center;
+    font-weight: 600; color: var(--acento); font-variant-numeric: tabular-nums; }
+  table.rejilla td.celda-desglose.vacia .svg-ico { width: 14px; height: 14px; vertical-align: -2px;
+    color: var(--texto-3); }
+  /* Multinota expandida: sub-celdas por criterio (banda de árbol, estrechas). */
+  table.rejilla td.celda-sub { border-left: 1px dashed var(--borde); min-width: 40px; }
+  table.rejilla td.celda-sub input.celda-sub-inp { width: 40px; text-align: center;
+    border: 1px solid var(--borde); border-radius: 6px; padding: 4px 2px; background: var(--bg);
+    font-size: 16px; font-variant-numeric: tabular-nums; }
   /* Selector flotante de nivel (escalas): los 5 niveles + vaciar, a un toque. */
   .pop-nivel { position: fixed; z-index: 60; display: flex; gap: 4px; padding: 6px;
     background: var(--surface); border: 1px solid var(--borde-fuerte);

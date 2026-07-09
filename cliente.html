@@ -1355,7 +1355,7 @@ var App = (function () {
   }
   function notaPendientesTxt_(p) {
     return p > 0
-      ? 'Quedan <b>' + p + '</b> criterios sin evaluar en la clase (marcados como «no evaluado»).'
+      ? 'Quedan <b>' + p + '</b> criterios por evaluar en el curso.'
       : svgUI('check') + ' Todos los criterios de la clase están ya asignados a alguna actividad.';
   }
 
@@ -1689,15 +1689,25 @@ var App = (function () {
    * Pinta la tabla alumnos × actividades. Orden de columnas:
    * # | Alumno | actividades… | Nota (global) | criterios (resumen, a la derecha).
    */
-  // ---------- columnas rúbrica expandibles (estilo iDoceo) ----------
-  var rubExpandido = {}; // actividadId -> true si la columna rúbrica está expandida
+  // ---------- columnas expandibles (estilo iDoceo): rúbrica y multinota ----------
+  var rubExpandido = {}; // actividadId -> true si la columna está expandida
+  /** ¿La columna se puede desplegar en subcolumnas? (rúbrica o multinota). */
+  function esExpandible_(a) {
+    return (tipoDe(a) === 'rubrica' && !!rubDef_(a)) ||
+      (!!a.desglose && (a.criterios || []).length > 0 && tipoDe(a) !== 'rubrica');
+  }
   function esRubExp_(a) {
     return tipoDe(a) === 'rubrica' && rubExpandido[a.actividadId] && rubDef_(a);
+  }
+  /** Columna multinota (desglose) desplegada en una subcolumna por criterio. */
+  function esDesExp_(a) {
+    return !!a.desglose && (a.criterios || []).length > 0 &&
+      tipoDe(a) !== 'rubrica' && rubExpandido[a.actividadId];
   }
   function toggleRubExpand(e, actId) {
     if (e) e.stopPropagation();
     var a = actDe(actId);
-    if (!a || tipoDe(a) !== 'rubrica' || !rubDef_(a)) return;
+    if (!a || !esExpandible_(a)) return;
     rubExpandido[actId] = !rubExpandido[actId];
     pintarRejilla();
   }
@@ -1713,35 +1723,46 @@ var App = (function () {
       'onclick="event.stopPropagation();App.editarActividadUI(\'' + actId + '\')">' + svgUI('lapiz') + '</button>';
   }
 
+  /** Cabecera principal de una columna expandida (rúbrica o multinota). */
+  function cabeceraPrincipal_(a, meta) {
+    return '<th class="act act-rub-col act-rub-prim" data-act="' + a.actividadId + '" ' +
+      'title="' + esc(a.nombre + ' · toca para plegar') + '" ' +
+      'onclick="App.toggleRubExpand(event,\'' + a.actividadId + '\')">' +
+      gripAct_(a.actividadId) + editAct_(a.actividadId) +
+      '<span class="act-nom rub-titulo">' + esc(a.nombre) + '</span>' +
+      '<small>' + esc(meta) + '</small></th>';
+  }
+  /** Sub-cabecera (rama) con el texto en vertical, dentro de una columna expandida. */
+  function subCabecera_(a, k, n, etiq, titulo) {
+    var fin = (k === n - 1);
+    return '<th class="act act-sub' + (k === 0 ? ' act-sub-ini' : '') + (fin ? ' act-sub-fin' : '') +
+      '" data-act="' + a.actividadId + '" ' +
+      'title="' + esc(titulo) + '" ' +
+      'onclick="App.toggleRubExpand(event,\'' + a.actividadId + '\')">' +
+      '<span class="rub-rama-vert">' + esc(etiq) + '</span></th>';
+  }
+
   /** Cabecera de una actividad: 1 columna (normal/contraída) o principal + N (expandida). */
   function cabeceraAct_(a) {
     if (esRubExp_(a)) {
-      var def = rubDef_(a), n = (def.indicadores || []).length;
-      // Columna principal (la rúbrica): se queda con su nota global.
-      var principal = '<th class="act act-rub-col act-rub-prim" data-act="' + a.actividadId + '" ' +
-        'title="' + esc(a.nombre + ' · toca para plegar') + '" ' +
-        'onclick="App.toggleRubExpand(event,\'' + a.actividadId + '\')">' +
-        gripAct_(a.actividadId) + editAct_(a.actividadId) +
-        '<span class="act-nom rub-titulo">' + esc(a.nombre) + '</span>' +
-        '<small>rúbrica</small></th>';
-      // Sub-columnas: cada indicador como rama, con el nombre en VERTICAL.
-      var subs = (def.indicadores || []).map(function (ind, k) {
-        var fin = (k === n - 1);
-        return '<th class="act act-sub' + (k === 0 ? ' act-sub-ini' : '') + (fin ? ' act-sub-fin' : '') +
-          '" data-act="' + a.actividadId + '" data-ind="' + k + '" ' +
-          'title="' + esc(a.nombre + ' · ' + ind.texto) + '" ' +
-          'onclick="App.toggleRubExpand(event,\'' + a.actividadId + '\')">' +
-          '<span class="rub-rama-vert">' + esc(ind.texto) + '</span></th>';
+      var def = rubDef_(a), inds = def.indicadores || [], n = inds.length;
+      return cabeceraPrincipal_(a, 'rúbrica') + inds.map(function (ind, k) {
+        return subCabecera_(a, k, n, ind.texto, a.nombre + ' · ' + ind.texto);
       }).join('');
-      return principal + subs;
     }
-    var esRub = (tipoDe(a) === 'rubrica' && rubDef_(a));
-    // La cabecera de rúbrica se toca para expandir; el resto no lleva onclick.
-    return '<th class="act' + (esRub ? ' act-rub-col' : '') + '" data-act="' + a.actividadId + '" ' +
-      'title="' + esc(esRub ? (a.nombre + ' · toca para desplegar') : a.criterios.join(', ')) + '" ' +
-      (esRub ? 'onclick="App.toggleRubExpand(event,\'' + a.actividadId + '\')" ' : '') + '>' +
+    if (esDesExp_(a)) {
+      var crits = a.criterios || [], m = crits.length;
+      return cabeceraPrincipal_(a, metaTipo_(a)) + crits.map(function (cod, k) {
+        return subCabecera_(a, k, m, cod, a.nombre + ' · ' + cod + ': ' + infoCrit(cod).texto);
+      }).join('');
+    }
+    var exp = esExpandible_(a);
+    // Las columnas desplegables se tocan para expandir; el resto no lleva onclick.
+    return '<th class="act' + (exp ? ' act-rub-col' : '') + '" data-act="' + a.actividadId + '" ' +
+      'title="' + esc(exp ? (a.nombre + ' · toca para desplegar') : a.criterios.join(', ')) + '" ' +
+      (exp ? 'onclick="App.toggleRubExpand(event,\'' + a.actividadId + '\')" ' : '') + '>' +
       gripAct_(a.actividadId) + editAct_(a.actividadId) +
-      (esRub ? '<span class="rub-exp-ico">' + svgUI('expandir') + '</span>' : '') +
+      (exp ? '<span class="rub-exp-ico">' + svgUI('expandir') + '</span>' : '') +
       '<span class="act-nom">' + esc(a.nombre) + '</span>' +
       '<small class="act-meta">' + esc(metaTipo_(a)) + '</small>' +
       '<small class="act-crits">' + esc(metaCrits_(a)) + '</small></th>';
@@ -1772,7 +1793,78 @@ var App = (function () {
       }).join('');
       return principal + subs;
     }
+    if (esDesExp_(a)) {
+      // Columna principal: la media /10 de la actividad (se queda al expandir).
+      var nm = notaActividad(a, alId), mCls = claseNota(nm);
+      var princ = '<td class="celda celda-rub-global celda-des-prim' + (mCls ? ' ' + mCls : '') +
+        '" data-act="' + a.actividadId + '" data-al="' + alId + '" tabindex="0" role="button" ' +
+        'title="Media · toca para plegar" ' +
+        'onclick="App.toggleRubExpand(event,\'' + a.actividadId + '\')">' +
+        (nm == null ? '·' : fmtNota(nm, evalActual && evalActual.curso)) + '</td>';
+      // Sub-celdas: una por criterio, con el editor propio del tipo base.
+      var subd = (a.criterios || []).map(function (cod) {
+        return celdaSubDesglose_(a, cod, alId);
+      }).join('');
+      return princ + subd;
+    }
     return celdaValor(a, c, r, alId);
+  }
+
+  /** Sub-celda de una columna multinota expandida: editor del tipo base para un criterio. */
+  function celdaSubDesglose_(a, cod, alId) {
+    var tipo = tipoDe(a);
+    var v = valorCod_(a.actividadId, alId, cod);
+    var comun = 'data-act="' + a.actividadId + '" data-al="' + alId + '" data-cod="' + esc(cod) + '"';
+    if (tipo === 'check') {
+      var cls = v === 1 ? ' si' : (v === 0 ? ' no' : '');
+      return '<td class="celda celda-sub celda-check' + cls + '" ' + comun +
+        ' tabindex="0" role="button" aria-label="Alternar check" ' +
+        'onclick="App.ciclarCheck(this)">' + iconoCheck_(v) + '</td>';
+    }
+    if (tipo === 'escala' || tipo === 'escalaInf') {
+      var niv = TIPOS_ACT[tipo].niveles[Math.round(v) - 1] || null;
+      var g = niv ? claseNota(niv.nota) : '';
+      return '<td class="celda celda-sub celda-escala' + (g ? ' ' + g : '') + '" ' + comun +
+        ' tabindex="0" role="button" aria-label="Elegir nivel" ' +
+        'title="' + (niv ? esc(niv.nombre) : 'Sin valorar') + '" ' +
+        'onclick="App.abrirSelectorNivel(this)">' + (niv ? niv.cod : '·') + '</td>';
+    }
+    if (tipo === 'contador') {
+      return '<td class="celda celda-sub celda-cont" ' + comun + '>' +
+        '<button type="button" class="cont-btn" aria-label="Restar" ' +
+        'onclick="App.sumarContador(this,-1)">−</button>' +
+        '<span class="cont-val">' + (v == null ? '·' : fmt(v)) + '</span>' +
+        '<button type="button" class="cont-btn" aria-label="Sumar" ' +
+        'onclick="App.sumarContador(this,1)">+</button></td>';
+    }
+    // items y nota: input numérico (no entra en la navegación 2D de la rejilla).
+    return '<td class="celda celda-sub"><input type="text" inputmode="decimal" ' +
+      'class="celda-sub-inp" ' + comun + ' value="' + (v == null ? '' : fmt(v)) + '"></td>';
+  }
+
+  /** Valor de una celda; con `cod` (multinota) devuelve el de ese criterio. */
+  function valorCod_(actId, alId, cod) {
+    var v = valorItem(actId, alId);
+    if (cod == null || cod === '') return v;
+    return (v && typeof v === 'object') ? (v[cod] != null ? v[cod] : null) : null;
+  }
+  /** Fija (o borra) el valor de una celda; con `cod` escribe dentro del objeto multinota. */
+  function fijarCod_(actId, alId, cod, nv) {
+    if (cod == null || cod === '') { fijarValor(actId, alId, nv); return; }
+    var prev = valorItem(actId, alId), obj = {};
+    if (prev && typeof prev === 'object') Object.keys(prev).forEach(function (k) { obj[k] = prev[k]; });
+    if (nv == null || nv === '') delete obj[cod]; else obj[cod] = nv;
+    fijarValor(actId, alId, Object.keys(obj).length ? obj : null);
+  }
+  /** Repinta la celda principal (media) de una columna multinota expandida. */
+  function refrescarMediaDesglose_(actId, alId) {
+    var td = document.querySelector('#rejilla-cont td.celda-des-prim[data-act="' + actId +
+      '"][data-al="' + alId + '"]');
+    if (!td) return;
+    var a = actDe(actId), n = a ? notaActividad(a, alId) : null;
+    td.className = td.className.replace(/\bg-\w+/g, '').trim();
+    var g = claseNota(n); if (g) td.classList.add(g);
+    td.textContent = (n == null ? '·' : fmtNota(n, evalActual && evalActual.curso));
   }
 
   /** Selector de nivel para una celda de indicador de rúbrica. */
@@ -1833,11 +1925,9 @@ var App = (function () {
     var verCrit = document.getElementById('ver-criterios').checked;
     var crits = verCrit ? criteriosUsados() : [];
 
-    // Si la unidad tiene alguna columna rúbrica, el alto de cabecera se reserva
-    // (más alto) SIEMPRE, para que expandir/plegar no lo cambie.
-    var conRubrica = rejilla.actividades.some(function (a) {
-      return tipoDe(a) === 'rubrica' && rubDef_(a);
-    });
+    // Si la unidad tiene alguna columna desplegable (rúbrica o multinota), el alto
+    // de cabecera se reserva (más alto) SIEMPRE, para que expandir/plegar no lo cambie.
+    var conRubrica = rejilla.actividades.some(esExpandible_);
     var h = '<table class="rejilla' + (conRubrica ? ' con-rubrica' : '') + '"><thead><tr>' +
       '<th class="idx">#</th><th class="esq">Alumno/a</th><th class="al-corto"></th>';
     rejilla.actividades.forEach(function (a) { h += cabeceraAct_(a); });
@@ -1928,7 +2018,7 @@ var App = (function () {
   /** Engancha la matriz de inputs y sus eventos (teclado, dictado, pegar). */
   function wireRejilla() {
     inputs2d = [];
-    var inputs = document.querySelectorAll('#rejilla-cont .celda input');
+    var inputs = document.querySelectorAll('#rejilla-cont .celda input:not(.celda-sub-inp)');
     [].forEach.call(inputs, function (inp) {
       var r = +inp.dataset.r, c = +inp.dataset.c;
       (inputs2d[r] || (inputs2d[r] = []))[c] = inp;
@@ -1937,6 +2027,24 @@ var App = (function () {
       inp.addEventListener('input', onDictado);
       inp.addEventListener('paste', onPegar);
     });
+    // Sub-celdas de columnas multinota expandidas (fuera de la navegación 2D).
+    [].forEach.call(document.querySelectorAll('#rejilla-cont .celda-sub-inp'), function (inp) {
+      inp.addEventListener('change', function () { commitSubInput(inp); });
+    });
+  }
+
+  /** Guarda el valor tecleado en una sub-celda de multinota (criterio `data-cod`). */
+  function commitSubInput(inp) {
+    var actId = inp.dataset.act, alId = inp.dataset.al, cod = inp.dataset.cod, act = actDe(actId);
+    var raw = inp.value === '' ? '' : Number(String(inp.value).replace(',', '.'));
+    if (raw !== '' && isNaN(raw)) { inp.value = ''; return; }
+    if (raw !== '' && raw < 0) { raw = 0; inp.value = fmt(raw); }
+    var tope = act ? topeValor(act) : null;
+    if (raw !== '' && tope != null && raw > tope) { raw = tope; inp.value = fmt(raw); }
+    fijarCod_(actId, alId, cod, raw === '' ? null : raw);
+    actualizarNotasFila(alId);
+    refrescarMediaDesglose_(actId, alId);
+    programarGuardadoNotas();
   }
 
   /** Tope del valor tecleable según el tipo (null = sin tope). */
@@ -1967,21 +2075,6 @@ var App = (function () {
     return (a.criterios && a.criterios.length) ? a.criterios.join(', ') : 'informativa';
   }
 
-  /** Extracto de una celda con desglose: el valor de cada criterio, en orden. */
-  function resumenDesglose_(a, v) {
-    var vals = (v && typeof v === 'object') ? v : {};
-    var tipo = tipoDe(a);
-    return (a.criterios || []).map(function (cod) {
-      var x = vals[cod];
-      if (x == null) return '·';
-      if (tipo === 'check') return x ? '✓' : '✗';
-      if (tipo === 'escala' || tipo === 'escalaInf') {
-        var niv = TIPOS_ACT[tipo].niveles[Math.round(x) - 1];
-        return niv ? niv.cod : '·';
-      }
-      return fmt(x);
-    }).join(' | ');
-  }
   function tituloDesglose_(a, v) {
     var vals = (v && typeof v === 'object') ? v : {};
     return (a.criterios || []).map(function (cod) {
@@ -2004,11 +2097,14 @@ var App = (function () {
         'onclick="App.toggleRubExpand(event,\'' + a.actividadId + '\')">' +
         (ng == null ? svgUI('expandir') : fmtNota(ng, evalActual && evalActual.curso)) + '</td>';
     }
-    if (a.desglose) {
-      return '<td class="celda celda-desglose" ' + comun +
-        ' tabindex="0" role="button" aria-label="Nota por criterio" ' +
+    if (a.desglose && (a.criterios || []).length) {
+      // Contraída: muestra la media /10; tocar la despliega en subcolumnas.
+      var nm = notaActividad(a, alId);
+      return '<td class="celda celda-desglose' + (nm == null ? ' vacia' : '') + '" ' + comun +
+        ' tabindex="0" role="button" aria-label="Desplegar notas por criterio" ' +
         'title="' + esc(tituloDesglose_(a, v)) + '" ' +
-        'onclick="App.abrirEditorDesglose(this)">' + esc(resumenDesglose_(a, v)) + '</td>';
+        'onclick="App.toggleRubExpand(event,\'' + a.actividadId + '\')">' +
+        (nm == null ? svgUI('expandir') : fmtNota(nm, evalActual && evalActual.curso)) + '</td>';
     }
     // Un objeto residual (la actividad dejó de tener desglose) no se pinta.
     if (v != null && typeof v === 'object') v = null;
@@ -2060,14 +2156,15 @@ var App = (function () {
 
   /** Check de un toque: vacío → ✓ → ✗ → vacío. */
   function ciclarCheck(td) {
-    var actId = td.dataset.act, alId = td.dataset.al;
-    var v = valorItem(actId, alId);
+    var actId = td.dataset.act, alId = td.dataset.al, cod = td.dataset.cod;
+    var v = valorCod_(actId, alId, cod);
     var nuevo = (v === 1) ? 0 : (v === 0 ? null : 1);
-    fijarValor(actId, alId, nuevo);
+    fijarCod_(actId, alId, cod, nuevo);
     td.classList.toggle('si', nuevo === 1);
     td.classList.toggle('no', nuevo === 0);
     td.innerHTML = iconoCheck_(nuevo);
     actualizarNotasFila(alId);
+    if (cod) refrescarMediaDesglose_(actId, alId);
     programarGuardadoNotas();
   }
 
@@ -2078,7 +2175,7 @@ var App = (function () {
   function abrirSelectorNivel(td) {
     var act = actDe(td.dataset.act);
     var niveles = TIPOS_ACT[tipoDe(act)].niveles;
-    var v = valorItem(td.dataset.act, td.dataset.al);
+    var v = valorCod_(td.dataset.act, td.dataset.al, td.dataset.cod);
     var pop = document.getElementById('pop-nivel');
     popNivelTd = td;
     pop.innerHTML = niveles.map(function (niv, i) {
@@ -2111,14 +2208,15 @@ var App = (function () {
     var td = popNivelTd;
     cerrarSelectorNivel();
     if (!td || !rejilla) return;
-    var actId = td.dataset.act, alId = td.dataset.al, act = actDe(actId);
-    fijarValor(actId, alId, nivel);
+    var actId = td.dataset.act, alId = td.dataset.al, cod = td.dataset.cod, act = actDe(actId);
+    fijarCod_(actId, alId, cod, nivel);
     var niv = nivel != null ? TIPOS_ACT[tipoDe(act)].niveles[nivel - 1] : null;
     td.className = td.className.replace(/\bg-\w+/g, '').trim();
     if (niv) { var g = claseNota(niv.nota); if (g) td.classList.add(g); }
     td.title = niv ? niv.nombre : 'Sin valorar';
     td.textContent = niv ? niv.cod : '·';
     actualizarNotasFila(alId);
+    if (cod) refrescarMediaDesglose_(actId, alId);
     programarGuardadoNotas();
   }
 
@@ -2148,80 +2246,18 @@ var App = (function () {
       });
   }
 
-  /** Modal para poner nota independiente a cada criterio de una actividad. */
-  function abrirEditorDesglose(td) {
-    var actId = td.dataset.act, alId = td.dataset.al;
-    var act = actDe(actId);
-    if (!act) return;
-    var al = null;
-    (rejilla.alumnos || []).forEach(function (a) { if (a.id === alId) al = a; });
-    var v = valorItem(actId, alId);
-    var vals = (v && typeof v === 'object') ? v : {};
-    var tipo = tipoDe(act);
-
-    function control_(cod) {
-      var x = vals[cod];
-      if (tipo === 'check') {
-        return '<select class="d-val" data-cod="' + esc(cod) + '">' +
-          '<option value=""' + (x == null ? ' selected' : '') + '>—</option>' +
-          '<option value="1"' + (x === 1 ? ' selected' : '') + '>✓ Conseguido</option>' +
-          '<option value="0"' + (x === 0 ? ' selected' : '') + '>✗ No conseguido</option>' +
-          '</select>';
-      }
-      if (tipo === 'escala' || tipo === 'escalaInf') {
-        return '<select class="d-val" data-cod="' + esc(cod) + '">' +
-          '<option value=""' + (x == null ? ' selected' : '') + '>— Sin valorar</option>' +
-          TIPOS_ACT[tipo].niveles.map(function (niv, i) {
-            return '<option value="' + (i + 1) + '"' + (Math.round(x) === i + 1 ? ' selected' : '') +
-              '>' + niv.cod + ' — ' + esc(niv.nombre) + '</option>';
-          }).join('') + '</select>';
-      }
-      // type=text + inputmode decimal (como la rejilla): un type=number rechaza
-      // en silencio los decimales con coma ("8,5") y la nota se perdería.
-      return '<input type="text" inputmode="decimal" class="campo-corto d-val" ' +
-        'data-cod="' + esc(cod) + '" value="' + (x == null ? '' : fmt(x)) + '">';
-    }
-
-    abrirModal(act.nombre + ' — nota por criterio',
-      (al ? '<p class="ayuda">' + esc(al.nombre) + '</p>' : '') +
-      act.criterios.map(function (cod) {
-        var c = infoCrit(cod);
-        return '<label><b>' + esc(cod) + '</b> <span class="ayuda-inline">' +
-          esc(c.texto) + '</span>' + control_(cod) + '</label>';
-      }).join(''),
-      'Guardar',
-      function () {
-        var obj = {};
-        [].forEach.call(document.querySelectorAll('#modal-cuerpo .d-val'), function (el) {
-          var raw = String(el.value).trim();
-          if (raw === '') return;
-          var n = Number(raw.replace(',', '.'));
-          if (isNaN(n) || n < 0) return;
-          var tope = tipo === 'nota' ? 10 : (tipo === 'items' && act.numItems > 0 ? act.numItems : null);
-          if (tope != null && n > tope) n = tope;
-          obj[el.dataset.cod] = n;
-        });
-        fijarValor(actId, alId, Object.keys(obj).length ? obj : null);
-        var nuevo = Object.keys(obj).length ? obj : null;
-        td.textContent = resumenDesglose_(act, nuevo);
-        td.title = tituloDesglose_(act, nuevo);
-        cerrarModal();
-        actualizarNotasFila(alId);
-        programarGuardadoNotas();
-      },
-      { sinFoco: true }); // en el móvil, que no salte el teclado al abrir
-  }
-
   /** Contador con − y +: parte de 0; con máximo definido, no lo supera. */
   function sumarContador(btn, delta) {
     var td = btn.parentNode;
-    var actId = td.dataset.act, alId = td.dataset.al, act = actDe(actId);
-    var v = valorItem(actId, alId);
+    var actId = td.dataset.act, alId = td.dataset.al, cod = td.dataset.cod, act = actDe(actId);
+    var v = valorCod_(actId, alId, cod);
     v = (v == null ? 0 : v) + delta;
+    if (v < 0) v = 0;
     if (act && act.numItems > 0 && v > act.numItems) v = act.numItems;
-    fijarValor(actId, alId, v);
+    fijarCod_(actId, alId, cod, v);
     td.querySelector('.cont-val').textContent = fmt(v);
     actualizarNotasFila(alId);
+    if (cod) refrescarMediaDesglose_(actId, alId);
     programarGuardadoNotas();
   }
 
@@ -3033,7 +3069,7 @@ var App = (function () {
       if (e.key !== 'Enter' && e.key !== ' ') return;
       var t = e.target;
       if (t && t.matches &&
-          t.matches('a.item-lat, a.tab, a.volver-icono, .clase-card, .grupo-card, .tarjeta-unidad, td.celda-check, td.celda-escala, td.celda-texto, td.celda-desglose, td.celda-rubrica, td.celda-rub-ind')) {
+          t.matches('a.item-lat, a.tab, a.volver-icono, .clase-card, .grupo-card, .tarjeta-unidad, td.celda-check, td.celda-escala, td.celda-texto, td.celda-desglose, td.celda-rubrica, td.celda-rub-ind, td.celda-rub-global, td.celda-sub')) {
         e.preventDefault(); // evita el scroll de Espacio
         t.click();
       }
@@ -3692,7 +3728,7 @@ var App = (function () {
     toggleRubExpand: toggleRubExpand, abrirSelectorNivelRub: abrirSelectorNivelRub,
     elegirNivelRub: elegirNivelRub,
     abrirSelectorNivel: abrirSelectorNivel, elegirNivel: elegirNivel,
-    abrirEditorTexto: abrirEditorTexto, abrirEditorDesglose: abrirEditorDesglose,
+    abrirEditorTexto: abrirEditorTexto,
     prefetchEval: prefetchEval, prefetchClase: prefetchClase, prefetchRejilla: prefetchRejilla,
     nuevaClase: nuevaClase, copiarDeClase: copiarDeClase,
     abrirClase: abrirClase, editarClaseUI: editarClaseUI, editarAlumnos: editarAlumnos,
