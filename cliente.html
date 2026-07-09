@@ -797,8 +797,16 @@ var App = (function () {
       return;
     }
     mostrar('vista-evaluacion');
-    document.getElementById('eval-titulo').textContent = '';
-    document.getElementById('eval-meta').textContent = '';
+    // Cabecera al instante con lo que ya sabemos de la tarjeta: nombre, grupo
+    // e icono (evita el hueco en blanco mientras responde el servidor).
+    var r = null;
+    (estado.evaluaciones || []).forEach(function (e) { if (e.evalId === evalId) r = e; });
+    document.getElementById('eval-titulo').textContent = r ? tituloEval(r) : '';
+    document.getElementById('eval-meta').textContent =
+      r ? (r.claseNombre + ' · ' + r.curso + ' · ' + r.numAlumnos + ' alumnos/as') : '';
+    var ico = document.getElementById('eval-ico');
+    ico.innerHTML = r ? iconoSvg(r.icono) : '';
+    ico.style.background = (r && r.color) || '';
     document.getElementById('lista-unidades').innerHTML = spinner();
     // Evaluación + unidades en UNA llamada (antes eran dos viajes secuenciales).
     llamar('getEvaluacionCompleta', [evalId], function (ev) {
@@ -1957,11 +1965,14 @@ var App = (function () {
       '<span class="act-nom rub-titulo">' + esc(a.nombre) + '</span>' +
       '<small>' + esc(meta) + '</small></th>';
   }
+  /** Retardo escalonado del deslizamiento de la columna k al expandir. */
+  function rubDelay_(k) { return ' style="--rub-d:' + (k * 35) + 'ms"'; }
+
   /** Sub-cabecera (rama) con el texto en vertical, dentro de una columna expandida. */
   function subCabecera_(a, k, n, etiq, titulo) {
     var fin = (k === n - 1);
     return '<th class="act act-sub' + (k === 0 ? ' act-sub-ini' : '') + (fin ? ' act-sub-fin' : '') +
-      '" data-act="' + a.actividadId + '" ' +
+      '" data-act="' + a.actividadId + '"' + rubDelay_(k) + ' ' +
       'title="' + esc(titulo) + '" ' +
       'onclick="App.toggleRubExpand(event,\'' + a.actividadId + '\')">' +
       '<span class="rub-rama-vert">' + esc(etiq) + '</span></th>';
@@ -2012,7 +2023,7 @@ var App = (function () {
         var niv = (lvl != null) ? (def.niveles || [])[Math.round(lvl) - 1] : null;
         var g = niv ? claseNota((Number(niv.valor) || 0) / maxP * 10) : '';
         return '<td class="celda celda-rub-ind' + (g ? ' ' + g : '') + '" data-act="' + a.actividadId +
-          '" data-al="' + alId + '" data-ind="' + k + '" tabindex="0" role="button" ' +
+          '" data-al="' + alId + '" data-ind="' + k + '"' + rubDelay_(k) + ' tabindex="0" role="button" ' +
           'aria-label="Elegir nivel" title="' + (niv ? esc(niv.etiqueta) : 'Sin valorar') + '" ' +
           'onclick="App.abrirSelectorNivelRub(this)">' + (niv ? esc(niv.valor) : '·') + '</td>';
       }).join('');
@@ -2027,8 +2038,8 @@ var App = (function () {
         'onclick="App.toggleRubExpand(event,\'' + a.actividadId + '\')">' +
         (nm == null ? '·' : fmtNota(nm, evalActual && evalActual.curso)) + '</td>';
       // Sub-celdas: una por criterio, con el editor propio del tipo base.
-      var subd = (a.criterios || []).map(function (cod) {
-        return celdaSubDesglose_(a, cod, alId);
+      var subd = (a.criterios || []).map(function (cod, k) {
+        return celdaSubDesglose_(a, cod, alId, k);
       }).join('');
       return princ + subd;
     }
@@ -2036,10 +2047,11 @@ var App = (function () {
   }
 
   /** Sub-celda de una columna multinota expandida: editor del tipo base para un criterio. */
-  function celdaSubDesglose_(a, cod, alId) {
+  function celdaSubDesglose_(a, cod, alId, k) {
     var tipo = tipoDe(a);
     var v = valorCod_(a.actividadId, alId, cod);
-    var comun = 'data-act="' + a.actividadId + '" data-al="' + alId + '" data-cod="' + esc(cod) + '"';
+    var comun = 'data-act="' + a.actividadId + '" data-al="' + alId + '" data-cod="' + esc(cod) +
+      '"' + rubDelay_(k);
     if (tipo === 'check') {
       var cls = v === 1 ? ' si' : (v === 0 ? ' no' : '');
       return '<td class="celda celda-sub celda-check' + cls + '" ' + comun +
@@ -2329,19 +2341,19 @@ var App = (function () {
       '" data-al="' + alId + '"';
     var tipo = tipoDe(a);
     if (tipo === 'rubrica') {
-      // Columna contraída: muestra la nota global /10; tocar la expande.
-      var ng = notaRubricaGlobal_(a, alId);
-      return '<td class="celda celda-rubrica' + (ng == null ? ' vacia' : '') + '" ' + comun +
-        ' tabindex="0" role="button" aria-label="Expandir rúbrica" ' +
+      // Contraída: la nota global /10 con su color (el MISMO que al expandir).
+      var ng = notaRubricaGlobal_(a, alId), gr = claseNota(ng);
+      return '<td class="celda celda-rubrica' + (ng == null ? ' vacia' : (gr ? ' ' + gr : '')) +
+        '" ' + comun + ' tabindex="0" role="button" aria-label="Expandir rúbrica" ' +
         'title="Tocar para evaluar por indicadores" ' +
         'onclick="App.toggleRubExpand(event,\'' + a.actividadId + '\')">' +
         (ng == null ? svgUI('expandir') : fmtNota(ng, evalActual && evalActual.curso)) + '</td>';
     }
     if (a.desglose && (a.criterios || []).length) {
-      // Contraída: muestra la media /10; tocar la despliega en subcolumnas.
-      var nm = notaActividad(a, alId);
-      return '<td class="celda celda-desglose' + (nm == null ? ' vacia' : '') + '" ' + comun +
-        ' tabindex="0" role="button" aria-label="Desplegar notas por criterio" ' +
+      // Contraída: la media /10 con su color; tocar la despliega en subcolumnas.
+      var nm = notaActividad(a, alId), gm = claseNota(nm);
+      return '<td class="celda celda-desglose' + (nm == null ? ' vacia' : (gm ? ' ' + gm : '')) +
+        '" ' + comun + ' tabindex="0" role="button" aria-label="Desplegar notas por criterio" ' +
         'title="' + esc(tituloDesglose_(a, v)) + '" ' +
         'onclick="App.toggleRubExpand(event,\'' + a.actividadId + '\')">' +
         (nm == null ? svgUI('expandir') : fmtNota(nm, evalActual && evalActual.curso)) + '</td>';
