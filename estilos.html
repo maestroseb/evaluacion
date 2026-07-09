@@ -425,6 +425,18 @@
   .modal input:focus, .modal select:focus, .modal textarea:focus {
     outline: none; border-color: var(--acento); box-shadow: 0 0 0 3px var(--acento-suave);
   }
+  /* Checks y radios: controles nativos. El ancho 100%, el relleno y el halo de
+     foco de los campos de texto los deformaban y hacían «parpadear» la casilla
+     al tocarla (halo animado + resaltado de toque de iOS). */
+  .modal input[type="checkbox"], .modal input[type="radio"] {
+    width: auto; margin: 0; padding: 0; box-shadow: none; transition: none;
+    flex: 0 0 auto; accent-color: var(--acento);
+  }
+  .modal input[type="checkbox"]:focus, .modal input[type="radio"]:focus { box-shadow: none; }
+  .modal input[type="checkbox"]:focus-visible, .modal input[type="radio"]:focus-visible {
+    outline: 2px solid var(--acento); outline-offset: 2px;
+  }
+  .modal label, .modal .check { -webkit-tap-highlight-color: transparent; }
   .modal textarea { resize: vertical; }
   /* Campos numéricos cortos (nº de ítems): con 2-3 dígitos basta, nada de
      ocupar el modal entero. display:block para que no herede el ancho del label. */
