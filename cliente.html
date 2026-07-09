@@ -1964,22 +1964,31 @@ var App = (function () {
     };
     if (!els.length) { fin(); return; }
     rubCerrando[actId] = true;
+    // El ancho de una COLUMNA de tabla no se puede transicionar con fiabilidad
+    // (iOS lo aplica a saltos); el ancho de su CONTENIDO sí. Así que el
+    // contenido de cada celda se envuelve al vuelo en un .cel-anim y es ese
+    // envoltorio el que estrecha a 0: la columna lo sigue fotograma a
+    // fotograma y las contiguas entran deslizándose, cerrando el abanico.
     var max = 0;
     [].forEach.call(els, function (el) {
       var d = parseInt(el.style.getPropertyValue('--rub-d'), 10) || 0;
       if (d > max) max = d;
+      var w = el.querySelector('.cel-anim');
+      if (!w) {
+        w = document.createElement('span');
+        w.className = 'cel-anim';
+        while (el.firstChild) w.appendChild(el.firstChild);
+        el.appendChild(w);
+      }
+      w.style.width = w.offsetWidth + 'px'; // punto de partida de la transición
     });
+    // Reflujo: consolida los anchos fijados antes de lanzar la transición.
+    void document.body.offsetWidth;
     [].forEach.call(els, function (el) {
       // Retardo invertido respecto al de apertura: la última rama pliega primero.
       var d = parseInt(el.style.getPropertyValue('--rub-d'), 10) || 0;
-      var dc = max - d;
-      el.style.setProperty('--rub-dc', dc + 'ms');
-      el.style.width = el.offsetWidth + 'px'; // punto de partida del encogido
+      el.style.setProperty('--rub-dc', (max - d) + 'ms');
       el.classList.add('rub-plegando');
-      // Cada columna ENCOGE justo cuando acaba su propio desvanecido (no al
-      // final de todos): el repliegue avanza en onda de fuera adentro y las
-      // contiguas van entrando sin dejar un hueco blanco muerto.
-      setTimeout(function () { el.classList.add('rub-colapsando'); }, dc + 140);
     });
     // La banda de la columna principal se desvanece A LA VEZ que llega la
     // rama más cercana (no después, con el repintado): mismo retardo que ella.
@@ -1988,7 +1997,8 @@ var App = (function () {
       prim.style.transitionDelay = max + 'ms';
       prim.classList.add('rub-plegando-prim');
     }
-    setTimeout(fin, max + 140 + 210);
+    // El repintado llega cuando todo mide ya cero: no cambia nada visible.
+    setTimeout(fin, max + 330);
   }
 
   /** Asa de arrastre (⠿): el ÚNICO sitio desde el que se reordena la columna. */
