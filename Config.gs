@@ -57,7 +57,11 @@ var CONFIG = {
   //      criterios de la columna); con contenido = un criterio por indicador
   //      (JSON: un código por posición de indicador). Así una misma rúbrica se
   //      asocia a criterios distintos según el área de la clase.
-  ESQUEMA_VERSION: 14,
+  // v15: columna "archivado" en _clases y _evaluaciones: quitar de la vista sin
+  //      eliminar. Un grupo archivado oculta también sus clases (derivado, sin
+  //      tocar sus filas); una clase puede archivarse suelta. Restaurable desde
+  //      la sección "Archivados" de cada lista.
+  ESQUEMA_VERSION: 15,
 
   // Banderas de funcionalidad. Cada bandera es la lista de correos que la ven
   // (o '*' para todo el profesorado). Sirve para lanzar módulos "ocultos": se

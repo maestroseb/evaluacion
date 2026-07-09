@@ -31,6 +31,16 @@ function eliminarClase(claseId) {
   return Clases.eliminar_(abrirCuaderno_(), claseId);
 }
 
+/** Elimina un grupo Y todas sus clases (evaluaciones) en cascada. */
+function eliminarClaseConTodo(claseId) {
+  return Clases.eliminarConTodo_(abrirCuaderno_(), claseId);
+}
+
+/** Archiva (si=true) o restaura (si=false) un grupo: fuera de la vista, sin borrar. */
+function archivarClase(claseId, si) {
+  return Clases.archivar_(abrirCuaderno_(), claseId, si);
+}
+
 /** Reordena los grupos según el nuevo orden de ids en la rejilla. */
 function reordenarClases(ids) {
   return Clases.reordenar_(abrirCuaderno_(), ids);
@@ -51,7 +61,8 @@ var Clases = (function () {
       out.push({
         claseId: f[0], nombre: f[1], curso: f[2], creado: f[3],
         numAlumnos: contar_(f[4]), color: f[5] || '', icono: f[6] || '',
-        orden: Number(f[7]) || 0, cursoAcademico: f[8] || ''
+        orden: Number(f[7]) || 0, cursoAcademico: f[8] || '',
+        archivado: !!f[10]
       });
     }
     out.sort(function (a, b) { return a.orden - b.orden; }); // orden guardado (0 = antiguos)
@@ -156,6 +167,27 @@ var Clases = (function () {
     return { ok: true };
   }
 
+  /**
+   * Elimina el grupo Y todas sus clases (evaluaciones) en cascada. Cada clase
+   * pasa por la papelera (con sus unidades y notas), y el grupo también: todo
+   * es restaurable un tiempo.
+   */
+  function eliminarConTodo_(ss, claseId) {
+    Evaluaciones.idsDeClase_(ss, claseId).forEach(function (evalId) {
+      Evaluaciones.eliminar_(ss, evalId);
+    });
+    return eliminar_(ss, claseId);
+  }
+
+  /** Marca (si=true) o desmarca el grupo como archivado (col 11). */
+  function archivar_(ss, claseId, si) {
+    var sh = hoja_(ss);
+    var fila = Datos.filaDeId_(sh, claseId);
+    if (fila < 0) throw new Error('Clase no encontrada.');
+    sh.getRange(fila, 11).setValue(si ? 1 : '');
+    return { ok: true };
+  }
+
   /** Ids estables y sin vacíos/duplicados. Entrada [{id?,nombre}]. */
   function normalizarAlumnos_(lista) {
     var out = [], vistos = {};
@@ -197,6 +229,7 @@ var Clases = (function () {
   return {
     listar_: listar_, crear_: crear_, obtener_: obtener_, editar_: editar_,
     actualizarAlumnos_: actualizarAlumnos_,
-    eliminar_: eliminar_, reordenar_: reordenar_
+    eliminar_: eliminar_, eliminarConTodo_: eliminarConTodo_,
+    archivar_: archivar_, reordenar_: reordenar_
   };
 })();

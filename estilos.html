@@ -311,6 +311,22 @@
   /* El asa en línea (no flotando sobre cabecera de color como en clase-card). */
   .gc-grip { position: static; color: var(--texto-3); }
   .gc-grip:hover { color: var(--texto); background: var(--bg); }
+  /* ---------- Archivados: sección plegable al pie, tarjetas atenuadas ---------- */
+  .bloque-archivados { margin-top: 30px; }
+  .bloque-archivados summary { cursor: pointer; user-select: none; display: inline-flex;
+    align-items: center; gap: 8px; font-size: 12.5px; font-weight: 600;
+    color: var(--texto-3); text-transform: uppercase; letter-spacing: .07em;
+    padding: 4px 2px; }
+  .bloque-archivados summary:hover { color: var(--texto-2); }
+  .bloque-archivados summary .svg-ico { width: 15px; height: 15px; }
+  .bloque-archivados > .tarjetas { margin-top: 12px; }
+  .grupo-card.archivada, .clase-card.archivada { opacity: .8; filter: grayscale(.45); }
+  .grupo-card.archivada:hover, .clase-card.archivada:hover { opacity: 1; filter: none; }
+  .btn-restaurar { display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto;
+    font-size: 12px; padding: 6px 10px; }
+  .btn-restaurar .svg-ico { width: 13px; height: 13px; }
+  /* En la tarjeta de clase (cabecera de color), el botón va sobre el color. */
+  .clase-card .btn-restaurar { position: absolute; top: 8px; right: 10px; z-index: 1; }
   /* Título de cada sección de curso en Mis grupos. */
   .seccion-curso { margin: 24px 0 10px; font-size: 12.5px; font-weight: 600;
     color: var(--texto-3); text-transform: uppercase; letter-spacing: .07em; }
@@ -444,6 +460,12 @@
   /* Editor de nota por criterio: texto del criterio atenuado junto al código. */
   .ayuda-inline { font-weight: 400; color: var(--texto-3); font-size: 12px; }
   .modal p.mensaje { margin: 0 0 4px; font-size: 14px; line-height: 1.5; color: var(--texto); }
+  .modal p.aviso-peligro { color: var(--peligro); font-weight: 600; }
+  /* Alcance de archivar/eliminar (solo esta clase / el grupo entero): radios en columna. */
+  .alcance-modal { display: flex; flex-direction: column; gap: 10px; margin: 12px 0 14px; }
+  .alcance-modal label { display: flex; align-items: flex-start; gap: 9px; margin: 0;
+    font-weight: 500; font-size: 13px; line-height: 1.45; cursor: pointer; }
+  .alcance-modal input[type="radio"] { margin-top: 2px; }
   .ayuda { font-size: 12px; color: var(--texto-3); margin: -8px 0 4px; }
   /* Dos párrafos de ayuda seguidos: el margen negativo del segundo los pegaba. */
   .ayuda + .ayuda { margin-top: 8px; }

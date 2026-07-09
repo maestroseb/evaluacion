@@ -14,8 +14,8 @@
 /** Cabeceras de cada pestaña interna. */
 var ESQUEMA = {
   _meta: ['clave', 'valor'],
-  _clases: ['claseId', 'nombre', 'curso', 'creado', 'alumnos', 'color', 'icono', 'orden', 'cursoAcademico', 'bajas'],
-  _evaluaciones: ['evalId', 'claseId', 'area', 'creado', 'color', 'icono', 'nombre', 'orden', 'cursoAcademico'],
+  _clases: ['claseId', 'nombre', 'curso', 'creado', 'alumnos', 'color', 'icono', 'orden', 'cursoAcademico', 'bajas', 'archivado'],
+  _evaluaciones: ['evalId', 'claseId', 'area', 'creado', 'color', 'icono', 'nombre', 'orden', 'cursoAcademico', 'archivado'],
   _unidades: ['unidadId', 'evalId', 'nombre', 'orden'],
   _actividades: ['actividadId', 'unidadId', 'nombre', 'criterios', 'numItems', 'orden', 'tipo', 'desglose', 'rubricaId', 'rubMap'],
   _notas: ['unidadId', 'items'],

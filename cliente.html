@@ -502,7 +502,8 @@ var App = (function () {
     var lista = estado.clases.map(function (c) {
       return '<label class="crit"><input type="checkbox" value="' + c.claseId + '">' +
         '<span class="crit-txt"><b>' + esc(c.nombre) + '</b> ' + esc(c.curso) +
-        ' · ' + c.numAlumnos + ' alumnos/as</span></label>';
+        ' · ' + c.numAlumnos + ' alumnos/as' +
+        (c.archivado ? ' <span class="tag-pend">archivado</span>' : '') + '</span></label>';
     }).join('');
     abrirModal('Pasar grupos a otra persona',
       '<p class="mensaje">Elige los grupos a traspasar. Se descargará un archivo con esos grupos ' +
@@ -537,16 +538,42 @@ var App = (function () {
           ' · ' + (c.alumnos || []).length + ' alumnos/as' +
           (c.cursoAcademico ? ' · ' + esc(c.cursoAcademico) : '') + '</li>';
       }).join('');
+      // Grupos propios que coinciden en nombre y curso con los del archivo
+      // (p. ej. re-importar un traspaso, o recibir una versión más reciente):
+      // importar SIEMPRE añade, así que se ofrece archivar los antiguos para
+      // no verlos duplicados. Nada se sobrescribe ni se pierde.
+      var coincidentes = [], vistosC = {};
+      datos.clases.forEach(function (c) {
+        estado.clases.forEach(function (m) {
+          if (m.archivado || vistosC[m.claseId]) return;
+          if (String(m.nombre).trim().toLowerCase() === String(c.nombre || '').trim().toLowerCase() &&
+              m.curso === c.curso) {
+            vistosC[m.claseId] = true;
+            coincidentes.push(m);
+          }
+        });
+      });
+      var avisoDup = coincidentes.length
+        ? '<p class="mensaje aviso-peligro">Ya tienes ' + coincidentes.length + ' grupo(s) con el ' +
+          'mismo nombre y curso (' + esc(coincidentes.map(function (m) { return m.nombre; }).join(', ')) +
+          '). El traspaso se añade aparte: no se fusiona ni sobrescribe nada.</p>' +
+          '<label class="check check-suelto"><input type="checkbox" id="f-archivar-viejos" checked> ' +
+          'Archivar mis grupos coincidentes al recibir (los nuevos quedan a la vista; ' +
+          'los antiguos, en «Archivados»)</label>'
+        : '';
       abrirModal('Recibir grupos',
         '<p class="mensaje">Traspaso de <b>' + esc(datos.de || 'otra persona') + '</b>' +
         (datos.fecha ? ' (' + esc(fechaCorta(datos.fecha)) + ')' : '') + ' con:</p>' +
         '<ol class="pasos">' + resumen + '</ol>' +
         '<p class="mensaje">Se <b>añadirán</b> a tu cuaderno con sus clases, unidades y notas. ' +
-        'Tus grupos actuales no se tocan.</p>',
+        'Tus grupos actuales no se tocan.</p>' + avisoDup,
         'Recibir grupos',
         function () {
           botonModalCargando('Recibiendo…');
-          llamar('importarGrupos', [datos], function (r) {
+          var chk = document.getElementById('f-archivar-viejos');
+          var archivarIds = (chk && chk.checked)
+            ? coincidentes.map(function (m) { return m.claseId; }) : [];
+          llamar('importarGrupos', [datos, archivarIds], function (r) {
             invalidarCaches();
             llamar('getEstadoInicial', [], function (e) {
               estado = e; cerrarModal(); irAEvaluaciones();
@@ -554,6 +581,7 @@ var App = (function () {
                 return c && estado.cursos && c !== estado.cursos.activo;
               });
               avisoOk('Recibidos ' + r.grupos + ' grupo(s) y ' + r.clases + ' clase(s).' +
+                (archivarIds.length ? ' Tus ' + archivarIds.length + ' antiguos quedan archivados.' : '') +
                 (otroCurso.length ? ' Ojo: alguno está en el curso ' + otroCurso[0] + '.' : ''));
             });
           });
@@ -562,31 +590,59 @@ var App = (function () {
   }
 
   // ---------- evaluaciones ----------
+  /** ¿La clase está fuera de la vista? (archivada ella o su grupo). */
+  function evalOculta_(ev) { return !!(ev.archivado || ev.grupoArchivado); }
+
+  function tarjetaEval_(ev, archivada) {
+    var col = ev.color || 'var(--acento)';
+    return '<div class="clase-card' + (archivada ? ' archivada' : '') + '" data-id="' + ev.evalId +
+      '" style="--c:' + col + '" tabindex="0" role="button" ' +
+      'onmouseenter="App.prefetchEval(\'' + ev.evalId + '\')" ' +
+      'onclick="App.abrirEvaluacion(\'' + ev.evalId + '\')">' +
+      '<div class="clase-card-head">' +
+        '<span class="clase-card-ico">' + iconoSvg(ev.icono) + '</span>' +
+        '<h3>' + esc(tituloEval(ev)) + '</h3>' +
+        (archivada
+          ? '<button class="btn btn-restaurar" title="Restaurar (volver a la vista)" ' +
+            'onclick="event.stopPropagation();App.restaurarEval(\'' + ev.evalId + '\')">' +
+            svgUI('restaurar') + ' Restaurar</button>'
+          : '<span class="cc-grip" title="Arrastra para reordenar" ' +
+            'onpointerdown="App.dragEval(event)" onclick="event.stopPropagation()">⠿</span>') +
+      '</div>' +
+      '<div class="clase-card-body">' +
+        '<div class="cc-meta"><b>' + ev.numAlumnos + '</b> alumnos/as</div>' +
+        '<div class="cc-meta">' + esc(ev.claseNombre) + ' · ' + esc(ev.curso) + '</div>' +
+      '</div>' +
+      '</div>';
+  }
+
   function pintarEvaluaciones() {
     var cont = document.getElementById('lista-evaluaciones');
-    if (!estado.evaluaciones.length) {
+    var activas = estado.evaluaciones.filter(function (e) { return !evalOculta_(e); });
+    // Archivadas SUELTAS: las ocultas por su grupo se restauran restaurando el grupo.
+    var archivadas = estado.evaluaciones.filter(function (e) {
+      return e.archivado && !e.grupoArchivado;
+    });
+    if (!activas.length && !archivadas.length) {
       cont.innerHTML = '<div class="vacio">Aún no tienes clases. ' +
         'Crea una eligiendo un grupo y un área.</div>';
       return;
     }
-    cont.innerHTML = estado.evaluaciones.map(function (ev) {
-      var col = ev.color || 'var(--acento)';
-      return '<div class="clase-card" data-id="' + ev.evalId + '" style="--c:' + col + '" ' +
-        'tabindex="0" role="button" ' +
-        'onmouseenter="App.prefetchEval(\'' + ev.evalId + '\')" ' +
-        'onclick="App.abrirEvaluacion(\'' + ev.evalId + '\')">' +
-        '<div class="clase-card-head">' +
-          '<span class="clase-card-ico">' + iconoSvg(ev.icono) + '</span>' +
-          '<h3>' + esc(tituloEval(ev)) + '</h3>' +
-          '<span class="cc-grip" title="Arrastra para reordenar" ' +
-          'onpointerdown="App.dragEval(event)" onclick="event.stopPropagation()">⠿</span>' +
-        '</div>' +
-        '<div class="clase-card-body">' +
-          '<div class="cc-meta"><b>' + ev.numAlumnos + '</b> alumnos/as</div>' +
-          '<div class="cc-meta">' + esc(ev.claseNombre) + ' · ' + esc(ev.curso) + '</div>' +
-        '</div>' +
-        '</div>';
-    }).join('');
+    var h = activas.map(function (ev) { return tarjetaEval_(ev, false); }).join('');
+    if (!activas.length) h += '<div class="vacio">No tienes clases a la vista (están archivadas).</div>';
+    cont.innerHTML = h;
+    pintarArchivadas_(cont, archivadas.map(function (ev) { return tarjetaEval_(ev, true); }));
+  }
+
+  /** Añade tras la lista la sección plegada «Archivados (N)» con sus tarjetas. */
+  function pintarArchivadas_(cont, tarjetas, claseRejilla) {
+    var prev = cont.parentNode.querySelector('.bloque-archivados');
+    if (prev) prev.remove();
+    if (!tarjetas.length) return;
+    cont.insertAdjacentHTML('afterend',
+      '<details class="bloque-archivados"><summary>' + svgUI('archivar') +
+      ' Archivados <span class="contador">(' + tarjetas.length + ')</span></summary>' +
+      '<div class="' + (claseRejilla || 'tarjetas') + '">' + tarjetas.join('') + '</div></details>');
   }
 
   // Paleta de colores predefinidos para las clases (por área).
@@ -669,7 +725,8 @@ var App = (function () {
     info:      '<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>',
     ojo:       '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>',
     expandir:  '<polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/>',
-    contraer:  '<polyline points="11 17 6 12 11 7"/><polyline points="18 17 13 12 18 7"/>'
+    contraer:  '<polyline points="11 17 6 12 11 7"/><polyline points="18 17 13 12 18 7"/>',
+    archivar:  '<polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/>'
   };
   /** Icono SVG de interfaz por id. */
   function svgUI(id) {
@@ -678,12 +735,14 @@ var App = (function () {
   }
 
   function nuevaEvaluacion() {
-    if (!estado.clases.length) {
+    // Los grupos archivados no se ofrecen: primero se restauran.
+    var grupos = estado.clases.filter(function (c) { return !c.archivado; });
+    if (!grupos.length) {
       confirmar('Sin grupos', 'Primero necesitas un grupo de alumnado. ¿Crear un grupo ahora?',
         'Crear grupo', nuevaClase);
       return;
     }
-    var optClases = estado.clases.map(function (c) {
+    var optClases = grupos.map(function (c) {
       return '<option value="' + c.claseId + '">' + esc(c.nombre + ' · ' + c.curso) + '</option>';
     }).join('');
 
@@ -983,17 +1042,39 @@ var App = (function () {
       });
   }
 
+  /**
+   * Eliminar desde una clase: pregunta el alcance (solo esta clase, o el grupo
+   * entero con TODAS sus clases), con aviso claro de lo que arrastra cada opción.
+   */
   function eliminarEvaluacionActual() {
-    confirmar('Eliminar clase',
-      '¿Eliminar esta clase? El grupo y su alumnado se conservan.',
-      'Eliminar', function () {
-        var id = evalActual.evalId;
+    var ev = evalActual;
+    var claseId = ev.clase ? ev.clase.claseId : null;
+    var grupoNombre = ev.clase ? ev.clase.nombre : '';
+    var n = claseId ? evalsDeGrupo_(claseId).length : 0;
+    abrirModal('Eliminar…',
+      '<div class="campo-crit alcance-modal">' +
+      '<label><input type="radio" name="f-alcance" value="clase" checked ' +
+        'onchange="App.avisoAlcanceEliminar()"> Solo esta clase («' + esc(tituloEval(ev)) + '»)</label>' +
+      (claseId && n
+        ? '<label><input type="radio" name="f-alcance" value="grupo" ' +
+          'onchange="App.avisoAlcanceEliminar()"> El grupo «' + esc(grupoNombre) +
+          '» entero, con sus ' + n + ' clase(s)</label>'
+        : '') +
+      '</div>' +
+      '<p class="mensaje" id="aviso-alcance">Se elimina solo esta clase (área) con sus unidades ' +
+      'y notas. El grupo y su alumnado se conservan.</p>',
+      'Eliminar',
+      function () {
+        botonModalCargando('Eliminando…');
+        if (alcanceElegido_() === 'grupo') { cerrarModal(); eliminarGrupoEntero_(claseId); return; }
+        var id = ev.evalId;
         // Borrado optimista: se sale YA de la pantalla y el servidor trabaja
         // detrás. Si el borrado falla, se restaura la tarjeta y se avisa.
         var pos = -1, borrada = null;
         estado.evaluaciones.forEach(function (e, i) { if (e.evalId === id) { pos = i; borrada = e; } });
         estado.evaluaciones = estado.evaluaciones.filter(function (e) { return e.evalId !== id; });
         delete evalCache[id];
+        cerrarModal();
         irAEvaluaciones();
         google.script.run
           .withSuccessHandler(function () { avisoOk('Clase eliminada.'); })
@@ -1004,6 +1085,149 @@ var App = (function () {
           })
           .eliminarEvaluacion(id);
       });
+  }
+
+  /** Actualiza el aviso del modal de eliminar según el alcance marcado. */
+  function avisoAlcanceEliminar() {
+    var p = document.getElementById('aviso-alcance');
+    if (!p) return;
+    if (alcanceElegido_() === 'grupo') {
+      p.className = 'mensaje aviso-peligro';
+      p.innerHTML = '⚠️ Se eliminarán el grupo, su alumnado y <b>todas</b> sus clases con sus ' +
+        'notas. Quedan un tiempo en la papelera. Si solo quieres quitarlo de la vista, usa Archivar.';
+    } else {
+      p.className = 'mensaje';
+      p.textContent = 'Se elimina solo esta clase (área) con sus unidades y notas. ' +
+        'El grupo y su alumnado se conservan.';
+    }
+  }
+
+  function alcanceElegido_() {
+    var m = document.querySelector('input[name="f-alcance"]:checked');
+    return m ? m.value : 'clase';
+  }
+
+  /** Clases (evaluaciones) de un grupo en el curso activo. */
+  function evalsDeGrupo_(claseId) {
+    return estado.evaluaciones.filter(function (e) { return e.claseId === claseId; });
+  }
+
+  /** Borrado optimista del grupo con TODAS sus clases (cascada en el servidor). */
+  function eliminarGrupoEntero_(claseId) {
+    estado.clases = estado.clases.filter(function (c) { return c.claseId !== claseId; });
+    estado.evaluaciones = estado.evaluaciones.filter(function (e) {
+      if (e.claseId !== claseId) return true;
+      delete evalCache[e.evalId];
+      return false;
+    });
+    delete claseCache[claseId];
+    irAEvaluaciones();
+    google.script.run
+      .withSuccessHandler(function () {
+        avisoOk('Grupo y clases eliminados (recuperables un tiempo en la papelera).');
+      })
+      .withFailureHandler(function (err) {
+        aviso('No se pudo eliminar el grupo: ' + ((err && err.message) || 'error'));
+        // Recarga el estado del servidor: recupera lo que quedara a medias.
+        llamar('getEstadoInicial', [], function (e) {
+          estado = e;
+          if (vistaActual === 'vista-evaluaciones') pintarEvaluaciones();
+          if (vistaActual === 'vista-clases') pintarClases();
+        });
+      })
+      .eliminarClaseConTodo(claseId);
+  }
+
+  // ---------- archivar: quitar de la vista sin eliminar ----------
+  /**
+   * Archivar desde una clase: pregunta el alcance (solo esta clase, o el grupo
+   * con todas sus clases). Si la clase ya está archivada, ofrece restaurarla.
+   */
+  function archivarEvalUI() {
+    var ev = evalActual;
+    var reg = null;
+    estado.evaluaciones.forEach(function (e) { if (e.evalId === ev.evalId) reg = e; });
+    if (reg && reg.archivado) {
+      confirmar('Restaurar clase', 'Esta clase está archivada. ¿Devolverla a la vista?',
+        'Restaurar', function () { restaurarEval(ev.evalId); });
+      return;
+    }
+    var claseId = ev.clase ? ev.clase.claseId : null;
+    var grupoNombre = ev.clase ? ev.clase.nombre : '';
+    var n = claseId ? evalsDeGrupo_(claseId).length : 0;
+    abrirModal('Archivar…',
+      '<p class="mensaje">Archivar quita de la vista <b>sin borrar nada</b>. Se restaura ' +
+      'cuando quieras desde la sección «Archivados», al pie de cada lista.</p>' +
+      '<div class="campo-crit alcance-modal">' +
+      '<label><input type="radio" name="f-alcance" value="clase" checked> ' +
+        'Solo esta clase («' + esc(tituloEval(ev)) + '»)</label>' +
+      (claseId && n
+        ? '<label><input type="radio" name="f-alcance" value="grupo"> El grupo «' +
+          esc(grupoNombre) + '» con sus ' + n + ' clase(s)</label>'
+        : '') +
+      '</div>',
+      'Archivar',
+      function () {
+        botonModalCargando('Archivando…');
+        if (alcanceElegido_() === 'grupo') {
+          llamar('archivarClase', [claseId, true], function () {
+            marcarGrupoArchivado_(claseId, true);
+            cerrarModal(); irAEvaluaciones();
+            avisoOk('Grupo archivado con sus clases.');
+          });
+        } else {
+          llamar('archivarEvaluacion', [ev.evalId, true], function () {
+            estado.evaluaciones.forEach(function (e) { if (e.evalId === ev.evalId) e.archivado = true; });
+            cerrarModal(); irAEvaluaciones();
+            avisoOk('Clase archivada.');
+          });
+        }
+      });
+  }
+
+  /** Archivar el grupo actual (con sus clases). Si ya está archivado, restaurar. */
+  function archivarGrupoUI() {
+    var cl = claseActual;
+    var reg = claseDe(cl.claseId);
+    if (reg && reg.archivado) {
+      confirmar('Restaurar grupo', 'Este grupo está archivado. ¿Devolverlo a la vista?',
+        'Restaurar', function () { restaurarGrupo(cl.claseId); });
+      return;
+    }
+    var n = evalsDeGrupo_(cl.claseId).length;
+    confirmar('Archivar grupo',
+      'El grupo «' + cl.nombre + '»' + (n ? ' y sus ' + n + ' clase(s)' : '') +
+      ' se quitarán de la vista, sin borrar nada. Podrás restaurarlo desde ' +
+      '«Mis grupos» → Archivados.',
+      'Archivar', function () {
+        llamar('archivarClase', [cl.claseId, true], function () {
+          marcarGrupoArchivado_(cl.claseId, true);
+          irAClases();
+          avisoOk('Grupo archivado.');
+        });
+      });
+  }
+
+  /** Marca en el estado local el grupo (y sus clases) como archivado o no. */
+  function marcarGrupoArchivado_(claseId, si) {
+    estado.clases.forEach(function (c) { if (c.claseId === claseId) c.archivado = si; });
+    estado.evaluaciones.forEach(function (e) { if (e.claseId === claseId) e.grupoArchivado = si; });
+  }
+
+  function restaurarGrupo(claseId) {
+    llamar('archivarClase', [claseId, false], function () {
+      marcarGrupoArchivado_(claseId, false);
+      if (vistaActual === 'vista-clases') pintarClases();
+      avisoOk('Grupo restaurado.');
+    });
+  }
+
+  function restaurarEval(evalId) {
+    llamar('archivarEvaluacion', [evalId, false], function () {
+      estado.evaluaciones.forEach(function (e) { if (e.evalId === evalId) e.archivado = false; });
+      if (vistaActual === 'vista-evaluaciones') pintarEvaluaciones();
+      avisoOk('Clase restaurada.');
+    });
   }
 
   // ---------- resumen global de la clase ----------
@@ -2625,30 +2849,36 @@ var App = (function () {
   }
 
   /** Tarjeta de grupo: horizontal y clara, distinta de la tarjeta de clase. */
-  function tarjetaGrupo_(c) {
+  function tarjetaGrupo_(c, archivada) {
     var col = c.color || colorAvatar(c.nombre);
-    return '<div class="grupo-card" data-id="' + c.claseId + '" style="--c:' + col + '" ' +
-      'tabindex="0" role="button" ' +
+    return '<div class="grupo-card' + (archivada ? ' archivada' : '') + '" data-id="' + c.claseId +
+      '" style="--c:' + col + '" tabindex="0" role="button" ' +
       'onmouseenter="App.prefetchClase(\'' + c.claseId + '\')" ' +
       'onclick="App.abrirClase(\'' + c.claseId + '\')">' +
       '<span class="gc-avatar">' + iconoSvg(c.icono || 'personas') + '</span>' +
       '<div class="gc-info"><h3>' + esc(c.nombre) + '</h3>' +
-      '<div class="gc-meta">' + c.numAlumnos + ' alumnos/as</div></div>' +
-      '<span class="cc-grip gc-grip" title="Arrastra para reordenar" ' +
-      'onpointerdown="App.dragGrupo(event)" onclick="event.stopPropagation()">⠿</span>' +
+      '<div class="gc-meta">' + (archivada ? esc(c.curso) + ' · ' : '') + c.numAlumnos + ' alumnos/as</div></div>' +
+      (archivada
+        ? '<button class="btn btn-restaurar" title="Restaurar (volver a la vista)" ' +
+          'onclick="event.stopPropagation();App.restaurarGrupo(\'' + c.claseId + '\')">' +
+          svgUI('restaurar') + ' Restaurar</button>'
+        : '<span class="cc-grip gc-grip" title="Arrastra para reordenar" ' +
+          'onpointerdown="App.dragGrupo(event)" onclick="event.stopPropagation()">⠿</span>') +
       '</div>';
   }
 
   function pintarClases() {
     var cont = document.getElementById('lista-clases');
-    if (!estado.clases.length) {
+    var activos = estado.clases.filter(function (c) { return !c.archivado; });
+    var archivados = estado.clases.filter(function (c) { return c.archivado; });
+    if (!activos.length && !archivados.length) {
       cont.innerHTML = '<div class="vacio">Aún no tienes grupos. ' +
         'Un grupo es una lista de alumnado que luego reutilizas en varias áreas.</div>';
       return;
     }
     // Secciones por curso (nivel), de menor a mayor; dentro, el orden manual.
     var porCurso = {};
-    estado.clases.forEach(function (c) {
+    activos.forEach(function (c) {
       var k = c.curso || 'Sin curso';
       (porCurso[k] || (porCurso[k] = [])).push(c);
     });
@@ -2658,8 +2888,12 @@ var App = (function () {
     cont.innerHTML = cursos.map(function (curso) {
       return '<h2 class="seccion-curso">' + esc(curso) + '</h2>' +
         '<div class="tarjetas tarjetas-grupos">' +
-        porCurso[curso].map(tarjetaGrupo_).join('') + '</div>';
-    }).join('');
+        porCurso[curso].map(function (c) { return tarjetaGrupo_(c, false); }).join('') + '</div>';
+    }).join('') +
+      (!activos.length ? '<div class="vacio">No tienes grupos a la vista (están archivados).</div>' : '');
+    pintarArchivadas_(cont,
+      archivados.map(function (c) { return tarjetaGrupo_(c, true); }),
+      'tarjetas tarjetas-grupos');
   }
 
   function nuevaClase() {
@@ -2857,6 +3091,16 @@ var App = (function () {
   }
 
   function eliminarClaseActual() {
+    var n = evalsDeGrupo_(claseActual.claseId).length;
+    // Con clases asociadas ya no se bloquea: se avisa y se elimina en cascada.
+    if (n > 0) {
+      confirmar('Eliminar grupo',
+        '⚠️ El grupo «' + claseActual.nombre + '» tiene ' + n + ' clase(s). Se eliminarán el ' +
+        'grupo, su alumnado y TODAS sus clases con sus notas (quedan un tiempo en la papelera). ' +
+        'Si solo quieres quitarlo de la vista, usa Archivar.',
+        'Eliminar todo', function () { eliminarGrupoEntero_(claseActual.claseId); });
+      return;
+    }
     confirmar('Eliminar grupo', '¿Eliminar el grupo "' + claseActual.nombre + '"?',
       'Eliminar', function () {
         var id = claseActual.claseId;
@@ -3749,6 +3993,9 @@ var App = (function () {
     nuevaClase: nuevaClase, copiarDeClase: copiarDeClase,
     abrirClase: abrirClase, editarClaseUI: editarClaseUI, editarAlumnos: editarAlumnos,
     eliminarClaseActual: eliminarClaseActual, promocionarGrupoUI: promocionarGrupoUI,
+    archivarGrupoUI: archivarGrupoUI, archivarEvalUI: archivarEvalUI,
+    restaurarGrupo: restaurarGrupo, restaurarEval: restaurarEval,
+    avisoAlcanceEliminar: avisoAlcanceEliminar,
     cambiarCurso: cambiarCurso,
     irARubricas: irARubricas, nuevaRubrica: nuevaRubrica,
     editarRubricaUI: editarRubricaUI, duplicarRubricaUI: duplicarRubricaUI,
