@@ -768,6 +768,12 @@
   table.rejilla th.act.act-sub, table.rejilla td.celda-rub-ind,
   table.rejilla td.celda-sub { animation: rub-deslizar .24s ease both;
     animation-delay: var(--rub-d, 0ms); }
+  /* Plegado: la misma animación a la inversa (las ramas vuelven a la principal;
+     --rub-dc invierte el escalonado: la última rama pliega primero). */
+  @keyframes rub-replegar { to { opacity: 0; transform: translateX(-18px); } }
+  table.rejilla th.act.act-sub.rub-plegando, table.rejilla td.celda-rub-ind.rub-plegando,
+  table.rejilla td.celda-sub.rub-plegando { animation: rub-replegar .18s ease both;
+    animation-delay: var(--rub-dc, 0ms); pointer-events: none; }
   table.rejilla .edit-act { position: absolute; top: 4px; right: 4px; border: none;
     background: transparent; color: var(--texto-3); cursor: pointer; font-size: 12px;
     padding: 2px; line-height: 1; z-index: 1; border-radius: 4px; }
@@ -797,13 +803,19 @@
      global + sub-columnas de indicador con el nombre en VERTICAL (estrechas).
      La cabecera de las columnas desplegables lleva SIEMPRE el mismo fondo
      (plegada o expandida): así no "cambia de color" al desplegar. */
-  table.rejilla th.act.act-rub-col { background: #e6e8fb; }
-  table.rejilla th.act.act-sub { background: var(--acento-suave); border-top: 3px solid var(--acento);
+  /* La cabecera desplegable reserva ya el hueco del borde superior (transparente)
+     para que al desplegar —cuando se pinta en color— la altura no salte. */
+  table.rejilla th.act.act-rub-col { background: #e6e8fb; border-top: 3px solid transparent; }
+  /* Marco en «L invertida» del bloque expandido: banda superior CONTINUA que
+     nace en la propia columna principal y baja por el borde derecho de la
+     última rama. Sin separadores verticales entre ramas (partían la banda);
+     el texto vertical ya separa visualmente cada una. */
+  table.rejilla th.act.act-rub-prim { border-top: 3px solid var(--acento); }
+  table.rejilla th.act.act-sub { background: var(--acento-suave);
+    border-top: 3px solid var(--acento); border-right: none;
     padding: 7px 4px; min-width: 32px; }
-  table.rejilla th.act.act-sub-ini { border-left: 2px solid var(--acento); }
-  table.rejilla th.act.act-sub-fin { border-right: 2px solid var(--acento); }
+  table.rejilla th.act.act-sub-fin { border-right: 3px solid var(--acento); }
   table.rejilla th.act.act-sub small { color: var(--acento-fuerte); }
-  table.rejilla .rub-titulo { max-width: 120px; white-space: normal; }
   table.rejilla .rub-rama-vert { writing-mode: vertical-rl; transform: rotate(180deg);
     display: inline-block; white-space: nowrap; max-height: 92px; overflow: hidden;
     font-weight: 600; }

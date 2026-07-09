@@ -1937,12 +1937,45 @@ var App = (function () {
     return !!a.desglose && (a.criterios || []).length > 0 &&
       tipoDe(a) !== 'rubrica' && rubExpandido[a.actividadId];
   }
+  var rubCerrando = {}; // actividadId -> true mientras corre la animación de plegado
   function toggleRubExpand(e, actId) {
     if (e) e.stopPropagation();
     var a = actDe(actId);
-    if (!a || !esExpandible_(a)) return;
-    rubExpandido[actId] = !rubExpandido[actId];
+    if (!a || !esExpandible_(a) || rubCerrando[actId]) return;
+    if (rubExpandido[actId]) { plegarConAnimacion_(actId); return; }
+    rubExpandido[actId] = true;
     pintarRejilla();
+  }
+
+  /**
+   * Pliega con la animación INVERSA a la de desplegar: las ramas se deslizan
+   * de vuelta hacia la columna principal (las de fuera primero) y, al terminar,
+   * se repinta la rejilla ya plegada.
+   */
+  function plegarConAnimacion_(actId) {
+    var els = document.querySelectorAll(
+      '#rejilla-cont th.act-sub[data-act="' + actId + '"],' +
+      '#rejilla-cont td.celda-rub-ind[data-act="' + actId + '"],' +
+      '#rejilla-cont td.celda-sub[data-act="' + actId + '"]');
+    var fin = function () {
+      delete rubCerrando[actId];
+      rubExpandido[actId] = false;
+      pintarRejilla();
+    };
+    if (!els.length) { fin(); return; }
+    rubCerrando[actId] = true;
+    var max = 0;
+    [].forEach.call(els, function (el) {
+      var d = parseInt(el.style.getPropertyValue('--rub-d'), 10) || 0;
+      if (d > max) max = d;
+    });
+    [].forEach.call(els, function (el) {
+      // Retardo invertido respecto al de apertura: la última rama pliega primero.
+      var d = parseInt(el.style.getPropertyValue('--rub-d'), 10) || 0;
+      el.style.setProperty('--rub-dc', (max - d) + 'ms');
+      el.classList.add('rub-plegando');
+    });
+    setTimeout(fin, 200 + max);
   }
 
   /** Asa de arrastre (⠿): el ÚNICO sitio desde el que se reordena la columna. */
@@ -1956,14 +1989,20 @@ var App = (function () {
       'onclick="event.stopPropagation();App.editarActividadUI(\'' + actId + '\')">' + svgUI('lapiz') + '</button>';
   }
 
-  /** Cabecera principal de una columna expandida (rúbrica o multinota). */
-  function cabeceraPrincipal_(a, meta) {
+  /**
+   * Cabecera principal de una columna expandida (rúbrica o multinota): el MISMO
+   * contenido de tres líneas que plegada —así el ancho no cambia al desplegar—,
+   * con el chevron apuntando hacia dentro (plegar).
+   */
+  function cabeceraPrincipal_(a) {
     return '<th class="act act-rub-col act-rub-prim" data-act="' + a.actividadId + '" ' +
       'title="' + esc(a.nombre + ' · toca para plegar') + '" ' +
       'onclick="App.toggleRubExpand(event,\'' + a.actividadId + '\')">' +
       gripAct_(a.actividadId) + editAct_(a.actividadId) +
-      '<span class="act-nom rub-titulo">' + esc(a.nombre) + '</span>' +
-      '<small>' + esc(meta) + '</small></th>';
+      '<span class="rub-exp-ico">' + svgUI('contraer') + '</span>' +
+      '<span class="act-nom">' + esc(a.nombre) + '</span>' +
+      '<small class="act-meta">' + esc(metaTipo_(a)) + '</small>' +
+      '<small class="act-crits">' + esc(metaCrits_(a)) + '</small></th>';
   }
   /** Retardo escalonado del deslizamiento de la columna k al expandir. */
   function rubDelay_(k) { return ' style="--rub-d:' + (k * 35) + 'ms"'; }
@@ -1982,13 +2021,13 @@ var App = (function () {
   function cabeceraAct_(a) {
     if (esRubExp_(a)) {
       var def = rubDef_(a), inds = def.indicadores || [], n = inds.length;
-      return cabeceraPrincipal_(a, 'rúbrica') + inds.map(function (ind, k) {
+      return cabeceraPrincipal_(a) + inds.map(function (ind, k) {
         return subCabecera_(a, k, n, ind.texto, a.nombre + ' · ' + ind.texto);
       }).join('');
     }
     if (esDesExp_(a)) {
       var crits = a.criterios || [], m = crits.length;
-      return cabeceraPrincipal_(a, metaTipo_(a)) + crits.map(function (cod, k) {
+      return cabeceraPrincipal_(a) + crits.map(function (cod, k) {
         return subCabecera_(a, k, m, cod, a.nombre + ' · ' + cod + ': ' + infoCrit(cod).texto);
       }).join('');
     }
