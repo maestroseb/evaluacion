@@ -119,6 +119,7 @@ var Actividades = (function () {
     var sh = hojaA_(ss);
     var fila = Datos.filaDeId_(sh, actividadId);
     if (fila < 0) throw new Error('Actividad no encontrada.');
+    var unidadId = sh.getRange(fila, 2).getValue(); // col 2 = unidadId
     sh.getRange(fila, 3, 1, 3).setValues([[
       p.nombre.trim(), JSON.stringify(p.criterios || []), Number(p.numItems) || 0
     ]]);
@@ -126,7 +127,31 @@ var Actividades = (function () {
     sh.getRange(fila, 7, 1, 4).setValues([[
       p.tipo || 'items', p.desglose ? 1 : '', p.rubricaId || '', JSON.stringify(p.rubMap || [])
     ]]);
+    if (p.desglose) repartirDesglose_(ss, unidadId, actividadId, p.criterios || []);
     return { ok: true };
+  }
+
+  /**
+   * Con desglose activo, las notas ÚNICAS que hubiera en el blob (puestas antes
+   * de activarlo) se reparten: la misma nota a todos los criterios de la
+   * actividad, como {criterio: nota}. Así se ven y se ajustan las que difieran,
+   * en vez de quedar ocultas de fondo. Los objetos (ya desglosados) y los
+   * textos no se tocan.
+   */
+  function repartirDesglose_(ss, unidadId, actividadId, criterios) {
+    if (!criterios.length) return;
+    var items = Notas.leer_(ss, unidadId);
+    var m = items[actividadId];
+    if (!m) return;
+    var cambia = false;
+    Object.keys(m).forEach(function (alId) {
+      if (typeof m[alId] !== 'number') return;
+      var obj = {};
+      criterios.forEach(function (cod) { obj[cod] = m[alId]; });
+      m[alId] = obj;
+      cambia = true;
+    });
+    if (cambia) Notas.guardar_(ss, unidadId, items);
   }
 
   /** Borrado suelto de una actividad: a la papelera (con sus notas) y fuera del blob. */

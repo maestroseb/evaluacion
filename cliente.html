@@ -1458,6 +1458,7 @@ var App = (function () {
             act.nombre = nombre; act.criterios = criterios;
             act.numItems = numItems; act.tipo = tipo; act.desglose = desglose;
             act.rubricaId = rubricaId; act.rubMap = rubMap;
+            if (desglose) repartirDesgloseLocal_(act.actividadId, criterios);
             cerrarModal(); pintarRejilla();
           });
         } else {
@@ -1855,6 +1856,21 @@ var App = (function () {
     if (prev && typeof prev === 'object') Object.keys(prev).forEach(function (k) { obj[k] = prev[k]; });
     if (nv == null || nv === '') delete obj[cod]; else obj[cod] = nv;
     fijarValor(actId, alId, Object.keys(obj).length ? obj : null);
+  }
+  /**
+   * Espejo local del reparto del servidor al guardar con desglose: las notas
+   * ÚNICAS ya puestas pasan a {criterio: nota} con la misma nota en todos, para
+   * verlas en las subcolumnas y ajustar solo las que difieran.
+   */
+  function repartirDesgloseLocal_(actId, criterios) {
+    var m = rejilla.items[actId];
+    if (!m || !criterios.length) return;
+    Object.keys(m).forEach(function (alId) {
+      if (typeof m[alId] !== 'number') return;
+      var obj = {};
+      criterios.forEach(function (cod) { obj[cod] = m[alId]; });
+      m[alId] = obj;
+    });
   }
   /** Repinta la celda principal (media) de una columna multinota expandida. */
   function refrescarMediaDesglose_(actId, alId) {

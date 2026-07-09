@@ -54,6 +54,11 @@ var Traspaso = (function () {
     var setU = {};
     unidades.forEach(function (r) { setU[r[0]] = true; });
     var actividades = filas_(ss, HOJAS.ACTIVIDADES).filter(function (r) { return setU[r[1]]; });
+    // Rúbricas del banco usadas por columnas de tipo "rubrica": viajan con el
+    // traspaso (sin ellas esas columnas llegarían sin definición al receptor).
+    var rubUsadas = {};
+    actividades.forEach(function (r) { if (r[8]) rubUsadas[r[8]] = true; });
+    var rubricas = filas_(ss, HOJAS.RUBRICAS).filter(function (r) { return rubUsadas[r[0]]; });
     // Observaciones en claro en el archivo (como los nombres): quien recibe
     // las re-cifra con su propia clave.
     var notas = filas_(ss, HOJAS.NOTAS).filter(function (r) { return setU[r[0]]; })
@@ -74,6 +79,7 @@ var Traspaso = (function () {
       evaluaciones: evals,
       unidades: unidades,
       actividades: actividades,
+      rubricas: rubricas,
       notas: notas
     };
   }
@@ -116,8 +122,18 @@ var Traspaso = (function () {
         });
       var filasU = (d.unidades || []).filter(function (r) { return mapa[r[1]]; })
         .map(function (r) { return [nuevo('u', r[0]), mapa[r[1]], r[2], r[3]]; });
+      // Rúbricas que acompañan al traspaso: ids nuevos y orden al final del banco
+      // propio (los archivos antiguos no traen 'rubricas': lista vacía).
+      var ordenR = Datos.siguienteOrden_(Rubricas.listar_(ss));
+      var filasR = (d.rubricas || []).map(function (r, i) {
+        return [nuevo('rub', r[0]), r[1], r[2], r[3], r[4],
+          r[5] || new Date().toISOString(), ordenR + i];
+      });
+      // Fila COMPLETA de cada actividad (tipo, desglose, rúbrica y su mapa
+      // incluidos); la rúbrica se reapunta a la copia recién importada.
       var filasA = (d.actividades || []).filter(function (r) { return mapa[r[1]]; })
-        .map(function (r) { return [nuevo('act', r[0]), mapa[r[1]], r[2], r[3], r[4], r[5], r[6] || 'items']; });
+        .map(function (r) { return [nuevo('act', r[0]), mapa[r[1]], r[2], r[3], r[4], r[5],
+          r[6] || 'items', r[7] || '', r[8] ? nuevo('rub', r[8]) : '', r[9] || '']; });
       var filasN = (d.notas || []).filter(function (r) { return mapa[r[0]]; })
         .map(function (r) {
           var items = {};
@@ -138,6 +154,7 @@ var Traspaso = (function () {
       anexar_(ss, HOJAS.CLASES, filasC);
       anexar_(ss, HOJAS.EVALUACIONES, filasE);
       anexar_(ss, HOJAS.UNIDADES, filasU);
+      anexar_(ss, HOJAS.RUBRICAS, filasR);
       anexar_(ss, HOJAS.ACTIVIDADES, filasA);
       anexar_(ss, HOJAS.NOTAS, filasN);
       // Por si el traspaso trae filas sin curso académico: re-estampar al abrir.
