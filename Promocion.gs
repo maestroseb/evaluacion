@@ -96,12 +96,22 @@ var Promocion = (function () {
               sinAsignar += (criterios.length - remap.length);
               criterios = remap;
             }
+            // El mapa criterio↔indicador de una columna rúbrica es POSICIONAL:
+            // se remapea código a código conservando cada posición ('' = ese
+            // indicador queda sin criterio en el nivel nuevo).
+            var rubMap = a.rubMap || [];
+            if (cambiaNivel && rubMap.length) {
+              rubMap = rubMap.map(function (cod) {
+                return cod ? (remapearCriterios_([cod], dOrigen, dDestino, validos)[0] || '') : '';
+              });
+            }
             // Copia fiel de la estructura: se permite siempre quedar sin
             // criterios (la actividad original pudo quedarse sin ellos en una
             // promoción anterior; si no, la copia fallaría a medias).
             Actividades.crear_(ss, nu.unidadId, {
               nombre: a.nombre, criterios: criterios, numItems: a.numItems,
-              tipo: a.tipo, desglose: a.desglose
+              tipo: a.tipo, desglose: a.desglose,
+              rubricaId: a.rubricaId, rubMap: rubMap
             }, true, ai + 1);
           });
         });
