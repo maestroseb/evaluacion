@@ -20,9 +20,13 @@ function exportarGrupos(claseIds) {
   return Traspaso.exportar_(abrirCuaderno_(), claseIds || []);
 }
 
-/** Recibe un traspaso: añade sus grupos al cuaderno propio (aditivo). */
-function importarGrupos(datos) {
-  return Traspaso.importar_(abrirCuaderno_(), datos);
+/**
+ * Recibe un traspaso: añade sus grupos al cuaderno propio (aditivo).
+ * archivarClaseIds (opcional): grupos PROPIOS a archivar en la misma operación
+ * (los coincidentes con el archivo, para no verlos duplicados).
+ */
+function importarGrupos(datos, archivarClaseIds) {
+  return Traspaso.importar_(abrirCuaderno_(), datos, archivarClaseIds);
 }
 
 var Traspaso = (function () {
@@ -84,7 +88,7 @@ var Traspaso = (function () {
     };
   }
 
-  function importar_(ss, d) {
+  function importar_(ss, d, archivarClaseIds) {
     if (!d || d.tipo !== 'traspaso' || !d.clases || !d.clases.length) {
       throw new Error('El archivo no es un traspaso válido.');
     }
@@ -157,6 +161,12 @@ var Traspaso = (function () {
       anexar_(ss, HOJAS.RUBRICAS, filasR);
       anexar_(ss, HOJAS.ACTIVIDADES, filasA);
       anexar_(ss, HOJAS.NOTAS, filasN);
+      // Grupos propios coincidentes: se archivan (nunca se borran) para que el
+      // traspaso recién recibido no conviva duplicado con la versión antigua.
+      (archivarClaseIds || []).forEach(function (id) {
+        try { Clases.archivar_(ss, id, true); } catch (e) { /* ya borrado: nada */ }
+      });
+
       // Por si el traspaso trae filas sin curso académico: re-estampar al abrir.
       Cursos.invalidarBackfill_();
 

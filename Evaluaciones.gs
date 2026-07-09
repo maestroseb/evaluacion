@@ -30,6 +30,11 @@ function eliminarEvaluacion(evalId) {
   return Evaluaciones.eliminar_(abrirCuaderno_(), evalId);
 }
 
+/** Archiva (si=true) o restaura (si=false) una clase suelta: fuera de la vista, sin borrar. */
+function archivarEvaluacion(evalId, si) {
+  return Evaluaciones.archivar_(abrirCuaderno_(), evalId, si);
+}
+
 /** Reordena las evaluaciones (clases) según el nuevo orden de ids en la rejilla. */
 function reordenarEvaluaciones(ids) {
   return Evaluaciones.reordenar_(abrirCuaderno_(), ids);
@@ -55,7 +60,11 @@ var Evaluaciones = (function () {
         cursoAcademico: f[8] || '',
         claseNombre: cl.nombre || '(grupo eliminado)',
         curso: cl.curso || '',
-        numAlumnos: cl.numAlumnos || 0
+        numAlumnos: cl.numAlumnos || 0,
+        // Archivada ella misma vs. oculta porque su grupo está archivado: la
+        // interfaz esconde ambas, pero solo la primera se restaura suelta.
+        archivado: !!f[9],
+        grupoArchivado: !!cl.archivado
       });
     }
     out.sort(function (a, b) { return a.orden - b.orden; }); // orden guardado (0 = antiguos)
@@ -136,6 +145,25 @@ var Evaluaciones = (function () {
     return false;
   }
 
+  /** Ids de las evaluaciones de un grupo (para la eliminación en cascada). */
+  function idsDeClase_(ss, claseId) {
+    var datos = hoja_(ss).getDataRange().getValues();
+    var out = [];
+    for (var i = 1; i < datos.length; i++) {
+      if (datos[i][0] && datos[i][1] === claseId) out.push(datos[i][0]);
+    }
+    return out;
+  }
+
+  /** Marca (si=true) o desmarca la evaluación como archivada (col 10). */
+  function archivar_(ss, evalId, si) {
+    var sh = hoja_(ss);
+    var fila = Datos.filaDeId_(sh, evalId);
+    if (fila < 0) throw new Error('Evaluación no encontrada.');
+    sh.getRange(fila, 10).setValue(si ? 1 : '');
+    return { ok: true };
+  }
+
   function indexarClases_(ss, clasesLista) {
     var idx = {};
     (clasesLista || Clases.listar_(ss)).forEach(function (c) { idx[c.claseId] = c; });
@@ -144,6 +172,7 @@ var Evaluaciones = (function () {
 
   return {
     listar_: listar_, crear_: crear_, obtener_: obtener_, editar_: editar_,
-    eliminar_: eliminar_, usaClase_: usaClase_, reordenar_: reordenar_
+    eliminar_: eliminar_, usaClase_: usaClase_, idsDeClase_: idsDeClase_,
+    archivar_: archivar_, reordenar_: reordenar_
   };
 })();
