@@ -1975,6 +1975,13 @@ var App = (function () {
       el.style.setProperty('--rub-dc', (max - d) + 'ms');
       el.classList.add('rub-plegando');
     });
+    // La banda de la columna principal se desvanece A LA VEZ que llega la
+    // rama más cercana (no después, con el repintado): mismo retardo que ella.
+    var prim = document.querySelector('#rejilla-cont th.act-rub-prim[data-act="' + actId + '"]');
+    if (prim) {
+      prim.style.transitionDelay = max + 'ms';
+      prim.classList.add('rub-plegando-prim');
+    }
     setTimeout(fin, 200 + max);
   }
 
