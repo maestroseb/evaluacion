@@ -778,6 +778,17 @@
      retardo se fija inline, sincronizado con el escalonado del plegado). */
   table.rejilla th.act.act-rub-prim { transition: border-top-color .18s ease; }
   table.rejilla th.act.act-rub-prim.rub-plegando-prim { border-top-color: transparent; }
+  /* Fase 2 del plegado: las columnas ya desvanecidas se encogen a 0 y las
+     contiguas vuelven deslizándose (inverso del empuje al desplegar). El texto
+     se colapsa con font-size 0 (los nodos de texto no se pueden ocultar). */
+  table.rejilla .rub-plegando.rub-colapsando {
+    transition: width .18s ease, min-width .18s ease, padding .18s ease, border-width .18s ease;
+    width: 0 !important; min-width: 0 !important;
+    padding-left: 0 !important; padding-right: 0 !important;
+    border-left-width: 0 !important; border-right-width: 0 !important;
+    font-size: 0 !important; line-height: 0 !important;
+  }
+  table.rejilla .rub-colapsando > * { display: none; }
   table.rejilla .edit-act { position: absolute; top: 4px; right: 4px; border: none;
     background: transparent; color: var(--texto-3); cursor: pointer; font-size: 12px;
     padding: 2px; line-height: 1; z-index: 1; border-radius: 4px; }
