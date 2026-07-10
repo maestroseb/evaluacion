@@ -68,8 +68,9 @@ var CONFIG = {
   // despliega el código pero solo lo ve quien esté en la lista, hasta que se
   // decida abrirlo a todos cambiando su valor por '*' (sin re-desplegar nada).
   FLAGS: {
-    // Módulo de rúbricas: en pruebas. Para abrirlo a todo el mundo: rubricas: '*'
-    rubricas: ['sgirjim495@g.educaand.es']
+    // Módulo de rúbricas: ABIERTO a todo el profesorado desde julio de 2026
+    // (probado en privado con la lista de correos que hubo aquí hasta entonces).
+    rubricas: '*'
   }
 };
 

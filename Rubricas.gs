@@ -120,12 +120,29 @@ var Rubricas = (function () {
   }
 
   function eliminar_(ss, rubricaId) {
+    // Una rúbrica enganchada a columnas no se borra: esas columnas quedarían
+    // sin definición (sin niveles ni cálculo) y las selecciones, huérfanas.
+    var usos = columnasQueLaUsan_(ss, rubricaId);
+    if (usos > 0) {
+      throw new Error('Esta rúbrica la usan ' + usos + ' columna(s) del cuaderno. ' +
+        'Cambia o elimina antes esas columnas.');
+    }
     Papelera.papelearRubrica_(ss, rubricaId); // a la papelera antes de borrar
     var sh = hoja_(ss);
     var fila = Datos.filaDeId_(sh, rubricaId);
     if (fila < 0) return { ok: true };
     sh.deleteRow(fila);
     return { ok: true };
+  }
+
+  /** Nº de columnas (actividades tipo rúbrica) enganchadas a esta rúbrica. */
+  function columnasQueLaUsan_(ss, rubricaId) {
+    var datos = ss.getSheetByName(HOJAS.ACTIVIDADES).getDataRange().getValues();
+    var n = 0;
+    for (var i = 1; i < datos.length; i++) {
+      if (datos[i][0] && datos[i][8] === rubricaId) n++;
+    }
+    return n;
   }
 
   function duplicar_(ss, rubricaId) {
