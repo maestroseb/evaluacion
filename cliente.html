@@ -2076,11 +2076,12 @@ var App = (function () {
       var picks = valorItem(a.actividadId, alId);
       if (!picks || typeof picks !== 'object') picks = {};
       // Columna principal: la nota global de la rúbrica (se queda al expandir).
+      // Doble toque = evaluador completo; plegar, solo desde la cabecera.
       var ng = notaRubricaGlobal_(a, alId), gCls = claseNota(ng);
       var principal = '<td class="celda celda-rub-global' + (gCls ? ' ' + gCls : '') + '" data-act="' +
         a.actividadId + '" data-al="' + alId + '" tabindex="0" role="button" ' +
-        'title="Nota global · toca para plegar" ' +
-        'onclick="App.toggleRubExpand(event,\'' + a.actividadId + '\')">' +
+        'title="Nota global · doble toque para evaluar con la rúbrica" ' +
+        'onclick="App.tapRubCelda(this)">' +
         (ng == null ? '·' : fmtNota(ng, evalActual && evalActual.curso)) + '</td>';
       // Sub-celdas: el VALOR (puntos) del nivel elegido en cada indicador.
       var subs = (def.indicadores || []).map(function (ind, k) {
@@ -2185,6 +2186,96 @@ var App = (function () {
     if (!td) return;
     var a = actDe(actId), n = a ? notaActividad(a, alId) : null;
     td.textContent = (n == null ? '·' : fmtNota(n, evalActual && evalActual.curso));
+  }
+
+  // ---------- evaluador de rúbrica completa (doble toque en la celda) ----------
+  var rubTapUlt = { clave: null, t: 0 }; // último toque en una celda de rúbrica
+  var rubEvalSel = null; // { actId, alId, picks } en edición dentro del modal
+
+  /** Doble toque en la celda principal de una rúbrica → evaluador completo. */
+  function tapRubCelda(td) {
+    var clave = td.dataset.act + '|' + td.dataset.al;
+    var ahora = Date.now();
+    if (rubTapUlt.clave === clave && (ahora - rubTapUlt.t) < 400) {
+      rubTapUlt.clave = null;
+      abrirEvaluadorRubrica_(td.dataset.act, td.dataset.al);
+      return;
+    }
+    rubTapUlt = { clave: clave, t: ahora };
+  }
+
+  /**
+   * Modal con la rúbrica COMPLETA (indicadores × niveles, con sus descripciones)
+   * para evaluar a un alumno/a tocando casillas, como en RubricApp. Una casilla
+   * por indicador; tocar la elegida la quita. La nota global se recalcula en vivo.
+   */
+  function abrirEvaluadorRubrica_(actId, alId) {
+    var act = actDe(actId), def = rubDef_(act);
+    if (!act || !def) return;
+    var al = null;
+    (rejilla.alumnos || []).forEach(function (a) { if (a.id === alId) al = a; });
+    var prev = valorItem(actId, alId);
+    var picks = {};
+    if (prev && typeof prev === 'object') {
+      Object.keys(prev).forEach(function (k) { picks[k] = prev[k]; });
+    }
+    rubEvalSel = { actId: actId, alId: alId, picks: picks };
+    var niveles = def.niveles || [];
+    var cab = '<tr><th class="rg-corner">Indicador · peso</th>' + niveles.map(function (n) {
+      return '<th>' + esc(n.etiqueta) + ' <span class="ver-pts">(' + esc(n.valor) + ')</span></th>';
+    }).join('') + '</tr>';
+    var cuerpo = (def.indicadores || []).map(function (ind, i) {
+      var celdas = niveles.map(function (n, j) {
+        var sel = Math.round(picks[i]) === j + 1;
+        return '<td class="rub-eval-celda' + (sel ? ' sel' : '') + '" data-ind="' + i +
+          '" data-lvl="' + (j + 1) + '" tabindex="0" role="button" ' +
+          'onclick="App.marcarNivelEvaluador(this)">' +
+          esc((ind.celdas && ind.celdas[j]) || '') + '</td>';
+      }).join('');
+      return '<tr><th class="rg-ind">' + esc(ind.texto) +
+        ' <span class="rg-peso">' + pesoEntero_(ind.peso) + '%</span></th>' + celdas + '</tr>';
+    }).join('');
+    abrirModal(act.nombre + (al ? ' — ' + al.nombre : ''),
+      '<p class="ayuda">Toca una casilla por indicador (tocar la elegida la quita). ' +
+      'Nota global: <b id="rub-eval-nota">' + notaEvaluador_() + '</b></p>' +
+      '<div class="rg-scroll"><table class="rubrica-grid rubrica-ver rubrica-evaluar"><thead>' +
+      cab + '</thead><tbody>' + cuerpo + '</tbody></table></div>',
+      'Guardar',
+      guardarEvaluadorRubrica_,
+      { ancho: true, sinFoco: true });
+  }
+
+  /** Nota global /10 de la selección en curso del evaluador (o —). */
+  function notaEvaluador_() {
+    var act = actDe(rubEvalSel.actId), def = act && rubDef_(act);
+    var n = def ? notaRubrica_(def, rubEvalSel.picks, null) : null;
+    return n == null ? '—' : fmtNota(n, evalActual && evalActual.curso);
+  }
+
+  /** Marca (o desmarca) un nivel en el evaluador: una casilla por indicador. */
+  function marcarNivelEvaluador(td) {
+    if (!rubEvalSel) return;
+    var i = Number(td.dataset.ind), lvl = Number(td.dataset.lvl);
+    var ya = Math.round(rubEvalSel.picks[i]) === lvl;
+    [].forEach.call(td.parentNode.querySelectorAll('.rub-eval-celda'), function (c) {
+      c.classList.remove('sel');
+    });
+    if (ya) { delete rubEvalSel.picks[i]; }
+    else { rubEvalSel.picks[i] = lvl; td.classList.add('sel'); }
+    var n = document.getElementById('rub-eval-nota');
+    if (n) n.textContent = notaEvaluador_();
+  }
+
+  /** Guarda la selección del evaluador y refresca rejilla y notas. */
+  function guardarEvaluadorRubrica_() {
+    var s = rubEvalSel;
+    rubEvalSel = null;
+    cerrarModal();
+    if (!s || !rejilla) return;
+    var vacio = !Object.keys(s.picks).length;
+    fijarValor(s.actId, s.alId, vacio ? null : s.picks);
+    pintarRejilla(); // refresca la celda (y las sub-celdas si está expandida)
+    programarGuardadoNotas();
   }
 
   /** Selector de nivel para una celda de indicador de rúbrica. */
@@ -2410,12 +2501,14 @@ var App = (function () {
     var tipo = tipoDe(a);
     if (tipo === 'rubrica') {
       // Contraída: la nota global /10 con su color (el MISMO que al expandir).
+      // La columna se despliega SOLO desde la cabecera; el doble toque en la
+      // celda abre el evaluador con la rúbrica completa.
       var ng = notaRubricaGlobal_(a, alId), gr = claseNota(ng);
       return '<td class="celda celda-rubrica' + (ng == null ? ' vacia' : (gr ? ' ' + gr : '')) +
-        '" ' + comun + ' tabindex="0" role="button" aria-label="Expandir rúbrica" ' +
-        'title="Tocar para evaluar por indicadores" ' +
-        'onclick="App.toggleRubExpand(event,\'' + a.actividadId + '\')">' +
-        (ng == null ? svgUI('expandir') : fmtNota(ng, evalActual && evalActual.curso)) + '</td>';
+        '" ' + comun + ' tabindex="0" role="button" aria-label="Evaluar con la rúbrica" ' +
+        'title="Doble toque: evaluar con la rúbrica completa" ' +
+        'onclick="App.tapRubCelda(this)">' +
+        (ng == null ? '·' : fmtNota(ng, evalActual && evalActual.curso)) + '</td>';
     }
     if (a.desglose && (a.criterios || []).length) {
       // Contraída: la media /10, sobria (sin semáforo, como las columnas
@@ -4068,6 +4161,7 @@ var App = (function () {
     rubricaActCambiada: rubricaActCambiada, rubActModoCambiado: rubActModoCambiado,
     toggleRubExpand: toggleRubExpand, abrirSelectorNivelRub: abrirSelectorNivelRub,
     elegirNivelRub: elegirNivelRub,
+    tapRubCelda: tapRubCelda, marcarNivelEvaluador: marcarNivelEvaluador,
     abrirSelectorNivel: abrirSelectorNivel, elegirNivel: elegirNivel,
     abrirEditorTexto: abrirEditorTexto,
     prefetchEval: prefetchEval, prefetchClase: prefetchClase, prefetchRejilla: prefetchRejilla,
