@@ -174,11 +174,34 @@ var Datos = (function () {
     return m + 1;
   }
 
+  /**
+   * Reescribe la columna de orden según la posición de cada id en la lista, en
+   * UNA sola escritura. Compartida por todas las pestañas con reordenación
+   * (clases, evaluaciones, unidades, actividades y rúbricas); solo cambia el
+   * número de columna. Los ids ausentes de la lista conservan su orden.
+   */
+  function reordenarPorIds_(sh, colOrden, ids) {
+    if (!ids || !ids.length) return { ok: true };
+    var n = Math.max(0, sh.getLastRow() - 1);
+    if (!n) return { ok: true };
+    var idCol = sh.getRange(2, 1, n, 1).getValues();
+    var ordenCol = sh.getRange(2, colOrden, n, 1).getValues();
+    var pos = {};
+    ids.forEach(function (id, idx) { pos[id] = idx + 1; });
+    for (var i = 0; i < n; i++) {
+      var id = idCol[i][0];
+      if (id && pos[id] != null) ordenCol[i][0] = pos[id];
+    }
+    sh.getRange(2, colOrden, n, 1).setValues(ordenCol);
+    return { ok: true };
+  }
+
   return {
     inicializarEsquema_: inicializarEsquema_,
     asegurarEsquema_: asegurarEsquema_,
     filaDeId_: filaDeId_,
     nuevoId_: nuevoId_,
-    siguienteOrden_: siguienteOrden_
+    siguienteOrden_: siguienteOrden_,
+    reordenarPorIds_: reordenarPorIds_
   };
 })();

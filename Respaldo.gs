@@ -21,7 +21,7 @@ var Respaldo = (function () {
       var ahora = Date.now();
       if (ahora - ultimo < HORAS_MIN * 3600 * 1000) return;
       hacer_(ss, props, ahora);
-    } catch (e) { /* una copia fallida nunca debe romper la app */ }
+    } catch (e) { Logger.log('Respaldo.siToca_: ' + e); /* una copia fallida nunca rompe la app */ }
   }
 
   function hacer_(ss, props, ahora) {

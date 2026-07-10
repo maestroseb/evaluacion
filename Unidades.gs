@@ -91,20 +91,7 @@ var Unidades = (function () {
 
   /** Reescribe la columna 'orden' (col 4) según la posición de cada id, en una escritura. */
   function reordenar_(ss, evalId, ids) {
-    if (!ids || !ids.length) return { ok: true };
-    var sh = hoja_(ss);
-    var n = Math.max(0, sh.getLastRow() - 1);
-    if (!n) return { ok: true };
-    var idCol = sh.getRange(2, 1, n, 1).getValues();
-    var ordenCol = sh.getRange(2, 4, n, 1).getValues();
-    var pos = {};
-    ids.forEach(function (id, idx) { pos[id] = idx + 1; });
-    for (var i = 0; i < n; i++) {
-      var id = idCol[i][0];
-      if (id && pos[id] != null) ordenCol[i][0] = pos[id];
-    }
-    sh.getRange(2, 4, n, 1).setValues(ordenCol);
-    return { ok: true };
+    return Datos.reordenarPorIds_(hoja_(ss), 4, ids); // col 4 = orden
   }
 
   /** Devuelve {unidadId, evalId, nombre} o null. */

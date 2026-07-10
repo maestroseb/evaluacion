@@ -72,7 +72,8 @@ var Notas = (function () {
   /** Quita las notas de una actividad del bloque de su unidad (borrado suelto). */
   function quitarActividad_(ss, unidadId, actividadId) {
     var lock = LockService.getUserLock();
-    try { lock.waitLock(20000); } catch (e) { return; }
+    try { lock.waitLock(20000); }
+    catch (e) { Logger.log('Notas: lock ocupado, operación pospuesta: ' + e); return; }
     try {
       var sh = hoja_(ss);
       var fila = fila_(sh, unidadId);
@@ -94,7 +95,8 @@ var Notas = (function () {
    */
   function reponerActividad_(ss, unidadId, actividadId, grades) {
     var lock = LockService.getUserLock();
-    try { lock.waitLock(20000); } catch (e) { return; }
+    try { lock.waitLock(20000); }
+    catch (e) { Logger.log('Notas: lock ocupado, operación pospuesta: ' + e); return; }
     try {
       var sh = hoja_(ss);
       var fila = fila_(sh, unidadId);

@@ -29,7 +29,20 @@ env:
   CLASP_VERSION: '2.4.2'
 
 jobs:
+  # Los tests del motor de notas, Cripto y promoción corren SIEMPRE antes de
+  # sincronizar: si el cálculo cliente/servidor deja de coincidir (o el
+  # cifrado/remapeo se rompe), el código no llega a Apps Script.
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node tests/tests.js
+
   clasp-push:
+    needs: tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

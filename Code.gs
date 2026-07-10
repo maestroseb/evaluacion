@@ -13,7 +13,10 @@ function doGet() {
     .evaluate()
     .setTitle(CONFIG.NOMBRE_APP)
     .addMetaTag('viewport', 'width=device-width, initial-scale=1')
-    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+    // DEFAULT = la app no puede embeberse en iframes de terceros (protección
+    // anti-clickjacking). Se entra siempre por URL directa; si algún día se
+    // quisiera incrustar en un Google Sites, habría que volver a ALLOWALL.
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.DEFAULT);
 }
 
 /**
@@ -72,6 +75,7 @@ function flagsDe_(email) {
  * plano tras cargar; nunca bloquea ni rompe la app (todo va en try/catch).
  */
 function respaldoAutomatico() {
-  try { Respaldo.siToca_(abrirCuaderno_()); } catch (e) {}
+  try { Respaldo.siToca_(abrirCuaderno_()); }
+  catch (e) { Logger.log('respaldoAutomatico: ' + e); }
   return true;
 }
