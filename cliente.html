@@ -1985,20 +1985,23 @@ var App = (function () {
     // Reflujo: consolida los anchos fijados antes de lanzar la transición.
     void document.body.offsetWidth;
     [].forEach.call(els, function (el) {
-      // Retardo invertido respecto al de apertura: la última rama pliega primero.
+      // Retardo invertido respecto al de apertura (la última rama pliega
+      // primero) y COMPRIMIDO a la mitad: al cerrar, el ancho recorre todo su
+      // trayecto animado (al abrir aparece de golpe), así que a igual ritmo se
+      // percibía más lento.
       var d = parseInt(el.style.getPropertyValue('--rub-d'), 10) || 0;
-      el.style.setProperty('--rub-dc', (max - d) + 'ms');
+      el.style.setProperty('--rub-dc', Math.round((max - d) / 2) + 'ms');
       el.classList.add('rub-plegando');
     });
     // La banda de la columna principal se desvanece A LA VEZ que llega la
     // rama más cercana (no después, con el repintado): mismo retardo que ella.
     var prim = document.querySelector('#rejilla-cont th.act-rub-prim[data-act="' + actId + '"]');
     if (prim) {
-      prim.style.transitionDelay = max + 'ms';
+      prim.style.transitionDelay = Math.round(max / 2) + 'ms';
       prim.classList.add('rub-plegando-prim');
     }
     // El repintado llega cuando todo mide ya cero: no cambia nada visible.
-    setTimeout(fin, max + 330);
+    setTimeout(fin, Math.round(max / 2) + 250);
   }
 
   /** Asa de arrastre (⠿): el ÚNICO sitio desde el que se reordena la columna. */
