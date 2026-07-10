@@ -699,6 +699,13 @@
   .rubrica-ver td { white-space: pre-wrap; overflow-wrap: anywhere; color: var(--texto); }
   .rubrica-ver th { white-space: normal; }
   .ver-pts { color: var(--texto-3); font-weight: 400; }
+  /* Evaluador de rúbrica (doble toque en la celda de la rejilla): las casillas
+     se tocan para elegir el nivel de cada indicador, como en RubricApp. */
+  .rubrica-evaluar td.rub-eval-celda { cursor: pointer; user-select: none;
+    touch-action: manipulation; transition: background .12s, box-shadow .12s; }
+  .rubrica-evaluar td.rub-eval-celda:hover { background: var(--acento-suave); }
+  .rubrica-evaluar td.rub-eval-celda.sel { background: var(--acento-suave);
+    box-shadow: inset 0 0 0 2px var(--acento); }
   /* Criterio por indicador al crear una actividad de rúbrica. */
   .rub-ind-fila { display: flex; align-items: center; gap: 10px; margin: 6px 0; }
   .rub-ind-nom { flex: 1 1 auto; min-width: 0; font-size: 13px; font-weight: 600; color: var(--texto-2); }
@@ -805,9 +812,11 @@
   table.rejilla td.celda-cont { white-space: nowrap; padding: 4px 6px; }
   table.rejilla td.celda-escala { cursor: pointer; min-width: 46px; user-select: none;
     font-weight: 600; font-size: 11px; letter-spacing: .02em; color: var(--texto-3); }
-  /* Rúbrica: celda contraída (nota global) y celdas de indicador (expandida). */
+  /* Rúbrica: celda contraída (nota global) y celdas de indicador (expandida).
+     touch-action manipulation: el doble toque abre el evaluador, no hace zoom. */
   table.rejilla td.celda-rubrica { cursor: pointer; user-select: none; text-align: center;
-    font-weight: 600; color: var(--acento); }
+    font-weight: 600; color: var(--acento); touch-action: manipulation; }
+  table.rejilla td.celda-rub-global { touch-action: manipulation; }
   table.rejilla td.celda-rubrica.vacia .svg-ico { width: 14px; height: 14px; vertical-align: -2px;
     color: var(--texto-3); }
   table.rejilla td.celda-rub-ind { cursor: pointer; min-width: 32px; padding: 4px 2px;
