@@ -164,7 +164,8 @@ var Traspaso = (function () {
       // Grupos propios coincidentes: se archivan (nunca se borran) para que el
       // traspaso recién recibido no conviva duplicado con la versión antigua.
       (archivarClaseIds || []).forEach(function (id) {
-        try { Clases.archivar_(ss, id, true); } catch (e) { /* ya borrado: nada */ }
+        try { Clases.archivar_(ss, id, true); }
+        catch (e) { Logger.log('importar_: no se pudo archivar ' + id + ': ' + e); }
       });
 
       // Por si el traspaso trae filas sin curso académico: re-estampar al abrir.

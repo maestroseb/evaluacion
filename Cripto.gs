@@ -11,9 +11,13 @@
  *
  * Cada valor lleva un "nonce" aleatorio propio, de modo que dos nombres iguales
  * NO producen el mismo cifrado y el flujo de clave nunca se reutiliza entre
- * valores (se evita el problema del "two-time pad"). Formato:
- *     enc:<nonce>:<base64>
- * Un valor sin el prefijo "enc:" se trata como texto plano y se devuelve igual
+ * valores (se evita el problema del "two-time pad"). Formato actual, con tag
+ * de integridad (HMAC truncado del propio cifrado: una celda corrupta o
+ * manipulada se detecta en vez de descifrar a basura silenciosa):
+ *     enc2:<nonce>:<tag>:<base64>
+ * Se siguen leyendo los valores del formato anterior sin tag
+ * ("enc:<nonce>:<base64>"); al re-guardarse van pasando al formato nuevo.
+ * Un valor sin prefijo "enc" se trata como texto plano y se devuelve igual
  * (así los datos importados en claro se muestran bien hasta re-cifrarse).
  *
  * Nota: es seudonimización razonable (protege de la lectura del archivo), no
@@ -22,7 +26,8 @@
  */
 var Cripto = (function () {
 
-  var PREFIJO = 'enc:';
+  var PREFIJO = 'enc:';    // formato antiguo (sin tag): solo se LEE
+  var PREFIJO2 = 'enc2:';  // formato actual (con tag de integridad)
 
   function clave_() {
     var props = PropertiesService.getUserProperties();
@@ -48,7 +53,17 @@ var Cripto = (function () {
     return out;
   }
 
-  /** Cifra un texto. Devuelve "enc:<nonce>:<base64>" o el original si está vacío. */
+  /**
+   * Tag de integridad: HMAC del nonce + cifrado, con la misma clave pero
+   * dominio separado ("mac:") para que nunca coincida con el flujo. Truncado
+   * a 12 caracteres base64 (~9 bytes): sobra para detectar corrupción.
+   */
+  function tag_(nonce, b64) {
+    var mac = Utilities.computeHmacSha256Signature('mac:' + nonce + ':' + b64, clave_());
+    return Utilities.base64Encode(mac).slice(0, 12);
+  }
+
+  /** Cifra un texto. Devuelve "enc2:<nonce>:<tag>:<base64>" o el original si está vacío. */
   function cifrar(texto) {
     if (texto == null || texto === '') return texto;
     var nonce = Utilities.getUuid().replace(/-/g, '').slice(0, 16); // aleatorio por valor
@@ -56,20 +71,37 @@ var Cripto = (function () {
     var ks = flujo_(bytes.length, nonce);
     var enc = [];
     for (var i = 0; i < bytes.length; i++) enc.push(aSigned_((bytes[i] & 0xff) ^ ks[i]));
-    return PREFIJO + nonce + ':' + Utilities.base64Encode(enc);
+    var b64 = Utilities.base64Encode(enc);
+    return PREFIJO2 + nonce + ':' + tag_(nonce, b64) + ':' + b64;
   }
 
-  /** Descifra. Si no lleva el prefijo, se asume texto plano y se devuelve igual. */
-  function descifrar(dato) {
-    if (dato == null || String(dato).indexOf(PREFIJO) !== 0) return dato;
-    var cuerpo = String(dato).slice(PREFIJO.length);
-    var sep = cuerpo.indexOf(':');
-    if (sep < 0) return dato; // formato irreconocible: se devuelve tal cual
-    var enc = Utilities.base64Decode(cuerpo.slice(sep + 1)); // signed
-    var ks = flujo_(enc.length, cuerpo.slice(0, sep));
+  /** XOR del cifrado con el flujo del nonce → texto (común a ambos formatos). */
+  function abrir_(nonce, b64) {
+    var enc = Utilities.base64Decode(b64); // signed
+    var ks = flujo_(enc.length, nonce);
     var dec = [];
     for (var i = 0; i < enc.length; i++) dec.push(aSigned_((enc[i] & 0xff) ^ ks[i]));
     return Utilities.newBlob(dec).getDataAsString(); // UTF-8
+  }
+
+  /** Descifra ambos formatos. Sin prefijo = texto plano (se devuelve igual). */
+  function descifrar(dato) {
+    var s = String(dato == null ? '' : dato);
+    if (dato == null) return dato;
+    if (s.indexOf(PREFIJO2) === 0) { // formato actual: verifica el tag primero
+      var p = s.slice(PREFIJO2.length).split(':');
+      if (p.length !== 3) return dato;
+      if (tag_(p[0], p[2]) !== p[1]) {
+        Logger.log('Cripto: tag inválido (valor corrupto o manipulado)');
+        return '(dato dañado)';
+      }
+      return abrir_(p[0], p[2]);
+    }
+    if (s.indexOf(PREFIJO) !== 0) return dato; // texto plano
+    var cuerpo = s.slice(PREFIJO.length);      // formato antiguo, sin tag
+    var sep = cuerpo.indexOf(':');
+    if (sep < 0) return dato; // formato irreconocible: se devuelve tal cual
+    return abrir_(cuerpo.slice(0, sep), cuerpo.slice(sep + 1));
   }
 
   return { cifrar: cifrar, descifrar: descifrar };

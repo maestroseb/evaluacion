@@ -36,7 +36,8 @@ var Resumen = (function () {
     Object.keys(actsPorUnidad).forEach(function (u) {
       actsPorUnidad[u].forEach(function (a) {
         if (a.tipo === 'rubrica' && a.rubricaId && !rubricas[a.rubricaId]) {
-          try { rubricas[a.rubricaId] = Rubricas.obtener_(ss, a.rubricaId); } catch (e) {}
+          try { rubricas[a.rubricaId] = Rubricas.obtener_(ss, a.rubricaId); }
+          catch (e) { Logger.log('Resumen: rúbrica ' + a.rubricaId + ' no disponible: ' + e); }
         }
       });
     });

@@ -87,20 +87,7 @@ var Clases = (function () {
 
   /** Reordena los grupos según la lista de ids (col 8 = orden), en una escritura. */
   function reordenar_(ss, ids) {
-    if (!ids || !ids.length) return { ok: true };
-    var sh = hoja_(ss);
-    var n = Math.max(0, sh.getLastRow() - 1);
-    if (!n) return { ok: true };
-    var idCol = sh.getRange(2, 1, n, 1).getValues();
-    var ordenCol = sh.getRange(2, 8, n, 1).getValues();
-    var pos = {};
-    ids.forEach(function (id, idx) { pos[id] = idx + 1; });
-    for (var i = 0; i < n; i++) {
-      var id = idCol[i][0];
-      if (id && pos[id] != null) ordenCol[i][0] = pos[id];
-    }
-    sh.getRange(2, 8, n, 1).setValues(ordenCol);
-    return { ok: true };
+    return Datos.reordenarPorIds_(hoja_(ss), 8, ids); // col 8 = orden
   }
 
   function obtener_(ss, claseId) {
@@ -131,28 +118,37 @@ var Clases = (function () {
   }
 
   function actualizarAlumnos_(ss, claseId, alumnos) {
-    var sh = hoja_(ss);
-    var fila = Datos.filaDeId_(sh, claseId);
-    if (fila < 0) throw new Error('Clase no encontrada.');
-    var previos = deserializar_(sh.getRange(fila, 5).getValue());
-    var nuevos = normalizarAlumnos_(alumnos);
+    // Lock: es un leer-modificar-escribir de dos celdas (alumnos y bajas); dos
+    // dispositivos editando la lista a la vez podrían pisarse las bajas.
+    var lock = LockService.getUserLock();
+    try { lock.waitLock(20000); }
+    catch (e) { throw new Error('No se pudo guardar el alumnado (ocupado). Reintenta.'); }
+    try {
+      var sh = hoja_(ss);
+      var fila = Datos.filaDeId_(sh, claseId);
+      if (fila < 0) throw new Error('Clase no encontrada.');
+      var previos = deserializar_(sh.getRange(fila, 5).getValue());
+      var nuevos = normalizarAlumnos_(alumnos);
 
-    // Mantiene la lista de bajas (col 10): quien sale de la lista entra en
-    // bajas (recientes primero); quien reaparece en la lista sale de bajas.
-    // Así, re-añadir a un alumno/a con su mismo nombre recupera su id y notas.
-    var enLista = {};
-    nuevos.forEach(function (a) { enLista[a.id] = true; });
-    var bajas = previos.filter(function (a) { return a.id && !enLista[a.id]; });
-    var vistos = {};
-    bajas.forEach(function (b) { vistos[b.id] = true; });
-    deserializar_(sh.getRange(fila, 10).getValue()).forEach(function (b) {
-      if (b.id && !enLista[b.id] && !vistos[b.id]) { vistos[b.id] = true; bajas.push(b); }
-    });
-    bajas = bajas.slice(0, 60); // techo defensivo: no crece sin límite
+      // Mantiene la lista de bajas (col 10): quien sale de la lista entra en
+      // bajas (recientes primero); quien reaparece en la lista sale de bajas.
+      // Así, re-añadir a un alumno/a con su mismo nombre recupera su id y notas.
+      var enLista = {};
+      nuevos.forEach(function (a) { enLista[a.id] = true; });
+      var bajas = previos.filter(function (a) { return a.id && !enLista[a.id]; });
+      var vistos = {};
+      bajas.forEach(function (b) { vistos[b.id] = true; });
+      deserializar_(sh.getRange(fila, 10).getValue()).forEach(function (b) {
+        if (b.id && !enLista[b.id] && !vistos[b.id]) { vistos[b.id] = true; bajas.push(b); }
+      });
+      bajas = bajas.slice(0, 60); // techo defensivo: no crece sin límite
 
-    sh.getRange(fila, 5).setValue(serializar_(nuevos));
-    sh.getRange(fila, 10).setValue(serializar_(bajas));
-    return obtener_(ss, claseId);
+      sh.getRange(fila, 5).setValue(serializar_(nuevos));
+      sh.getRange(fila, 10).setValue(serializar_(bajas));
+      return obtener_(ss, claseId);
+    } finally {
+      lock.releaseLock();
+    }
   }
 
   function eliminar_(ss, claseId) {

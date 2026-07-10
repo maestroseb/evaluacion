@@ -155,20 +155,7 @@ var Rubricas = (function () {
 
   /** Reescribe la columna 'orden' (col 7) según la posición de cada id, en una escritura. */
   function reordenar_(ss, ids) {
-    if (!ids || !ids.length) return { ok: true };
-    var sh = hoja_(ss);
-    var n = Math.max(0, sh.getLastRow() - 1);
-    if (!n) return { ok: true };
-    var idCol = sh.getRange(2, 1, n, 1).getValues();
-    var ordenCol = sh.getRange(2, 7, n, 1).getValues();
-    var pos = {};
-    ids.forEach(function (id, idx) { pos[id] = idx + 1; });
-    for (var i = 0; i < n; i++) {
-      var id = idCol[i][0];
-      if (id && pos[id] != null) ordenCol[i][0] = pos[id];
-    }
-    sh.getRange(2, 7, n, 1).setValues(ordenCol);
-    return { ok: true };
+    return Datos.reordenarPorIds_(hoja_(ss), 7, ids); // col 7 = orden
   }
 
   // ---------- validación / normalización ----------
