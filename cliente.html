@@ -2179,6 +2179,16 @@ var App = (function () {
       m[alId] = obj;
     });
   }
+  /** Repinta la celda de nota global de una rúbrica expandida (fila del alumno). */
+  function refrescarGlobalRub_(actId, alId) {
+    var td = document.querySelector('#rejilla-cont td.celda-rub-global[data-act="' + actId +
+      '"][data-al="' + alId + '"]');
+    if (!td) return;
+    var a = actDe(actId), n = a ? notaRubricaGlobal_(a, alId) : null;
+    td.className = td.className.replace(/\bg-\w+/g, '').trim();
+    var g = claseNota(n); if (g) td.classList.add(g);
+    td.textContent = (n == null ? '·' : fmtNota(n, evalActual && evalActual.curso));
+  }
   /** Repinta la celda principal (media) de una columna multinota expandida. */
   function refrescarMediaDesglose_(actId, alId) {
     var td = document.querySelector('#rejilla-cont td.celda-des-prim[data-act="' + actId +
@@ -2357,6 +2367,7 @@ var App = (function () {
     if (niv && maxP > 0) { var g = claseNota((Number(niv.valor) || 0) / maxP * 10); if (g) td.classList.add(g); }
     td.title = niv ? niv.etiqueta : 'Sin valorar';
     td.textContent = niv ? niv.valor : '·';
+    refrescarGlobalRub_(actId, alId); // la nota global de la fila, al momento
     actualizarNotasFila(alId);
     programarGuardadoNotas();
   }
