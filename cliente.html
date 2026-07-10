@@ -2243,15 +2243,16 @@ var App = (function () {
     // Barra de alumno: anterior / nombre / siguiente (se guarda al cambiar).
     var nav = '<div class="rub-eval-nav">' +
       '<button type="button" class="btn"' + (idx > 0 ? '' : ' disabled') +
-        ' onclick="App.cambiarAlumnoEvaluador(-1)">‹ Anterior</button>' +
+        ' onclick="App.cambiarAlumnoEvaluador(-1)" aria-label="Alumno anterior">' +
+        '‹<span class="rub-nav-txt"> Anterior</span></button>' +
       '<span class="rub-eval-alumno">' + (al ? esc(al.nombre) : '') + '</span>' +
       '<button type="button" class="btn"' + (idx >= 0 && idx < alumnos.length - 1 ? '' : ' disabled') +
-        ' onclick="App.cambiarAlumnoEvaluador(1)">Siguiente ›</button>' +
+        ' onclick="App.cambiarAlumnoEvaluador(1)" aria-label="Alumno siguiente">' +
+        '<span class="rub-nav-txt">Siguiente </span>›</button>' +
       '</div>';
     abrirModal(act.nombre,
       nav +
-      '<p class="ayuda">Toca una casilla por indicador (tocar la elegida la quita). ' +
-      'Nota global: <b id="rub-eval-nota">' + notaEvaluador_() + '</b></p>' +
+      '<p class="ayuda">Nota global: <b id="rub-eval-nota">' + notaEvaluador_() + '</b></p>' +
       '<div class="rg-scroll"><table class="rubrica-grid rubrica-ver rubrica-evaluar"><thead>' +
       cab + '</thead><tbody>' + cuerpo + '</tbody></table></div>',
       'Guardar',
