@@ -2096,8 +2096,10 @@ var App = (function () {
     }
     if (esDesExp_(a)) {
       // Columna principal: la media /10 de la actividad (se queda al expandir).
-      var nm = notaActividad(a, alId), mCls = claseNota(nm);
-      var princ = '<td class="celda celda-rub-global celda-des-prim' + (mCls ? ' ' + mCls : '') +
+      // Sin semáforo de color: las multinota van sobrias, como las columnas
+      // normales (el color queda para la columna NOTA y las rúbricas).
+      var nm = notaActividad(a, alId);
+      var princ = '<td class="celda celda-rub-global celda-des-prim' +
         '" data-act="' + a.actividadId + '" data-al="' + alId + '" tabindex="0" role="button" ' +
         'title="Media · toca para plegar" ' +
         'onclick="App.toggleRubExpand(event,\'' + a.actividadId + '\')">' +
@@ -2140,8 +2142,11 @@ var App = (function () {
         'onclick="App.sumarContador(this,1)">+</button></td>';
     }
     // items y nota: input numérico (no entra en la navegación 2D de la rejilla).
-    return '<td class="celda celda-sub"><input type="text" inputmode="decimal" ' +
-      'class="celda-sub-inp" ' + comun + ' value="' + (v == null ? '' : fmt(v)) + '"></td>';
+    // El TD lleva data-act y el retardo (los usa la animación de plegado); el
+    // input, sus datos de edición (los lee commitSubInput).
+    return '<td class="celda celda-sub" data-act="' + a.actividadId + '"' + rubDelay_(k) + '>' +
+      '<input type="text" inputmode="decimal" class="celda-sub-inp" ' + comun +
+      ' value="' + (v == null ? '' : fmt(v)) + '"></td>';
   }
 
   /** Valor de una celda; con `cod` (multinota) devuelve el de ese criterio. */
@@ -2179,8 +2184,6 @@ var App = (function () {
       '"][data-al="' + alId + '"]');
     if (!td) return;
     var a = actDe(actId), n = a ? notaActividad(a, alId) : null;
-    td.className = td.className.replace(/\bg-\w+/g, '').trim();
-    var g = claseNota(n); if (g) td.classList.add(g);
     td.textContent = (n == null ? '·' : fmtNota(n, evalActual && evalActual.curso));
   }
 
@@ -2415,9 +2418,10 @@ var App = (function () {
         (ng == null ? svgUI('expandir') : fmtNota(ng, evalActual && evalActual.curso)) + '</td>';
     }
     if (a.desglose && (a.criterios || []).length) {
-      // Contraída: la media /10 con su color; tocar la despliega en subcolumnas.
-      var nm = notaActividad(a, alId), gm = claseNota(nm);
-      return '<td class="celda celda-desglose' + (nm == null ? ' vacia' : (gm ? ' ' + gm : '')) +
+      // Contraída: la media /10, sobria (sin semáforo, como las columnas
+      // normales); tocar la despliega en subcolumnas.
+      var nm = notaActividad(a, alId);
+      return '<td class="celda celda-desglose' + (nm == null ? ' vacia' : '') +
         '" ' + comun + ' tabindex="0" role="button" aria-label="Desplegar notas por criterio" ' +
         'title="' + esc(tituloDesglose_(a, v)) + '" ' +
         'onclick="App.toggleRubExpand(event,\'' + a.actividadId + '\')">' +

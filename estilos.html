@@ -844,9 +844,11 @@
     text-align: left; font-size: 12px; padding: 4px 8px; }
   table.rejilla td.celda-texto.vacia { text-align: center; color: var(--texto-3); }
   table.rejilla td.celda-texto.vacia .svg-ico { width: 13px; height: 13px; vertical-align: -2px; }
-  /* Multinota (desglose) contraída: la media /10; tocar para desplegar. */
+  /* Multinota (desglose): la media /10 va SOBRIA (sin semáforo ni acento),
+     como una columna normal; el color queda para NOTA y las rúbricas. */
   table.rejilla td.celda-desglose { cursor: pointer; user-select: none; text-align: center;
-    font-weight: 600; color: var(--acento); font-variant-numeric: tabular-nums; }
+    font-weight: 600; color: var(--texto-2); font-variant-numeric: tabular-nums; }
+  table.rejilla td.celda-des-prim { color: var(--texto-2); font-weight: 600; }
   table.rejilla td.celda-desglose.vacia .svg-ico { width: 14px; height: 14px; vertical-align: -2px;
     color: var(--texto-3); }
   /* Multinota expandida: sub-celdas por criterio (banda de árbol, estrechas). */
