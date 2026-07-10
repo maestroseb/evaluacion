@@ -2212,22 +2212,27 @@ var App = (function () {
   function abrirEvaluadorRubrica_(actId, alId) {
     var act = actDe(actId), def = rubDef_(act);
     if (!act || !def) return;
-    var al = null;
-    (rejilla.alumnos || []).forEach(function (a) { if (a.id === alId) al = a; });
+    var alumnos = rejilla.alumnos || [], al = null, idx = -1;
+    alumnos.forEach(function (a, i) { if (a.id === alId) { al = a; idx = i; } });
     var prev = valorItem(actId, alId);
     var picks = {};
     if (prev && typeof prev === 'object') {
       Object.keys(prev).forEach(function (k) { picks[k] = prev[k]; });
     }
     rubEvalSel = { actId: actId, alId: alId, picks: picks };
-    var niveles = def.niveles || [];
-    var cab = '<tr><th class="rg-corner">Indicador · peso</th>' + niveles.map(function (n) {
-      return '<th>' + esc(n.etiqueta) + ' <span class="ver-pts">(' + esc(n.valor) + ')</span></th>';
+    var niveles = def.niveles || [], maxP = rubMaxPts_(def);
+    // Color de cada nivel según su puntuación /10 (semáforo, como la rejilla).
+    var gNivel = niveles.map(function (n) {
+      return maxP > 0 ? claseNota((Number(n.valor) || 0) / maxP * 10) : '';
+    });
+    var cab = '<tr><th class="rg-corner">Indicador · peso</th>' + niveles.map(function (n, j) {
+      return '<th class="' + gNivel[j] + '">' + esc(n.etiqueta) +
+        ' <span class="ver-pts">(' + esc(n.valor) + ')</span></th>';
     }).join('') + '</tr>';
     var cuerpo = (def.indicadores || []).map(function (ind, i) {
       var celdas = niveles.map(function (n, j) {
         var sel = Math.round(picks[i]) === j + 1;
-        return '<td class="rub-eval-celda' + (sel ? ' sel' : '') + '" data-ind="' + i +
+        return '<td class="rub-eval-celda ' + gNivel[j] + (sel ? ' sel' : '') + '" data-ind="' + i +
           '" data-lvl="' + (j + 1) + '" tabindex="0" role="button" ' +
           'onclick="App.marcarNivelEvaluador(this)">' +
           esc((ind.celdas && ind.celdas[j]) || '') + '</td>';
@@ -2235,7 +2240,16 @@ var App = (function () {
       return '<tr><th class="rg-ind">' + esc(ind.texto) +
         ' <span class="rg-peso">' + pesoEntero_(ind.peso) + '%</span></th>' + celdas + '</tr>';
     }).join('');
-    abrirModal(act.nombre + (al ? ' — ' + al.nombre : ''),
+    // Barra de alumno: anterior / nombre / siguiente (se guarda al cambiar).
+    var nav = '<div class="rub-eval-nav">' +
+      '<button type="button" class="btn"' + (idx > 0 ? '' : ' disabled') +
+        ' onclick="App.cambiarAlumnoEvaluador(-1)">‹ Anterior</button>' +
+      '<span class="rub-eval-alumno">' + (al ? esc(al.nombre) : '') + '</span>' +
+      '<button type="button" class="btn"' + (idx >= 0 && idx < alumnos.length - 1 ? '' : ' disabled') +
+        ' onclick="App.cambiarAlumnoEvaluador(1)">Siguiente ›</button>' +
+      '</div>';
+    abrirModal(act.nombre,
+      nav +
       '<p class="ayuda">Toca una casilla por indicador (tocar la elegida la quita). ' +
       'Nota global: <b id="rub-eval-nota">' + notaEvaluador_() + '</b></p>' +
       '<div class="rg-scroll"><table class="rubrica-grid rubrica-ver rubrica-evaluar"><thead>' +
@@ -2243,6 +2257,18 @@ var App = (function () {
       'Guardar',
       guardarEvaluadorRubrica_,
       { ancho: true, sinFoco: true });
+  }
+
+  /** Guarda al alumno actual y abre el anterior/siguiente en el evaluador. */
+  function cambiarAlumnoEvaluador(delta) {
+    var s = rubEvalSel;
+    if (!s) return;
+    var alumnos = rejilla.alumnos || [], idx = -1;
+    alumnos.forEach(function (a, i) { if (a.id === s.alId) idx = i; });
+    var nuevo = alumnos[idx + delta];
+    if (!nuevo) return;
+    persistirEvaluador_();
+    abrirEvaluadorRubrica_(s.actId, nuevo.id);
   }
 
   /** Nota global /10 de la selección en curso del evaluador (o —). */
@@ -2266,11 +2292,20 @@ var App = (function () {
     if (n) n.textContent = notaEvaluador_();
   }
 
-  /** Guarda la selección del evaluador y refresca rejilla y notas. */
+  /** Botón Guardar del evaluador: persiste y cierra. */
   function guardarEvaluadorRubrica_() {
+    persistirEvaluador_();
+    cerrarModal();
+  }
+
+  /**
+   * Vuelca la selección en curso del evaluador al estado local y programa el
+   * guardado. La llama Guardar, el cambio de alumno y también cerrarModal():
+   * cerrar tocando fuera (o con Escape) NUNCA pierde lo último marcado.
+   */
+  function persistirEvaluador_() {
     var s = rubEvalSel;
     rubEvalSel = null;
-    cerrarModal();
     if (!s || !rejilla) return;
     var vacio = !Object.keys(s.picks).length;
     fijarValor(s.actId, s.alId, vacio ? null : s.picks);
@@ -3531,6 +3566,9 @@ var App = (function () {
     var b = document.getElementById('modal-aceptar'); b.disabled = true; b.textContent = txt;
   }
   function cerrarModal() {
+    // Evaluador de rúbrica abierto: cerrar como sea (fuera, Escape…) GUARDA
+    // lo último seleccionado; nada se pierde por un toque fuera del modal.
+    if (rubEvalSel) persistirEvaluador_();
     document.getElementById('modal-fondo').hidden = true;
     accionModal = null;
     var m = document.querySelector('.modal');
@@ -4162,6 +4200,7 @@ var App = (function () {
     toggleRubExpand: toggleRubExpand, abrirSelectorNivelRub: abrirSelectorNivelRub,
     elegirNivelRub: elegirNivelRub,
     tapRubCelda: tapRubCelda, marcarNivelEvaluador: marcarNivelEvaluador,
+    cambiarAlumnoEvaluador: cambiarAlumnoEvaluador,
     abrirSelectorNivel: abrirSelectorNivel, elegirNivel: elegirNivel,
     abrirEditorTexto: abrirEditorTexto,
     prefetchEval: prefetchEval, prefetchClase: prefetchClase, prefetchRejilla: prefetchRejilla,
