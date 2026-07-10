@@ -2262,7 +2262,8 @@ var App = (function () {
       '</div>';
     abrirModal(act.nombre,
       nav +
-      '<p class="ayuda">Nota global: <b id="rub-eval-nota">' + notaEvaluador_() + '</b></p>' +
+      '<p class="ayuda">Nota global: <b id="rub-eval-nota">' + notaEvaluador_() + '</b> ' +
+      '<span id="rub-eval-cont" class="ayuda-inline">' + contadorEvaluador_() + '</span></p>' +
       '<div class="rg-scroll"><table class="rubrica-grid rubrica-ver rubrica-evaluar"><thead>' +
       cab + '</thead><tbody>' + cuerpo + '</tbody></table></div>',
       'Guardar',
@@ -2289,6 +2290,15 @@ var App = (function () {
     return n == null ? '—' : fmtNota(n, evalActual && evalActual.curso);
   }
 
+  /** «n/m indicadores» evaluados: deja claro cuándo la nota aún es parcial. */
+  function contadorEvaluador_() {
+    var act = actDe(rubEvalSel.actId), def = act && rubDef_(act);
+    if (!def) return '';
+    var total = (def.indicadores || []).length;
+    var hechos = Object.keys(rubEvalSel.picks).length;
+    return '(' + hechos + '/' + total + ' indicadores)';
+  }
+
   /** Marca (o desmarca) un nivel en el evaluador: una casilla por indicador. */
   function marcarNivelEvaluador(td) {
     if (!rubEvalSel) return;
@@ -2301,6 +2311,8 @@ var App = (function () {
     else { rubEvalSel.picks[i] = lvl; td.classList.add('sel'); }
     var n = document.getElementById('rub-eval-nota');
     if (n) n.textContent = notaEvaluador_();
+    var c = document.getElementById('rub-eval-cont');
+    if (c) c.textContent = contadorEvaluador_();
   }
 
   /** Botón Guardar del evaluador: persiste y cierra. */
