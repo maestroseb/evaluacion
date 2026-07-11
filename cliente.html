@@ -4328,6 +4328,7 @@ var App = (function () {
   // Guardado en cada evaluación ([{dia:0-6, hora}], 0 = lunes): la vista
   // semanal lo cruza con las sesiones para enseñar los huecos sin planificar.
   var DIA_CHIPS = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+  var DIAS_LECTIVOS = 5; // el editor de horario solo ofrece L–V (no hay clase en finde)
   var horarioDraft = null; // {evalId: [{dia,hora}]} mientras el modal está abierto
 
   /** Clases (reales o provisionales) que tocan ese día, ordenadas por hora (sin hora, al final). */
@@ -4366,14 +4367,14 @@ var App = (function () {
     var reales = evalsProgramables_();
     var h = clases.map(function (c) {
       var dias = horarioDraft[c.id] || [];
-      var chips = DIA_CHIPS.map(function (etq, d) {
+      var chips = DIA_CHIPS.slice(0, DIAS_LECTIVOS).map(function (etq, d) {
         var act = dias.some(function (x) { return x.dia === d; });
         return '<button type="button" class="planner-chip-dia' + (act ? ' activo' : '') +
           '" onclick="App.horToggleDia(\'' + c.id + '\',' + d + ')">' + etq + '</button>';
       }).join('');
       var horas = dias.map(function (x) {
-        return '<label class="planner-hora">' + DIA_CHIPS[x.dia] +
-          '<input type="time" class="planner-hora-inp" data-eval="' + c.id +
+        return '<label class="planner-hora"><span class="planner-hora-dia">' + DIA_CHIPS[x.dia] +
+          '</span><input type="time" class="planner-hora-inp" data-eval="' + c.id +
           '" data-dia="' + x.dia + '" value="' + esc(x.hora) + '"></label>';
       }).join('');
       // Las provisionales llevan sus controles: vincular a una clase real (su
