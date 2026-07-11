@@ -1164,6 +1164,19 @@
     font: inherit; font-size: 12px; cursor: pointer; }
   .pl-hueco:hover { border-color: var(--acento); color: var(--acento); }
   .pl-sueltas { margin-top: 14px; }
+  /* Banda superior de recordatorios (tipo aviso) */
+  .pl-avisos { display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+    background: var(--g-media-bg); border: 1px solid var(--g-media-tx); border-radius: 10px;
+    padding: 8px 10px; margin-bottom: 12px; }
+  .pl-avisos-tit { font-size: 12px; font-weight: 700; color: var(--g-media-tx);
+    text-transform: uppercase; letter-spacing: .03em; }
+  .pl-aviso { border: 0; background: var(--surface); border-radius: 999px; padding: 4px 12px;
+    font: inherit; font-size: 13px; font-weight: 500; color: var(--texto); cursor: pointer;
+    box-shadow: var(--sombra-1); }
+  /* Fila «Otros» (eventos sin grupo) y su chip diferenciado */
+  .pl-fila-otros { color: var(--texto-2); font-style: italic; }
+  .pl-chip-evento { background: var(--acento-suave); border-left-color: var(--texto-2);
+    border-left-style: dashed; }
   .planner-hor-dias { display: flex; flex-wrap: wrap; gap: 8px; }
   .planner-chip-dia { flex: 0 0 auto; display: inline-flex; align-items: center;
     justify-content: center; width: 34px; height: 34px; padding: 0; line-height: 1;

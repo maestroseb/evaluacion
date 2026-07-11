@@ -63,7 +63,7 @@ var Planner = (function () {
       out.push({
         sesionId: f[0], titulo: f[1], descripcion: f[2],
         criterios: parse_(f[3]), asignaciones: parse_(f[4]),
-        creado: f[5], orden: Number(f[6]) || 0
+        creado: f[5], orden: Number(f[6]) || 0, tipo: f[7] || 'clase'
       });
     }
     out.sort(function (a, b) { return a.orden - b.orden; });
@@ -74,11 +74,11 @@ var Planner = (function () {
     var sh = hoja_(ss);
     var fila = Datos.filaDeId_(sh, sesionId);
     if (fila < 0) throw new Error('Sesión no encontrada.');
-    var f = sh.getRange(fila, 1, 1, 7).getValues()[0];
+    var f = sh.getRange(fila, 1, 1, 8).getValues()[0];
     return {
       sesionId: f[0], titulo: f[1], descripcion: f[2],
       criterios: parse_(f[3]), asignaciones: parse_(f[4]),
-      creado: f[5], orden: Number(f[6]) || 0
+      creado: f[5], orden: Number(f[6]) || 0, tipo: f[7] || 'clase'
     };
   }
 
@@ -88,7 +88,7 @@ var Planner = (function () {
     var orden = Datos.siguienteOrden_(listar_(ss));
     hoja_(ss).appendRow([
       id, limpio.titulo, limpio.descripcion, JSON.stringify(limpio.criterios),
-      JSON.stringify(limpio.asignaciones), new Date().toISOString(), orden
+      JSON.stringify(limpio.asignaciones), new Date().toISOString(), orden, limpio.tipo
     ]);
     return obtener_(ss, id);
   }
@@ -103,6 +103,7 @@ var Planner = (function () {
       limpio.titulo, limpio.descripcion,
       JSON.stringify(limpio.criterios), JSON.stringify(limpio.asignaciones)
     ]]);
+    sh.getRange(fila, 8).setValue(limpio.tipo); // col 8 = tipo
     return obtener_(ss, sesionId);
   }
 
@@ -121,7 +122,7 @@ var Planner = (function () {
     // el mismo contenido en otras fechas u otras clases.
     return crear_(ss, {
       titulo: orig.titulo + ' (copia)', descripcion: orig.descripcion,
-      criterios: orig.criterios, asignaciones: []
+      criterios: orig.criterios, asignaciones: [], tipo: orig.tipo
     });
   }
 
@@ -208,31 +209,45 @@ var Planner = (function () {
    * asignaciones bien formadas (evalId sin duplicar, fecha ISO o vacía, estado
    * conocido). Blinda tipos para que la hoja no guarde basura del cliente.
    */
+  var TIPOS = { clase: true, evento: true, aviso: true };
+
+  function mapAsig_(a) {
+    return {
+      evalId: String((a && a.evalId) || '').trim(),
+      fecha: fechaValida_(a && a.fecha),
+      estado: ESTADOS[a && a.estado] ? a.estado : 'pendiente',
+      // Nota corta del desvío en ESE grupo (la plantilla es compartida).
+      observaciones: String((a && a.observaciones) || '').slice(0, 2000)
+    };
+  }
+
   function validarYNormalizar_(payload) {
     var titulo = String((payload && payload.titulo) || '').trim();
     if (!titulo) throw new Error('Falta el título de la sesión.');
 
-    var vistos = {};
-    var asignaciones = (Array.isArray(payload.asignaciones) ? payload.asignaciones : [])
-      .map(function (a) {
-        return {
-          evalId: String((a && a.evalId) || '').trim(),
-          fecha: fechaValida_(a && a.fecha),
-          estado: ESTADOS[a && a.estado] ? a.estado : 'pendiente',
-          // Nota corta del desvío en ESE grupo (la plantilla es compartida).
-          observaciones: String((a && a.observaciones) || '').slice(0, 2000)
-        };
-      })
-      .filter(function (a) {
+    var tipo = (payload && TIPOS[payload.tipo]) ? payload.tipo : 'clase';
+    var raw = Array.isArray(payload.asignaciones) ? payload.asignaciones : [];
+    var asignaciones;
+    if (tipo === 'clase') {
+      // Una asignación por grupo (evalId real, sin duplicar).
+      var vistos = {};
+      asignaciones = raw.map(mapAsig_).filter(function (a) {
         if (!a.evalId || vistos[a.evalId]) return false;
         vistos[a.evalId] = true;
         return true;
       });
+    } else {
+      // Evento / aviso: una única asignación "general" (sin grupo).
+      var a0 = raw.length ? mapAsig_(raw[0]) : { fecha: '', estado: 'pendiente', observaciones: '' };
+      asignaciones = [{ evalId: '', fecha: a0.fecha, estado: a0.estado, observaciones: '' }];
+    }
 
     return {
       titulo: titulo,
+      tipo: tipo,
       descripcion: String((payload && payload.descripcion) || '').slice(0, 8000),
-      criterios: codigos_(payload && payload.criterios),
+      // Los criterios solo tienen sentido en una sesión de clase.
+      criterios: tipo === 'clase' ? codigos_(payload && payload.criterios) : [],
       asignaciones: asignaciones
     };
   }

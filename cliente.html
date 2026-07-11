@@ -4577,31 +4577,54 @@ var App = (function () {
     }
     var enSemana = {};
     isos.forEach(function (x) { enSemana[x] = true; });
-    var porClaseFecha = {}; // 'evalId|iso' -> [entrada]
+    var porClaseFecha = {}; // 'evalId|iso' -> [entrada] (sesiones de clase)
+    var eventos = {};       // iso -> [entrada] (tipo evento, sin grupo → fila OTROS)
+    var avisos = [];        // entradas tipo aviso de la semana (banda superior)
     entradasPlanner_().forEach(function (en) {
       var a = en.asig;
-      if (a && a.fecha && enSemana[a.fecha]) {
-        var k = a.evalId + '|' + a.fecha;
-        (porClaseFecha[k] = porClaseFecha[k] || []).push(en);
-      }
+      if (!a || !a.fecha || !enSemana[a.fecha]) return;
+      var tipo = en.ses.tipo || 'clase';
+      if (tipo === 'aviso') { avisos.push(en); return; }
+      if (tipo === 'evento' || !a.evalId) { (eventos[a.fecha] = eventos[a.fecha] || []).push(en); return; }
+      var k = a.evalId + '|' + a.fecha;
+      (porClaseFecha[k] = porClaseFecha[k] || []).push(en);
     });
-    return { isos: isos, porClaseFecha: porClaseFecha, hoy: isoLocal_(new Date()) };
+    return { isos: isos, porClaseFecha: porClaseFecha, eventos: eventos, avisos: avisos,
+      hoy: isoLocal_(new Date()) };
+  }
+
+  /** Banda superior de recordatorios (tipo aviso) de la semana. */
+  function htmlAvisosBanda_(avisos) {
+    if (!avisos || !avisos.length) return '';
+    return '<div class="pl-avisos"><span class="pl-avisos-tit">No olvidar</span>' +
+      avisos.map(function (en) {
+        return '<button class="pl-aviso" onclick="App.editarSesionUI(\'' + en.ses.sesionId +
+          '\')" title="' + esc(en.ses.descripcion || '') + '">' +
+          esc(en.ses.titulo || 'Aviso') +
+          (en.asig && en.asig.fecha ? ' · ' + fechaCorta_(en.asig.fecha) : '') + '</button>';
+      }).join('') + '</div>';
   }
 
   /** Chip compacto de sesión para las celdas de la rejilla. */
   function chipSesion_(en, conClase) {
     var s = en.ses, a = en.asig;
+    var tipo = s.tipo || 'clase';
     var est = a ? a.estado : 'pendiente';
     var sub = '';
     if (conClase && a) {
-      var hora = horaClaseDia_(a.evalId, diaSemanaIso_(a.fecha));
-      sub = '<span class="pl-chip-sub">' + (hora ? esc(hora) + ' · ' : '') +
-        esc(etiquetaClase_(a.evalId)) + '</span>';
+      if (tipo !== 'clase') {
+        sub = '<span class="pl-chip-sub">' + (tipo === 'evento' ? 'Evento' : 'Aviso') + '</span>';
+      } else {
+        var hora = horaClaseDia_(a.evalId, diaSemanaIso_(a.fecha));
+        sub = '<span class="pl-chip-sub">' + (hora ? esc(hora) + ' · ' : '') +
+          esc(etiquetaClase_(a.evalId)) + '</span>';
+      }
     }
     var obs = (a && a.observaciones)
       ? '<span class="pl-chip-obs" title="' + esc(a.observaciones) + '">' + svgUI('lapiz') + '</span>'
       : '';
-    return '<div class="pl-chip ' + est + '" onclick="App.editarSesionUI(\'' + s.sesionId +
+    return '<div class="pl-chip ' + est + (tipo === 'evento' ? ' pl-chip-evento' : '') +
+        '" onclick="App.editarSesionUI(\'' + s.sesionId +
         '\')" title="' + esc(s.titulo || 'Sin título') +
         (a && a.observaciones ? ' — ' + esc(a.observaciones) : '') + '">' +
       (a ? '<span class="pl-chip-dot" title="Cambiar estado" ' +
@@ -4634,7 +4657,12 @@ var App = (function () {
       ? '<div class="planner-dia pl-sueltas"><h3>Sin programar</h3>' +
         sueltas.map(function (en) { return lineaSesion_(en); }).join('') + '</div>'
       : '';
-    return grid + extra;
+    return htmlAvisosBanda_(ctx.avisos) + grid + extra;
+  }
+
+  /** ¿Hay algún evento en la semana? (para decidir si se pinta la fila OTROS). */
+  function hayEventos_(ctx) {
+    return ctx.isos.some(function (iso) { return (ctx.eventos[iso] || []).length; });
   }
 
   /** Rejilla grupos × días: una fila por clase, una columna por día lectivo. */
@@ -4659,6 +4687,15 @@ var App = (function () {
         cel.push('<div class="pl-celda">' + cont + '</div>');
       });
     });
+    // Fila «Otros»: eventos sin grupo (reuniones, exámenes…) por día.
+    if (hayEventos_(ctx)) {
+      cel.push('<div class="pl-esq pl-fila-lbl pl-fila-otros">Otros</div>');
+      ctx.isos.forEach(function (iso) {
+        var evs = ctx.eventos[iso] || [];
+        cel.push('<div class="pl-celda">' +
+          evs.map(function (en) { return chipSesion_(en, false); }).join('') + '</div>');
+      });
+    }
     return '<div class="pl-scroll"><div class="pl-grid" style="--cols:' + DIAS_LECTIVOS + '">' +
       cel.join('') + '</div></div>';
   }
@@ -4676,6 +4713,10 @@ var App = (function () {
         } else if (c.horario.some(function (h) { return h.dia === i; })) {
           bloques.push({ hora: hora, html: huecoCelda_(c.id, iso, true) });
         }
+      });
+      // Eventos sin grupo del día: al final de la columna (no tienen hora).
+      (ctx.eventos[iso] || []).forEach(function (en) {
+        bloques.push({ hora: '99:98', html: chipSesion_(en, true) });
       });
       bloques.sort(function (a, b) {
         var ha = a.hora || '99:99', hb = b.hora || '99:99';
@@ -4717,8 +4758,10 @@ var App = (function () {
           'onclick="App.estadoSesionUI(\'' + s.sesionId + '\',\'' + a.evalId + '\')">' +
           ESTADO_TXT[a.estado] + '</button>'
       : '<span class="planner-estado borrador">Borrador</span>';
+    var tipo = s.tipo || 'clase';
     var meta = [];
-    if (a) meta.push(esc(etiquetaClase_(a.evalId)));
+    if (a && a.evalId) meta.push(esc(etiquetaClase_(a.evalId)));
+    else if (tipo !== 'clase') meta.push(tipo === 'evento' ? 'Evento' : 'Aviso');
     if (conFecha && a && a.fecha) meta.push(fechaCorta_(a.fecha));
     if ((s.criterios || []).length) meta.push(s.criterios.join(', '));
     var obs = (a && a.observaciones)
@@ -4779,6 +4822,10 @@ var App = (function () {
   function abrirModalSesion_(titulo, textoAceptar, id, s) {
     sesionCritSel = {};
     (s.criterios || []).forEach(function (c) { sesionCritSel[c] = true; });
+    var tipoActual = s.tipo || 'clase';
+    // Evento/aviso: una sola asignación general; su fecha prellenaría el campo.
+    var eventoFecha = (tipoActual !== 'clase' && s.asignaciones && s.asignaciones[0])
+      ? (s.asignaciones[0].fecha || '') : '';
     var asigDe = {};
     (s.asignaciones || []).forEach(function (a) { asigDe[a.evalId] = a; });
     var filas = clasesPlanner_().map(function (c) {
@@ -4801,20 +4848,54 @@ var App = (function () {
       '<label>Descripción / desarrollo (opcional)' +
         '<textarea id="ses-desc" rows="4" placeholder="Qué se hace, materiales, deberes…">' +
         esc(s.descripcion) + '</textarea></label>' +
-      '<div class="campo-crit"><span class="etq">Clases donde se dará la sesión</span>' +
-        '<p class="ayuda">La misma planificación sirve para varios grupos; cada uno lleva su ' +
-          'fecha y su estado.</p>' +
-        '<div class="planner-asigs">' + (filas ||
-          '<div class="vacio">Aún no tienes clases: añade una con su nombre desde el botón ' +
-          '«Horario» del planificador.</div>') + '</div></div>' +
-      '<div class="campo-crit"><span class="etq">Criterios trabajados</span>' +
-        '<div id="ses-crit-lista" class="lista-crit planner-crit"></div>' +
-        '<p class="ayuda">Salen del área de las clases marcadas; solo tienes que marcarlos.</p>' +
+      '<div class="campo-crit"><span class="etq">Tipo</span>' +
+        '<div class="tipos-act">' +
+          ['clase', 'evento', 'aviso'].map(function (t) {
+            var etq = t === 'clase' ? 'Clase' : (t === 'evento' ? 'Evento' : 'Aviso');
+            return '<label class="tipo-opt"><input type="radio" name="f-ses-tipo" value="' + t + '"' +
+              (t === tipoActual ? ' checked' : '') + ' onchange="App.sesTipoCambiado()">' + etq + '</label>';
+          }).join('') +
+        '</div>' +
+        '<p class="ayuda" id="ses-tipo-ayuda"></p></div>' +
+      '<div id="ses-sec-clase">' +
+        '<div class="campo-crit"><span class="etq">Clases donde se dará la sesión</span>' +
+          '<p class="ayuda">La misma planificación sirve para varios grupos; cada uno lleva su ' +
+            'fecha y su estado.</p>' +
+          '<div class="planner-asigs">' + (filas ||
+            '<div class="vacio">Aún no tienes clases: añade una con su nombre desde el botón ' +
+            '«Horario» del planificador.</div>') + '</div></div>' +
+        '<div class="campo-crit"><span class="etq">Criterios trabajados</span>' +
+          '<div id="ses-crit-lista" class="lista-crit planner-crit"></div>' +
+          '<p class="ayuda">Salen del área de las clases marcadas; solo tienes que marcarlos.</p>' +
+        '</div>' +
+      '</div>' +
+      '<div id="ses-sec-evento"' + (tipoActual === 'clase' ? ' hidden' : '') + '>' +
+        '<label>Fecha' +
+          '<input id="ses-evento-fecha" type="date" value="' + esc(eventoFecha) + '"></label>' +
       '</div>',
       textoAceptar,
       function () { guardarSesion_(id); },
       { sinFoco: !!id });
-    refrescarCriteriosSesion_(); // pinta las casillas según las clases ya marcadas
+    sesTipoCambiado();            // ajusta secciones y ayuda al tipo actual
+    refrescarCriteriosSesion_();  // pinta las casillas según las clases ya marcadas
+  }
+
+  function sesTipoElegido_() {
+    var r = document.querySelector('input[name="f-ses-tipo"]:checked');
+    return r ? r.value : 'clase';
+  }
+  /** Muestra la sección de clases (tipo clase) o la de fecha (evento/aviso). */
+  function sesTipoCambiado() {
+    var t = sesTipoElegido_();
+    var secClase = document.getElementById('ses-sec-clase');
+    var secEvento = document.getElementById('ses-sec-evento');
+    if (secClase) secClase.hidden = (t !== 'clase');
+    if (secEvento) secEvento.hidden = (t === 'clase');
+    var ayuda = document.getElementById('ses-tipo-ayuda');
+    if (ayuda) ayuda.textContent =
+      t === 'clase' ? 'Sesión de clase: se asigna a uno o varios grupos.'
+      : t === 'evento' ? 'Evento sin grupo (reunión, examen, guardia…): aparece en la fila «Otros».'
+      : 'Recordatorio de la semana: aparece en la banda «No olvidar».';
   }
 
   /** Al (des)marcar una clase: sugiere fecha y recalcula los criterios del área. */
@@ -4884,22 +4965,30 @@ var App = (function () {
   function guardarSesion_(id) {
     var titulo = val('ses-titulo').trim();
     if (!titulo) return aviso('Pon un título a la sesión.');
+    var tipo = sesTipoElegido_();
     var previa = id && (sesionesCache || []).filter(function (x) { return x.sesionId === id; })[0];
     var estadoDe = {};
     if (previa) (previa.asignaciones || []).forEach(function (a) { estadoDe[a.evalId] = a.estado; });
     var asignaciones = [];
-    [].forEach.call(document.querySelectorAll('.planner-asig-chk'), function (chk) {
-      if (!chk.checked) return;
-      var evalId = chk.dataset.eval;
-      var f = document.querySelector('.planner-asig-fecha[data-eval="' + evalId + '"]');
-      var o = document.querySelector('.planner-asig-obs[data-eval="' + evalId + '"]');
-      asignaciones.push({ evalId: evalId, fecha: (f && f.value) || '',
-        estado: estadoDe[evalId] || 'pendiente', // conserva el estado al editar
-        observaciones: (o && o.value) || '' });
-    });
+    if (tipo === 'clase') {
+      [].forEach.call(document.querySelectorAll('.planner-asig-chk'), function (chk) {
+        if (!chk.checked) return;
+        var evalId = chk.dataset.eval;
+        var f = document.querySelector('.planner-asig-fecha[data-eval="' + evalId + '"]');
+        var o = document.querySelector('.planner-asig-obs[data-eval="' + evalId + '"]');
+        asignaciones.push({ evalId: evalId, fecha: (f && f.value) || '',
+          estado: estadoDe[evalId] || 'pendiente', // conserva el estado al editar
+          observaciones: (o && o.value) || '' });
+      });
+    } else {
+      // Evento / aviso: una asignación general (sin grupo), con su fecha.
+      var prevA = previa && (previa.asignaciones || [])[0];
+      asignaciones = [{ evalId: '', fecha: val('ses-evento-fecha') || '',
+        estado: (prevA && prevA.estado) || 'pendiente', observaciones: '' }];
+    }
     var payload = {
-      titulo: titulo, descripcion: val('ses-desc'),
-      criterios: Object.keys(sesionCritSel), // casillas marcadas (el servidor deduplica)
+      titulo: titulo, tipo: tipo, descripcion: val('ses-desc'),
+      criterios: tipo === 'clase' ? Object.keys(sesionCritSel) : [],
       asignaciones: asignaciones
     };
     // Guardado OPTIMISTA (como las notas de la rejilla): se cierra el modal y se
@@ -4907,7 +4996,7 @@ var App = (function () {
     cerrarModal();
     if (id) {
       var optimista = {
-        sesionId: id, titulo: payload.titulo, descripcion: payload.descripcion,
+        sesionId: id, titulo: payload.titulo, descripcion: payload.descripcion, tipo: tipo,
         criterios: payload.criterios.slice(), asignaciones: payload.asignaciones,
         creado: previa ? previa.creado : '', orden: previa ? previa.orden : 0
       };
@@ -4920,7 +5009,7 @@ var App = (function () {
     } else {
       var tmpId = 'tmp_' + (++sesionTmpSeq);
       var nueva = {
-        sesionId: tmpId, titulo: payload.titulo, descripcion: payload.descripcion,
+        sesionId: tmpId, titulo: payload.titulo, descripcion: payload.descripcion, tipo: tipo,
         criterios: payload.criterios.slice(), asignaciones: payload.asignaciones,
         creado: new Date().toISOString(), orden: 1e9
       };
@@ -4991,8 +5080,10 @@ var App = (function () {
     function bloque(en) {
       var s = en.ses, a = en.asig;
       var l = '- [' + (a && a.estado === 'hecha' ? 'x' : ' ') + '] **' + s.titulo + '**';
+      var tipo = s.tipo || 'clase';
       var meta = [];
-      if (a) meta.push(etiquetaClase_(a.evalId));
+      if (a && a.evalId) meta.push(etiquetaClase_(a.evalId));
+      else if (tipo !== 'clase') meta.push(tipo === 'evento' ? 'Evento' : 'Aviso');
       if (a && a.fecha) meta.push(a.fecha);
       if ((s.criterios || []).length) meta.push('criterios: ' + s.criterios.join(', '));
       if (a && a.estado === 'aplazada') meta.push('APLAZADA');
@@ -5036,6 +5127,7 @@ var App = (function () {
     estadoSesionUI: estadoSesionUI, exportarPlanner: exportarPlanner,
     abrirHorario: abrirHorario, horToggleDia: horToggleDia, horChkCambiada: horChkCambiada,
     asigChkCambiada: asigChkCambiada, critSesionCambiado: critSesionCambiado,
+    sesTipoCambiado: sesTipoCambiado,
     crearClaseHorario: crearClaseHorario, agGrupoCambiado: agGrupoCambiado,
     irAEvaluaciones: irAEvaluaciones, irAClases: irAClases,
     toggleSidebar: toggleSidebar, cerrarSidebar: cerrarSidebar, filtrar: filtrar,
