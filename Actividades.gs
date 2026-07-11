@@ -48,6 +48,26 @@ function getRejilla(unidadId) {
   return Actividades.rejilla_(abrirCuaderno_(), unidadId);
 }
 
+/**
+ * Todos los criterios ya "evaluados" = asignados a alguna actividad del
+ * cuaderno (en cualquier clase/unidad). Lo usa el planificador para señalar,
+ * de lo que programa, qué está ya recogido en la evaluación. Devuelve un array
+ * de códigos (datos del propio profe, sin datos personales del alumnado).
+ */
+function criteriosEvaluados() {
+  var ss = abrirCuaderno_();
+  var datos = ss.getSheetByName(HOJAS.ACTIVIDADES).getDataRange().getValues();
+  var set = {};
+  for (var i = 1; i < datos.length; i++) {
+    var raw = datos[i][3]; // col 4 = criterios (JSON)
+    if (!raw) continue;
+    try {
+      JSON.parse(raw).forEach(function (c) { if (c) set[c] = true; });
+    } catch (e) { /* fila con criterios ilegibles: se ignora */ }
+  }
+  return Object.keys(set);
+}
+
 
 var Actividades = (function () {
 
