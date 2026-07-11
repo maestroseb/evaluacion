@@ -5067,7 +5067,7 @@ var App = (function () {
   // ---------- crear / editar ----------
   /** evalId y fecha opcionales: los pasa el «+ Planificar» de un hueco del horario. */
   function nuevaSesion(evalId, fecha) {
-    abrirModalSesion_('Nueva sesión', 'Crear sesión', null,
+    abrirModalSesion_('Crear', null,
       { titulo: '', descripcion: '', criterios: [],
         asignaciones: evalId
           ? [{ evalId: evalId, fecha: fecha || '', estado: 'pendiente' }] : [] });
@@ -5075,7 +5075,15 @@ var App = (function () {
 
   function editarSesionUI(id) {
     var s = (sesionesCache || []).filter(function (x) { return x.sesionId === id; })[0];
-    if (s) abrirModalSesion_('Editar sesión', 'Guardar cambios', id, s);
+    if (s) abrirModalSesion_('Guardar cambios', id, s);
+  }
+
+  var sesModalId = null; // id de la sesión abierta en el modal (null = nueva)
+  /** Título del modal según el tipo (una sesión no es un aviso). */
+  function tituloSesion_(id, tipo) {
+    if (tipo === 'evento') return id ? 'Editar evento' : 'Nuevo evento';
+    if (tipo === 'aviso') return id ? 'Editar aviso' : 'Nuevo aviso';
+    return id ? 'Editar sesión' : 'Nueva sesión';
   }
 
   var sesionCritSel = {};        // códigos de criterio marcados en el modal abierto
@@ -5100,8 +5108,9 @@ var App = (function () {
     return html;
   }
 
-  function abrirModalSesion_(titulo, textoAceptar, id, s) {
+  function abrirModalSesion_(textoAceptar, id, s) {
     sesionCritSel = {};
+    sesModalId = id;
     (s.criterios || []).forEach(function (c) { sesionCritSel[c] = true; });
     var tipoActual = s.tipo || 'clase';
     // Evento/aviso: una sola asignación general; su fecha prellenaría el campo.
@@ -5122,8 +5131,8 @@ var App = (function () {
           esc((a && a.observaciones) || '') + '">' +
       '</div>';
     }).join('');
-    abrirModal(titulo,
-      '<label>Título de la sesión' +
+    abrirModal(tituloSesion_(id, tipoActual),
+      '<label>Título' +
         '<input id="ses-titulo" type="text" placeholder="Ej.: Los ecosistemas: salida al parque" value="' +
         esc(s.titulo) + '"></label>' +
       '<label>Descripción / desarrollo (opcional)' +
@@ -5137,7 +5146,7 @@ var App = (function () {
               (t === tipoActual ? ' checked' : '') + ' onchange="App.sesTipoCambiado()">' + etq + '</label>';
           }).join('') +
         '</div>' +
-        '<p class="ayuda" id="ses-tipo-ayuda"></p></div>' +
+        '<p class="ayuda ayuda-tipo" id="ses-tipo-ayuda"></p></div>' +
       '<div id="ses-sec-clase">' +
         '<label>Unidad de planificación (opcional)' +
           '<select id="ses-unidad">' + opcionesUnidadesPlan_(s.unidadId || '') + '</select></label>' +
@@ -5158,8 +5167,8 @@ var App = (function () {
       '</div>',
       textoAceptar,
       function () { guardarSesion_(id); },
-      { sinFoco: !!id });
-    sesTipoCambiado();            // ajusta secciones y ayuda al tipo actual
+      { sinFoco: !!id, ancho: true });
+    sesTipoCambiado();            // ajusta secciones, ayuda y título al tipo actual
     refrescarCriteriosSesion_();  // pinta las casillas según las clases ya marcadas
   }
 
@@ -5179,6 +5188,9 @@ var App = (function () {
       t === 'clase' ? 'Sesión de clase: se asigna a uno o varios grupos.'
       : t === 'evento' ? 'Evento sin grupo (reunión, examen, guardia…): aparece en la fila «Otros».'
       : 'Recordatorio de la semana: aparece en la banda «No olvidar».';
+    // El título del modal sigue al tipo (una sesión no es un aviso).
+    var tit = document.getElementById('modal-titulo');
+    if (tit) tit.textContent = tituloSesion_(sesModalId, t);
   }
 
   /** Al (des)marcar una clase: sugiere fecha y recalcula los criterios del área. */
