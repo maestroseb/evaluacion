@@ -4294,6 +4294,7 @@ var App = (function () {
   // cada asignación lleva su fecha y su estado (cada grupo va a su ritmo).
   var sesionesCache = null;       // todas las sesiones (null = aún no cargadas)
   var plannerModoActual = 'semana'; // 'semana' | 'clase'
+  var plannerLayout = 'grupo';      // en semana: 'grupo' (grupos × días) | 'horario' (por hora)
   var plannerLunes = lunesDe_(new Date()); // lunes de la semana visible
 
   /** Revela la entrada del Planificador si el usuario tiene la bandera. */
@@ -4336,6 +4337,11 @@ var App = (function () {
 
   function plannerModo(modo) {
     plannerModoActual = modo;
+    pintarPlanner();
+  }
+  /** Conmuta el layout de la vista semanal: grupos × días o por horario. */
+  function setPlannerLayout(layout) {
+    plannerLayout = layout;
     pintarPlanner();
   }
   /** Mueve la semana visible (+1/-1) o vuelve a la actual (0). */
@@ -4386,6 +4392,11 @@ var App = (function () {
     document.getElementById('planner-modo-semana').classList.toggle('primario', semana);
     document.getElementById('planner-modo-clase').classList.toggle('primario', !semana);
     document.getElementById('planner-nav-semana').hidden = !semana;
+    // Conmutador de layout: solo en modo semana.
+    var lay = document.getElementById('planner-layout');
+    if (lay) lay.hidden = !semana;
+    document.getElementById('planner-lay-grupo').classList.toggle('primario', plannerLayout === 'grupo');
+    document.getElementById('planner-lay-horario').classList.toggle('primario', plannerLayout === 'horario');
     var selWrap = document.getElementById('planner-sel-clase');
     selWrap.hidden = semana;
     if (!semana) pintarSelectorPlanner_();
@@ -4410,15 +4421,6 @@ var App = (function () {
   var DIAS_LECTIVOS = 5; // el editor de horario solo ofrece L–V (no hay clase en finde)
   var horarioDraft = null; // {evalId: [{dia,hora}]} mientras el modal está abierto
 
-  /** Clases que tocan ese día, ordenadas por hora (sin hora, al final). */
-  function clasesDelDia_(dia) {
-    return clasesPlanner_().filter(function (c) {
-      return c.horario.some(function (h) { return h.dia === dia; });
-    }).sort(function (a, b) {
-      var ha = horaDia_(a, dia), hb = horaDia_(b, dia);
-      return ha < hb ? -1 : ha > hb ? 1 : 0;
-    });
-  }
   function horaDia_(c, dia) {
     var h = c.horario.filter(function (x) { return x.dia === dia; })[0];
     return (h && h.hora) || '';
@@ -4552,63 +4554,137 @@ var App = (function () {
     return out;
   }
 
-  function htmlSemana_() {
+  // ---------- rejilla semanal (grupos × días / por horario) ----------
+  /** Índice del día de la semana (0 = lunes) de una fecha 'YYYY-MM-DD'. */
+  function diaSemanaIso_(iso) {
+    var p = String(iso || '').split('-');
+    if (p.length !== 3) return -1;
+    return (new Date(+p[0], +p[1] - 1, +p[2]).getDay() + 6) % 7;
+  }
+  /** Hora (del horario) de una clase en un día de la semana; '' si no tiene. */
+  function horaClaseDia_(evalId, dia) {
+    var c = clasePlannerDe_(evalId);
+    return c ? horaDia_(c, dia) : '';
+  }
+
+  /** Contexto común de la semana visible: días lectivos (L–V) y sus sesiones. */
+  function semanaCtx_() {
     var lunes = new Date(plannerLunes);
-    var domingo = new Date(lunes); domingo.setDate(domingo.getDate() + 6);
-    document.getElementById('planner-semana-etq').textContent =
-      'Semana del ' + fechaCorta_(isoLocal_(lunes)) + ' al ' + fechaCorta_(isoLocal_(domingo));
-    var desde = isoLocal_(lunes), hasta = isoLocal_(domingo);
-    var porDia = {};
-    entradasPlanner_().forEach(function (en) {
-      var f = en.asig.fecha;
-      if (f && f >= desde && f <= hasta) (porDia[f] = porDia[f] || []).push(en);
-    });
-    var hoyIso = isoLocal_(new Date());
-    var h = '';
-    for (var i = 0; i < 7; i++) {
+    var isos = [];
+    for (var i = 0; i < DIAS_LECTIVOS; i++) {
       var d = new Date(lunes); d.setDate(d.getDate() + i);
-      var iso = isoLocal_(d);
-      var lista = (porDia[iso] || []).slice();
-      var slots = clasesDelDia_(i); // clases que tocan ese día según el horario
-      if (i >= 5 && !lista.length && !slots.length) continue; // finde solo si tiene algo
-      // Primero las clases del horario: su sesión si la hay, o el hueco.
-      var htmlDia = '';
-      slots.forEach(function (c) {
-        var mias = lista.filter(function (en) { return en.asig.evalId === c.id; });
-        lista = lista.filter(function (en) { return en.asig.evalId !== c.id; });
-        if (mias.length) {
-          htmlDia += mias.map(function (en) { return lineaSesion_(en); }).join('');
-          return;
-        }
-        var hora = horaDia_(c, i);
-        htmlDia += '<div class="planner-hueco">' +
-          '<span class="planner-hueco-txt">' + (hora ? hora + ' · ' : '') +
-            esc(etiquetaClase_(c.id)) + '</span>' +
-          '<button class="btn planner-hueco-btn" onclick="App.nuevaSesion(\'' + c.id +
-            '\',\'' + iso + '\')">+ Planificar</button>' +
-        '</div>';
-      });
-      // Después, las sesiones del día en clases fuera del horario.
-      htmlDia += lista.map(function (en) { return lineaSesion_(en); }).join('');
-      h += '<div class="planner-dia' + (iso === hoyIso ? ' planner-hoy' : '') + '">' +
-        '<h3>' + DIAS_SEM[i] + ' <span class="planner-dia-fecha">' + fechaCorta_(iso) + '</span></h3>' +
-        (htmlDia || '<div class="planner-vacio">—</div>') +
-      '</div>';
+      isos.push(isoLocal_(d));
     }
-    // Sesiones sin programar: sin asignaciones, o asignadas sin fecha.
+    var enSemana = {};
+    isos.forEach(function (x) { enSemana[x] = true; });
+    var porClaseFecha = {}; // 'evalId|iso' -> [entrada]
+    entradasPlanner_().forEach(function (en) {
+      var a = en.asig;
+      if (a && a.fecha && enSemana[a.fecha]) {
+        var k = a.evalId + '|' + a.fecha;
+        (porClaseFecha[k] = porClaseFecha[k] || []).push(en);
+      }
+    });
+    return { isos: isos, porClaseFecha: porClaseFecha, hoy: isoLocal_(new Date()) };
+  }
+
+  /** Chip compacto de sesión para las celdas de la rejilla. */
+  function chipSesion_(en, conClase) {
+    var s = en.ses, a = en.asig;
+    var est = a ? a.estado : 'pendiente';
+    var sub = '';
+    if (conClase && a) {
+      var hora = horaClaseDia_(a.evalId, diaSemanaIso_(a.fecha));
+      sub = '<span class="pl-chip-sub">' + (hora ? esc(hora) + ' · ' : '') +
+        esc(etiquetaClase_(a.evalId)) + '</span>';
+    }
+    return '<div class="pl-chip ' + est + '" onclick="App.editarSesionUI(\'' + s.sesionId +
+        '\')" title="' + esc(s.titulo || 'Sin título') + '">' +
+      (a ? '<span class="pl-chip-dot" title="Cambiar estado" ' +
+        'onclick="event.stopPropagation();App.estadoSesionUI(\'' + s.sesionId + '\',\'' +
+        a.evalId + '\')"></span>' : '') +
+      '<span class="pl-chip-txt"><span class="pl-chip-tit">' + esc(s.titulo || 'Sin título') +
+        '</span>' + sub + '</span>' +
+    '</div>';
+  }
+
+  /** Hueco «+ Planificar» compacto (clase que toca ese día sin sesión). */
+  function huecoCelda_(evalId, iso, conEtq) {
+    return '<button class="pl-hueco" title="Planificar" ' +
+      'onclick="App.nuevaSesion(\'' + evalId + '\',\'' + iso + '\')">+' +
+      (conEtq ? ' ' + esc(etiquetaClase_(evalId)) : '') + '</button>';
+  }
+
+  function htmlSemana_() {
+    var ctx = semanaCtx_();
+    document.getElementById('planner-semana-etq').textContent =
+      'Semana del ' + fechaCorta_(ctx.isos[0]) + ' al ' + fechaCorta_(ctx.isos[ctx.isos.length - 1]);
+    var grid = (plannerLayout === 'horario') ? htmlSemanaHorario_(ctx) : htmlSemanaGrupo_(ctx);
+    // Tira inferior de sesiones sin programar (sin asignaciones o sin fecha).
     var sueltas = [];
     (sesionesCache || []).forEach(function (s) {
       if (!(s.asignaciones || []).length) sueltas.push({ ses: s, asig: null });
-      else s.asignaciones.forEach(function (a) {
-        if (!a.fecha) sueltas.push({ ses: s, asig: a });
+      else s.asignaciones.forEach(function (a) { if (!a.fecha) sueltas.push({ ses: s, asig: a }); });
+    });
+    var extra = sueltas.length
+      ? '<div class="planner-dia pl-sueltas"><h3>Sin programar</h3>' +
+        sueltas.map(function (en) { return lineaSesion_(en); }).join('') + '</div>'
+      : '';
+    return grid + extra;
+  }
+
+  /** Rejilla grupos × días: una fila por clase, una columna por día lectivo. */
+  function htmlSemanaGrupo_(ctx) {
+    var clases = clasesPlanner_();
+    if (!clases.length) {
+      return '<div class="vacio">Aún no tienes clases. Añade una desde el botón «Horario».</div>';
+    }
+    var cel = ['<div class="pl-esq pl-cab"></div>'];
+    ctx.isos.forEach(function (iso, i) {
+      cel.push('<div class="pl-cab' + (iso === ctx.hoy ? ' pl-hoy' : '') + '">' +
+        DIAS_SEM[i].slice(0, 3) + ' <span>' + fechaCorta_(iso) + '</span></div>');
+    });
+    clases.forEach(function (c) {
+      cel.push('<div class="pl-esq pl-fila-lbl">' + esc(etiquetaClase_(c.id)) + '</div>');
+      ctx.isos.forEach(function (iso, i) {
+        var ens = ctx.porClaseFecha[c.id + '|' + iso] || [];
+        var cont;
+        if (ens.length) cont = ens.map(function (en) { return chipSesion_(en, false); }).join('');
+        else if (c.horario.some(function (h) { return h.dia === i; })) cont = huecoCelda_(c.id, iso, false);
+        else cont = '';
+        cel.push('<div class="pl-celda">' + cont + '</div>');
       });
     });
-    if (sueltas.length) {
-      h += '<div class="planner-dia"><h3>Sin programar</h3>' +
-        sueltas.map(function (en) { return lineaSesion_(en); }).join('') + '</div>';
-    }
-    if (!h) h = '<div class="vacio">Nada planificado. Crea una sesión y asígnala a tus clases.</div>';
-    return h;
+    return '<div class="pl-scroll"><div class="pl-grid" style="--cols:' + DIAS_LECTIVOS + '">' +
+      cel.join('') + '</div></div>';
+  }
+
+  /** Vista por horario: cada día, sus clases (sesión o hueco) ordenadas por hora. */
+  function htmlSemanaHorario_(ctx) {
+    var clases = clasesPlanner_();
+    var cols = ctx.isos.map(function (iso, i) {
+      var bloques = [];
+      clases.forEach(function (c) {
+        var ens = ctx.porClaseFecha[c.id + '|' + iso] || [];
+        var hora = horaDia_(c, i);
+        if (ens.length) {
+          ens.forEach(function (en) { bloques.push({ hora: hora, html: chipSesion_(en, true) }); });
+        } else if (c.horario.some(function (h) { return h.dia === i; })) {
+          bloques.push({ hora: hora, html: huecoCelda_(c.id, iso, true) });
+        }
+      });
+      bloques.sort(function (a, b) {
+        var ha = a.hora || '99:99', hb = b.hora || '99:99';
+        return ha < hb ? -1 : ha > hb ? 1 : 0;
+      });
+      return '<div class="pl-col">' +
+        '<div class="pl-col-cab' + (iso === ctx.hoy ? ' pl-hoy' : '') + '">' +
+          DIAS_SEM[i].slice(0, 3) + ' <span>' + fechaCorta_(iso) + '</span></div>' +
+        (bloques.length ? bloques.map(function (b) { return b.html; }).join('')
+          : '<div class="planner-vacio">—</div>') +
+      '</div>';
+    }).join('');
+    return '<div class="pl-scroll"><div class="pl-cols">' + cols + '</div></div>';
   }
 
   function htmlPorClase_() {
@@ -4820,7 +4896,7 @@ var App = (function () {
   return {
     iniciar: iniciar,
     irAPlanner: irAPlanner, pintarPlanner: pintarPlanner,
-    plannerModo: plannerModo, plannerSemana: plannerSemana,
+    plannerModo: plannerModo, plannerSemana: plannerSemana, setPlannerLayout: setPlannerLayout,
     nuevaSesion: nuevaSesion, editarSesionUI: editarSesionUI,
     duplicarSesionUI: duplicarSesionUI, eliminarSesionUI: eliminarSesionUI,
     estadoSesionUI: estadoSesionUI, exportarPlanner: exportarPlanner,
