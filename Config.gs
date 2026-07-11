@@ -80,7 +80,12 @@ var CONFIG = {
   //      en "Clases". Sustituye a las clases provisionales, que se migran solas
   //      a clases reales sin grupo (conservando su horario y sus sesiones); la
   //      pestaña _provisionales queda vacía tras la migración.
-  ESQUEMA_VERSION: 19,
+  // v20: columna "tipo" en _planner: una sesión puede ser 'clase' (por defecto,
+  //      con grupos), 'evento' (reunión, examen… sin grupo, fila OTROS) o
+  //      'aviso' (recordatorio de la semana). Aditiva: las filas sin tipo son
+  //      'clase'. También se guarda 'observaciones' por asignación (nota del
+  //      desvío en cada grupo), dentro del JSON de asignaciones (sin columna).
+  ESQUEMA_VERSION: 20,
 
   // Banderas de funcionalidad. Cada bandera es la lista de correos que la ven
   // (o '*' para todo el profesorado). Sirve para lanzar módulos "ocultos": se
