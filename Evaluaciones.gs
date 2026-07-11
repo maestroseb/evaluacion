@@ -5,9 +5,21 @@
  * actividades e ítems (Fase 3) colgarán de la evaluación (evalId).
  */
 
-/** Crea una evaluación. payload: {claseId, area, color, icono, nombre} */
+/**
+ * Crea una evaluación. payload: {claseId?, area?, color, icono, nombre?}
+ * El grupo (claseId) y el área son OPCIONALES: una clase puede nacer sin grupo
+ * (p. ej. desde el planificador) y completarse más tarde con asociarGrupo.
+ */
 function crearEvaluacion(payload) {
   return Evaluaciones.crear_(abrirCuaderno_(), payload);
+}
+
+/**
+ * Asocia un grupo (y, opcionalmente, el área) a una clase que aún no lo tenía.
+ * Es el paso que completa una clase creada sin grupo desde el planificador.
+ */
+function asociarGrupoEvaluacion(evalId, claseId, area) {
+  return Evaluaciones.asociarGrupo_(abrirCuaderno_(), evalId, claseId, area);
 }
 
 /** Edita el nombre, color e icono de una evaluación (no cambia grupo ni área). */
@@ -42,20 +54,10 @@ function reordenarEvaluaciones(ids) {
 
 /**
  * Guarda el horario semanal de varias clases a la vez (lo edita el
- * planificador): {id: [{dia:0-6, hora:'HH:MM' opcional}]}, 0 = lunes. Los ids
- * pueden ser evaluaciones (e_…) o clases provisionales del planner (prov_…).
+ * planificador): {evalId: [{dia:0-6, hora:'HH:MM' opcional}]}, 0 = lunes.
  */
 function guardarHorarios(mapa) {
-  var ss = abrirCuaderno_();
-  var reales = {};
-  Object.keys(mapa || {}).forEach(function (id) {
-    if (id.indexOf('prov_') === 0) {
-      Planner.guardarHorarioProv_(ss, id, Evaluaciones.horarioValido_(mapa[id]));
-    } else {
-      reales[id] = mapa[id];
-    }
-  });
-  return Evaluaciones.guardarHorarios_(ss, reales);
+  return Evaluaciones.guardarHorarios_(abrirCuaderno_(), mapa);
 }
 
 
@@ -83,25 +85,48 @@ var Evaluaciones = (function () {
         // interfaz esconde ambas, pero solo la primera se restaura suelta.
         archivado: !!f[9],
         grupoArchivado: !!cl.archivado,
-        horario: parseHorario_(f[10])
+        horario: parseHorario_(f[10]),
+        // Clase sin grupo aún (creada desde el planificador): se completa al
+        // pulsarla en "Clases". claseNombre '' para distinguirla de un grupo
+        // realmente eliminado.
+        sinGrupo: !f[1]
       });
+      if (!f[1]) { out[out.length - 1].claseNombre = ''; out[out.length - 1].curso = ''; }
     }
     out.sort(function (a, b) { return a.orden - b.orden; }); // orden guardado (0 = antiguos)
     return out;
   }
 
   function crear_(ss, payload) {
-    if (!payload || !payload.claseId) throw new Error('Falta la clase.');
-    if (!payload.area) throw new Error('Falta el área.');
-    var clase = Clases.obtener_(ss, payload.claseId); // valida que existe
+    if (!payload) throw new Error('Faltan los datos de la clase.');
+    var claseId = '', cursoAcad = Cursos.activo_();
+    if (payload.claseId) {
+      var clase = Clases.obtener_(ss, payload.claseId); // valida que existe
+      claseId = clase.claseId;
+      // La clase hereda el curso académico de su grupo (o el activo si el grupo
+      // aún no lo tuviera asignado).
+      cursoAcad = clase.cursoAcademico || Cursos.activo_();
+    }
+    var area = payload.area ? String(payload.area).trim() : '';
+    var nombre = (payload.nombre && String(payload.nombre).trim()) || area;
+    // Sin grupo ni área, hace falta al menos un nombre (clase del planificador).
+    if (!claseId && !area && !nombre) throw new Error('Falta el nombre o el grupo.');
     var evalId = Datos.nuevoId_('e');
-    var nombre = (payload.nombre && String(payload.nombre).trim()) || payload.area;
     var orden = Datos.siguienteOrden_(listar_(ss));
-    // La clase hereda el curso académico de su grupo (o el activo si el grupo
-    // aún no lo tuviera asignado).
-    var cursoAcad = clase.cursoAcademico || Cursos.activo_();
-    hoja_(ss).appendRow([evalId, clase.claseId, payload.area,
+    hoja_(ss).appendRow([evalId, claseId, area,
       new Date().toISOString(), payload.color || '', payload.icono || '', nombre, orden, cursoAcad]);
+    return obtener_(ss, evalId);
+  }
+
+  /** Asocia grupo (y área opcional) a una clase sin grupo; hereda su curso académico. */
+  function asociarGrupo_(ss, evalId, claseId, area) {
+    var clase = Clases.obtener_(ss, claseId); // valida que existe
+    var sh = hoja_(ss);
+    var fila = Datos.filaDeId_(sh, evalId);
+    if (fila < 0) throw new Error('Evaluación no encontrada.');
+    sh.getRange(fila, 2).setValue(clase.claseId); // col 2 = claseId
+    if (area != null && String(area).trim()) sh.getRange(fila, 3).setValue(String(area).trim()); // col 3 = área
+    sh.getRange(fila, 9).setValue(clase.cursoAcademico || Cursos.activo_()); // col 9 = cursoAcademico
     return obtener_(ss, evalId);
   }
 
@@ -115,10 +140,13 @@ var Evaluaciones = (function () {
     var fila = Datos.filaDeId_(sh, evalId);
     if (fila < 0) throw new Error('Evaluación no encontrada.');
     var f = sh.getRange(fila, 1, 1, 7).getValues()[0];
-    var clase = Clases.obtener_(ss, f[1]);
+    // Clase sin grupo aún: se devuelve un grupo "vacío" para que el resto del
+    // código (que espera ev.clase) no tenga que llevar ramas por todas partes.
+    var clase = f[1] ? Clases.obtener_(ss, f[1])
+      : { claseId: '', nombre: '', curso: '', alumnos: [], bajas: [], cursoAcademico: '' };
     return {
       evalId: f[0], area: f[2], creado: f[3], color: f[4] || '', icono: f[5] || '',
-      nombre: f[6] || f[2], clase: clase, curso: clase.curso
+      nombre: f[6] || f[2], clase: clase, curso: clase.curso, sinGrupo: !f[1]
     };
   }
 
@@ -229,6 +257,6 @@ var Evaluaciones = (function () {
     eliminar_: eliminar_, usaClase_: usaClase_, idsDeClase_: idsDeClase_,
     archivar_: archivar_, reordenar_: reordenar_,
     guardarHorarios_: guardarHorarios_, horarioValido_: horarioValido_,
-    fusionarHorario_: fusionarHorario_
+    fusionarHorario_: fusionarHorario_, asociarGrupo_: asociarGrupo_
   };
 })();

@@ -94,12 +94,14 @@ docs/
   clases del mismo nivel, cada una con su fecha y su estado
   (pendiente/hecha/aplazada). Vista semanal y por clase; exportación en
   Markdown al portapapeles (imprimir, documentar o dar contexto a una IA).
-  Con horario semanal por clase (días + hora opcional): la vista semanal
-  enseña los huecos sin sesión de cada día («+ Planificar») y al asignar una
-  sesión se sugiere la próxima fecha en que toque esa clase. Admite **clases
-  provisionales** (solo el nombre): a principio de curso se monta el horario y
-  se planifica sin tener grupos; al crear la clase real se vincula y su
-  horario y sus sesiones pasan a ella.
+  Con horario semanal por clase (días lectivos L–V + hora opcional): la vista
+  semanal enseña los huecos sin sesión de cada día («+ Planificar») y al
+  asignar una sesión se sugiere la próxima fecha en que toque esa clase. A
+  principio de curso puedes **añadir una clase con solo su nombre** (sin grupo
+  todavía): aparece ya en «Clases» y en el planificador; al pulsarla en
+  «Clases» te pide asignar (o crear) el grupo y elegir el área, y si el grupo
+  aún no tiene alumnado te ofrece incluirlo. Así el flujo es horario →
+  planificar → (más adelante) grupos y evaluación.
 
 ## Cómo se reparte (importante)
 

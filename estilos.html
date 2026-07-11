@@ -1106,17 +1106,22 @@
   .planner-prov-add input { flex: 1; min-width: 0; padding: 7px 10px;
     border: 1px solid var(--borde-fuerte); border-radius: 8px; font: inherit; font-size: 14px; }
   .planner-prov-add .btn { white-space: nowrap; }
-  .planner-hor-dias { display: flex; gap: 6px; }
-  .planner-chip-dia { width: 32px; height: 32px; border-radius: 50%; border: 1px solid
-    var(--borde-fuerte); background: var(--surface); font: inherit; font-size: 13px;
-    font-weight: 600; color: var(--texto-2); cursor: pointer; }
+  /* Tarjeta de clase todavía sin grupo asociado (se completa al pulsarla). */
+  .cc-sin-grupo { color: var(--texto-3); font-style: italic; }
+  .planner-hor-dias { display: flex; flex-wrap: wrap; gap: 8px; }
+  .planner-chip-dia { flex: 0 0 auto; display: inline-flex; align-items: center;
+    justify-content: center; width: 34px; height: 34px; padding: 0; line-height: 1;
+    border-radius: 50%; border: 1px solid var(--borde-fuerte); background: var(--surface);
+    font: inherit; font-size: 13px; font-weight: 600; color: var(--texto-2); cursor: pointer; }
   .planner-chip-dia.activo { background: var(--acento); border-color: var(--acento);
     color: #fff; }
-  .planner-hor-horas { display: flex; flex-wrap: wrap; gap: 8px 14px; margin-top: 8px; }
-  .planner-hora { display: inline-flex; align-items: center; gap: 6px; font-size: 13px;
-    color: var(--texto-2); font-weight: 600; }
-  .planner-hora input { width: auto; padding: 3px 6px; border: 1px solid var(--borde-fuerte);
-    border-radius: 6px; font: inherit; font-size: 13px; }
+  .planner-hor-horas { display: flex; flex-wrap: wrap; gap: 8px 12px; margin-top: 10px; }
+  /* Cada hora casa con las demás: letra del día a ancho fijo + input de altura fija. */
+  .planner-hora { display: inline-flex; align-items: center; gap: 6px; height: 34px;
+    font-size: 13px; color: var(--texto-2); font-weight: 600; }
+  .planner-hora-dia { flex: 0 0 auto; width: 14px; text-align: center; }
+  .planner-hora input { box-sizing: border-box; width: 104px; height: 34px; padding: 3px 8px;
+    border: 1px solid var(--borde-fuerte); border-radius: 8px; font: inherit; font-size: 13px; }
 
   /* ---------- Foco visible (navegación por teclado) ---------- */
   .clase-card:focus-visible, .grupo-card:focus-visible, .tarjeta-unidad:focus-visible,

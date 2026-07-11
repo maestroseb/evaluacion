@@ -75,7 +75,12 @@ var CONFIG = {
   //      nombre, sin grupo ni alumnado), para montar el horario y planificar
   //      ANTES de crear grupos y clases (principio de curso). Al vincularlas a
   //      una clase real, su horario y sus sesiones pasan a ella.
-  ESQUEMA_VERSION: 18,
+  // v19: una clase (evaluación) puede existir SIN grupo y sin área todavía:
+  //      se crea desde el planificador y se completa (grupo + área) al pulsarla
+  //      en "Clases". Sustituye a las clases provisionales, que se migran solas
+  //      a clases reales sin grupo (conservando su horario y sus sesiones); la
+  //      pestaña _provisionales queda vacía tras la migración.
+  ESQUEMA_VERSION: 19,
 
   // Banderas de funcionalidad. Cada bandera es la lista de correos que la ven
   // (o '*' para todo el profesorado). Sirve para lanzar módulos "ocultos": se
