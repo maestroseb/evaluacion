@@ -236,7 +236,8 @@ var App = (function () {
 
   function invalidarCaches() {
     evalCache = {}; rejillaCache = {}; claseCache = {}; enVuelo = {};
-    sesionesCache = null; planUnidadesCache = null; // el planner se recarga al reabrir
+    // El planner se recarga al reabrir (sesiones, unidades y criterios evaluados).
+    sesionesCache = null; planUnidadesCache = null; critEvaluadosCache = null;
   }
 
   /**
@@ -4307,17 +4308,18 @@ var App = (function () {
   }
 
   var planUnidadesCache = null;   // unidades de planificación (por materia)
+  var critEvaluadosCache = null;  // códigos de criterio ya asignados a alguna actividad
 
   function irAPlanner() {
     registrarHistorial({ v: 'planner' });
     setTitulo('Planificador');
     mostrar('vista-planner');
-    if (sesionesCache && planUnidadesCache) { pintarPlanner(); return; }
+    if (sesionesCache && planUnidadesCache && critEvaluadosCache) { pintarPlanner(); return; }
     document.getElementById('planner-cont').innerHTML = spinner();
     cargarPlannerDatos_(pintarPlanner);
   }
 
-  /** Carga sesiones y unidades de planificación (las que falten) y llama a cb. */
+  /** Carga sesiones, unidades de planificación y criterios evaluados (los que falten). */
   function cargarPlannerDatos_(cb) {
     var pend = 0;
     function done() { if (--pend === 0) cb(); }
@@ -4328,6 +4330,7 @@ var App = (function () {
     }
     if (!sesionesCache) pedir('listarSesiones', function (l) { sesionesCache = l; });
     if (!planUnidadesCache) pedir('listarPlanUnidades', function (l) { planUnidadesCache = l; });
+    if (!critEvaluadosCache) pedir('criteriosEvaluados', function (l) { critEvaluadosCache = l; });
     if (pend === 0) cb();
   }
   function unidadPlanDe_(id) {
@@ -4780,20 +4783,23 @@ var App = (function () {
       if (a && a.fecha) (porFecha[a.fecha] = porFecha[a.fecha] || []).push(en);
     });
     var hoyIso = isoLocal_(new Date());
-    var cabs = DIAS_SEM.map(function (d) {
+    // Solo días lectivos (L–V): en el finde no hay clase.
+    var cabs = DIAS_SEM.slice(0, DIAS_LECTIVOS).map(function (d) {
       return '<div class="pl-mes-cab">' + d.slice(0, 3) + '</div>';
     }).join('');
     var celdas = '';
-    for (var i = 0; i < semanas * 7; i++) {
-      var d = new Date(inicio); d.setDate(d.getDate() + i);
-      var iso = isoLocal_(d);
-      var fuera = (d.getMonth() !== m);
-      var ens = porFecha[iso] || [];
-      celdas += '<div class="pl-mes-dia' + (fuera ? ' pl-mes-fuera' : '') +
-          (iso === hoyIso ? ' pl-hoy' : '') + '">' +
-        '<div class="pl-mes-num">' + d.getDate() + '</div>' +
-        ens.map(chipMes_).join('') +
-      '</div>';
+    for (var w = 0; w < semanas; w++) {
+      for (var dd = 0; dd < DIAS_LECTIVOS; dd++) {
+        var d = new Date(inicio); d.setDate(d.getDate() + w * 7 + dd);
+        var iso = isoLocal_(d);
+        var fuera = (d.getMonth() !== m);
+        var ens = porFecha[iso] || [];
+        celdas += '<div class="pl-mes-dia' + (fuera ? ' pl-mes-fuera' : '') +
+            (iso === hoyIso ? ' pl-hoy' : '') + '">' +
+          '<div class="pl-mes-num">' + d.getDate() + '</div>' +
+          ens.map(chipMes_).join('') +
+        '</div>';
+      }
     }
     return '<div class="pl-scroll"><div class="pl-mes">' +
       '<div class="pl-mes-cabs">' + cabs + '</div>' +
@@ -4853,11 +4859,20 @@ var App = (function () {
     var ses = (sesionesCache || []).filter(function (s) { return s.unidadId === u.unidadId; });
     // Ordena las sesiones por su primera fecha asignada (sin fecha, al final).
     ses.sort(function (a, b) { return primeraFecha_(a).localeCompare(primeraFecha_(b)); });
-    // Criterios programados = unión de los criterios de sus sesiones.
+    // Criterios programados = unión de los criterios de sus sesiones. Cada uno
+    // se marca según si ya está asignado a alguna actividad de evaluación.
     var crit = {}; ses.forEach(function (s) { (s.criterios || []).forEach(function (c) { crit[c] = true; }); });
-    var chips = Object.keys(crit).sort().map(function (c) {
-      return '<span class="pl-uni-crit">' + esc(c) + '</span>';
+    var evalSet = {}; (critEvaluadosCache || []).forEach(function (c) { evalSet[c] = true; });
+    var codes = Object.keys(crit).sort();
+    var nEval = codes.filter(function (c) { return evalSet[c]; }).length;
+    var chips = codes.map(function (c) {
+      var ok = !!evalSet[c];
+      return '<span class="pl-uni-crit ' + (ok ? 'pl-uni-crit-ok' : 'pl-uni-crit-no') + '" title="' +
+        (ok ? 'Ya evaluado (en alguna actividad del cuaderno)' : 'Programado pero aún sin evaluar') +
+        '">' + esc(c) + (ok ? ' ' + svgUI('check') : '') + '</span>';
     }).join('');
+    var cobertura = codes.length
+      ? '<span class="pl-uni-cob">' + nEval + '/' + codes.length + ' evaluados</span>' : '';
     var filas = ses.length
       ? ses.map(function (s) {
           var f = primeraFecha_(s);
@@ -4876,7 +4891,8 @@ var App = (function () {
             svgUI('papelera') + '</button>' +
         '</span></div>' +
       '<div class="pl-uni-meta">' + ses.length + ' sesión(es)</div>' +
-      (chips ? '<div class="pl-uni-crits"><span class="etq">Criterios programados</span>' + chips + '</div>' : '') +
+      (chips ? '<div class="pl-uni-crits"><span class="etq">Criterios programados ' + cobertura +
+        '</span>' + chips + '</div>' : '') +
       '<div class="pl-uni-sesiones">' + filas + '</div>' +
     '</div>';
   }
