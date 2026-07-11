@@ -1108,6 +1108,46 @@
   .planner-prov-add .btn { white-space: nowrap; }
   /* Tarjeta de clase todavía sin grupo asociado (se completa al pulsarla). */
   .cc-sin-grupo { color: var(--texto-3); font-style: italic; }
+
+  /* ---------- Rejilla semanal del planificador (grupos × días / por horario) ---------- */
+  .planner-layouts { margin-left: 4px; }
+  .pl-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 6px; }
+  /* Layout "por grupo": rejilla con 1ª columna fija (etiqueta de clase). */
+  .pl-grid { display: grid; grid-template-columns: 132px repeat(var(--cols), minmax(120px, 1fr));
+    gap: 6px; min-width: 640px; align-items: stretch; }
+  .pl-cab { font-size: 12px; font-weight: 700; color: var(--texto-2); text-transform: capitalize;
+    padding: 2px 2px 6px; }
+  .pl-cab span, .pl-col-cab span { color: var(--texto-3); font-weight: 500; }
+  .pl-esq { position: sticky; left: 0; background: var(--bg); z-index: 1; }
+  .pl-fila-lbl { display: flex; align-items: center; font-size: 13px; font-weight: 600;
+    padding: 6px 8px 6px 0; }
+  .pl-celda { background: var(--surface); border: 1px solid var(--borde); border-radius: 8px;
+    min-height: 44px; padding: 4px; display: flex; flex-direction: column; gap: 4px; }
+  /* Layout "por horario": columnas apiladas por día. */
+  .pl-cols { display: flex; gap: 8px; min-width: 680px; align-items: flex-start; }
+  .pl-col { flex: 1; min-width: 148px; display: flex; flex-direction: column; gap: 6px; }
+  .pl-col-cab { font-size: 12px; font-weight: 700; color: var(--texto-2); text-transform: capitalize;
+    padding: 2px 2px 2px; }
+  .pl-hoy { color: var(--acento); }
+  /* Chip de sesión (celda) */
+  .pl-chip { display: flex; gap: 6px; align-items: flex-start; background: var(--acento-suave);
+    border-left: 3px solid var(--acento); border-radius: 6px; padding: 5px 7px; cursor: pointer; }
+  .pl-chip.hecha { border-left-color: var(--g-top-tx); background: var(--g-top-bg); }
+  .pl-chip.aplazada { border-left-color: var(--g-baja-tx); background: var(--g-baja-bg); }
+  .pl-chip.hecha .pl-chip-tit { text-decoration: line-through; opacity: .8; }
+  .pl-chip-dot { flex: 0 0 auto; width: 12px; height: 12px; margin-top: 2px; border-radius: 50%;
+    border: 2px solid var(--acento); }
+  .pl-chip.hecha .pl-chip-dot { background: var(--g-top-tx); border-color: var(--g-top-tx); }
+  .pl-chip.aplazada .pl-chip-dot { border-color: var(--g-baja-tx); }
+  .pl-chip-txt { min-width: 0; display: flex; flex-direction: column; }
+  .pl-chip-tit { font-size: 12.5px; font-weight: 600; line-height: 1.25; word-break: break-word; }
+  .pl-chip-sub { font-size: 11px; color: var(--texto-2); font-weight: 500; }
+  /* Hueco "+ Planificar" compacto */
+  .pl-hueco { width: 100%; text-align: left; border: 1px dashed var(--borde-fuerte);
+    background: transparent; color: var(--texto-3); border-radius: 6px; padding: 4px 6px;
+    font: inherit; font-size: 12px; cursor: pointer; }
+  .pl-hueco:hover { border-color: var(--acento); color: var(--acento); }
+  .pl-sueltas { margin-top: 14px; }
   .planner-hor-dias { display: flex; flex-wrap: wrap; gap: 8px; }
   .planner-chip-dia { flex: 0 0 auto; display: inline-flex; align-items: center;
     justify-content: center; width: 34px; height: 34px; padding: 0; line-height: 1;

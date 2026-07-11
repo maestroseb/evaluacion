@@ -230,6 +230,10 @@
           <button class="btn btn-icono" title="Semana siguiente" onclick="App.plannerSemana(1)"><svg class="svg-ico" viewBox="0 0 24 24" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg></button>
           <button class="btn" onclick="App.plannerSemana(0)">Hoy</button>
         </span>
+        <span id="planner-layout" class="grupo-btn planner-layouts">
+          <button id="planner-lay-grupo" class="btn" onclick="App.setPlannerLayout('grupo')" title="Filas = tus grupos, columnas = días">Por grupo</button>
+          <button id="planner-lay-horario" class="btn" onclick="App.setPlannerLayout('horario')" title="Cada día, tus clases ordenadas por hora (como un horario)">Por horario</button>
+        </span>
         <label id="planner-sel-clase" class="planner-sel-clase" hidden>
           <select id="planner-clase" onchange="App.pintarPlanner()"></select>
         </label>
