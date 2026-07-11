@@ -1164,6 +1164,11 @@
     font: inherit; font-size: 12px; cursor: pointer; }
   .pl-hueco:hover { border-color: var(--acento); color: var(--acento); }
   .pl-sueltas { margin-top: 14px; }
+  /* Celda vacía de la rejilla por grupo: toda ella planifica al pulsarla. */
+  .pl-celda-nueva { cursor: pointer; align-items: flex-start; justify-content: flex-start; }
+  .pl-celda-nueva:hover { border-color: var(--acento); background: var(--acento-suave); }
+  .pl-celda-mas { color: var(--texto-3); font-weight: 700; font-size: 14px; line-height: 1; }
+  .pl-celda-nueva:hover .pl-celda-mas { color: var(--acento); }
   /* Banda superior de recordatorios (tipo aviso) */
   .pl-avisos { display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
     background: var(--g-media-bg); border: 1px solid var(--g-media-tx); border-radius: 10px;

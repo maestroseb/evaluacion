@@ -89,7 +89,10 @@ var CONFIG = {
   //      materia/área e independientes de las unidades de evaluación (una
   //      sesión puede colgar de una). Columna "unidadId" en _planner (a qué
   //      unidad de planificación pertenece la sesión). Aditiva.
-  ESQUEMA_VERSION: 21,
+  // v22: columna "curso" en _planUnidades: las unidades de planificación van por
+  //      materia Y curso (una misma materia tiene unidades distintas en cursos
+  //      distintos). Aditiva; las filas sin curso quedan como "sin curso".
+  ESQUEMA_VERSION: 22,
 
   // Banderas de funcionalidad. Cada bandera es la lista de correos que la ven
   // (o '*' para todo el profesorado). Sirve para lanzar módulos "ocultos": se
