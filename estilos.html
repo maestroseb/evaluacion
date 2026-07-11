@@ -1080,11 +1080,19 @@
   .planner-estado.borrador { background: var(--bg); color: var(--texto-3); cursor: default; }
   .planner-asigs { max-height: 240px; overflow-y: auto; border: 1px solid var(--borde);
     border-radius: 8px; padding: 6px 10px; }
-  .planner-asig-fila { display: flex; align-items: center; justify-content: space-between;
-    gap: 10px; padding: 4px 0; }
-  .planner-asig-fila .check { flex: 1; min-width: 0; }
-  .planner-asig-fecha { width: auto; padding: 4px 6px; border: 1px solid var(--borde-fuerte);
-    border-radius: 6px; font: inherit; font-size: 13px; }
+  /* Fila clase + fecha: la etiqueta va en su línea y la fecha debajo, a lo ancho
+     (en móvil no se parte el nombre ni choca con el campo de fecha). */
+  .planner-asig-fila { display: flex; flex-direction: column; gap: 6px; padding: 8px 0;
+    border-top: 1px solid var(--borde); }
+  .planner-asig-fila:first-child { border-top: 0; }
+  .planner-asig-fila .check { align-items: flex-start; line-height: 1.3; }
+  .planner-asig-fecha { width: 100%; box-sizing: border-box; padding: 7px 9px;
+    border: 1px solid var(--borde-fuerte); border-radius: 8px; font: inherit; font-size: 14px; }
+  /* Criterios como casillas (igual que en las actividades del cuaderno) */
+  .planner-crit { max-height: 220px; overflow-y: auto; }
+  .planner-crit-area { font-size: 12px; font-weight: 700; color: var(--texto-2);
+    text-transform: uppercase; letter-spacing: .02em; margin: 8px 0 4px; }
+  .planner-crit-area:first-child { margin-top: 0; }
   /* Huecos del horario sin sesión planificada (vista semanal) */
   .planner-hueco { display: flex; align-items: center; justify-content: space-between;
     gap: 10px; padding: 6px 10px; margin: 6px 0; border: 1px dashed var(--borde-fuerte);
