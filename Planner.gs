@@ -48,6 +48,22 @@ function estadoSesion(sesionId, evalId, estado, fecha) {
   return Planner.cambiarEstado_(abrirCuaderno_(), sesionId, evalId, estado, fecha);
 }
 
+/** Lista las unidades de planificación del profe (por materia/área). */
+function listarPlanUnidades() {
+  return Planner.listarU_(abrirCuaderno_());
+}
+/** Crea una unidad de planificación. */
+function crearPlanUnidad(nombre, area) {
+  return Planner.crearU_(abrirCuaderno_(), nombre, area);
+}
+function editarPlanUnidad(unidadId, nombre, area) {
+  return Planner.editarU_(abrirCuaderno_(), unidadId, nombre, area);
+}
+/** Elimina una unidad; las sesiones que la usaban quedan sin unidad. */
+function eliminarPlanUnidad(unidadId) {
+  return Planner.eliminarU_(abrirCuaderno_(), unidadId);
+}
+
 var Planner = (function () {
 
   var ESTADOS = { pendiente: true, hecha: true, aplazada: true };
@@ -63,7 +79,7 @@ var Planner = (function () {
       out.push({
         sesionId: f[0], titulo: f[1], descripcion: f[2],
         criterios: parse_(f[3]), asignaciones: parse_(f[4]),
-        creado: f[5], orden: Number(f[6]) || 0, tipo: f[7] || 'clase'
+        creado: f[5], orden: Number(f[6]) || 0, tipo: f[7] || 'clase', unidadId: f[8] || ''
       });
     }
     out.sort(function (a, b) { return a.orden - b.orden; });
@@ -74,11 +90,11 @@ var Planner = (function () {
     var sh = hoja_(ss);
     var fila = Datos.filaDeId_(sh, sesionId);
     if (fila < 0) throw new Error('Sesión no encontrada.');
-    var f = sh.getRange(fila, 1, 1, 8).getValues()[0];
+    var f = sh.getRange(fila, 1, 1, 9).getValues()[0];
     return {
       sesionId: f[0], titulo: f[1], descripcion: f[2],
       criterios: parse_(f[3]), asignaciones: parse_(f[4]),
-      creado: f[5], orden: Number(f[6]) || 0, tipo: f[7] || 'clase'
+      creado: f[5], orden: Number(f[6]) || 0, tipo: f[7] || 'clase', unidadId: f[8] || ''
     };
   }
 
@@ -88,7 +104,8 @@ var Planner = (function () {
     var orden = Datos.siguienteOrden_(listar_(ss));
     hoja_(ss).appendRow([
       id, limpio.titulo, limpio.descripcion, JSON.stringify(limpio.criterios),
-      JSON.stringify(limpio.asignaciones), new Date().toISOString(), orden, limpio.tipo
+      JSON.stringify(limpio.asignaciones), new Date().toISOString(), orden, limpio.tipo,
+      limpio.unidadId
     ]);
     return obtener_(ss, id);
   }
@@ -103,7 +120,8 @@ var Planner = (function () {
       limpio.titulo, limpio.descripcion,
       JSON.stringify(limpio.criterios), JSON.stringify(limpio.asignaciones)
     ]]);
-    sh.getRange(fila, 8).setValue(limpio.tipo); // col 8 = tipo
+    sh.getRange(fila, 8).setValue(limpio.tipo);       // col 8 = tipo
+    sh.getRange(fila, 9).setValue(limpio.unidadId);   // col 9 = unidad de planificación
     return obtener_(ss, sesionId);
   }
 
@@ -122,7 +140,7 @@ var Planner = (function () {
     // el mismo contenido en otras fechas u otras clases.
     return crear_(ss, {
       titulo: orig.titulo + ' (copia)', descripcion: orig.descripcion,
-      criterios: orig.criterios, asignaciones: [], tipo: orig.tipo
+      criterios: orig.criterios, asignaciones: [], tipo: orig.tipo, unidadId: orig.unidadId
     });
   }
 
@@ -248,8 +266,69 @@ var Planner = (function () {
       descripcion: String((payload && payload.descripcion) || '').slice(0, 8000),
       // Los criterios solo tienen sentido en una sesión de clase.
       criterios: tipo === 'clase' ? codigos_(payload && payload.criterios) : [],
-      asignaciones: asignaciones
+      asignaciones: asignaciones,
+      // Unidad de planificación a la que pertenece (opcional).
+      unidadId: String((payload && payload.unidadId) || '').trim()
     };
+  }
+
+  // ---------- unidades de planificación (por materia/área) ----------
+  function hojaU_(ss) { return ss.getSheetByName(HOJAS.PLAN_UNIDADES); }
+
+  function listarU_(ss) {
+    var datos = hojaU_(ss).getDataRange().getValues();
+    var out = [];
+    for (var i = 1; i < datos.length; i++) {
+      var f = datos[i];
+      if (!f[0]) continue;
+      out.push({ unidadId: f[0], area: f[1] || '', nombre: f[2] || '',
+        orden: Number(f[3]) || 0, creado: f[4] });
+    }
+    out.sort(function (a, b) { return a.orden - b.orden; });
+    return out;
+  }
+
+  function crearU_(ss, nombre, area) {
+    var n = String(nombre || '').trim().slice(0, 120);
+    if (!n) throw new Error('Pon nombre a la unidad de planificación.');
+    var a = String(area || '').trim();
+    var id = Datos.nuevoId_('pu');
+    var orden = Datos.siguienteOrden_(listarU_(ss));
+    hojaU_(ss).appendRow([id, a, n, orden, new Date().toISOString()]);
+    return { unidadId: id, area: a, nombre: n, orden: orden };
+  }
+
+  function editarU_(ss, unidadId, nombre, area) {
+    var sh = hojaU_(ss);
+    var fila = Datos.filaDeId_(sh, unidadId);
+    if (fila < 0) throw new Error('Unidad de planificación no encontrada.');
+    var n = String(nombre || '').trim().slice(0, 120);
+    if (!n) throw new Error('Pon nombre a la unidad de planificación.');
+    var a = String(area || '').trim();
+    sh.getRange(fila, 2, 1, 2).setValues([[a, n]]); // col 2 = area, col 3 = nombre
+    return { unidadId: unidadId, area: a, nombre: n };
+  }
+
+  function eliminarU_(ss, unidadId) {
+    desligarUnidad_(ss, unidadId); // las sesiones que la usaban quedan sin unidad
+    var sh = hojaU_(ss);
+    var fila = Datos.filaDeId_(sh, unidadId);
+    if (fila >= 0) sh.deleteRow(fila);
+    return { ok: true };
+  }
+
+  /** Vacía la columna unidadId (col 9) de las sesiones que apuntaban a la unidad. */
+  function desligarUnidad_(ss, unidadId) {
+    var sh = hoja_(ss);
+    var n = Math.max(0, sh.getLastRow() - 1);
+    if (!n) return;
+    var rango = sh.getRange(2, 9, n, 1);
+    var vals = rango.getValues();
+    var cambiado = false;
+    for (var i = 0; i < n; i++) {
+      if (vals[i][0] === unidadId) { vals[i][0] = ''; cambiado = true; }
+    }
+    if (cambiado) rango.setValues(vals);
   }
 
   /** Fecha en formato YYYY-MM-DD, o '' (asignada sin fecha aún). */
@@ -276,6 +355,7 @@ var Planner = (function () {
   return {
     listar_: listar_, obtener_: obtener_, crear_: crear_, editar_: editar_,
     eliminar_: eliminar_, duplicar_: duplicar_, cambiarEstado_: cambiarEstado_,
-    migrarProvisionales_: migrarProvisionales_
+    migrarProvisionales_: migrarProvisionales_,
+    listarU_: listarU_, crearU_: crearU_, editarU_: editarU_, eliminarU_: eliminarU_
   };
 })();

@@ -236,7 +236,7 @@ var App = (function () {
 
   function invalidarCaches() {
     evalCache = {}; rejillaCache = {}; claseCache = {}; enVuelo = {};
-    sesionesCache = null; // el planner se recarga al volver a abrirlo
+    sesionesCache = null; planUnidadesCache = null; // el planner se recarga al reabrir
   }
 
   /**
@@ -4306,15 +4306,32 @@ var App = (function () {
     });
   }
 
+  var planUnidadesCache = null;   // unidades de planificación (por materia)
+
   function irAPlanner() {
     registrarHistorial({ v: 'planner' });
     setTitulo('Planificador');
     mostrar('vista-planner');
-    if (sesionesCache) { pintarPlanner(); return; }
+    if (sesionesCache && planUnidadesCache) { pintarPlanner(); return; }
     document.getElementById('planner-cont').innerHTML = spinner();
-    llamar('listarSesiones', [], function (lista) {
-      sesionesCache = lista || []; pintarPlanner();
-    });
+    cargarPlannerDatos_(pintarPlanner);
+  }
+
+  /** Carga sesiones y unidades de planificación (las que falten) y llama a cb. */
+  function cargarPlannerDatos_(cb) {
+    var pend = 0;
+    function done() { if (--pend === 0) cb(); }
+    function pedir(fn, set) {
+      pend++;
+      google.script.run.withSuccessHandler(function (l) { set(l || []); done(); })
+        .withFailureHandler(function () { set([]); done(); })[fn]();
+    }
+    if (!sesionesCache) pedir('listarSesiones', function (l) { sesionesCache = l; });
+    if (!planUnidadesCache) pedir('listarPlanUnidades', function (l) { planUnidadesCache = l; });
+    if (pend === 0) cb();
+  }
+  function unidadPlanDe_(id) {
+    return (planUnidadesCache || []).filter(function (u) { return u.unidadId === id; })[0];
   }
 
   // ---------- fechas ----------
@@ -4396,9 +4413,11 @@ var App = (function () {
   // ---------- pintado ----------
   function pintarPlanner() {
     var modo = plannerModoActual;
-    var semana = (modo === 'semana'), mes = (modo === 'mes'), clase = (modo === 'clase');
+    var semana = (modo === 'semana'), mes = (modo === 'mes'),
+        clase = (modo === 'clase'), unidades = (modo === 'unidades');
     document.getElementById('planner-modo-semana').classList.toggle('primario', semana);
     document.getElementById('planner-modo-mes').classList.toggle('primario', mes);
+    document.getElementById('planner-modo-unidades').classList.toggle('primario', unidades);
     document.getElementById('planner-modo-clase').classList.toggle('primario', clase);
     document.getElementById('planner-nav-semana').hidden = !semana;
     document.getElementById('planner-nav-mes').hidden = !mes;
@@ -4410,7 +4429,7 @@ var App = (function () {
     document.getElementById('planner-sel-clase').hidden = !clase;
     if (clase) pintarSelectorPlanner_();
     document.getElementById('planner-cont').innerHTML =
-      semana ? htmlSemana_() : mes ? htmlMes_() : htmlPorClase_();
+      semana ? htmlSemana_() : mes ? htmlMes_() : unidades ? htmlUnidades_() : htmlPorClase_();
   }
 
   /** Rellena el selector de clase conservando la selección actual. */
@@ -4792,6 +4811,134 @@ var App = (function () {
       'title="' + esc(lab + (s.titulo || 'Sin título')) + '">' + esc(s.titulo || '—') + '</button>';
   }
 
+  // ---------- vista Unidades (unidades de planificación por materia) ----------
+  var plannerMateria = null; // materia (área) seleccionada en la vista Unidades
+
+  /** Materias disponibles: áreas de tus clases + las de las unidades ya creadas. */
+  function materiasPlanner_() {
+    var set = {};
+    (estado.evaluaciones || []).forEach(function (e) { if (e.area) set[e.area] = true; });
+    (planUnidadesCache || []).forEach(function (u) { if (u.area) set[u.area] = true; });
+    return Object.keys(set).sort();
+  }
+  /** Etiqueta de materia ('' → «General»). */
+  function etqMateria_(a) { return a || 'General'; }
+
+  function htmlUnidades_() {
+    var materias = materiasPlanner_();
+    // Materia activa: la elegida, o la primera con contenido.
+    if (plannerMateria == null || (plannerMateria && materias.indexOf(plannerMateria) < 0 && plannerMateria !== '')) {
+      plannerMateria = materias.length ? materias[0] : '';
+    }
+    var opciones = materias.map(function (a) {
+      return '<option value="' + esc(a) + '"' + (a === plannerMateria ? ' selected' : '') + '>' +
+        esc(a) + '</option>';
+    }).join('') +
+      '<option value=""' + (plannerMateria === '' ? ' selected' : '') + '>General (sin materia)</option>';
+    var barra = '<div class="pl-uni-barra">' +
+      '<label class="pl-uni-materia">Materia ' +
+        '<select onchange="App.plannerMateriaSel(this.value)">' + opciones + '</select></label>' +
+      '<button class="btn primario" onclick="App.nuevaPlanUnidad()">+ Nueva unidad</button></div>';
+
+    var unidades = (planUnidadesCache || []).filter(function (u) { return (u.area || '') === plannerMateria; });
+    if (!unidades.length) {
+      return barra + '<div class="vacio">No hay unidades de planificación en «' +
+        esc(etqMateria_(plannerMateria)) + '». Crea una y luego asígnala a tus sesiones ' +
+        'desde el modal de sesión.</div>';
+    }
+    return barra + unidades.map(tarjetaPlanUnidad_).join('');
+  }
+
+  function tarjetaPlanUnidad_(u) {
+    var ses = (sesionesCache || []).filter(function (s) { return s.unidadId === u.unidadId; });
+    // Ordena las sesiones por su primera fecha asignada (sin fecha, al final).
+    ses.sort(function (a, b) { return primeraFecha_(a).localeCompare(primeraFecha_(b)); });
+    // Criterios programados = unión de los criterios de sus sesiones.
+    var crit = {}; ses.forEach(function (s) { (s.criterios || []).forEach(function (c) { crit[c] = true; }); });
+    var chips = Object.keys(crit).sort().map(function (c) {
+      return '<span class="pl-uni-crit">' + esc(c) + '</span>';
+    }).join('');
+    var filas = ses.length
+      ? ses.map(function (s) {
+          var f = primeraFecha_(s);
+          return '<button class="pl-uni-ses" onclick="App.editarSesionUI(\'' + s.sesionId + '\')">' +
+            '<span class="pl-uni-ses-tit">' + esc(s.titulo || 'Sin título') + '</span>' +
+            (f !== '9999' ? '<span class="pl-uni-ses-fecha">' + fechaCorta_(f) + '</span>' : '') +
+          '</button>';
+        }).join('')
+      : '<div class="planner-vacio">Sin sesiones todavía.</div>';
+    return '<div class="pl-uni-card">' +
+      '<div class="pl-uni-head"><h3>' + esc(u.nombre) + '</h3>' +
+        '<span class="pl-uni-acc">' +
+          '<button class="btn btn-icono" title="Editar" onclick="App.editarPlanUnidadUI(\'' + u.unidadId + '\')">' +
+            svgUI('lapiz') + '</button>' +
+          '<button class="btn peligro btn-icono" title="Eliminar" onclick="App.eliminarPlanUnidadUI(\'' + u.unidadId + '\')">' +
+            svgUI('papelera') + '</button>' +
+        '</span></div>' +
+      '<div class="pl-uni-meta">' + ses.length + ' sesión(es)</div>' +
+      (chips ? '<div class="pl-uni-crits"><span class="etq">Criterios programados</span>' + chips + '</div>' : '') +
+      '<div class="pl-uni-sesiones">' + filas + '</div>' +
+    '</div>';
+  }
+
+  /** Primera fecha asignada de una sesión ('9999' si ninguna), para ordenar. */
+  function primeraFecha_(s) {
+    var min = '9999';
+    (s.asignaciones || []).forEach(function (a) { if (a.fecha && a.fecha < min) min = a.fecha; });
+    return min;
+  }
+
+  function plannerMateriaSel(a) { plannerMateria = a; pintarPlanner(); }
+
+  function nuevaPlanUnidad() { modalPlanUnidad_(null, { nombre: '', area: plannerMateria || '' }); }
+  function editarPlanUnidadUI(id) {
+    var u = unidadPlanDe_(id);
+    if (u) modalPlanUnidad_(id, u);
+  }
+  function modalPlanUnidad_(id, u) {
+    var materias = materiasPlanner_();
+    var opts = materias.map(function (a) {
+      return '<option value="' + esc(a) + '"' + (a === (u.area || '') ? ' selected' : '') + '>' + esc(a) + '</option>';
+    }).join('') + '<option value=""' + (!u.area ? ' selected' : '') + '>General (sin materia)</option>';
+    abrirModal(id ? 'Editar unidad' : 'Nueva unidad de planificación',
+      '<label>Nombre<input id="pu-nombre" type="text" placeholder="Ej.: U1 · Los ecosistemas" value="' +
+        esc(u.nombre) + '"></label>' +
+      '<label>Materia<select id="pu-area">' + opts + '</select></label>',
+      id ? 'Guardar' : 'Crear unidad',
+      function () {
+        var nombre = val('pu-nombre').trim();
+        if (!nombre) return aviso('Pon nombre a la unidad.');
+        var area = val('pu-area');
+        botonModalCargando('Guardando…');
+        llamar(id ? 'editarPlanUnidad' : 'crearPlanUnidad',
+          id ? [id, nombre, area] : [nombre, area], function (r) {
+            if (id) {
+              planUnidadesCache = (planUnidadesCache || []).map(function (x) {
+                return x.unidadId === id ? { unidadId: id, area: r.area, nombre: r.nombre, orden: x.orden } : x;
+              });
+            } else {
+              planUnidadesCache = (planUnidadesCache || []).concat([r]);
+            }
+            plannerMateria = area;
+            cerrarModal(); pintarPlanner(); avisoOk(id ? 'Unidad guardada.' : 'Unidad creada.');
+          });
+      }, { sinFoco: !!id });
+  }
+  function eliminarPlanUnidadUI(id) {
+    var u = unidadPlanDe_(id);
+    confirmar('Eliminar unidad',
+      'Se eliminará «' + ((u && u.nombre) || '') + '». Sus sesiones se conservan, pero quedan ' +
+      'sin unidad. ¿Continuar?',
+      'Eliminar', function () {
+        llamar('eliminarPlanUnidad', [id], function () {
+          planUnidadesCache = (planUnidadesCache || []).filter(function (x) { return x.unidadId !== id; });
+          // Las sesiones que la usaban quedan sin unidad (reflejo local).
+          (sesionesCache || []).forEach(function (s) { if (s.unidadId === id) s.unidadId = ''; });
+          pintarPlanner(); avisoOk('Unidad eliminada.');
+        });
+      });
+  }
+
   function htmlPorClase_() {
     var evalId = document.getElementById('planner-clase').value;
     if (!evalId) return '<div class="vacio">No tienes clases en este curso académico.</div>';
@@ -4879,6 +5026,23 @@ var App = (function () {
   var sesionCritSel = {};        // códigos de criterio marcados en el modal abierto
   var criteriosAreaCache = {};   // 'curso||area' -> [{codigo,texto,…}] (cacheado del mapa)
 
+  /** Opciones del selector de unidad de planificación (agrupadas por materia). */
+  function opcionesUnidadesPlan_(sel) {
+    var porMateria = {};
+    (planUnidadesCache || []).forEach(function (u) {
+      (porMateria[u.area || ''] = porMateria[u.area || ''] || []).push(u);
+    });
+    var html = '<option value="">— Sin unidad —</option>';
+    Object.keys(porMateria).sort().forEach(function (area) {
+      html += '<optgroup label="' + esc(etqMateria_(area)) + '">' +
+        porMateria[area].map(function (u) {
+          return '<option value="' + u.unidadId + '"' + (u.unidadId === sel ? ' selected' : '') + '>' +
+            esc(u.nombre) + '</option>';
+        }).join('') + '</optgroup>';
+    });
+    return html;
+  }
+
   function abrirModalSesion_(titulo, textoAceptar, id, s) {
     sesionCritSel = {};
     (s.criterios || []).forEach(function (c) { sesionCritSel[c] = true; });
@@ -4918,6 +5082,8 @@ var App = (function () {
         '</div>' +
         '<p class="ayuda" id="ses-tipo-ayuda"></p></div>' +
       '<div id="ses-sec-clase">' +
+        '<label>Unidad de planificación (opcional)' +
+          '<select id="ses-unidad">' + opcionesUnidadesPlan_(s.unidadId || '') + '</select></label>' +
         '<div class="campo-crit"><span class="etq">Clases donde se dará la sesión</span>' +
           '<p class="ayuda">La misma planificación sirve para varios grupos; cada uno lleva su ' +
             'fecha y su estado.</p>' +
@@ -5049,7 +5215,8 @@ var App = (function () {
     var payload = {
       titulo: titulo, tipo: tipo, descripcion: val('ses-desc'),
       criterios: tipo === 'clase' ? Object.keys(sesionCritSel) : [],
-      asignaciones: asignaciones
+      asignaciones: asignaciones,
+      unidadId: tipo === 'clase' ? (val('ses-unidad') || '') : ''
     };
     // Guardado OPTIMISTA (como las notas de la rejilla): se cierra el modal y se
     // pinta ya con lo introducido; la persistencia va por detrás y reconcilia.
@@ -5058,7 +5225,7 @@ var App = (function () {
       var optimista = {
         sesionId: id, titulo: payload.titulo, descripcion: payload.descripcion, tipo: tipo,
         criterios: payload.criterios.slice(), asignaciones: payload.asignaciones,
-        creado: previa ? previa.creado : '', orden: previa ? previa.orden : 0
+        unidadId: payload.unidadId, creado: previa ? previa.creado : '', orden: previa ? previa.orden : 0
       };
       actualizarSesionCache_(optimista);
       pintarPlanner();
@@ -5071,7 +5238,7 @@ var App = (function () {
       var nueva = {
         sesionId: tmpId, titulo: payload.titulo, descripcion: payload.descripcion, tipo: tipo,
         criterios: payload.criterios.slice(), asignaciones: payload.asignaciones,
-        creado: new Date().toISOString(), orden: 1e9
+        unidadId: payload.unidadId, creado: new Date().toISOString(), orden: 1e9
       };
       sesionesCache = (sesionesCache || []).concat([nueva]);
       pintarPlanner();
@@ -5182,7 +5349,9 @@ var App = (function () {
     iniciar: iniciar,
     irAPlanner: irAPlanner, pintarPlanner: pintarPlanner,
     plannerModo: plannerModo, plannerSemana: plannerSemana, setPlannerLayout: setPlannerLayout,
-    plannerMesNav: plannerMesNav,
+    plannerMesNav: plannerMesNav, plannerMateriaSel: plannerMateriaSel,
+    nuevaPlanUnidad: nuevaPlanUnidad, editarPlanUnidadUI: editarPlanUnidadUI,
+    eliminarPlanUnidadUI: eliminarPlanUnidadUI,
     nuevaSesion: nuevaSesion, editarSesionUI: editarSesionUI,
     duplicarSesionUI: duplicarSesionUI, eliminarSesionUI: eliminarSesionUI,
     estadoSesionUI: estadoSesionUI, exportarPlanner: exportarPlanner,
