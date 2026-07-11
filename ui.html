@@ -222,7 +222,14 @@
       <div class="planner-barra">
         <span class="grupo-btn planner-modos">
           <button id="planner-modo-semana" class="btn" onclick="App.plannerModo('semana')">Semana</button>
+          <button id="planner-modo-mes" class="btn" onclick="App.plannerModo('mes')">Mes</button>
           <button id="planner-modo-clase" class="btn" onclick="App.plannerModo('clase')">Por clase</button>
+        </span>
+        <span id="planner-nav-mes" class="planner-nav" hidden>
+          <button class="btn btn-icono" title="Mes anterior" onclick="App.plannerMesNav(-1)"><svg class="svg-ico" viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg></button>
+          <span id="planner-mes-etq" class="planner-semana-etq"></span>
+          <button class="btn btn-icono" title="Mes siguiente" onclick="App.plannerMesNav(1)"><svg class="svg-ico" viewBox="0 0 24 24" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg></button>
+          <button class="btn" onclick="App.plannerMesNav(0)">Hoy</button>
         </span>
         <span id="planner-nav-semana" class="planner-nav">
           <button class="btn btn-icono" title="Semana anterior" onclick="App.plannerSemana(-1)"><svg class="svg-ico" viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg></button>

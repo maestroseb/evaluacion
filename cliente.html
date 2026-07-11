@@ -4293,9 +4293,10 @@ var App = (function () {
   // ASIGNACIONES por clase: la misma planificación sirve para 3ºA y 3ºB, y
   // cada asignación lleva su fecha y su estado (cada grupo va a su ritmo).
   var sesionesCache = null;       // todas las sesiones (null = aún no cargadas)
-  var plannerModoActual = 'semana'; // 'semana' | 'clase'
+  var plannerModoActual = 'semana'; // 'semana' | 'mes' | 'clase'
   var plannerLayout = 'grupo';      // en semana: 'grupo' (grupos × días) | 'horario' (por hora)
   var plannerLunes = lunesDe_(new Date()); // lunes de la semana visible
+  var plannerMes = new Date(new Date().getFullYear(), new Date().getMonth(), 1); // mes visible
 
   /** Revela la entrada del Planificador si el usuario tiene la bandera. */
   function activarPlannerSiFlag_() {
@@ -4350,6 +4351,12 @@ var App = (function () {
     else plannerLunes.setDate(plannerLunes.getDate() + delta * 7);
     pintarPlanner();
   }
+  /** Mueve el mes visible (+1/-1) o vuelve al actual (0). */
+  function plannerMesNav(delta) {
+    if (delta === 0) plannerMes = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+    else plannerMes = new Date(plannerMes.getFullYear(), plannerMes.getMonth() + delta, 1);
+    pintarPlanner();
+  }
 
   // ---------- resolución de clases ----------
   function evalDe_(evalId) {
@@ -4388,20 +4395,22 @@ var App = (function () {
 
   // ---------- pintado ----------
   function pintarPlanner() {
-    var semana = (plannerModoActual === 'semana');
+    var modo = plannerModoActual;
+    var semana = (modo === 'semana'), mes = (modo === 'mes'), clase = (modo === 'clase');
     document.getElementById('planner-modo-semana').classList.toggle('primario', semana);
-    document.getElementById('planner-modo-clase').classList.toggle('primario', !semana);
+    document.getElementById('planner-modo-mes').classList.toggle('primario', mes);
+    document.getElementById('planner-modo-clase').classList.toggle('primario', clase);
     document.getElementById('planner-nav-semana').hidden = !semana;
+    document.getElementById('planner-nav-mes').hidden = !mes;
     // Conmutador de layout: solo en modo semana.
     var lay = document.getElementById('planner-layout');
     if (lay) lay.hidden = !semana;
     document.getElementById('planner-lay-grupo').classList.toggle('primario', plannerLayout === 'grupo');
     document.getElementById('planner-lay-horario').classList.toggle('primario', plannerLayout === 'horario');
-    var selWrap = document.getElementById('planner-sel-clase');
-    selWrap.hidden = semana;
-    if (!semana) pintarSelectorPlanner_();
+    document.getElementById('planner-sel-clase').hidden = !clase;
+    if (clase) pintarSelectorPlanner_();
     document.getElementById('planner-cont').innerHTML =
-      semana ? htmlSemana_() : htmlPorClase_();
+      semana ? htmlSemana_() : mes ? htmlMes_() : htmlPorClase_();
   }
 
   /** Rellena el selector de clase conservando la selección actual. */
@@ -4730,6 +4739,57 @@ var App = (function () {
       '</div>';
     }).join('');
     return '<div class="pl-scroll"><div class="pl-cols">' + cols + '</div></div>';
+  }
+
+  // ---------- vista mensual ----------
+  var MESES_LARGO = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio',
+    'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+
+  function htmlMes_() {
+    var y = plannerMes.getFullYear(), m = plannerMes.getMonth();
+    var etq = document.getElementById('planner-mes-etq');
+    if (etq) etq.textContent = MESES_LARGO[m] + ' ' + y;
+    var primero = new Date(y, m, 1);
+    var inicio = lunesDe_(primero); // lunes de la semana en que cae el día 1
+    var offset = (primero.getDay() + 6) % 7; // 0 = lunes
+    var diasMes = new Date(y, m + 1, 0).getDate();
+    var semanas = Math.ceil((offset + diasMes) / 7);
+    // Sesiones del mes visible por fecha.
+    var porFecha = {};
+    entradasPlanner_().forEach(function (en) {
+      var a = en.asig;
+      if (a && a.fecha) (porFecha[a.fecha] = porFecha[a.fecha] || []).push(en);
+    });
+    var hoyIso = isoLocal_(new Date());
+    var cabs = DIAS_SEM.map(function (d) {
+      return '<div class="pl-mes-cab">' + d.slice(0, 3) + '</div>';
+    }).join('');
+    var celdas = '';
+    for (var i = 0; i < semanas * 7; i++) {
+      var d = new Date(inicio); d.setDate(d.getDate() + i);
+      var iso = isoLocal_(d);
+      var fuera = (d.getMonth() !== m);
+      var ens = porFecha[iso] || [];
+      celdas += '<div class="pl-mes-dia' + (fuera ? ' pl-mes-fuera' : '') +
+          (iso === hoyIso ? ' pl-hoy' : '') + '">' +
+        '<div class="pl-mes-num">' + d.getDate() + '</div>' +
+        ens.map(chipMes_).join('') +
+      '</div>';
+    }
+    return '<div class="pl-scroll"><div class="pl-mes">' +
+      '<div class="pl-mes-cabs">' + cabs + '</div>' +
+      '<div class="pl-mes-grid">' + celdas + '</div></div></div>';
+  }
+
+  /** Chip de sesión en la vista mensual (compacto, coloreado por estado/tipo). */
+  function chipMes_(en) {
+    var s = en.ses, a = en.asig, tipo = s.tipo || 'clase';
+    var est = a ? a.estado : 'pendiente';
+    var cls = 'pl-mes-chip ' + est +
+      (tipo === 'evento' ? ' pl-chip-evento' : '') + (tipo === 'aviso' ? ' pl-mes-aviso' : '');
+    var lab = (tipo === 'clase' && a && a.evalId) ? etiquetaClase_(a.evalId) + ': ' : '';
+    return '<button class="' + cls + '" onclick="App.editarSesionUI(\'' + s.sesionId + '\')" ' +
+      'title="' + esc(lab + (s.titulo || 'Sin título')) + '">' + esc(s.titulo || '—') + '</button>';
   }
 
   function htmlPorClase_() {
@@ -5122,6 +5182,7 @@ var App = (function () {
     iniciar: iniciar,
     irAPlanner: irAPlanner, pintarPlanner: pintarPlanner,
     plannerModo: plannerModo, plannerSemana: plannerSemana, setPlannerLayout: setPlannerLayout,
+    plannerMesNav: plannerMesNav,
     nuevaSesion: nuevaSesion, editarSesionUI: editarSesionUI,
     duplicarSesionUI: duplicarSesionUI, eliminarSesionUI: eliminarSesionUI,
     estadoSesionUI: estadoSesionUI, exportarPlanner: exportarPlanner,
