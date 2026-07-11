@@ -23,7 +23,11 @@ var ESQUEMA = {
   // Banco de rúbricas del profe (v12). 'indicadores' y 'niveles' son JSON; en
   // cada indicador se reserva un campo 'criterios' para la futura asociación por
   // indicador. 'criterios' (columna) = códigos asociados a la rúbrica completa.
-  _rubricas: ['rubricaId', 'nombre', 'indicadores', 'niveles', 'criterios', 'creado', 'orden']
+  _rubricas: ['rubricaId', 'nombre', 'indicadores', 'niveles', 'criterios', 'creado', 'orden'],
+  // Planificador de sesiones (v16). 'criterios' es JSON (códigos trabajados);
+  // 'asignaciones' es JSON [{evalId, fecha, estado}]: la misma sesión puede
+  // programarse en varias clases, cada una con su fecha y su estado.
+  _planner: ['sesionId', 'titulo', 'descripcion', 'criterios', 'asignaciones', 'creado', 'orden']
 };
 
 /**

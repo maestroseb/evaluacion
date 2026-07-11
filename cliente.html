@@ -50,6 +50,7 @@ var App = (function () {
       document.getElementById('perfil-avatar').textContent = iniciales(e.usuario);
       document.getElementById('cargando').hidden = true;
       activarRubricasSiFlag_(); // revela el módulo de rúbricas si el usuario lo tiene
+      activarPlannerSiFlag_();  // ídem con el planificador (en pruebas)
       pintarSelectorCurso();
       // Si la URL trae una vista (recarga o enlace copiado), se restaura;
       // si no, se abre la lista de clases como siempre.
@@ -68,7 +69,8 @@ var App = (function () {
 
   // ---------- navegación ----------
   var SECCIONES = ['vista-evaluaciones', 'vista-clases', 'vista-clase',
-    'vista-evaluacion', 'vista-unidad', 'vista-resumen', 'vista-papelera', 'vista-rubricas'];
+    'vista-evaluacion', 'vista-unidad', 'vista-resumen', 'vista-papelera', 'vista-rubricas',
+    'vista-planner'];
   var vistaActual = null; // vista visible: descarta respuestas tardías del servidor
   function mostrar(id) {
     flushNotas(); // guarda notas pendientes de la unidad al cambiar de vista
@@ -82,9 +84,10 @@ var App = (function () {
       (id === 'vista-clases' || id === 'vista-clase') ? 'clases' :
       (id === 'vista-papelera') ? 'papelera' :
       (id === 'vista-rubricas') ? 'rubricas' :
+      (id === 'vista-planner') ? 'planner' :
       (id === 'vista-evaluaciones' || id === 'vista-evaluacion' ||
        id === 'vista-unidad' || id === 'vista-resumen') ? 'eval' : '';
-    ['eval', 'clases', 'papelera', 'rubricas'].forEach(function (k) {
+    ['eval', 'clases', 'papelera', 'rubricas', 'planner'].forEach(function (k) {
       [].forEach.call(document.querySelectorAll('[data-nav="' + k + '"]'), function (el) {
         el.classList.toggle('activo', k === clave);
       });
@@ -142,6 +145,9 @@ var App = (function () {
         case 'papelera': irAPapelera(); break;
         case 'rubricas':
           if (estado.flags && estado.flags.rubricas) irARubricas(); else irAEvaluaciones();
+          break;
+        case 'planner':
+          if (estado.flags && estado.flags.planner) irAPlanner(); else irAEvaluaciones();
           break;
         case 'clase':
           if (claseCache[st.id] || claseDe(st.id)) abrirClase(st.id);
@@ -228,7 +234,10 @@ var App = (function () {
   /** Título visible de una clase: su nombre propio o, si no, el área. */
   function tituloEval(ev) { return (ev && ev.nombre) ? ev.nombre : (ev ? ev.area : ''); }
 
-  function invalidarCaches() { evalCache = {}; rejillaCache = {}; claseCache = {}; enVuelo = {}; }
+  function invalidarCaches() {
+    evalCache = {}; rejillaCache = {}; claseCache = {}; enVuelo = {};
+    sesionesCache = null; // el planner se recarga al volver a abrirlo
+  }
 
   /**
    * Descarta de la caché las evaluaciones de una clase (tras editar su nombre
@@ -4195,8 +4204,365 @@ var App = (function () {
       });
   }
 
+  // ================= PLANIFICADOR (sesiones) =================
+  // Todo este módulo solo es alcanzable si estado.flags.planner es true: la
+  // entrada de la sidebar nace oculta y solo se revela para quien tenga la
+  // bandera. El resto del profesorado no ve nada.
+  //
+  // Una sesión es contenido compartido (título, descripción, criterios) con
+  // ASIGNACIONES por clase: la misma planificación sirve para 3ºA y 3ºB, y
+  // cada asignación lleva su fecha y su estado (cada grupo va a su ritmo).
+  var sesionesCache = null;       // todas las sesiones (null = aún no cargadas)
+  var plannerModoActual = 'semana'; // 'semana' | 'clase'
+  var plannerLunes = lunesDe_(new Date()); // lunes de la semana visible
+
+  /** Revela la entrada del Planificador si el usuario tiene la bandera. */
+  function activarPlannerSiFlag_() {
+    if (!estado || !estado.flags || !estado.flags.planner) return;
+    [].forEach.call(document.querySelectorAll('.solo-planner'), function (el) {
+      el.hidden = false;
+    });
+  }
+
+  function irAPlanner() {
+    registrarHistorial({ v: 'planner' });
+    setTitulo('Planificador');
+    mostrar('vista-planner');
+    if (sesionesCache) { pintarPlanner(); return; }
+    document.getElementById('planner-cont').innerHTML = spinner();
+    llamar('listarSesiones', [], function (lista) {
+      sesionesCache = lista || []; pintarPlanner();
+    });
+  }
+
+  // ---------- fechas ----------
+  function lunesDe_(d) {
+    var x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    x.setDate(x.getDate() - (x.getDay() + 6) % 7); // getDay(): 0=domingo
+    return x;
+  }
+  /** Fecha local → 'YYYY-MM-DD' (sin pasar por UTC, que cambia de día). */
+  function isoLocal_(d) {
+    function p(n) { return (n < 10 ? '0' : '') + n; }
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+  }
+  var DIAS_SEM = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
+  var MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+  function fechaCorta_(iso) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+    if (!m) return '';
+    return Number(m[3]) + ' ' + MESES[Number(m[2]) - 1];
+  }
+
+  function plannerModo(modo) {
+    plannerModoActual = modo;
+    pintarPlanner();
+  }
+  /** Mueve la semana visible (+1/-1) o vuelve a la actual (0). */
+  function plannerSemana(delta) {
+    if (delta === 0) plannerLunes = lunesDe_(new Date());
+    else plannerLunes.setDate(plannerLunes.getDate() + delta * 7);
+    pintarPlanner();
+  }
+
+  // ---------- resolución de clases ----------
+  function evalDe_(evalId) {
+    return (estado.evaluaciones || []).filter(function (e) { return e.evalId === evalId; })[0];
+  }
+  /** Clases donde se puede programar: las visibles del curso activo. */
+  function evalsProgramables_() {
+    return (estado.evaluaciones || []).filter(function (e) {
+      return !e.archivado && !e.grupoArchivado;
+    });
+  }
+  function etiquetaClase_(evalId) {
+    var ev = evalDe_(evalId);
+    if (!ev) return '(clase de otro curso)';
+    var grupo = (estado.clases || []).filter(function (c) { return c.claseId === ev.claseId; })[0];
+    return tituloEval(ev) + (grupo ? ' · ' + grupo.nombre : '');
+  }
+
+  // ---------- pintado ----------
+  function pintarPlanner() {
+    var semana = (plannerModoActual === 'semana');
+    document.getElementById('planner-modo-semana').classList.toggle('primario', semana);
+    document.getElementById('planner-modo-clase').classList.toggle('primario', !semana);
+    document.getElementById('planner-nav-semana').hidden = !semana;
+    var selWrap = document.getElementById('planner-sel-clase');
+    selWrap.hidden = semana;
+    if (!semana) pintarSelectorPlanner_();
+    document.getElementById('planner-cont').innerHTML =
+      semana ? htmlSemana_() : htmlPorClase_();
+  }
+
+  /** Rellena el selector de clase conservando la selección actual. */
+  function pintarSelectorPlanner_() {
+    var sel = document.getElementById('planner-clase');
+    var previo = sel.value;
+    sel.innerHTML = evalsProgramables_().map(function (ev) {
+      return '<option value="' + ev.evalId + '">' + esc(etiquetaClase_(ev.evalId)) + '</option>';
+    }).join('');
+    if (previo) sel.value = previo;
+  }
+
+  /** Entradas {ses, asig} de todas las sesiones (una por asignación). */
+  function entradasPlanner_() {
+    var out = [];
+    (sesionesCache || []).forEach(function (s) {
+      (s.asignaciones || []).forEach(function (a) { out.push({ ses: s, asig: a }); });
+    });
+    return out;
+  }
+
+  function htmlSemana_() {
+    var lunes = new Date(plannerLunes);
+    var domingo = new Date(lunes); domingo.setDate(domingo.getDate() + 6);
+    document.getElementById('planner-semana-etq').textContent =
+      'Semana del ' + fechaCorta_(isoLocal_(lunes)) + ' al ' + fechaCorta_(isoLocal_(domingo));
+    var desde = isoLocal_(lunes), hasta = isoLocal_(domingo);
+    var porDia = {};
+    entradasPlanner_().forEach(function (en) {
+      var f = en.asig.fecha;
+      if (f && f >= desde && f <= hasta) (porDia[f] = porDia[f] || []).push(en);
+    });
+    var hoyIso = isoLocal_(new Date());
+    var h = '';
+    for (var i = 0; i < 7; i++) {
+      var d = new Date(lunes); d.setDate(d.getDate() + i);
+      var iso = isoLocal_(d);
+      var lista = porDia[iso] || [];
+      if (i >= 5 && !lista.length) continue; // finde solo si tiene algo
+      h += '<div class="planner-dia' + (iso === hoyIso ? ' planner-hoy' : '') + '">' +
+        '<h3>' + DIAS_SEM[i] + ' <span class="planner-dia-fecha">' + fechaCorta_(iso) + '</span></h3>' +
+        (lista.length
+          ? lista.map(function (en) { return lineaSesion_(en); }).join('')
+          : '<div class="planner-vacio">—</div>') +
+      '</div>';
+    }
+    // Sesiones sin programar: sin asignaciones, o asignadas sin fecha.
+    var sueltas = [];
+    (sesionesCache || []).forEach(function (s) {
+      if (!(s.asignaciones || []).length) sueltas.push({ ses: s, asig: null });
+      else s.asignaciones.forEach(function (a) {
+        if (!a.fecha) sueltas.push({ ses: s, asig: a });
+      });
+    });
+    if (sueltas.length) {
+      h += '<div class="planner-dia"><h3>Sin programar</h3>' +
+        sueltas.map(function (en) { return lineaSesion_(en); }).join('') + '</div>';
+    }
+    if (!h) h = '<div class="vacio">Nada planificado. Crea una sesión y asígnala a tus clases.</div>';
+    return h;
+  }
+
+  function htmlPorClase_() {
+    var evalId = document.getElementById('planner-clase').value;
+    if (!evalId) return '<div class="vacio">No tienes clases en este curso académico.</div>';
+    var lista = entradasPlanner_().filter(function (en) { return en.asig.evalId === evalId; });
+    // Por fecha ascendente; las que aún no tienen fecha, al final.
+    lista.sort(function (a, b) {
+      var fa = a.asig.fecha || '9999', fb = b.asig.fecha || '9999';
+      return fa < fb ? -1 : fa > fb ? 1 : 0;
+    });
+    if (!lista.length) {
+      return '<div class="vacio">Esta clase no tiene sesiones asignadas todavía.</div>';
+    }
+    return '<div class="planner-dia">' + lista.map(function (en) {
+      return lineaSesion_(en, true);
+    }).join('') + '</div>';
+  }
+
+  /** Una línea de sesión: estado (clicable), contenido y acciones. */
+  function lineaSesion_(en, conFecha) {
+    var s = en.ses, a = en.asig;
+    var ESTADO_TXT = { pendiente: 'Pendiente', hecha: 'Hecha', aplazada: 'Aplazada' };
+    var estadoBtn = a
+      ? '<button class="planner-estado ' + a.estado + '" title="Cambiar estado" ' +
+          'onclick="App.estadoSesionUI(\'' + s.sesionId + '\',\'' + a.evalId + '\')">' +
+          ESTADO_TXT[a.estado] + '</button>'
+      : '<span class="planner-estado borrador">Borrador</span>';
+    var meta = [];
+    if (a) meta.push(esc(etiquetaClase_(a.evalId)));
+    if (conFecha && a && a.fecha) meta.push(fechaCorta_(a.fecha));
+    if ((s.criterios || []).length) meta.push(s.criterios.join(', '));
+    return '<div class="planner-sesion' + (a && a.estado === 'hecha' ? ' hecha' : '') + '">' +
+      estadoBtn +
+      '<div class="planner-sesion-txt">' +
+        '<span class="planner-sesion-tit">' + esc(s.titulo) + '</span>' +
+        (meta.length ? '<span class="planner-sesion-meta">' + meta.join(' · ') + '</span>' : '') +
+      '</div>' +
+      '<span class="planner-sesion-acc">' +
+        '<button class="btn btn-icono" title="Editar" onclick="App.editarSesionUI(\'' +
+          s.sesionId + '\')">' + svgUI('lapiz') + '</button>' +
+        '<button class="btn btn-icono" title="Duplicar (para reutilizarla en otras clases o fechas)" ' +
+          'onclick="App.duplicarSesionUI(\'' + s.sesionId + '\')">' + svgUI('duplicar') + '</button>' +
+        '<button class="btn peligro btn-icono" title="Eliminar" onclick="App.eliminarSesionUI(\'' +
+          s.sesionId + '\')">' + svgUI('papelera') + '</button>' +
+      '</span>' +
+    '</div>';
+  }
+
+  // ---------- estado por asignación ----------
+  function estadoSesionUI(sesionId, evalId) {
+    var s = (sesionesCache || []).filter(function (x) { return x.sesionId === sesionId; })[0];
+    var a = s && (s.asignaciones || []).filter(function (x) { return x.evalId === evalId; })[0];
+    if (!a) return;
+    var CICLO = { pendiente: 'hecha', hecha: 'aplazada', aplazada: 'pendiente' };
+    var nuevo = CICLO[a.estado] || 'hecha';
+    a.estado = nuevo; // optimista: se repinta ya y se persiste detrás
+    pintarPlanner();
+    llamar('estadoSesion', [sesionId, evalId, nuevo, null], function (r) {
+      actualizarSesionCache_(r);
+    });
+  }
+
+  // ---------- crear / editar ----------
+  function nuevaSesion() {
+    abrirModalSesion_('Nueva sesión', 'Crear sesión', null,
+      { titulo: '', descripcion: '', criterios: [], asignaciones: [] });
+  }
+
+  function editarSesionUI(id) {
+    var s = (sesionesCache || []).filter(function (x) { return x.sesionId === id; })[0];
+    if (s) abrirModalSesion_('Editar sesión', 'Guardar cambios', id, s);
+  }
+
+  function abrirModalSesion_(titulo, textoAceptar, id, s) {
+    var asigDe = {};
+    (s.asignaciones || []).forEach(function (a) { asigDe[a.evalId] = a; });
+    var filas = evalsProgramables_().map(function (ev) {
+      var a = asigDe[ev.evalId];
+      return '<div class="planner-asig-fila">' +
+        '<label class="check"><input type="checkbox" class="planner-asig-chk" data-eval="' +
+          ev.evalId + '"' + (a ? ' checked' : '') + '> ' + esc(etiquetaClase_(ev.evalId)) + '</label>' +
+        '<input type="date" class="planner-asig-fecha" data-eval="' + ev.evalId + '" value="' +
+          esc((a && a.fecha) || '') + '">' +
+      '</div>';
+    }).join('');
+    abrirModal(titulo,
+      '<label>Título de la sesión' +
+        '<input id="ses-titulo" type="text" placeholder="Ej.: Los ecosistemas: salida al parque" value="' +
+        esc(s.titulo) + '"></label>' +
+      '<label>Descripción / desarrollo (opcional)' +
+        '<textarea id="ses-desc" rows="4" placeholder="Qué se hace, materiales, deberes…">' +
+        esc(s.descripcion) + '</textarea></label>' +
+      '<label>Criterios trabajados (códigos separados por comas, opcional)' +
+        '<input id="ses-crit" type="text" placeholder="Ej.: LCL.2.1.1, LCL.2.3.2" value="' +
+        esc((s.criterios || []).join(', ')) + '"></label>' +
+      '<p class="ayuda">Marca las clases donde se dará la sesión: la misma planificación sirve ' +
+        'para varios grupos y cada uno lleva su fecha y su estado.</p>' +
+      '<div class="planner-asigs">' + (filas ||
+        '<div class="vacio">No tienes clases en este curso académico.</div>') + '</div>',
+      textoAceptar,
+      function () { guardarSesion_(id); },
+      { sinFoco: !!id });
+  }
+
+  function guardarSesion_(id) {
+    var titulo = val('ses-titulo').trim();
+    if (!titulo) return aviso('Pon un título a la sesión.');
+    var previa = id && (sesionesCache || []).filter(function (x) { return x.sesionId === id; })[0];
+    var estadoDe = {};
+    if (previa) (previa.asignaciones || []).forEach(function (a) { estadoDe[a.evalId] = a.estado; });
+    var asignaciones = [];
+    [].forEach.call(document.querySelectorAll('.planner-asig-chk'), function (chk) {
+      if (!chk.checked) return;
+      var evalId = chk.dataset.eval;
+      var f = document.querySelector('.planner-asig-fecha[data-eval="' + evalId + '"]');
+      asignaciones.push({ evalId: evalId, fecha: (f && f.value) || '',
+        estado: estadoDe[evalId] || 'pendiente' }); // conserva el estado al editar
+    });
+    var payload = {
+      titulo: titulo, descripcion: val('ses-desc'),
+      criterios: val('ses-crit').split(','), // el servidor recorta y deduplica
+      asignaciones: asignaciones
+    };
+    botonModalCargando('Guardando…');
+    llamar(id ? 'editarSesion' : 'crearSesion', id ? [id, payload] : [payload], function (r) {
+      actualizarSesionCache_(r); cerrarModal(); pintarPlanner();
+      avisoOk(id ? 'Sesión guardada.' : 'Sesión creada.');
+    });
+  }
+
+  function actualizarSesionCache_(s) {
+    if (!sesionesCache) { sesionesCache = [s]; return; }
+    for (var i = 0; i < sesionesCache.length; i++) {
+      if (sesionesCache[i].sesionId === s.sesionId) { sesionesCache[i] = s; return; }
+    }
+    sesionesCache.push(s);
+  }
+
+  function duplicarSesionUI(id) {
+    llamar('duplicarSesion', [id], function (r) {
+      actualizarSesionCache_(r); pintarPlanner();
+      avisoOk('Sesión duplicada (sin asignaciones): edítala para programarla.');
+    });
+  }
+
+  function eliminarSesionUI(id) {
+    var s = (sesionesCache || []).filter(function (x) { return x.sesionId === id; })[0];
+    confirmar('Eliminar sesión',
+      'La sesión «' + ((s && s.titulo) || '') + '» irá a la papelera (con todas sus ' +
+      'asignaciones). ¿Continuar?',
+      'Eliminar', function () {
+        llamar('eliminarSesion', [id], function () {
+          sesionesCache = (sesionesCache || []).filter(function (x) { return x.sesionId !== id; });
+          pintarPlanner(); avisoOk('Sesión movida a la papelera.');
+        });
+      });
+  }
+
+  // ---------- exportar (Markdown al portapapeles) ----------
+  // Texto plano estructurado: sirve igual para imprimir, para pegar en la
+  // programación de aula o como contexto para pedirle sesiones a una IA.
+  function exportarPlanner() {
+    if (!sesionesCache) return;
+    var lineas = [];
+    function bloque(en) {
+      var s = en.ses, a = en.asig;
+      var l = '- [' + (a && a.estado === 'hecha' ? 'x' : ' ') + '] **' + s.titulo + '**';
+      var meta = [];
+      if (a) meta.push(etiquetaClase_(a.evalId));
+      if (a && a.fecha) meta.push(a.fecha);
+      if ((s.criterios || []).length) meta.push('criterios: ' + s.criterios.join(', '));
+      if (a && a.estado === 'aplazada') meta.push('APLAZADA');
+      if (meta.length) l += ' (' + meta.join(' · ') + ')';
+      lineas.push(l);
+      if (s.descripcion) lineas.push('  ' + s.descripcion.replace(/\n/g, '\n  '));
+    }
+    if (plannerModoActual === 'semana') {
+      var lunes = new Date(plannerLunes);
+      lineas.push('# Planificación · semana del ' + isoLocal_(lunes));
+      for (var i = 0; i < 7; i++) {
+        var d = new Date(lunes); d.setDate(d.getDate() + i);
+        var iso = isoLocal_(d);
+        var del = entradasPlanner_().filter(function (en) { return en.asig.fecha === iso; });
+        if (!del.length) continue;
+        lineas.push('', '## ' + DIAS_SEM[i] + ' ' + iso, '');
+        del.forEach(bloque);
+      }
+    } else {
+      var evalId = document.getElementById('planner-clase').value;
+      lineas.push('# Planificación · ' + etiquetaClase_(evalId), '');
+      var lista = entradasPlanner_().filter(function (en) { return en.asig.evalId === evalId; });
+      lista.sort(function (a, b) {
+        var fa = a.asig.fecha || '9999', fb = b.asig.fecha || '9999';
+        return fa < fb ? -1 : fa > fb ? 1 : 0;
+      });
+      lista.forEach(bloque);
+    }
+    if (lineas.length <= 2) return aviso('No hay nada que exportar en esta vista.');
+    copiarAlPortapapeles(lineas.join('\n'),
+      'Planificación copiada en Markdown: pégala donde quieras (documento, IA…).');
+  }
+
   return {
     iniciar: iniciar,
+    irAPlanner: irAPlanner, pintarPlanner: pintarPlanner,
+    plannerModo: plannerModo, plannerSemana: plannerSemana,
+    nuevaSesion: nuevaSesion, editarSesionUI: editarSesionUI,
+    duplicarSesionUI: duplicarSesionUI, eliminarSesionUI: eliminarSesionUI,
+    estadoSesionUI: estadoSesionUI, exportarPlanner: exportarPlanner,
     irAEvaluaciones: irAEvaluaciones, irAClases: irAClases,
     toggleSidebar: toggleSidebar, cerrarSidebar: cerrarSidebar, filtrar: filtrar,
     irAPapelera: irAPapelera, restaurarItem: restaurarItem, vaciarPapeleraUI: vaciarPapeleraUI,

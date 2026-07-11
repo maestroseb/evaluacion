@@ -57,6 +57,7 @@ Resumen.gs        Resumen global de la clase (criterios agregados + nota final)
 Cursos.gs         Cursos académicos (multi-curso en un solo cuaderno)
 Promocion.gs      Promocionar un grupo al curso siguiente (remapeo de criterios)
 Papelera.gs       Papelera de borrados (restaurables 30 días)
+Planner.gs        Planificador de sesiones (en pruebas, tras FLAGS.planner)
 Cripto.gs         Cifrado en reposo de datos personales (nombres, observaciones)
 Respaldo.gs       Copia de seguridad automática diaria en el Drive del profe
 Portabilidad.gs   Exportar/importar la copia personal completa (JSON)
@@ -88,6 +89,11 @@ docs/
 - [x] **Fase 4** — Resumen global de la clase: nota de cada criterio agregando
   todas las unidades, nota por unidad y nota final; copiable para Séneca
 - [~] **Fase 5** — Pulido visual (hecho) + despliegue y reparto (en curso)
+- [~] **Planificador** (en pruebas, tras `FLAGS.planner`) — sesiones con
+  contenido compartido (título, descripción, criterios) asignables a varias
+  clases del mismo nivel, cada una con su fecha y su estado
+  (pendiente/hecha/aplazada). Vista semanal y por clase; exportación en
+  Markdown al portapapeles (imprimir, documentar o dar contexto a una IA).
 
 ## Cómo se reparte (importante)
 

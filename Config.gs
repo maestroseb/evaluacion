@@ -61,7 +61,13 @@ var CONFIG = {
   //      eliminar. Un grupo archivado oculta también sus clases (derivado, sin
   //      tocar sus filas); una clase puede archivarse suelta. Restaurable desde
   //      la sección "Archivados" de cada lista.
-  ESQUEMA_VERSION: 15,
+  // v16: pestaña "_planner": planificador de sesiones del profe. Una sesión es
+  //      contenido reutilizable (título, descripción, criterios) con
+  //      asignaciones por clase (evalId + fecha + estado): la misma
+  //      planificación sirve para varios grupos del mismo nivel y cada uno
+  //      avanza a su ritmo. Migración no destructiva: solo añade la pestaña.
+  //      La superficie de UI va oculta tras la bandera FLAGS.planner.
+  ESQUEMA_VERSION: 16,
 
   // Banderas de funcionalidad. Cada bandera es la lista de correos que la ven
   // (o '*' para todo el profesorado). Sirve para lanzar módulos "ocultos": se
@@ -70,7 +76,9 @@ var CONFIG = {
   FLAGS: {
     // Módulo de rúbricas: ABIERTO a todo el profesorado desde julio de 2026
     // (probado en privado con la lista de correos que hubo aquí hasta entonces).
-    rubricas: '*'
+    rubricas: '*',
+    // Planificador de sesiones: EN PRUEBAS, solo lo ve esta lista de correos.
+    planner: ['sgirjim495@g.educaand.es']
   }
 };
 
@@ -91,5 +99,6 @@ var HOJAS = {
   ACTIVIDADES: '_actividades', // actividades de cada unidad y sus criterios
   NOTAS: '_notas',        // notas por unidad: un JSON {act:{alumno:valor}} por fila
   PAPELERA: '_papelera',  // elementos borrados, restaurables un tiempo
-  RUBRICAS: '_rubricas'   // banco de rúbricas del profe (indicadores + niveles)
+  RUBRICAS: '_rubricas',  // banco de rúbricas del profe (indicadores + niveles)
+  PLANNER: '_planner'     // planificador de sesiones (asignables a varias clases)
 };
