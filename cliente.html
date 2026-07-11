@@ -4762,7 +4762,12 @@ var App = (function () {
     if (s) abrirModalSesion_('Editar sesión', 'Guardar cambios', id, s);
   }
 
+  var sesionCritSel = {};        // códigos de criterio marcados en el modal abierto
+  var criteriosAreaCache = {};   // 'curso||area' -> [{codigo,texto,…}] (cacheado del mapa)
+
   function abrirModalSesion_(titulo, textoAceptar, id, s) {
+    sesionCritSel = {};
+    (s.criterios || []).forEach(function (c) { sesionCritSel[c] = true; });
     var asigDe = {};
     (s.asignaciones || []).forEach(function (a) { asigDe[a.evalId] = a; });
     var filas = clasesPlanner_().map(function (c) {
@@ -4770,7 +4775,7 @@ var App = (function () {
       return '<div class="planner-asig-fila">' +
         '<label class="check"><input type="checkbox" class="planner-asig-chk" data-eval="' +
           c.id + '"' + (a ? ' checked' : '') +
-          ' onchange="App.horChkCambiada(this)"> ' + esc(etiquetaClase_(c.id)) + '</label>' +
+          ' onchange="App.asigChkCambiada(this)"> ' + esc(etiquetaClase_(c.id)) + '</label>' +
         '<input type="date" class="planner-asig-fecha" data-eval="' + c.id + '" value="' +
           esc((a && a.fecha) || '') + '">' +
       '</div>';
@@ -4782,17 +4787,84 @@ var App = (function () {
       '<label>Descripción / desarrollo (opcional)' +
         '<textarea id="ses-desc" rows="4" placeholder="Qué se hace, materiales, deberes…">' +
         esc(s.descripcion) + '</textarea></label>' +
-      '<label>Criterios trabajados (códigos separados por comas, opcional)' +
-        '<input id="ses-crit" type="text" placeholder="Ej.: LCL.2.1.1, LCL.2.3.2" value="' +
-        esc((s.criterios || []).join(', ')) + '"></label>' +
-      '<p class="ayuda">Marca las clases donde se dará la sesión: la misma planificación sirve ' +
-        'para varios grupos y cada uno lleva su fecha y su estado.</p>' +
-      '<div class="planner-asigs">' + (filas ||
-        '<div class="vacio">Aún no tienes clases: añade una con su nombre desde el botón ' +
-        '«Horario» del planificador.</div>') + '</div>',
+      '<div class="campo-crit"><span class="etq">Clases donde se dará la sesión</span>' +
+        '<p class="ayuda">La misma planificación sirve para varios grupos; cada uno lleva su ' +
+          'fecha y su estado.</p>' +
+        '<div class="planner-asigs">' + (filas ||
+          '<div class="vacio">Aún no tienes clases: añade una con su nombre desde el botón ' +
+          '«Horario» del planificador.</div>') + '</div></div>' +
+      '<div class="campo-crit"><span class="etq">Criterios trabajados</span>' +
+        '<div id="ses-crit-lista" class="lista-crit planner-crit"></div>' +
+        '<p class="ayuda">Salen del área de las clases marcadas; solo tienes que marcarlos.</p>' +
+      '</div>',
       textoAceptar,
       function () { guardarSesion_(id); },
       { sinFoco: !!id });
+    refrescarCriteriosSesion_(); // pinta las casillas según las clases ya marcadas
+  }
+
+  /** Al (des)marcar una clase: sugiere fecha y recalcula los criterios del área. */
+  function asigChkCambiada(chk) {
+    horChkCambiada(chk);
+    refrescarCriteriosSesion_();
+  }
+
+  /** Carga (si hace falta) y pinta los criterios de las áreas de las clases marcadas. */
+  function refrescarCriteriosSesion_() {
+    var cont = document.getElementById('ses-crit-lista');
+    if (!cont) return;
+    var pares = {};
+    [].forEach.call(document.querySelectorAll('.planner-asig-chk:checked'), function (chk) {
+      var ev = evalDe_(chk.dataset.eval);
+      if (ev && ev.area && ev.curso) pares[ev.curso + '||' + ev.area] = { curso: ev.curso, area: ev.area };
+    });
+    var claves = Object.keys(pares);
+    var faltan = claves.filter(function (k) { return !criteriosAreaCache[k]; });
+    if (!faltan.length) return pintarCriteriosSesion_(claves);
+    cont.innerHTML = spinner();
+    var pend = faltan.length;
+    function hecho() { if (--pend === 0) pintarCriteriosSesion_(Object.keys(pares)); }
+    faltan.forEach(function (k) {
+      var p = pares[k];
+      google.script.run
+        .withSuccessHandler(function (lista) { criteriosAreaCache[k] = lista || []; hecho(); })
+        .withFailureHandler(function () { criteriosAreaCache[k] = []; hecho(); })
+        .getCriterios(p.curso, p.area);
+    });
+  }
+
+  function pintarCriteriosSesion_(claves) {
+    var cont = document.getElementById('ses-crit-lista');
+    if (!cont) return;
+    var vistos = {}, bloques = '';
+    var varias = claves.length > 1;
+    claves.forEach(function (k) {
+      var lista = criteriosAreaCache[k] || [];
+      if (!lista.length) return;
+      var items = lista.map(function (c) {
+        vistos[c.codigo] = true;
+        return critChkSesion_(c.codigo, c.texto, !!sesionCritSel[c.codigo]);
+      }).join('');
+      bloques += (varias ? '<div class="planner-crit-area">' + esc(k.split('||')[1]) + '</div>' : '') + items;
+    });
+    // Códigos ya marcados que no están en ninguna área cargada: se conservan.
+    var otros = Object.keys(sesionCritSel).filter(function (cod) { return !vistos[cod]; });
+    if (otros.length) {
+      bloques += '<div class="planner-crit-area">Otros</div>' +
+        otros.map(function (cod) { return critChkSesion_(cod, '', true); }).join('');
+    }
+    cont.innerHTML = bloques ||
+      '<p class="ayuda">Marca arriba una clase con área para ver sus criterios.</p>';
+  }
+
+  function critChkSesion_(cod, texto, marcado) {
+    return '<label class="crit"><input type="checkbox" value="' + esc(cod) + '"' +
+      (marcado ? ' checked' : '') + ' onchange="App.critSesionCambiado(this)">' +
+      '<span class="crit-txt"><b>' + esc(cod) + '</b> ' + esc(texto) + '</span></label>';
+  }
+  function critSesionCambiado(input) {
+    if (input.checked) sesionCritSel[input.value] = true;
+    else delete sesionCritSel[input.value];
   }
 
   function guardarSesion_(id) {
@@ -4811,7 +4883,7 @@ var App = (function () {
     });
     var payload = {
       titulo: titulo, descripcion: val('ses-desc'),
-      criterios: val('ses-crit').split(','), // el servidor recorta y deduplica
+      criterios: Object.keys(sesionCritSel), // casillas marcadas (el servidor deduplica)
       asignaciones: asignaciones
     };
     botonModalCargando('Guardando…');
@@ -4901,6 +4973,7 @@ var App = (function () {
     duplicarSesionUI: duplicarSesionUI, eliminarSesionUI: eliminarSesionUI,
     estadoSesionUI: estadoSesionUI, exportarPlanner: exportarPlanner,
     abrirHorario: abrirHorario, horToggleDia: horToggleDia, horChkCambiada: horChkCambiada,
+    asigChkCambiada: asigChkCambiada, critSesionCambiado: critSesionCambiado,
     crearClaseHorario: crearClaseHorario, agGrupoCambiado: agGrupoCambiado,
     irAEvaluaciones: irAEvaluaciones, irAClases: irAClases,
     toggleSidebar: toggleSidebar, cerrarSidebar: cerrarSidebar, filtrar: filtrar,
