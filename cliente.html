@@ -4598,13 +4598,17 @@ var App = (function () {
       sub = '<span class="pl-chip-sub">' + (hora ? esc(hora) + ' · ' : '') +
         esc(etiquetaClase_(a.evalId)) + '</span>';
     }
+    var obs = (a && a.observaciones)
+      ? '<span class="pl-chip-obs" title="' + esc(a.observaciones) + '">' + svgUI('lapiz') + '</span>'
+      : '';
     return '<div class="pl-chip ' + est + '" onclick="App.editarSesionUI(\'' + s.sesionId +
-        '\')" title="' + esc(s.titulo || 'Sin título') + '">' +
+        '\')" title="' + esc(s.titulo || 'Sin título') +
+        (a && a.observaciones ? ' — ' + esc(a.observaciones) : '') + '">' +
       (a ? '<span class="pl-chip-dot" title="Cambiar estado" ' +
         'onclick="event.stopPropagation();App.estadoSesionUI(\'' + s.sesionId + '\',\'' +
         a.evalId + '\')"></span>' : '') +
       '<span class="pl-chip-txt"><span class="pl-chip-tit">' + esc(s.titulo || 'Sin título') +
-        '</span>' + sub + '</span>' +
+        obs + '</span>' + sub + '</span>' +
     '</div>';
   }
 
@@ -4717,11 +4721,15 @@ var App = (function () {
     if (a) meta.push(esc(etiquetaClase_(a.evalId)));
     if (conFecha && a && a.fecha) meta.push(fechaCorta_(a.fecha));
     if ((s.criterios || []).length) meta.push(s.criterios.join(', '));
+    var obs = (a && a.observaciones)
+      ? '<span class="planner-sesion-obs">' + svgUI('lapiz') + ' ' + esc(a.observaciones) + '</span>'
+      : '';
     return '<div class="planner-sesion' + (a && a.estado === 'hecha' ? ' hecha' : '') + '">' +
       estadoBtn +
       '<div class="planner-sesion-txt">' +
         '<span class="planner-sesion-tit">' + esc(s.titulo) + '</span>' +
         (meta.length ? '<span class="planner-sesion-meta">' + meta.join(' · ') + '</span>' : '') +
+        obs +
       '</div>' +
       '<span class="planner-sesion-acc">' +
         '<button class="btn btn-icono" title="Editar" onclick="App.editarSesionUI(\'' +
@@ -4781,6 +4789,9 @@ var App = (function () {
           ' onchange="App.asigChkCambiada(this)"> ' + esc(etiquetaClase_(c.id)) + '</label>' +
         '<input type="date" class="planner-asig-fecha" data-eval="' + c.id + '" value="' +
           esc((a && a.fecha) || '') + '">' +
+        '<input type="text" class="planner-asig-obs" data-eval="' + c.id + '" ' +
+          'placeholder="Observaciones para este grupo (opcional)" value="' +
+          esc((a && a.observaciones) || '') + '">' +
       '</div>';
     }).join('');
     abrirModal(titulo,
@@ -4881,8 +4892,10 @@ var App = (function () {
       if (!chk.checked) return;
       var evalId = chk.dataset.eval;
       var f = document.querySelector('.planner-asig-fecha[data-eval="' + evalId + '"]');
+      var o = document.querySelector('.planner-asig-obs[data-eval="' + evalId + '"]');
       asignaciones.push({ evalId: evalId, fecha: (f && f.value) || '',
-        estado: estadoDe[evalId] || 'pendiente' }); // conserva el estado al editar
+        estado: estadoDe[evalId] || 'pendiente', // conserva el estado al editar
+        observaciones: (o && o.value) || '' });
     });
     var payload = {
       titulo: titulo, descripcion: val('ses-desc'),
@@ -4986,6 +4999,7 @@ var App = (function () {
       if (meta.length) l += ' (' + meta.join(' · ') + ')';
       lineas.push(l);
       if (s.descripcion) lineas.push('  ' + s.descripcion.replace(/\n/g, '\n  '));
+      if (a && a.observaciones) lineas.push('  _Obs.: ' + a.observaciones.replace(/\n/g, ' ') + '_');
     }
     if (plannerModoActual === 'semana') {
       var lunes = new Date(plannerLunes);

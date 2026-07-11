@@ -192,7 +192,8 @@ var Planner = (function () {
         var destino = (a.evalId === id) ? nuevoId : a.evalId;
         if (!destino || vistos[destino]) return;
         vistos[destino] = true;
-        out.push({ evalId: destino, fecha: a.fecha || '', estado: a.estado });
+        out.push({ evalId: destino, fecha: a.fecha || '', estado: a.estado,
+          observaciones: a.observaciones || '' });
       });
       vals[i][0] = JSON.stringify(out);
       cambiado = true;
@@ -217,7 +218,9 @@ var Planner = (function () {
         return {
           evalId: String((a && a.evalId) || '').trim(),
           fecha: fechaValida_(a && a.fecha),
-          estado: ESTADOS[a && a.estado] ? a.estado : 'pendiente'
+          estado: ESTADOS[a && a.estado] ? a.estado : 'pendiente',
+          // Nota corta del desvío en ESE grupo (la plantilla es compartida).
+          observaciones: String((a && a.observaciones) || '').slice(0, 2000)
         };
       })
       .filter(function (a) {
