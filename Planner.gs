@@ -48,29 +48,6 @@ function estadoSesion(sesionId, evalId, estado, fecha) {
   return Planner.cambiarEstado_(abrirCuaderno_(), sesionId, evalId, estado, fecha);
 }
 
-/**
- * Crea una clase provisional del planificador: solo un nombre (sin grupo ni
- * alumnado), para montar el horario y planificar antes de crear las clases
- * reales (principio de curso).
- */
-function crearProvisional(nombre) {
-  return Planner.crearProv_(abrirCuaderno_(), nombre);
-}
-
-/** Elimina una provisional (y quita sus asignaciones de las sesiones). */
-function eliminarProvisional(provId) {
-  return Planner.eliminarProv_(abrirCuaderno_(), provId);
-}
-
-/**
- * Vincula una provisional a una clase real: su horario se fusiona con el de la
- * clase (mandan los días que la clase ya tuviera), sus asignaciones en las
- * sesiones pasan a apuntar a la clase, y la provisional desaparece.
- */
-function vincularProvisional(provId, evalId) {
-  return Planner.vincularProv_(abrirCuaderno_(), provId, evalId);
-}
-
 var Planner = (function () {
 
   var ESTADOS = { pendiente: true, hecha: true, aplazada: true };
@@ -167,53 +144,32 @@ var Planner = (function () {
     return obtener_(ss, sesionId);
   }
 
-  // ---------- clases provisionales ----------
+  // ---------- migración de clases provisionales (v18 → v19) ----------
+  // Las provisionales dejan de existir como concepto aparte: cada una se
+  // convierte en una clase real SIN grupo (conservando su nombre y su horario)
+  // y sus sesiones se re-apuntan a la nueva clase. Idempotente: al vaciar la
+  // pestaña, no se vuelve a ejecutar.
 
   function hojaProv_(ss) { return ss.getSheetByName(HOJAS.PROVISIONALES); }
 
-  function listarProv_(ss) {
-    var datos = hojaProv_(ss).getDataRange().getValues();
-    var out = [];
+  function migrarProvisionales_(ss) {
+    var sh = hojaProv_(ss);
+    if (!sh || sh.getLastRow() < 2) return; // solo cabecera (o no existe): nada que migrar
+    var datos = sh.getDataRange().getValues();
+    var mapa = {}; // provId -> nuevo evalId
     for (var i = 1; i < datos.length; i++) {
-      if (!datos[i][0]) continue;
-      out.push({ provId: datos[i][0], nombre: datos[i][1], horario: parse_(datos[i][2]) });
+      var r = datos[i];
+      if (!r[0]) continue;
+      var ev = Evaluaciones.crear_(ss, { nombre: r[1] }); // clase real sin grupo
+      Evaluaciones.fusionarHorario_(ss, ev.evalId, parse_(r[2])); // conserva su horario
+      mapa[r[0]] = ev.evalId;
     }
-    return out;
-  }
-
-  function crearProv_(ss, nombre) {
-    var n = String(nombre || '').trim().slice(0, 80);
-    if (!n) throw new Error('Pon nombre a la clase provisional.');
-    var id = Datos.nuevoId_('prov');
-    hojaProv_(ss).appendRow([id, n, '[]', new Date().toISOString()]);
-    return { provId: id, nombre: n, horario: [] };
-  }
-
-  /** Guarda el horario (col 3) de una provisional; el saneado lo hace quien llama. */
-  function guardarHorarioProv_(ss, provId, horario) {
-    var sh = hojaProv_(ss);
-    var fila = Datos.filaDeId_(sh, provId);
-    if (fila < 0) return;
-    sh.getRange(fila, 3).setValue(JSON.stringify(horario));
-  }
-
-  function eliminarProv_(ss, provId) {
-    reasignar_(ss, provId, null); // sus asignaciones desaparecen de las sesiones
-    var sh = hojaProv_(ss);
-    var fila = Datos.filaDeId_(sh, provId);
-    if (fila >= 0) sh.deleteRow(fila);
-    return { ok: true };
-  }
-
-  function vincularProv_(ss, provId, evalId) {
-    var sh = hojaProv_(ss);
-    var fila = Datos.filaDeId_(sh, provId);
-    if (fila < 0) throw new Error('Clase provisional no encontrada.');
-    var horario = parse_(sh.getRange(fila, 3).getValue());
-    Evaluaciones.fusionarHorario_(ss, evalId, horario); // valida que la clase existe
-    reasignar_(ss, provId, evalId);
-    sh.deleteRow(fila);
-    return { ok: true };
+    // Re-apunta las asignaciones de las sesiones (prov → nueva clase).
+    Object.keys(mapa).forEach(function (provId) { reasignar_(ss, provId, mapa[provId]); });
+    // Vacía la pestaña: la migración no se repite.
+    if (sh.getLastRow() > 1) {
+      sh.getRange(2, 1, sh.getLastRow() - 1, sh.getLastColumn()).clearContent();
+    }
   }
 
   /**
@@ -302,7 +258,6 @@ var Planner = (function () {
   return {
     listar_: listar_, obtener_: obtener_, crear_: crear_, editar_: editar_,
     eliminar_: eliminar_, duplicar_: duplicar_, cambiarEstado_: cambiarEstado_,
-    listarProv_: listarProv_, crearProv_: crearProv_, eliminarProv_: eliminarProv_,
-    vincularProv_: vincularProv_, guardarHorarioProv_: guardarHorarioProv_
+    migrarProvisionales_: migrarProvisionales_
   };
 })();

@@ -619,8 +619,10 @@ var App = (function () {
             'onpointerdown="App.dragEval(event)" onclick="event.stopPropagation()">⠿</span>') +
       '</div>' +
       '<div class="clase-card-body">' +
-        '<div class="cc-meta"><b>' + ev.numAlumnos + '</b> alumnos/as</div>' +
-        '<div class="cc-meta">' + esc(ev.claseNombre) + ' · ' + esc(ev.curso) + '</div>' +
+        (ev.claseId
+          ? '<div class="cc-meta"><b>' + ev.numAlumnos + '</b> alumnos/as</div>' +
+            '<div class="cc-meta">' + esc(ev.claseNombre) + ' · ' + esc(ev.curso) + '</div>'
+          : '<div class="cc-meta cc-sin-grupo">Sin grupo — pulsa para asignarlo</div>') +
       '</div>' +
       '</div>';
   }
@@ -797,8 +799,13 @@ var App = (function () {
 
   var evalCache = {}; // evalId -> evaluación (con clase y alumnos)
   var evalActiva = null; // última clase abierta (descarta respuestas tardías)
+  var avisoAlumnosPara = null; // evalId cuyo grupo vacío hay que avisar al cargar (una vez)
 
   function abrirEvaluacion(evalId) {
+    // Clase sin grupo aún: no se abre el detalle; se pide asignar/crear grupo.
+    var r = evalDe_(evalId);
+    if (r && !r.claseId) { asignarGrupoUI(evalId); return; }
+    avisoAlumnosPara = evalId; // al cargar el detalle, se avisa si el grupo no tiene alumnado
     evalActiva = evalId;
     if (evalCache[evalId]) {
       // Instantáneo desde caché (precarga o visita anterior), sin ir al servidor.
@@ -808,8 +815,6 @@ var App = (function () {
     mostrar('vista-evaluacion');
     // Cabecera al instante con lo que ya sabemos de la tarjeta: nombre, grupo
     // e icono (evita el hueco en blanco mientras responde el servidor).
-    var r = null;
-    (estado.evaluaciones || []).forEach(function (e) { if (e.evalId === evalId) r = e; });
     document.getElementById('eval-titulo').textContent = r ? tituloEval(r) : '';
     document.getElementById('eval-meta').textContent =
       r ? (r.claseNombre + ' · ' + r.curso + ' · ' + r.numAlumnos + ' alumnos/as') : '';
@@ -841,6 +846,76 @@ var App = (function () {
       ev.clase.nombre + ' · ' + ev.curso + ' · ' + ev.clase.alumnos.length + ' alumnos/as';
     pintarUnidades();
     precargarRejillas(); // las unidades se abrirán al instante
+    // Aviso (una sola vez por entrada): grupo asociado pero sin alumnado.
+    if (avisoAlumnosPara === ev.evalId) {
+      avisoAlumnosPara = null;
+      if (ev.clase && ev.clase.claseId && !(ev.clase.alumnos || []).length) avisarSinAlumnos_(ev);
+    }
+  }
+
+  // ---------- completar una clase sin grupo / sin alumnado ----------
+  /** Modal para asignar (o crear) el grupo de una clase que aún no lo tiene. */
+  function asignarGrupoUI(evalId, preGroupId) {
+    var r = evalDe_(evalId);
+    var grupos = (estado.clases || []).filter(function (c) { return !c.archivado; });
+    var opts = '<option value="">— Elegir grupo —</option>' +
+      grupos.map(function (c) {
+        return '<option value="' + c.claseId + '"' + (c.claseId === preGroupId ? ' selected' : '') +
+          '>' + esc(c.nombre + ' · ' + c.curso) + '</option>';
+      }).join('') +
+      '<option value="__nuevo__">➕ Crear grupo nuevo…</option>';
+    abrirModal('Clase sin grupo',
+      '<p class="ayuda">La clase «' + esc(r ? tituloEval(r) : '') + '» todavía no tiene grupo de ' +
+        'alumnado. Elige un grupo (o crea uno) y el área que vas a evaluar.</p>' +
+      '<label>Grupo<select id="ag-grupo" onchange="App.agGrupoCambiado(\'' + evalId + '\')">' +
+        opts + '</select></label>' +
+      '<label>Área<select id="ag-area"></select></label>',
+      'Asociar', function () { confirmarAsociarGrupo_(evalId); }, { sinFoco: true });
+    agGrupoCambiado(evalId); // rellena las áreas del grupo preseleccionado (si lo hay)
+  }
+
+  /** Al cambiar el grupo del modal: si es «crear nuevo», lanza el alta; si no, recarga áreas. */
+  function agGrupoCambiado(evalId) {
+    var v = val('ag-grupo');
+    if (v === '__nuevo__') {
+      // Crea el grupo con el flujo normal y vuelve aquí con él ya elegido.
+      nuevaClase(function (cl) { asignarGrupoUI(evalId, cl.claseId); });
+      return;
+    }
+    var cl = claseDe(v);
+    document.getElementById('ag-area').innerHTML = opcionesAreas(cl ? cl.curso : '');
+  }
+
+  function confirmarAsociarGrupo_(evalId) {
+    var claseId = val('ag-grupo');
+    var area = val('ag-area');
+    if (!claseId || claseId === '__nuevo__') return aviso('Elige un grupo.');
+    if (!area) return aviso('Elige el área que vas a evaluar.');
+    botonModalCargando('Asociando…');
+    llamar('asociarGrupoEvaluacion', [evalId, claseId, area], function (ev) {
+      var r = evalDe_(evalId), cl = claseDe(claseId);
+      if (r) {
+        r.claseId = claseId; r.area = ev.area; r.nombre = ev.nombre; r.sinGrupo = false;
+        r.claseNombre = cl ? cl.nombre : ''; r.curso = cl ? cl.curso : '';
+        r.numAlumnos = cl ? (cl.numAlumnos || 0) : 0;
+      }
+      delete evalCache[evalId]; // se recargará ya con su grupo
+      cerrarModal();
+      avisoOk('Clase asociada al grupo.');
+      abrirEvaluacion(evalId); // abre el detalle (y avisa si el grupo está sin alumnado)
+    });
+  }
+
+  /** Aviso al entrar en una clase cuyo grupo aún no tiene alumnado. */
+  function avisarSinAlumnos_(ev) {
+    var cl = ev.clase;
+    abrirModal('Grupo sin alumnado',
+      '<p class="mensaje">El grupo «' + esc(cl.nombre) + '» de esta clase todavía no tiene ' +
+        'alumnado. Puedes incluirlo ahora o dejarlo para más adelante.</p>',
+      'Incluir alumnos', function () {
+        claseActual = cl;   // el editor de alumnado opera sobre el grupo actual
+        editarAlumnos();    // abre directamente la edición del grupo
+      }, { sinFoco: true });
   }
   function pintarUnidades() {
     var cont = document.getElementById('lista-unidades');
@@ -3138,7 +3213,11 @@ var App = (function () {
       'tarjetas tarjetas-grupos');
   }
 
-  function nuevaClase() {
+  /**
+   * Crea un grupo. Si se pasa `onCreated`, se llama con el grupo creado en vez
+   * de abrir su ficha (lo usa la asociación de grupo a una clase sin grupo).
+   */
+  function nuevaClase(onCreated) {
     var cursos = cursosDisponibles();
     if (!cursos.length) return aviso('El Mapa Curricular está vacío o sin configurar.');
     copiaAlumnosEnCurso = false; // modal recién abierto: sin copias en vuelo
@@ -3188,7 +3267,8 @@ var App = (function () {
           });
           claseCache[cl.claseId] = cl;
           cerrarModal();
-          abrirClaseCargada(cl);
+          if (typeof onCreated === 'function') onCreated(cl);
+          else abrirClaseCargada(cl);
         });
       });
   }
@@ -4276,21 +4356,20 @@ var App = (function () {
     });
   }
   function etiquetaEval_(ev) {
-    var grupo = (estado.clases || []).filter(function (c) { return c.claseId === ev.claseId; })[0];
+    var grupo = ev.claseId &&
+      (estado.clases || []).filter(function (c) { return c.claseId === ev.claseId; })[0];
     return tituloEval(ev) + (grupo ? ' · ' + grupo.nombre : '');
   }
   /**
-   * Las "clases" con las que trabaja el planificador: las reales del curso
-   * activo MÁS las provisionales (solo nombre, creadas desde el editor de
-   * horario para planificar antes de tener grupos). Forma común:
-   * {id, etiqueta, horario, real}.
+   * Las "clases" con las que trabaja el planificador: las clases (evaluaciones)
+   * visibles del curso activo, tengan grupo o no. Forma común:
+   * {id, etiqueta, horario, sinGrupo}.
    */
   function clasesPlanner_() {
     return evalsProgramables_().map(function (ev) {
-      return { id: ev.evalId, etiqueta: etiquetaEval_(ev), horario: ev.horario || [], real: true };
-    }).concat((estado.provisionales || []).map(function (p) {
-      return { id: p.provId, etiqueta: p.nombre, horario: p.horario || [], real: false };
-    }));
+      return { id: ev.evalId, etiqueta: etiquetaEval_(ev),
+        horario: ev.horario || [], sinGrupo: !ev.claseId };
+    });
   }
   function clasePlannerDe_(id) {
     return clasesPlanner_().filter(function (c) { return c.id === id; })[0];
@@ -4298,7 +4377,7 @@ var App = (function () {
   function etiquetaClase_(id) {
     var c = clasePlannerDe_(id);
     if (!c) return '(clase de otro curso)';
-    return c.etiqueta + (c.real ? '' : ' (prov.)');
+    return c.etiqueta + (c.sinGrupo ? ' · sin grupo' : '');
   }
 
   // ---------- pintado ----------
@@ -4331,7 +4410,7 @@ var App = (function () {
   var DIAS_LECTIVOS = 5; // el editor de horario solo ofrece L–V (no hay clase en finde)
   var horarioDraft = null; // {evalId: [{dia,hora}]} mientras el modal está abierto
 
-  /** Clases (reales o provisionales) que tocan ese día, ordenadas por hora (sin hora, al final). */
+  /** Clases que tocan ese día, ordenadas por hora (sin hora, al final). */
   function clasesDelDia_(dia) {
     return clasesPlanner_().filter(function (c) {
       return c.horario.some(function (h) { return h.dia === dia; });
@@ -4356,15 +4435,14 @@ var App = (function () {
       '<p class="ayuda">Marca los días que toca cada clase (y su hora, si quieres). La vista ' +
         'semanal usará el horario para enseñarte, día a día, las clases sin sesión planificada, ' +
         'y al asignar una sesión se sugerirá la próxima fecha que le toque. Si aún no has ' +
-        'creado tus grupos y clases, añade abajo <b>clases provisionales</b> (solo el nombre) ' +
-        'y vincúlalas a la clase real cuando exista.</p>' +
+        'creado tus grupos, añade abajo <b>una clase con su nombre</b> (p. ej. «Lengua · 3ºA»): ' +
+        'aparece ya en «Clases» y le asignas el grupo y el alumnado cuando quieras.</p>' +
       '<div id="planner-horario">' + htmlHorario_() + '</div>',
       'Guardar horario', guardarHorariosUI_, { sinFoco: true });
   }
 
   function htmlHorario_() {
     var clases = clasesPlanner_();
-    var reales = evalsProgramables_();
     var h = clases.map(function (c) {
       var dias = horarioDraft[c.id] || [];
       var chips = DIA_CHIPS.slice(0, DIAS_LECTIVOS).map(function (etq, d) {
@@ -4377,96 +4455,43 @@ var App = (function () {
           '</span><input type="time" class="planner-hora-inp" data-eval="' + c.id +
           '" data-dia="' + x.dia + '" value="' + esc(x.hora) + '"></label>';
       }).join('');
-      // Las provisionales llevan sus controles: vincular a una clase real (su
-      // horario y sus sesiones pasan a ella) o eliminarla.
-      var controles = '';
-      if (!c.real) {
-        var opts = reales.map(function (ev) {
-          return '<option value="' + ev.evalId + '">' + esc(etiquetaEval_(ev)) + '</option>';
-        }).join('');
-        controles = '<span class="planner-hor-prov">' +
-          (reales.length
-            ? '<select class="planner-prov-vinc" title="Su horario y sus sesiones pasan a la clase real" ' +
-                'onchange="App.vincularProvisionalUI(\'' + c.id + '\', this.value)">' +
-                '<option value="">Vincular a clase real…</option>' + opts + '</select>'
-            : '') +
-          '<button type="button" class="btn peligro btn-icono" title="Eliminar provisional" ' +
-            'onclick="App.eliminarProvisionalUI(\'' + c.id + '\')">' + svgUI('papelera') + '</button>' +
-        '</span>';
-      }
       return '<div class="planner-hor-clase">' +
         '<div class="planner-hor-cab"><div class="planner-hor-nombre">' +
-          esc(etiquetaClase_(c.id)) + '</div>' + controles + '</div>' +
+          esc(etiquetaClase_(c.id)) + '</div></div>' +
         '<div class="planner-hor-dias">' + chips + '</div>' +
         (horas ? '<div class="planner-hor-horas">' + horas + '</div>' : '') +
       '</div>';
     }).join('');
     if (!clases.length) {
-      h = '<div class="vacio">Aún no tienes clases: añade abajo clases provisionales (solo el ' +
-        'nombre) para montar tu horario y empezar a planificar. Cuando crees tus grupos y ' +
-        'clases, las vincularás y todo pasará a ellas.</div>';
+      h = '<div class="vacio">Aún no tienes clases: añade abajo una clase con su nombre para ' +
+        'montar tu horario y empezar a planificar. Aparecerá también en «Clases», donde le ' +
+        'asignas el grupo y el alumnado cuando quieras.</div>';
     }
     h += '<div class="planner-prov-add">' +
       '<input id="prov-nombre" type="text" placeholder="Ej.: Lengua · 3ºA" ' +
-        'onkeydown="if(event.key===\'Enter\'){event.preventDefault();App.crearProvisionalUI();}">' +
-      '<button type="button" class="btn" onclick="App.crearProvisionalUI()">+ Añadir clase provisional</button>' +
+        'onkeydown="if(event.key===\'Enter\'){event.preventDefault();App.crearClaseHorario();}">' +
+      '<button type="button" class="btn" onclick="App.crearClaseHorario()">+ Añadir clase</button>' +
     '</div>';
     return h;
   }
 
-  function crearProvisionalUI() {
+  /** Crea una clase real SIN grupo desde el horario (se completa luego en «Clases»). */
+  function crearClaseHorario() {
     var inp = document.getElementById('prov-nombre');
     var nombre = ((inp && inp.value) || '').trim();
-    if (!nombre) return aviso('Escribe el nombre de la clase provisional (p. ej. «Lengua · 3ºA»).');
+    if (!nombre) return aviso('Escribe el nombre de la clase (p. ej. «Lengua · 3ºA»).');
     leerHorasDraft_(); // el repintado no debe perder horas ya escritas
-    llamar('crearProvisional', [nombre], function (p) {
-      estado.provisionales = (estado.provisionales || []).concat([p]);
-      horarioDraft[p.provId] = [];
+    llamar('crearEvaluacion', [{ nombre: nombre }], function (ev) {
+      estado.evaluaciones.push({
+        evalId: ev.evalId, claseId: '', area: ev.area || '', nombre: ev.nombre,
+        color: ev.color || '', icono: ev.icono || '', claseNombre: '', curso: '',
+        numAlumnos: 0, horario: [], creado: ev.creado, sinGrupo: true
+      });
+      horarioDraft[ev.evalId] = [];
       document.getElementById('planner-horario').innerHTML = htmlHorario_();
       var nuevo = document.getElementById('prov-nombre');
       if (nuevo) nuevo.focus();
     });
-  }
-
-  function vincularProvisionalUI(provId, evalId) {
-    if (!evalId) return;
-    leerHorasDraft_();
-    llamar('vincularProvisional', [provId, evalId], function () {
-      // Refleja la fusión también en el borrador: mandan los días de la real.
-      var destino = horarioDraft[evalId] || (horarioDraft[evalId] = []);
-      var tiene = {};
-      destino.forEach(function (h) { tiene[h.dia] = true; });
-      (horarioDraft[provId] || []).forEach(function (h) {
-        if (!tiene[h.dia]) { destino.push(h); tiene[h.dia] = true; }
-      });
-      destino.sort(function (a, b) { return a.dia - b.dia; });
-      delete horarioDraft[provId];
-      estado.provisionales = (estado.provisionales || [])
-        .filter(function (p) { return p.provId !== provId; });
-      var ev = evalDe_(evalId);
-      if (ev) ev.horario = destino;
-      recargarSesiones_(); // sus sesiones apuntan ya a la clase real
-      document.getElementById('planner-horario').innerHTML = htmlHorario_();
-      avisoOk('Vinculada: su horario y sus sesiones han pasado a la clase real.');
-    });
-  }
-
-  function eliminarProvisionalUI(provId) {
-    leerHorasDraft_();
-    llamar('eliminarProvisional', [provId], function () {
-      delete horarioDraft[provId];
-      estado.provisionales = (estado.provisionales || [])
-        .filter(function (p) { return p.provId !== provId; });
-      recargarSesiones_(); // sus asignaciones han desaparecido de las sesiones
-      document.getElementById('planner-horario').innerHTML = htmlHorario_();
-      avisoOk('Clase provisional eliminada (sus sesiones quedan sin esa asignación).');
-    });
-  }
-
-  /** Recarga las sesiones en 2º plano (tras vincular/eliminar una provisional). */
-  function recargarSesiones_() {
-    sesionesCache = null;
-    llamarSilencioso('listarSesiones', [], function (l) { sesionesCache = l || []; });
   }
 
   /** Vuelca las horas escritas al borrador (antes de repintar o guardar). */
@@ -4498,9 +4523,6 @@ var App = (function () {
       // Refleja lo guardado en el estado local (sin recargar del servidor).
       (estado.evaluaciones || []).forEach(function (ev) {
         if (horarioDraft[ev.evalId]) ev.horario = horarioDraft[ev.evalId];
-      });
-      (estado.provisionales || []).forEach(function (p) {
-        if (horarioDraft[p.provId]) p.horario = horarioDraft[p.provId];
       });
       cerrarModal(); pintarPlanner(); avisoOk('Horario guardado.');
     });
@@ -4690,8 +4712,8 @@ var App = (function () {
       '<p class="ayuda">Marca las clases donde se dará la sesión: la misma planificación sirve ' +
         'para varios grupos y cada uno lleva su fecha y su estado.</p>' +
       '<div class="planner-asigs">' + (filas ||
-        '<div class="vacio">Aún no tienes clases: puedes crear clases provisionales (solo el ' +
-        'nombre) desde el botón «Horario» del planificador.</div>') + '</div>',
+        '<div class="vacio">Aún no tienes clases: añade una con su nombre desde el botón ' +
+        '«Horario» del planificador.</div>') + '</div>',
       textoAceptar,
       function () { guardarSesion_(id); },
       { sinFoco: !!id });
@@ -4803,8 +4825,7 @@ var App = (function () {
     duplicarSesionUI: duplicarSesionUI, eliminarSesionUI: eliminarSesionUI,
     estadoSesionUI: estadoSesionUI, exportarPlanner: exportarPlanner,
     abrirHorario: abrirHorario, horToggleDia: horToggleDia, horChkCambiada: horChkCambiada,
-    crearProvisionalUI: crearProvisionalUI, vincularProvisionalUI: vincularProvisionalUI,
-    eliminarProvisionalUI: eliminarProvisionalUI,
+    crearClaseHorario: crearClaseHorario, agGrupoCambiado: agGrupoCambiado,
     irAEvaluaciones: irAEvaluaciones, irAClases: irAClases,
     toggleSidebar: toggleSidebar, cerrarSidebar: cerrarSidebar, filtrar: filtrar,
     irAPapelera: irAPapelera, restaurarItem: restaurarItem, vaciarPapeleraUI: vaciarPapeleraUI,

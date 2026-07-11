@@ -43,6 +43,9 @@ function getEstadoInicial() {
   // Banderas de funcionalidad para este usuario: el cliente enseña u oculta
   // módulos en pruebas (p. ej. el planificador) según su valor.
   var flags = flagsDe_(email);
+  // Migración v18→v19: las clases provisionales pasan a ser clases reales sin
+  // grupo. Idempotente (vacía su pestaña); solo aplica a quien tenga el planner.
+  if (flags.planner) Planner.migrarProvisionales_(ss);
   return {
     usuario: email,
     esquemaVersion: CONFIG.ESQUEMA_VERSION,
@@ -50,9 +53,7 @@ function getEstadoInicial() {
     areas: Curriculo.listarAreasCursos(),
     cursos: Cursos.info_(ss, clases),
     clases: Cursos.filtrar_(clases, activo),
-    evaluaciones: Cursos.filtrar_(Evaluaciones.listar_(ss, clases), activo),
-    // Clases provisionales del planificador (solo si el usuario ve el módulo).
-    provisionales: flags.planner ? Planner.listarProv_(ss) : []
+    evaluaciones: Cursos.filtrar_(Evaluaciones.listar_(ss, clases), activo)
   };
 }
 
