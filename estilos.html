@@ -1177,6 +1177,25 @@
   .pl-fila-otros { color: var(--texto-2); font-style: italic; }
   .pl-chip-evento { background: var(--acento-suave); border-left-color: var(--texto-2);
     border-left-style: dashed; }
+  /* ---------- Vista mensual ---------- */
+  .pl-mes { min-width: 680px; }
+  .pl-mes-cabs { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 6px; }
+  .pl-mes-cab { font-size: 12px; font-weight: 700; color: var(--texto-2); text-transform: capitalize;
+    text-align: center; }
+  .pl-mes-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+  .pl-mes-dia { background: var(--surface); border: 1px solid var(--borde); border-radius: 8px;
+    min-height: 88px; padding: 4px; display: flex; flex-direction: column; gap: 3px; }
+  .pl-mes-fuera { background: var(--bg); }
+  .pl-mes-fuera .pl-mes-num { color: var(--texto-3); }
+  .pl-mes-dia.pl-hoy { border-color: var(--acento); }
+  .pl-mes-num { font-size: 12px; font-weight: 600; color: var(--texto-2); padding: 1px 3px; }
+  .pl-mes-chip { text-align: left; border: 0; border-left: 3px solid var(--acento);
+    background: var(--acento-suave); border-radius: 4px; padding: 2px 5px; font: inherit;
+    font-size: 11.5px; line-height: 1.2; cursor: pointer; white-space: nowrap; overflow: hidden;
+    text-overflow: ellipsis; }
+  .pl-mes-chip.hecha { border-left-color: var(--g-top-tx); background: var(--g-top-bg); }
+  .pl-mes-chip.aplazada { border-left-color: var(--g-baja-tx); background: var(--g-baja-bg); }
+  .pl-mes-aviso { border-left-color: var(--g-media-tx); background: var(--g-media-bg); }
   .planner-hor-dias { display: flex; flex-wrap: wrap; gap: 8px; }
   .planner-chip-dia { flex: 0 0 auto; display: inline-flex; align-items: center;
     justify-content: center; width: 34px; height: 34px; padding: 0; line-height: 1;
