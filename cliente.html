@@ -4743,6 +4743,9 @@ var App = (function () {
     var nuevo = CICLO[a.estado] || 'hecha';
     a.estado = nuevo; // optimista: se repinta ya y se persiste detrás
     pintarPlanner();
+    // Sesión aún sin confirmar del servidor (id temporal): solo local; su estado
+    // ya viaja en la creación en curso.
+    if (String(sesionId).indexOf('tmp_') === 0) return;
     llamar('estadoSesion', [sesionId, evalId, nuevo, null], function (r) {
       actualizarSesionCache_(r);
     });
@@ -4886,11 +4889,56 @@ var App = (function () {
       criterios: Object.keys(sesionCritSel), // casillas marcadas (el servidor deduplica)
       asignaciones: asignaciones
     };
-    botonModalCargando('Guardando…');
-    llamar(id ? 'editarSesion' : 'crearSesion', id ? [id, payload] : [payload], function (r) {
-      actualizarSesionCache_(r); cerrarModal(); pintarPlanner();
-      avisoOk(id ? 'Sesión guardada.' : 'Sesión creada.');
-    });
+    // Guardado OPTIMISTA (como las notas de la rejilla): se cierra el modal y se
+    // pinta ya con lo introducido; la persistencia va por detrás y reconcilia.
+    cerrarModal();
+    if (id) {
+      var optimista = {
+        sesionId: id, titulo: payload.titulo, descripcion: payload.descripcion,
+        criterios: payload.criterios.slice(), asignaciones: payload.asignaciones,
+        creado: previa ? previa.creado : '', orden: previa ? previa.orden : 0
+      };
+      actualizarSesionCache_(optimista);
+      pintarPlanner();
+      avisoOk('Sesión guardada.');
+      llamarConFallo_('editarSesion', [id, payload],
+        function (r) { actualizarSesionCache_(r); pintarPlanner(); },
+        function (err) { recargarSesionesTrasError_('No se pudo guardar la sesión: ' + err); });
+    } else {
+      var tmpId = 'tmp_' + (++sesionTmpSeq);
+      var nueva = {
+        sesionId: tmpId, titulo: payload.titulo, descripcion: payload.descripcion,
+        criterios: payload.criterios.slice(), asignaciones: payload.asignaciones,
+        creado: new Date().toISOString(), orden: 1e9
+      };
+      sesionesCache = (sesionesCache || []).concat([nueva]);
+      pintarPlanner();
+      avisoOk('Sesión creada.');
+      llamarConFallo_('crearSesion', [payload],
+        function (r) {
+          var idx = sesionesCache.indexOf(nueva);
+          if (idx >= 0) sesionesCache[idx] = r; else actualizarSesionCache_(r);
+          pintarPlanner();
+        },
+        function (err) {
+          sesionesCache = (sesionesCache || []).filter(function (x) { return x !== nueva; });
+          pintarPlanner();
+          aviso('No se pudo crear la sesión: ' + err);
+        });
+    }
+  }
+  var sesionTmpSeq = 0; // ids temporales para las sesiones aún sin confirmar del servidor
+
+  /** google.script.run con éxito y fallo explícitos (para el guardado optimista). */
+  function llamarConFallo_(fn, args, ok, fallo) {
+    google.script.run.withSuccessHandler(ok)
+      .withFailureHandler(function (e) { fallo((e && e.message) || 'error'); })
+      [fn].apply(google.script.run, args || []);
+  }
+  /** Tras un fallo al persistir, recarga las sesiones del servidor para no quedar descuadrado. */
+  function recargarSesionesTrasError_(msg) {
+    aviso(msg);
+    llamarSilencioso('listarSesiones', [], function (l) { sesionesCache = l || []; pintarPlanner(); });
   }
 
   function actualizarSesionCache_(s) {
