@@ -30,7 +30,7 @@ var ESQUEMA = {
   _planner: ['sesionId', 'titulo', 'descripcion', 'criterios', 'asignaciones', 'creado', 'orden', 'tipo', 'unidadId'],
   // Unidades de planificación del profe (v21), por materia/área (independientes
   // de las unidades de evaluación). Una sesión puede colgar de una.
-  _planUnidades: ['unidadId', 'area', 'nombre', 'orden', 'creado'],
+  _planUnidades: ['unidadId', 'area', 'nombre', 'orden', 'creado', 'curso'],
   // Clases provisionales del planificador (v18): solo un nombre y su horario,
   // para planificar antes de crear grupos/clases. 'horario' como en
   // _evaluaciones (JSON [{dia,hora}]). Al vincular a una clase real, la fila

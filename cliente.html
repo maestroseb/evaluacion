@@ -4355,6 +4355,11 @@ var App = (function () {
     if (!m) return '';
     return Number(m[3]) + ' ' + MESES[Number(m[2]) - 1];
   }
+  /** Fecha corta con año: «5 oct 2026». */
+  function fechaConAnio_(iso) {
+    var m = /^(\d{4})-/.exec(iso || '');
+    return fechaCorta_(iso) + (m ? ' ' + m[1] : '');
+  }
 
   function plannerModo(modo) {
     plannerModoActual = modo;
@@ -4514,17 +4519,26 @@ var App = (function () {
     var nombre = ((inp && inp.value) || '').trim();
     if (!nombre) return aviso('Escribe el nombre de la clase (p. ej. «Lengua · 3ºA»).');
     leerHorasDraft_(); // el repintado no debe perder horas ya escritas
-    llamar('crearEvaluacion', [{ nombre: nombre }], function (ev) {
-      estado.evaluaciones.push({
-        evalId: ev.evalId, claseId: '', area: ev.area || '', nombre: ev.nombre,
-        color: ev.color || '', icono: ev.icono || '', claseNombre: '', curso: '',
-        numAlumnos: 0, horario: [], creado: ev.creado, sinGrupo: true
+    var btn = document.querySelector('.planner-prov-add .btn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Añadiendo…'; }
+    if (inp) inp.disabled = true;
+    llamarConFallo_('crearEvaluacion', [{ nombre: nombre }],
+      function (ev) {
+        estado.evaluaciones.push({
+          evalId: ev.evalId, claseId: '', area: ev.area || '', nombre: ev.nombre,
+          color: ev.color || '', icono: ev.icono || '', claseNombre: '', curso: '',
+          numAlumnos: 0, horario: [], creado: ev.creado, sinGrupo: true
+        });
+        horarioDraft[ev.evalId] = [];
+        document.getElementById('planner-horario').innerHTML = htmlHorario_(); // recrea botón/input
+        var nuevo = document.getElementById('prov-nombre');
+        if (nuevo) nuevo.focus();
+      },
+      function (err) {
+        if (btn) { btn.disabled = false; btn.textContent = '+ Añadir clase'; }
+        if (inp) inp.disabled = false;
+        aviso('No se pudo crear la clase: ' + err);
       });
-      horarioDraft[ev.evalId] = [];
-      document.getElementById('planner-horario').innerHTML = htmlHorario_();
-      var nuevo = document.getElementById('prov-nombre');
-      if (nuevo) nuevo.focus();
-    });
   }
 
   /** Vuelca las horas escritas al borrador (antes de repintar o guardar). */
@@ -4711,11 +4725,17 @@ var App = (function () {
       cel.push('<div class="pl-esq pl-fila-lbl">' + esc(etiquetaClase_(c.id)) + '</div>');
       ctx.isos.forEach(function (iso, i) {
         var ens = ctx.porClaseFecha[c.id + '|' + iso] || [];
-        var cont;
-        if (ens.length) cont = ens.map(function (en) { return chipSesion_(en, false); }).join('');
-        else if (c.horario.some(function (h) { return h.dia === i; })) cont = huecoCelda_(c.id, iso, false);
-        else cont = '';
-        cel.push('<div class="pl-celda">' + cont + '</div>');
+        if (ens.length) {
+          cel.push('<div class="pl-celda">' +
+            ens.map(function (en) { return chipSesion_(en, false); }).join('') + '</div>');
+        } else {
+          // Celda vacía: TODA la celda planifica (con clase y fecha ya puestas).
+          // Un «+» marca los días de horario; el resto también es clicable.
+          var esHor = c.horario.some(function (h) { return h.dia === i; });
+          cel.push('<div class="pl-celda pl-celda-nueva" title="Planificar aquí" ' +
+            'onclick="App.nuevaSesion(\'' + c.id + '\',\'' + iso + '\')">' +
+            (esHor ? '<span class="pl-celda-mas">+</span>' : '') + '</div>');
+        }
       });
     });
     // Fila «Otros»: eventos sin grupo (reuniones, exámenes…) por día.
@@ -4817,39 +4837,51 @@ var App = (function () {
       'title="' + esc(lab + (s.titulo || 'Sin título')) + '">' + esc(s.titulo || '—') + '</button>';
   }
 
-  // ---------- vista Unidades (unidades de planificación por materia) ----------
-  var plannerMateria = null; // materia (área) seleccionada en la vista Unidades
+  // ---------- vista Unidades (unidades de planificación por materia + curso) ----------
+  var plannerMatCurso = null; // 'area||curso' seleccionado en la vista Unidades
 
-  /** Materias disponibles: áreas de tus clases + las de las unidades ya creadas. */
-  function materiasPlanner_() {
-    var set = {};
-    (estado.evaluaciones || []).forEach(function (e) { if (e.area) set[e.area] = true; });
-    (planUnidadesCache || []).forEach(function (u) { if (u.area) set[u.area] = true; });
-    return Object.keys(set).sort();
+  function matCursoKey_(area, curso) { return (area || '') + '||' + (curso || ''); }
+  /** Etiqueta legible de una materia+curso ('' → «General»). */
+  function etqMatCurso_(area, curso) {
+    var a = area || 'General';
+    return curso ? a + ' · ' + curso : a;
   }
-  /** Etiqueta de materia ('' → «General»). */
-  function etqMateria_(a) { return a || 'General'; }
+  /** Combinaciones materia+curso: de tus clases y de las unidades ya creadas. */
+  function materiasCursoPlanner_() {
+    var set = {};
+    (estado.evaluaciones || []).forEach(function (e) { if (e.area) set[matCursoKey_(e.area, e.curso)] = true; });
+    (planUnidadesCache || []).forEach(function (u) { if (u.area || u.curso) set[matCursoKey_(u.area, u.curso)] = true; });
+    return Object.keys(set).sort().map(function (k) {
+      var p = k.split('||'); return { area: p[0], curso: p[1], key: k };
+    });
+  }
+  /** Opciones de un <select> de materia+curso (con «General» al final). */
+  function opcionesMatCurso_(sel, combos) {
+    return combos.map(function (c) {
+      return '<option value="' + esc(c.key) + '"' + (c.key === sel ? ' selected' : '') + '>' +
+        esc(etqMatCurso_(c.area, c.curso)) + '</option>';
+    }).join('') +
+      '<option value="||"' + (sel === '||' ? ' selected' : '') + '>General (sin materia)</option>';
+  }
 
   function htmlUnidades_() {
-    var materias = materiasPlanner_();
-    // Materia activa: la elegida, o la primera con contenido.
-    if (plannerMateria == null || (plannerMateria && materias.indexOf(plannerMateria) < 0 && plannerMateria !== '')) {
-      plannerMateria = materias.length ? materias[0] : '';
+    var combos = materiasCursoPlanner_();
+    if (plannerMatCurso == null ||
+        (plannerMatCurso !== '||' && !combos.some(function (c) { return c.key === plannerMatCurso; }))) {
+      plannerMatCurso = combos.length ? combos[0].key : '||';
     }
-    var opciones = materias.map(function (a) {
-      return '<option value="' + esc(a) + '"' + (a === plannerMateria ? ' selected' : '') + '>' +
-        esc(a) + '</option>';
-    }).join('') +
-      '<option value=""' + (plannerMateria === '' ? ' selected' : '') + '>General (sin materia)</option>';
     var barra = '<div class="pl-uni-barra">' +
-      '<label class="pl-uni-materia">Materia ' +
-        '<select onchange="App.plannerMateriaSel(this.value)">' + opciones + '</select></label>' +
+      '<label class="pl-uni-materia">Materia y curso ' +
+        '<select onchange="App.plannerMatCursoSel(this.value)">' +
+        opcionesMatCurso_(plannerMatCurso, combos) + '</select></label>' +
       '<button class="btn primario" onclick="App.nuevaPlanUnidad()">+ Nueva unidad</button></div>';
-
-    var unidades = (planUnidadesCache || []).filter(function (u) { return (u.area || '') === plannerMateria; });
+    var p = plannerMatCurso.split('||'), area = p[0], curso = p[1];
+    var unidades = (planUnidadesCache || []).filter(function (u) {
+      return (u.area || '') === area && (u.curso || '') === curso;
+    });
     if (!unidades.length) {
       return barra + '<div class="vacio">No hay unidades de planificación en «' +
-        esc(etqMateria_(plannerMateria)) + '». Crea una y luego asígnala a tus sesiones ' +
+        esc(etqMatCurso_(area, curso)) + '». Crea una y luego asígnala a tus sesiones ' +
         'desde el modal de sesión.</div>';
     }
     return barra + unidades.map(tarjetaPlanUnidad_).join('');
@@ -4878,7 +4910,7 @@ var App = (function () {
           var f = primeraFecha_(s);
           return '<button class="pl-uni-ses" onclick="App.editarSesionUI(\'' + s.sesionId + '\')">' +
             '<span class="pl-uni-ses-tit">' + esc(s.titulo || 'Sin título') + '</span>' +
-            (f !== '9999' ? '<span class="pl-uni-ses-fecha">' + fechaCorta_(f) + '</span>' : '') +
+            (f !== '9999' ? '<span class="pl-uni-ses-fecha">' + fechaConAnio_(f) + '</span>' : '') +
           '</button>';
         }).join('')
       : '<div class="planner-vacio">Sin sesiones todavía.</div>';
@@ -4904,38 +4936,45 @@ var App = (function () {
     return min;
   }
 
-  function plannerMateriaSel(a) { plannerMateria = a; pintarPlanner(); }
+  function plannerMatCursoSel(k) { plannerMatCurso = k; pintarPlanner(); }
 
-  function nuevaPlanUnidad() { modalPlanUnidad_(null, { nombre: '', area: plannerMateria || '' }); }
+  function nuevaPlanUnidad() {
+    var p = (plannerMatCurso || '||').split('||');
+    modalPlanUnidad_(null, { nombre: '', area: p[0], curso: p[1] });
+  }
   function editarPlanUnidadUI(id) {
     var u = unidadPlanDe_(id);
     if (u) modalPlanUnidad_(id, u);
   }
   function modalPlanUnidad_(id, u) {
-    var materias = materiasPlanner_();
-    var opts = materias.map(function (a) {
-      return '<option value="' + esc(a) + '"' + (a === (u.area || '') ? ' selected' : '') + '>' + esc(a) + '</option>';
-    }).join('') + '<option value=""' + (!u.area ? ' selected' : '') + '>General (sin materia)</option>';
+    var combos = materiasCursoPlanner_().slice();
+    var uKey = matCursoKey_(u.area, u.curso);
+    // Asegura que la materia+curso de la propia unidad está entre las opciones.
+    if (uKey !== '||' && !combos.some(function (c) { return c.key === uKey; })) {
+      combos.push({ area: u.area || '', curso: u.curso || '', key: uKey });
+    }
     abrirModal(id ? 'Editar unidad' : 'Nueva unidad de planificación',
       '<label>Nombre<input id="pu-nombre" type="text" placeholder="Ej.: U1 · Los ecosistemas" value="' +
         esc(u.nombre) + '"></label>' +
-      '<label>Materia<select id="pu-area">' + opts + '</select></label>',
+      '<label>Materia y curso<select id="pu-matcurso">' +
+        opcionesMatCurso_(uKey, combos) + '</select></label>',
       id ? 'Guardar' : 'Crear unidad',
       function () {
         var nombre = val('pu-nombre').trim();
         if (!nombre) return aviso('Pon nombre a la unidad.');
-        var area = val('pu-area');
+        var kk = val('pu-matcurso').split('||'), area = kk[0], curso = kk[1];
         botonModalCargando('Guardando…');
         llamar(id ? 'editarPlanUnidad' : 'crearPlanUnidad',
-          id ? [id, nombre, area] : [nombre, area], function (r) {
+          id ? [id, nombre, area, curso] : [nombre, area, curso], function (r) {
             if (id) {
               planUnidadesCache = (planUnidadesCache || []).map(function (x) {
-                return x.unidadId === id ? { unidadId: id, area: r.area, nombre: r.nombre, orden: x.orden } : x;
+                return x.unidadId === id
+                  ? { unidadId: id, area: r.area, nombre: r.nombre, curso: r.curso, orden: x.orden } : x;
               });
             } else {
               planUnidadesCache = (planUnidadesCache || []).concat([r]);
             }
-            plannerMateria = area;
+            plannerMatCurso = matCursoKey_(area, curso);
             cerrarModal(); pintarPlanner(); avisoOk(id ? 'Unidad guardada.' : 'Unidad creada.');
           });
       }, { sinFoco: !!id });
@@ -5042,16 +5081,18 @@ var App = (function () {
   var sesionCritSel = {};        // códigos de criterio marcados en el modal abierto
   var criteriosAreaCache = {};   // 'curso||area' -> [{codigo,texto,…}] (cacheado del mapa)
 
-  /** Opciones del selector de unidad de planificación (agrupadas por materia). */
+  /** Opciones del selector de unidad de planificación (agrupadas por materia+curso). */
   function opcionesUnidadesPlan_(sel) {
-    var porMateria = {};
+    var porGrupo = {};
     (planUnidadesCache || []).forEach(function (u) {
-      (porMateria[u.area || ''] = porMateria[u.area || ''] || []).push(u);
+      var k = matCursoKey_(u.area, u.curso);
+      (porGrupo[k] = porGrupo[k] || []).push(u);
     });
     var html = '<option value="">— Sin unidad —</option>';
-    Object.keys(porMateria).sort().forEach(function (area) {
-      html += '<optgroup label="' + esc(etqMateria_(area)) + '">' +
-        porMateria[area].map(function (u) {
+    Object.keys(porGrupo).sort().forEach(function (k) {
+      var p = k.split('||');
+      html += '<optgroup label="' + esc(etqMatCurso_(p[0], p[1])) + '">' +
+        porGrupo[k].map(function (u) {
           return '<option value="' + u.unidadId + '"' + (u.unidadId === sel ? ' selected' : '') + '>' +
             esc(u.nombre) + '</option>';
         }).join('') + '</optgroup>';
@@ -5365,7 +5406,7 @@ var App = (function () {
     iniciar: iniciar,
     irAPlanner: irAPlanner, pintarPlanner: pintarPlanner,
     plannerModo: plannerModo, plannerSemana: plannerSemana, setPlannerLayout: setPlannerLayout,
-    plannerMesNav: plannerMesNav, plannerMateriaSel: plannerMateriaSel,
+    plannerMesNav: plannerMesNav, plannerMatCursoSel: plannerMatCursoSel,
     nuevaPlanUnidad: nuevaPlanUnidad, editarPlanUnidadUI: editarPlanUnidadUI,
     eliminarPlanUnidadUI: eliminarPlanUnidadUI,
     nuevaSesion: nuevaSesion, editarSesionUI: editarSesionUI,

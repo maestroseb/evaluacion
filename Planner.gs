@@ -53,11 +53,11 @@ function listarPlanUnidades() {
   return Planner.listarU_(abrirCuaderno_());
 }
 /** Crea una unidad de planificación. */
-function crearPlanUnidad(nombre, area) {
-  return Planner.crearU_(abrirCuaderno_(), nombre, area);
+function crearPlanUnidad(nombre, area, curso) {
+  return Planner.crearU_(abrirCuaderno_(), nombre, area, curso);
 }
-function editarPlanUnidad(unidadId, nombre, area) {
-  return Planner.editarU_(abrirCuaderno_(), unidadId, nombre, area);
+function editarPlanUnidad(unidadId, nombre, area, curso) {
+  return Planner.editarU_(abrirCuaderno_(), unidadId, nombre, area, curso);
 }
 /** Elimina una unidad; las sesiones que la usaban quedan sin unidad. */
 function eliminarPlanUnidad(unidadId) {
@@ -282,31 +282,32 @@ var Planner = (function () {
       var f = datos[i];
       if (!f[0]) continue;
       out.push({ unidadId: f[0], area: f[1] || '', nombre: f[2] || '',
-        orden: Number(f[3]) || 0, creado: f[4] });
+        orden: Number(f[3]) || 0, creado: f[4], curso: f[5] || '' });
     }
     out.sort(function (a, b) { return a.orden - b.orden; });
     return out;
   }
 
-  function crearU_(ss, nombre, area) {
+  function crearU_(ss, nombre, area, curso) {
     var n = String(nombre || '').trim().slice(0, 120);
     if (!n) throw new Error('Pon nombre a la unidad de planificación.');
-    var a = String(area || '').trim();
+    var a = String(area || '').trim(), c = String(curso || '').trim();
     var id = Datos.nuevoId_('pu');
     var orden = Datos.siguienteOrden_(listarU_(ss));
-    hojaU_(ss).appendRow([id, a, n, orden, new Date().toISOString()]);
-    return { unidadId: id, area: a, nombre: n, orden: orden };
+    hojaU_(ss).appendRow([id, a, n, orden, new Date().toISOString(), c]);
+    return { unidadId: id, area: a, nombre: n, orden: orden, curso: c };
   }
 
-  function editarU_(ss, unidadId, nombre, area) {
+  function editarU_(ss, unidadId, nombre, area, curso) {
     var sh = hojaU_(ss);
     var fila = Datos.filaDeId_(sh, unidadId);
     if (fila < 0) throw new Error('Unidad de planificación no encontrada.');
     var n = String(nombre || '').trim().slice(0, 120);
     if (!n) throw new Error('Pon nombre a la unidad de planificación.');
-    var a = String(area || '').trim();
+    var a = String(area || '').trim(), c = String(curso || '').trim();
     sh.getRange(fila, 2, 1, 2).setValues([[a, n]]); // col 2 = area, col 3 = nombre
-    return { unidadId: unidadId, area: a, nombre: n };
+    sh.getRange(fila, 6).setValue(c);               // col 6 = curso
+    return { unidadId: unidadId, area: a, nombre: n, curso: c };
   }
 
   function eliminarU_(ss, unidadId) {
