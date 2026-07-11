@@ -27,7 +27,12 @@ var ESQUEMA = {
   // Planificador de sesiones (v16). 'criterios' es JSON (códigos trabajados);
   // 'asignaciones' es JSON [{evalId, fecha, estado}]: la misma sesión puede
   // programarse en varias clases, cada una con su fecha y su estado.
-  _planner: ['sesionId', 'titulo', 'descripcion', 'criterios', 'asignaciones', 'creado', 'orden']
+  _planner: ['sesionId', 'titulo', 'descripcion', 'criterios', 'asignaciones', 'creado', 'orden'],
+  // Clases provisionales del planificador (v18): solo un nombre y su horario,
+  // para planificar antes de crear grupos/clases. 'horario' como en
+  // _evaluaciones (JSON [{dia,hora}]). Al vincular a una clase real, la fila
+  // desaparece (su horario y sus asignaciones pasan a la clase).
+  _provisionales: ['provId', 'nombre', 'horario', 'creado']
 };
 
 /**

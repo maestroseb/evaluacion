@@ -1094,7 +1094,18 @@
   /* Editor de horario (modal) */
   .planner-hor-clase { padding: 10px 0; border-top: 1px solid var(--borde); }
   .planner-hor-clase:first-of-type { border-top: 0; }
-  .planner-hor-nombre { font-weight: 600; font-size: 14px; margin-bottom: 6px; }
+  .planner-hor-cab { display: flex; align-items: center; justify-content: space-between;
+    gap: 10px; margin-bottom: 6px; }
+  .planner-hor-nombre { font-weight: 600; font-size: 14px; }
+  .planner-hor-prov { display: inline-flex; align-items: center; gap: 6px; }
+  .planner-prov-vinc { padding: 4px 6px; border: 1px solid var(--borde-fuerte);
+    border-radius: 6px; font: inherit; font-size: 12px; color: var(--texto-2);
+    background: var(--surface); max-width: 190px; }
+  .planner-prov-add { display: flex; gap: 8px; margin-top: 12px; padding-top: 10px;
+    border-top: 1px solid var(--borde); }
+  .planner-prov-add input { flex: 1; min-width: 0; padding: 7px 10px;
+    border: 1px solid var(--borde-fuerte); border-radius: 8px; font: inherit; font-size: 14px; }
+  .planner-prov-add .btn { white-space: nowrap; }
   .planner-hor-dias { display: flex; gap: 6px; }
   .planner-chip-dia { width: 32px; height: 32px; border-radius: 50%; border: 1px solid
     var(--borde-fuerte); background: var(--surface); font: inherit; font-size: 13px;

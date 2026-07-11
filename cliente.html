@@ -4269,17 +4269,36 @@ var App = (function () {
   function evalDe_(evalId) {
     return (estado.evaluaciones || []).filter(function (e) { return e.evalId === evalId; })[0];
   }
-  /** Clases donde se puede programar: las visibles del curso activo. */
+  /** Clases reales donde se puede programar: las visibles del curso activo. */
   function evalsProgramables_() {
     return (estado.evaluaciones || []).filter(function (e) {
       return !e.archivado && !e.grupoArchivado;
     });
   }
-  function etiquetaClase_(evalId) {
-    var ev = evalDe_(evalId);
-    if (!ev) return '(clase de otro curso)';
+  function etiquetaEval_(ev) {
     var grupo = (estado.clases || []).filter(function (c) { return c.claseId === ev.claseId; })[0];
     return tituloEval(ev) + (grupo ? ' · ' + grupo.nombre : '');
+  }
+  /**
+   * Las "clases" con las que trabaja el planificador: las reales del curso
+   * activo MÁS las provisionales (solo nombre, creadas desde el editor de
+   * horario para planificar antes de tener grupos). Forma común:
+   * {id, etiqueta, horario, real}.
+   */
+  function clasesPlanner_() {
+    return evalsProgramables_().map(function (ev) {
+      return { id: ev.evalId, etiqueta: etiquetaEval_(ev), horario: ev.horario || [], real: true };
+    }).concat((estado.provisionales || []).map(function (p) {
+      return { id: p.provId, etiqueta: p.nombre, horario: p.horario || [], real: false };
+    }));
+  }
+  function clasePlannerDe_(id) {
+    return clasesPlanner_().filter(function (c) { return c.id === id; })[0];
+  }
+  function etiquetaClase_(id) {
+    var c = clasePlannerDe_(id);
+    if (!c) return '(clase de otro curso)';
+    return c.etiqueta + (c.real ? '' : ' (prov.)');
   }
 
   // ---------- pintado ----------
@@ -4299,8 +4318,8 @@ var App = (function () {
   function pintarSelectorPlanner_() {
     var sel = document.getElementById('planner-clase');
     var previo = sel.value;
-    sel.innerHTML = evalsProgramables_().map(function (ev) {
-      return '<option value="' + ev.evalId + '">' + esc(etiquetaClase_(ev.evalId)) + '</option>';
+    sel.innerHTML = clasesPlanner_().map(function (c) {
+      return '<option value="' + c.id + '">' + esc(etiquetaClase_(c.id)) + '</option>';
     }).join('');
     if (previo) sel.value = previo;
   }
@@ -4311,57 +4330,142 @@ var App = (function () {
   var DIA_CHIPS = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
   var horarioDraft = null; // {evalId: [{dia,hora}]} mientras el modal está abierto
 
-  function horarioDe_(ev) { return (ev && ev.horario) || []; }
-  /** Clases que tocan ese día de la semana, ordenadas por hora (sin hora, al final). */
-  function evalsDelDia_(dia) {
-    return evalsProgramables_().filter(function (ev) {
-      return horarioDe_(ev).some(function (h) { return h.dia === dia; });
+  /** Clases (reales o provisionales) que tocan ese día, ordenadas por hora (sin hora, al final). */
+  function clasesDelDia_(dia) {
+    return clasesPlanner_().filter(function (c) {
+      return c.horario.some(function (h) { return h.dia === dia; });
     }).sort(function (a, b) {
       var ha = horaDia_(a, dia), hb = horaDia_(b, dia);
       return ha < hb ? -1 : ha > hb ? 1 : 0;
     });
   }
-  function horaDia_(ev, dia) {
-    var h = horarioDe_(ev).filter(function (x) { return x.dia === dia; })[0];
+  function horaDia_(c, dia) {
+    var h = c.horario.filter(function (x) { return x.dia === dia; })[0];
     return (h && h.hora) || '';
   }
 
   function abrirHorario() {
     horarioDraft = {};
-    evalsProgramables_().forEach(function (ev) {
-      horarioDraft[ev.evalId] = horarioDe_(ev).map(function (h) {
+    clasesPlanner_().forEach(function (c) {
+      horarioDraft[c.id] = c.horario.map(function (h) {
         return { dia: h.dia, hora: h.hora || '' };
       });
     });
     abrirModal('Horario semanal',
       '<p class="ayuda">Marca los días que toca cada clase (y su hora, si quieres). La vista ' +
         'semanal usará el horario para enseñarte, día a día, las clases sin sesión planificada, ' +
-        'y al asignar una sesión se sugerirá la próxima fecha que le toque.</p>' +
+        'y al asignar una sesión se sugerirá la próxima fecha que le toque. Si aún no has ' +
+        'creado tus grupos y clases, añade abajo <b>clases provisionales</b> (solo el nombre) ' +
+        'y vincúlalas a la clase real cuando exista.</p>' +
       '<div id="planner-horario">' + htmlHorario_() + '</div>',
       'Guardar horario', guardarHorariosUI_, { sinFoco: true });
   }
 
   function htmlHorario_() {
-    var evs = evalsProgramables_();
-    if (!evs.length) return '<div class="vacio">No tienes clases en este curso académico.</div>';
-    return evs.map(function (ev) {
-      var dias = horarioDraft[ev.evalId] || [];
+    var clases = clasesPlanner_();
+    var reales = evalsProgramables_();
+    var h = clases.map(function (c) {
+      var dias = horarioDraft[c.id] || [];
       var chips = DIA_CHIPS.map(function (etq, d) {
-        var act = dias.some(function (h) { return h.dia === d; });
+        var act = dias.some(function (x) { return x.dia === d; });
         return '<button type="button" class="planner-chip-dia' + (act ? ' activo' : '') +
-          '" onclick="App.horToggleDia(\'' + ev.evalId + '\',' + d + ')">' + etq + '</button>';
+          '" onclick="App.horToggleDia(\'' + c.id + '\',' + d + ')">' + etq + '</button>';
       }).join('');
-      var horas = dias.map(function (h) {
-        return '<label class="planner-hora">' + DIA_CHIPS[h.dia] +
-          '<input type="time" class="planner-hora-inp" data-eval="' + ev.evalId +
-          '" data-dia="' + h.dia + '" value="' + esc(h.hora) + '"></label>';
+      var horas = dias.map(function (x) {
+        return '<label class="planner-hora">' + DIA_CHIPS[x.dia] +
+          '<input type="time" class="planner-hora-inp" data-eval="' + c.id +
+          '" data-dia="' + x.dia + '" value="' + esc(x.hora) + '"></label>';
       }).join('');
+      // Las provisionales llevan sus controles: vincular a una clase real (su
+      // horario y sus sesiones pasan a ella) o eliminarla.
+      var controles = '';
+      if (!c.real) {
+        var opts = reales.map(function (ev) {
+          return '<option value="' + ev.evalId + '">' + esc(etiquetaEval_(ev)) + '</option>';
+        }).join('');
+        controles = '<span class="planner-hor-prov">' +
+          (reales.length
+            ? '<select class="planner-prov-vinc" title="Su horario y sus sesiones pasan a la clase real" ' +
+                'onchange="App.vincularProvisionalUI(\'' + c.id + '\', this.value)">' +
+                '<option value="">Vincular a clase real…</option>' + opts + '</select>'
+            : '') +
+          '<button type="button" class="btn peligro btn-icono" title="Eliminar provisional" ' +
+            'onclick="App.eliminarProvisionalUI(\'' + c.id + '\')">' + svgUI('papelera') + '</button>' +
+        '</span>';
+      }
       return '<div class="planner-hor-clase">' +
-        '<div class="planner-hor-nombre">' + esc(etiquetaClase_(ev.evalId)) + '</div>' +
+        '<div class="planner-hor-cab"><div class="planner-hor-nombre">' +
+          esc(etiquetaClase_(c.id)) + '</div>' + controles + '</div>' +
         '<div class="planner-hor-dias">' + chips + '</div>' +
         (horas ? '<div class="planner-hor-horas">' + horas + '</div>' : '') +
       '</div>';
     }).join('');
+    if (!clases.length) {
+      h = '<div class="vacio">Aún no tienes clases: añade abajo clases provisionales (solo el ' +
+        'nombre) para montar tu horario y empezar a planificar. Cuando crees tus grupos y ' +
+        'clases, las vincularás y todo pasará a ellas.</div>';
+    }
+    h += '<div class="planner-prov-add">' +
+      '<input id="prov-nombre" type="text" placeholder="Ej.: Lengua · 3ºA" ' +
+        'onkeydown="if(event.key===\'Enter\'){event.preventDefault();App.crearProvisionalUI();}">' +
+      '<button type="button" class="btn" onclick="App.crearProvisionalUI()">+ Añadir clase provisional</button>' +
+    '</div>';
+    return h;
+  }
+
+  function crearProvisionalUI() {
+    var inp = document.getElementById('prov-nombre');
+    var nombre = ((inp && inp.value) || '').trim();
+    if (!nombre) return aviso('Escribe el nombre de la clase provisional (p. ej. «Lengua · 3ºA»).');
+    leerHorasDraft_(); // el repintado no debe perder horas ya escritas
+    llamar('crearProvisional', [nombre], function (p) {
+      estado.provisionales = (estado.provisionales || []).concat([p]);
+      horarioDraft[p.provId] = [];
+      document.getElementById('planner-horario').innerHTML = htmlHorario_();
+      var nuevo = document.getElementById('prov-nombre');
+      if (nuevo) nuevo.focus();
+    });
+  }
+
+  function vincularProvisionalUI(provId, evalId) {
+    if (!evalId) return;
+    leerHorasDraft_();
+    llamar('vincularProvisional', [provId, evalId], function () {
+      // Refleja la fusión también en el borrador: mandan los días de la real.
+      var destino = horarioDraft[evalId] || (horarioDraft[evalId] = []);
+      var tiene = {};
+      destino.forEach(function (h) { tiene[h.dia] = true; });
+      (horarioDraft[provId] || []).forEach(function (h) {
+        if (!tiene[h.dia]) { destino.push(h); tiene[h.dia] = true; }
+      });
+      destino.sort(function (a, b) { return a.dia - b.dia; });
+      delete horarioDraft[provId];
+      estado.provisionales = (estado.provisionales || [])
+        .filter(function (p) { return p.provId !== provId; });
+      var ev = evalDe_(evalId);
+      if (ev) ev.horario = destino;
+      recargarSesiones_(); // sus sesiones apuntan ya a la clase real
+      document.getElementById('planner-horario').innerHTML = htmlHorario_();
+      avisoOk('Vinculada: su horario y sus sesiones han pasado a la clase real.');
+    });
+  }
+
+  function eliminarProvisionalUI(provId) {
+    leerHorasDraft_();
+    llamar('eliminarProvisional', [provId], function () {
+      delete horarioDraft[provId];
+      estado.provisionales = (estado.provisionales || [])
+        .filter(function (p) { return p.provId !== provId; });
+      recargarSesiones_(); // sus asignaciones han desaparecido de las sesiones
+      document.getElementById('planner-horario').innerHTML = htmlHorario_();
+      avisoOk('Clase provisional eliminada (sus sesiones quedan sin esa asignación).');
+    });
+  }
+
+  /** Recarga las sesiones en 2º plano (tras vincular/eliminar una provisional). */
+  function recargarSesiones_() {
+    sesionesCache = null;
+    llamarSilencioso('listarSesiones', [], function (l) { sesionesCache = l || []; });
   }
 
   /** Vuelca las horas escritas al borrador (antes de repintar o guardar). */
@@ -4394,6 +4498,9 @@ var App = (function () {
       (estado.evaluaciones || []).forEach(function (ev) {
         if (horarioDraft[ev.evalId]) ev.horario = horarioDraft[ev.evalId];
       });
+      (estado.provisionales || []).forEach(function (p) {
+        if (horarioDraft[p.provId]) p.horario = horarioDraft[p.provId];
+      });
       cerrarModal(); pintarPlanner(); avisoOk('Horario guardado.');
     });
   }
@@ -4403,7 +4510,8 @@ var App = (function () {
     if (!chk.checked) return;
     var f = document.querySelector('.planner-asig-fecha[data-eval="' + chk.dataset.eval + '"]');
     if (!f || f.value) return;
-    var dias = horarioDe_(evalDe_(chk.dataset.eval)).map(function (h) { return h.dia; });
+    var c = clasePlannerDe_(chk.dataset.eval);
+    var dias = ((c && c.horario) || []).map(function (h) { return h.dia; });
     if (!dias.length) return;
     var d = new Date();
     for (var i = 0; i < 14; i++) {
@@ -4438,22 +4546,22 @@ var App = (function () {
       var d = new Date(lunes); d.setDate(d.getDate() + i);
       var iso = isoLocal_(d);
       var lista = (porDia[iso] || []).slice();
-      var slots = evalsDelDia_(i); // clases que tocan ese día según el horario
+      var slots = clasesDelDia_(i); // clases que tocan ese día según el horario
       if (i >= 5 && !lista.length && !slots.length) continue; // finde solo si tiene algo
       // Primero las clases del horario: su sesión si la hay, o el hueco.
       var htmlDia = '';
-      slots.forEach(function (ev) {
-        var mias = lista.filter(function (en) { return en.asig.evalId === ev.evalId; });
-        lista = lista.filter(function (en) { return en.asig.evalId !== ev.evalId; });
+      slots.forEach(function (c) {
+        var mias = lista.filter(function (en) { return en.asig.evalId === c.id; });
+        lista = lista.filter(function (en) { return en.asig.evalId !== c.id; });
         if (mias.length) {
           htmlDia += mias.map(function (en) { return lineaSesion_(en); }).join('');
           return;
         }
-        var hora = horaDia_(ev, i);
+        var hora = horaDia_(c, i);
         htmlDia += '<div class="planner-hueco">' +
           '<span class="planner-hueco-txt">' + (hora ? hora + ' · ' : '') +
-            esc(etiquetaClase_(ev.evalId)) + '</span>' +
-          '<button class="btn planner-hueco-btn" onclick="App.nuevaSesion(\'' + ev.evalId +
+            esc(etiquetaClase_(c.id)) + '</span>' +
+          '<button class="btn planner-hueco-btn" onclick="App.nuevaSesion(\'' + c.id +
             '\',\'' + iso + '\')">+ Planificar</button>' +
         '</div>';
       });
@@ -4558,13 +4666,13 @@ var App = (function () {
   function abrirModalSesion_(titulo, textoAceptar, id, s) {
     var asigDe = {};
     (s.asignaciones || []).forEach(function (a) { asigDe[a.evalId] = a; });
-    var filas = evalsProgramables_().map(function (ev) {
-      var a = asigDe[ev.evalId];
+    var filas = clasesPlanner_().map(function (c) {
+      var a = asigDe[c.id];
       return '<div class="planner-asig-fila">' +
         '<label class="check"><input type="checkbox" class="planner-asig-chk" data-eval="' +
-          ev.evalId + '"' + (a ? ' checked' : '') +
-          ' onchange="App.horChkCambiada(this)"> ' + esc(etiquetaClase_(ev.evalId)) + '</label>' +
-        '<input type="date" class="planner-asig-fecha" data-eval="' + ev.evalId + '" value="' +
+          c.id + '"' + (a ? ' checked' : '') +
+          ' onchange="App.horChkCambiada(this)"> ' + esc(etiquetaClase_(c.id)) + '</label>' +
+        '<input type="date" class="planner-asig-fecha" data-eval="' + c.id + '" value="' +
           esc((a && a.fecha) || '') + '">' +
       '</div>';
     }).join('');
@@ -4581,7 +4689,8 @@ var App = (function () {
       '<p class="ayuda">Marca las clases donde se dará la sesión: la misma planificación sirve ' +
         'para varios grupos y cada uno lleva su fecha y su estado.</p>' +
       '<div class="planner-asigs">' + (filas ||
-        '<div class="vacio">No tienes clases en este curso académico.</div>') + '</div>',
+        '<div class="vacio">Aún no tienes clases: puedes crear clases provisionales (solo el ' +
+        'nombre) desde el botón «Horario» del planificador.</div>') + '</div>',
       textoAceptar,
       function () { guardarSesion_(id); },
       { sinFoco: !!id });
@@ -4693,6 +4802,8 @@ var App = (function () {
     duplicarSesionUI: duplicarSesionUI, eliminarSesionUI: eliminarSesionUI,
     estadoSesionUI: estadoSesionUI, exportarPlanner: exportarPlanner,
     abrirHorario: abrirHorario, horToggleDia: horToggleDia, horChkCambiada: horChkCambiada,
+    crearProvisionalUI: crearProvisionalUI, vincularProvisionalUI: vincularProvisionalUI,
+    eliminarProvisionalUI: eliminarProvisionalUI,
     irAEvaluaciones: irAEvaluaciones, irAClases: irAClases,
     toggleSidebar: toggleSidebar, cerrarSidebar: cerrarSidebar, filtrar: filtrar,
     irAPapelera: irAPapelera, restaurarItem: restaurarItem, vaciarPapeleraUI: vaciarPapeleraUI,

@@ -71,7 +71,11 @@ var CONFIG = {
   //      opcional) en que se imparte cada clase (JSON [{dia:0-6, hora}],
   //      0 = lunes). Lo usa el planificador para enseñar los huecos sin
   //      sesión de cada día y sugerir fechas al asignar.
-  ESQUEMA_VERSION: 17,
+  // v18: pestaña "_provisionales": clases provisionales del planificador (solo
+  //      nombre, sin grupo ni alumnado), para montar el horario y planificar
+  //      ANTES de crear grupos y clases (principio de curso). Al vincularlas a
+  //      una clase real, su horario y sus sesiones pasan a ella.
+  ESQUEMA_VERSION: 18,
 
   // Banderas de funcionalidad. Cada bandera es la lista de correos que la ven
   // (o '*' para todo el profesorado). Sirve para lanzar módulos "ocultos": se
@@ -104,5 +108,6 @@ var HOJAS = {
   NOTAS: '_notas',        // notas por unidad: un JSON {act:{alumno:valor}} por fila
   PAPELERA: '_papelera',  // elementos borrados, restaurables un tiempo
   RUBRICAS: '_rubricas',  // banco de rúbricas del profe (indicadores + niveles)
-  PLANNER: '_planner'     // planificador de sesiones (asignables a varias clases)
+  PLANNER: '_planner',    // planificador de sesiones (asignables a varias clases)
+  PROVISIONALES: '_provisionales' // clases provisionales del planificador (solo nombre)
 };

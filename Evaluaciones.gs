@@ -42,10 +42,20 @@ function reordenarEvaluaciones(ids) {
 
 /**
  * Guarda el horario semanal de varias clases a la vez (lo edita el
- * planificador): {evalId: [{dia:0-6, hora:'HH:MM' opcional}]}, 0 = lunes.
+ * planificador): {id: [{dia:0-6, hora:'HH:MM' opcional}]}, 0 = lunes. Los ids
+ * pueden ser evaluaciones (e_…) o clases provisionales del planner (prov_…).
  */
 function guardarHorarios(mapa) {
-  return Evaluaciones.guardarHorarios_(abrirCuaderno_(), mapa);
+  var ss = abrirCuaderno_();
+  var reales = {};
+  Object.keys(mapa || {}).forEach(function (id) {
+    if (id.indexOf('prov_') === 0) {
+      Planner.guardarHorarioProv_(ss, id, Evaluaciones.horarioValido_(mapa[id]));
+    } else {
+      reales[id] = mapa[id];
+    }
+  });
+  return Evaluaciones.guardarHorarios_(ss, reales);
 }
 
 
@@ -186,6 +196,23 @@ var Evaluaciones = (function () {
     return out;
   }
 
+  /**
+   * Fusiona un horario extra con el de la clase (al vincular una provisional):
+   * los días que la clase ya tenía definidos mandan; los nuevos se añaden.
+   */
+  function fusionarHorario_(ss, evalId, extra) {
+    var sh = hoja_(ss);
+    var fila = Datos.filaDeId_(sh, evalId);
+    if (fila < 0) throw new Error('Evaluación no encontrada.');
+    var actual = parseHorario_(sh.getRange(fila, 11).getValue());
+    var dias = {};
+    actual.forEach(function (h) { dias[h.dia] = true; });
+    (Array.isArray(extra) ? extra : []).forEach(function (h) {
+      if (h && !dias[h.dia]) { actual.push(h); dias[h.dia] = true; }
+    });
+    sh.getRange(fila, 11).setValue(JSON.stringify(horarioValido_(actual)));
+  }
+
   function parseHorario_(json) {
     if (!json) return [];
     try { var v = JSON.parse(json); return Array.isArray(v) ? v : []; } catch (e) { return []; }
@@ -201,6 +228,7 @@ var Evaluaciones = (function () {
     listar_: listar_, crear_: crear_, obtener_: obtener_, editar_: editar_,
     eliminar_: eliminar_, usaClase_: usaClase_, idsDeClase_: idsDeClase_,
     archivar_: archivar_, reordenar_: reordenar_,
-    guardarHorarios_: guardarHorarios_
+    guardarHorarios_: guardarHorarios_, horarioValido_: horarioValido_,
+    fusionarHorario_: fusionarHorario_
   };
 })();

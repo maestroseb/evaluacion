@@ -40,16 +40,19 @@ function getEstadoInicial() {
   var activo = Cursos.activo_();
   var clases = Clases.listar_(ss); // una sola lectura de _clases para todo el estado
   var email = Session.getActiveUser().getEmail();
+  // Banderas de funcionalidad para este usuario: el cliente enseña u oculta
+  // módulos en pruebas (p. ej. el planificador) según su valor.
+  var flags = flagsDe_(email);
   return {
     usuario: email,
     esquemaVersion: CONFIG.ESQUEMA_VERSION,
-    // Banderas de funcionalidad para este usuario: el cliente enseña u oculta
-    // módulos en pruebas (p. ej. rúbricas) según su valor.
-    flags: flagsDe_(email),
+    flags: flags,
     areas: Curriculo.listarAreasCursos(),
     cursos: Cursos.info_(ss, clases),
     clases: Cursos.filtrar_(clases, activo),
-    evaluaciones: Cursos.filtrar_(Evaluaciones.listar_(ss, clases), activo)
+    evaluaciones: Cursos.filtrar_(Evaluaciones.listar_(ss, clases), activo),
+    // Clases provisionales del planificador (solo si el usuario ve el módulo).
+    provisionales: flags.planner ? Planner.listarProv_(ss) : []
   };
 }
 
