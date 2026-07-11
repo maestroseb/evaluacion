@@ -85,7 +85,11 @@ var CONFIG = {
   //      'aviso' (recordatorio de la semana). Aditiva: las filas sin tipo son
   //      'clase'. También se guarda 'observaciones' por asignación (nota del
   //      desvío en cada grupo), dentro del JSON de asignaciones (sin columna).
-  ESQUEMA_VERSION: 20,
+  // v21: pestaña "_planUnidades": unidades de planificación del profe, por
+  //      materia/área e independientes de las unidades de evaluación (una
+  //      sesión puede colgar de una). Columna "unidadId" en _planner (a qué
+  //      unidad de planificación pertenece la sesión). Aditiva.
+  ESQUEMA_VERSION: 21,
 
   // Banderas de funcionalidad. Cada bandera es la lista de correos que la ven
   // (o '*' para todo el profesorado). Sirve para lanzar módulos "ocultos": se
@@ -119,5 +123,6 @@ var HOJAS = {
   PAPELERA: '_papelera',  // elementos borrados, restaurables un tiempo
   RUBRICAS: '_rubricas',  // banco de rúbricas del profe (indicadores + niveles)
   PLANNER: '_planner',    // planificador de sesiones (asignables a varias clases)
-  PROVISIONALES: '_provisionales' // clases provisionales del planificador (solo nombre)
+  PROVISIONALES: '_provisionales', // clases provisionales del planificador (solo nombre)
+  PLAN_UNIDADES: '_planUnidades'   // unidades de planificación del profe (por materia/área)
 };
