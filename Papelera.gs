@@ -148,10 +148,18 @@ var Papelera = (function () {
     guardar_(ss, 'rubrica', 'Rúbrica: ' + row[1], { _rubricas: [row] });
   }
 
+  /** Guarda una sesión del planificador antes de borrarla (restaurable como el resto). */
+  function papelearSesion_(ss, sesionId) {
+    var sh = ss.getSheetByName(HOJAS.PLANNER);
+    var row = filaPorId_(sh, sesionId);
+    if (!row) return;
+    guardar_(ss, 'sesion', 'Sesión: ' + row[1], { _planner: [row] });
+  }
+
   return {
     listar_: listar_, restaurar_: restaurar_, vaciar_: vaciar_,
     papelearGrupo_: papelearGrupo_, papelearClase_: papelearClase_,
     papelearUnidad_: papelearUnidad_, papelearActividad_: papelearActividad_,
-    papelearRubrica_: papelearRubrica_
+    papelearRubrica_: papelearRubrica_, papelearSesion_: papelearSesion_
   };
 })();

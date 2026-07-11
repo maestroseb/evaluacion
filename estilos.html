@@ -1048,6 +1048,76 @@
     .rubrica-grid .celda, .rubrica-grid .ind-txt { font-size: 16px; }
   }
 
+  /* ---------- Planificador (tras la bandera FLAGS.planner) ---------- */
+  .planner-barra { display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    margin: 0 0 16px; }
+  .planner-nav { display: inline-flex; align-items: center; gap: 6px; }
+  .planner-semana-etq { font-weight: 600; font-size: 14px; min-width: 190px;
+    text-align: center; }
+  .planner-sel-clase select { padding: 8px 10px; border: 1px solid var(--borde-fuerte);
+    border-radius: 8px; background: var(--surface); font: inherit; font-size: 14px; }
+  .planner-dia { background: var(--surface); border: 1px solid var(--borde);
+    border-radius: var(--radio); box-shadow: var(--sombra-1); padding: 12px 14px;
+    margin-bottom: 12px; }
+  .planner-dia h3 { margin: 0 0 8px; font-size: 14px; text-transform: capitalize; }
+  .planner-dia-fecha { color: var(--texto-3); font-weight: 500; }
+  .planner-hoy { border-color: var(--acento); }
+  .planner-vacio { color: var(--texto-3); font-size: 13px; padding: 2px 0 4px; }
+  .planner-sesion { display: flex; align-items: center; gap: 10px; padding: 8px 0;
+    border-top: 1px solid var(--borde); }
+  .planner-sesion:first-of-type { border-top: 0; }
+  .planner-sesion.hecha .planner-sesion-tit { text-decoration: line-through;
+    color: var(--texto-2); }
+  .planner-sesion-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .planner-sesion-tit { font-weight: 600; font-size: 14px; }
+  .planner-sesion-meta { color: var(--texto-2); font-size: 12px; }
+  .planner-sesion-acc { display: inline-flex; gap: 4px; }
+  .planner-estado { border: 0; border-radius: 999px; padding: 4px 10px; font: inherit;
+    font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+  .planner-estado.pendiente { background: var(--acento-suave); color: var(--acento-fuerte); }
+  .planner-estado.hecha { background: var(--g-top-bg); color: var(--g-top-tx); }
+  .planner-estado.aplazada { background: var(--g-baja-bg); color: var(--g-baja-tx); }
+  .planner-estado.borrador { background: var(--bg); color: var(--texto-3); cursor: default; }
+  .planner-asigs { max-height: 240px; overflow-y: auto; border: 1px solid var(--borde);
+    border-radius: 8px; padding: 6px 10px; }
+  .planner-asig-fila { display: flex; align-items: center; justify-content: space-between;
+    gap: 10px; padding: 4px 0; }
+  .planner-asig-fila .check { flex: 1; min-width: 0; }
+  .planner-asig-fecha { width: auto; padding: 4px 6px; border: 1px solid var(--borde-fuerte);
+    border-radius: 6px; font: inherit; font-size: 13px; }
+  /* Huecos del horario sin sesión planificada (vista semanal) */
+  .planner-hueco { display: flex; align-items: center; justify-content: space-between;
+    gap: 10px; padding: 6px 10px; margin: 6px 0; border: 1px dashed var(--borde-fuerte);
+    border-radius: 8px; }
+  .planner-hueco-txt { color: var(--texto-2); font-size: 13px; }
+  .planner-hueco-btn { padding: 3px 10px; font-size: 12px; }
+  /* Editor de horario (modal) */
+  .planner-hor-clase { padding: 10px 0; border-top: 1px solid var(--borde); }
+  .planner-hor-clase:first-of-type { border-top: 0; }
+  .planner-hor-cab { display: flex; align-items: center; justify-content: space-between;
+    gap: 10px; margin-bottom: 6px; }
+  .planner-hor-nombre { font-weight: 600; font-size: 14px; }
+  .planner-hor-prov { display: inline-flex; align-items: center; gap: 6px; }
+  .planner-prov-vinc { padding: 4px 6px; border: 1px solid var(--borde-fuerte);
+    border-radius: 6px; font: inherit; font-size: 12px; color: var(--texto-2);
+    background: var(--surface); max-width: 190px; }
+  .planner-prov-add { display: flex; gap: 8px; margin-top: 12px; padding-top: 10px;
+    border-top: 1px solid var(--borde); }
+  .planner-prov-add input { flex: 1; min-width: 0; padding: 7px 10px;
+    border: 1px solid var(--borde-fuerte); border-radius: 8px; font: inherit; font-size: 14px; }
+  .planner-prov-add .btn { white-space: nowrap; }
+  .planner-hor-dias { display: flex; gap: 6px; }
+  .planner-chip-dia { width: 32px; height: 32px; border-radius: 50%; border: 1px solid
+    var(--borde-fuerte); background: var(--surface); font: inherit; font-size: 13px;
+    font-weight: 600; color: var(--texto-2); cursor: pointer; }
+  .planner-chip-dia.activo { background: var(--acento); border-color: var(--acento);
+    color: #fff; }
+  .planner-hor-horas { display: flex; flex-wrap: wrap; gap: 8px 14px; margin-top: 8px; }
+  .planner-hora { display: inline-flex; align-items: center; gap: 6px; font-size: 13px;
+    color: var(--texto-2); font-weight: 600; }
+  .planner-hora input { width: auto; padding: 3px 6px; border: 1px solid var(--borde-fuerte);
+    border-radius: 6px; font: inherit; font-size: 13px; }
+
   /* ---------- Foco visible (navegación por teclado) ---------- */
   .clase-card:focus-visible, .grupo-card:focus-visible, .tarjeta-unidad:focus-visible,
   .item-lat:focus-visible, .tab:focus-visible, .volver-icono:focus-visible {

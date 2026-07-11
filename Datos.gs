@@ -15,7 +15,7 @@
 var ESQUEMA = {
   _meta: ['clave', 'valor'],
   _clases: ['claseId', 'nombre', 'curso', 'creado', 'alumnos', 'color', 'icono', 'orden', 'cursoAcademico', 'bajas', 'archivado'],
-  _evaluaciones: ['evalId', 'claseId', 'area', 'creado', 'color', 'icono', 'nombre', 'orden', 'cursoAcademico', 'archivado'],
+  _evaluaciones: ['evalId', 'claseId', 'area', 'creado', 'color', 'icono', 'nombre', 'orden', 'cursoAcademico', 'archivado', 'horario'],
   _unidades: ['unidadId', 'evalId', 'nombre', 'orden'],
   _actividades: ['actividadId', 'unidadId', 'nombre', 'criterios', 'numItems', 'orden', 'tipo', 'desglose', 'rubricaId', 'rubMap'],
   _notas: ['unidadId', 'items'],
@@ -23,7 +23,16 @@ var ESQUEMA = {
   // Banco de rúbricas del profe (v12). 'indicadores' y 'niveles' son JSON; en
   // cada indicador se reserva un campo 'criterios' para la futura asociación por
   // indicador. 'criterios' (columna) = códigos asociados a la rúbrica completa.
-  _rubricas: ['rubricaId', 'nombre', 'indicadores', 'niveles', 'criterios', 'creado', 'orden']
+  _rubricas: ['rubricaId', 'nombre', 'indicadores', 'niveles', 'criterios', 'creado', 'orden'],
+  // Planificador de sesiones (v16). 'criterios' es JSON (códigos trabajados);
+  // 'asignaciones' es JSON [{evalId, fecha, estado}]: la misma sesión puede
+  // programarse en varias clases, cada una con su fecha y su estado.
+  _planner: ['sesionId', 'titulo', 'descripcion', 'criterios', 'asignaciones', 'creado', 'orden'],
+  // Clases provisionales del planificador (v18): solo un nombre y su horario,
+  // para planificar antes de crear grupos/clases. 'horario' como en
+  // _evaluaciones (JSON [{dia,hora}]). Al vincular a una clase real, la fila
+  // desaparece (su horario y sus asignaciones pasan a la clase).
+  _provisionales: ['provId', 'nombre', 'horario', 'creado']
 };
 
 /**
