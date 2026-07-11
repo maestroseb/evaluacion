@@ -94,6 +94,9 @@ docs/
   clases del mismo nivel, cada una con su fecha y su estado
   (pendiente/hecha/aplazada). Vista semanal y por clase; exportación en
   Markdown al portapapeles (imprimir, documentar o dar contexto a una IA).
+  Con horario semanal por clase (días + hora opcional): la vista semanal
+  enseña los huecos sin sesión de cada día («+ Planificar») y al asignar una
+  sesión se sugiere la próxima fecha en que toque esa clase.
 
 ## Cómo se reparte (importante)
 

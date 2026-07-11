@@ -67,7 +67,11 @@ var CONFIG = {
   //      planificación sirve para varios grupos del mismo nivel y cada uno
   //      avanza a su ritmo. Migración no destructiva: solo añade la pestaña.
   //      La superficie de UI va oculta tras la bandera FLAGS.planner.
-  ESQUEMA_VERSION: 16,
+  // v17: columna "horario" en _evaluaciones: días de la semana (y hora
+  //      opcional) en que se imparte cada clase (JSON [{dia:0-6, hora}],
+  //      0 = lunes). Lo usa el planificador para enseñar los huecos sin
+  //      sesión de cada día y sugerir fechas al asignar.
+  ESQUEMA_VERSION: 17,
 
   // Banderas de funcionalidad. Cada bandera es la lista de correos que la ven
   // (o '*' para todo el profesorado). Sirve para lanzar módulos "ocultos": se

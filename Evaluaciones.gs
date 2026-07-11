@@ -40,6 +40,14 @@ function reordenarEvaluaciones(ids) {
   return Evaluaciones.reordenar_(abrirCuaderno_(), ids);
 }
 
+/**
+ * Guarda el horario semanal de varias clases a la vez (lo edita el
+ * planificador): {evalId: [{dia:0-6, hora:'HH:MM' opcional}]}, 0 = lunes.
+ */
+function guardarHorarios(mapa) {
+  return Evaluaciones.guardarHorarios_(abrirCuaderno_(), mapa);
+}
+
 
 var Evaluaciones = (function () {
 
@@ -64,7 +72,8 @@ var Evaluaciones = (function () {
         // Archivada ella misma vs. oculta porque su grupo está archivado: la
         // interfaz esconde ambas, pero solo la primera se restaura suelta.
         archivado: !!f[9],
-        grupoArchivado: !!cl.archivado
+        grupoArchivado: !!cl.archivado,
+        horario: parseHorario_(f[10])
       });
     }
     out.sort(function (a, b) { return a.orden - b.orden; }); // orden guardado (0 = antiguos)
@@ -151,6 +160,37 @@ var Evaluaciones = (function () {
     return { ok: true };
   }
 
+  /** Escribe el horario (col 11) de cada evalId del mapa, ya saneado. */
+  function guardarHorarios_(ss, mapa) {
+    var sh = hoja_(ss);
+    Object.keys(mapa || {}).forEach(function (evalId) {
+      var fila = Datos.filaDeId_(sh, evalId);
+      if (fila < 0) return; // borrada entre abrir el modal y guardar
+      sh.getRange(fila, 11).setValue(JSON.stringify(horarioValido_(mapa[evalId])));
+    });
+    return { ok: true };
+  }
+
+  /** Horario en forma canónica: días 0-6 sin duplicar, hora HH:MM o vacía. */
+  function horarioValido_(lista) {
+    var out = [], vistos = {};
+    (Array.isArray(lista) ? lista : []).forEach(function (h) {
+      var dia = Number(h && h.dia);
+      if (!(dia >= 0 && dia <= 6) || dia % 1 !== 0 || vistos[dia]) return;
+      var hora = String((h && h.hora) || '').trim();
+      if (!/^\d{2}:\d{2}$/.test(hora)) hora = '';
+      vistos[dia] = true;
+      out.push({ dia: dia, hora: hora });
+    });
+    out.sort(function (a, b) { return a.dia - b.dia; });
+    return out;
+  }
+
+  function parseHorario_(json) {
+    if (!json) return [];
+    try { var v = JSON.parse(json); return Array.isArray(v) ? v : []; } catch (e) { return []; }
+  }
+
   function indexarClases_(ss, clasesLista) {
     var idx = {};
     (clasesLista || Clases.listar_(ss)).forEach(function (c) { idx[c.claseId] = c; });
@@ -160,6 +200,7 @@ var Evaluaciones = (function () {
   return {
     listar_: listar_, crear_: crear_, obtener_: obtener_, editar_: editar_,
     eliminar_: eliminar_, usaClase_: usaClase_, idsDeClase_: idsDeClase_,
-    archivar_: archivar_, reordenar_: reordenar_
+    archivar_: archivar_, reordenar_: reordenar_,
+    guardarHorarios_: guardarHorarios_
   };
 })();
