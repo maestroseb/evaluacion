@@ -95,7 +95,11 @@ var CONFIG = {
   // v23: pestaña "_calendario": calendario de cada curso académico (fecha de
   //      inicio y fin + festivos). Lo usa el planificador para sugerir fechas
   //      saltando findes y festivos y para señalar los días no lectivos.
-  ESQUEMA_VERSION: 23,
+  // v24: columnas "paginas" y "deberes" en _planner (campos rápidos de la
+  //      sesión, p. ej. «12-13» y «1-4»). Aditivas. El orden de las sesiones
+  //      dentro de una unidad de planificación se guarda en la columna "orden"
+  //      ya existente (reordenables arrastrando).
+  ESQUEMA_VERSION: 24,
 
   // Banderas de funcionalidad. Cada bandera es la lista de correos que la ven
   // (o '*' para todo el profesorado). Sirve para lanzar módulos "ocultos": se

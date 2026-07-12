@@ -5001,8 +5001,9 @@ var App = (function () {
 
   function tarjetaPlanUnidad_(u) {
     var ses = (sesionesCache || []).filter(function (s) { return s.unidadId === u.unidadId; });
-    // Ordena las sesiones por su primera fecha asignada (sin fecha, al final).
-    ses.sort(function (a, b) { return primeraFecha_(a).localeCompare(primeraFecha_(b)); });
+    // Secuencia de la unidad: por 'orden' (se reordena arrastrando). El nº de
+    // sesión es la posición en esta lista (automático).
+    ses.sort(function (a, b) { return (a.orden || 0) - (b.orden || 0); });
     // Criterios programados = unión de los criterios de sus sesiones. Cada uno
     // se marca según si ya está asignado a alguna actividad de evaluación.
     var crit = {}; ses.forEach(function (s) { (s.criterios || []).forEach(function (c) { crit[c] = true; }); });
@@ -5018,12 +5019,21 @@ var App = (function () {
     var cobertura = codes.length
       ? '<span class="pl-uni-cob">' + nEval + '/' + codes.length + ' evaluados</span>' : '';
     var filas = ses.length
-      ? ses.map(function (s) {
+      ? ses.map(function (s, idx) {
           var f = primeraFecha_(s);
-          return '<button class="pl-uni-ses" onclick="App.editarSesionUI(\'' + s.sesionId + '\')">' +
-            '<span class="pl-uni-ses-tit">' + esc(s.titulo || 'Sin título') + '</span>' +
-            (f !== '9999' ? '<span class="pl-uni-ses-fecha">' + fechaConAnio_(f) + '</span>' : '') +
-          '</button>';
+          var info = [];
+          if (s.paginas) info.push('pág. ' + s.paginas);
+          if (s.deberes) info.push('ej. ' + s.deberes);
+          if (f !== '9999') info.push(fechaConAnio_(f));
+          return '<div class="pl-uni-ses" data-id="' + s.sesionId + '">' +
+            '<span class="pl-uni-grip" title="Arrastrar para reordenar" ' +
+              'onpointerdown="App.dragSesionUnidad(event)">⠿</span>' +
+            '<span class="pl-uni-num">' + ('0' + (idx + 1)).slice(-2) + '</span>' +
+            '<button class="pl-uni-ses-cuerpo" onclick="App.editarSesionUI(\'' + s.sesionId + '\')">' +
+              '<span class="pl-uni-ses-tit">' + esc(s.titulo || 'Sin título') + '</span>' +
+              (info.length ? '<span class="pl-uni-ses-info">' + esc(info.join(' · ')) + '</span>' : '') +
+            '</button>' +
+          '</div>';
         }).join('')
       : '<div class="planner-vacio">Sin sesiones todavía.</div>';
     return '<div class="pl-uni-card">' +
@@ -5038,7 +5048,27 @@ var App = (function () {
       (chips ? '<div class="pl-uni-crits"><span class="etq">Criterios programados ' + cobertura +
         '</span>' + chips + '</div>' : '') +
       '<div class="pl-uni-sesiones">' + filas + '</div>' +
+      '<button class="btn pl-uni-add" onclick="App.nuevaSesionEnUnidad(\'' + u.unidadId + '\')">' +
+        '+ Nueva sesión</button>' +
     '</div>';
+  }
+
+  /** Nueva sesión ya colgada de esta unidad (abre el modal para rellenarla). */
+  function nuevaSesionEnUnidad(unidadId) {
+    abrirModalSesion_('Crear', null,
+      { titulo: '', descripcion: '', criterios: [], asignaciones: [], unidadId: unidadId, tipo: 'clase' });
+  }
+
+  /** Arrastrar una fila de sesión para reordenar la secuencia de la unidad. */
+  function dragSesionUnidad(e) {
+    dragInicio(e, '.pl-uni-ses', function (ids) {
+      ids.forEach(function (id, i) {
+        var s = (sesionesCache || []).filter(function (x) { return x.sesionId === id; })[0];
+        if (s) s.orden = i + 1; // renumera 01, 02… localmente
+      });
+      pintarPlanner();
+      llamar('reordenarSesionesUnidad', ['', ids], function () {});
+    });
   }
 
   /** Primera fecha asignada de una sesión ('9999' si ninguna), para ordenar. */
@@ -5262,6 +5292,12 @@ var App = (function () {
       '<div id="ses-sec-clase">' +
         '<label>Unidad de planificación (opcional)' +
           '<select id="ses-unidad">' + opcionesUnidadesPlan_(s.unidadId || '') + '</select></label>' +
+        '<div class="ses-rapidos">' +
+          '<label>Páginas<input id="ses-paginas" type="text" placeholder="Ej.: 12-13" value="' +
+            esc(s.paginas || '') + '"></label>' +
+          '<label>Deberes / ejercicios<input id="ses-deberes" type="text" placeholder="Ej.: 1-4" ' +
+            'value="' + esc(s.deberes || '') + '"></label>' +
+        '</div>' +
         '<div class="campo-crit"><span class="etq">Clases donde se dará la sesión</span>' +
           '<p class="ayuda">La misma planificación sirve para varios grupos; cada uno lleva su ' +
             'fecha y su estado.</p>' +
@@ -5397,7 +5433,9 @@ var App = (function () {
       titulo: titulo, tipo: tipo, descripcion: val('ses-desc'),
       criterios: tipo === 'clase' ? Object.keys(sesionCritSel) : [],
       asignaciones: asignaciones,
-      unidadId: tipo === 'clase' ? (val('ses-unidad') || '') : ''
+      unidadId: tipo === 'clase' ? (val('ses-unidad') || '') : '',
+      paginas: tipo === 'clase' ? (val('ses-paginas') || '') : '',
+      deberes: tipo === 'clase' ? (val('ses-deberes') || '') : ''
     };
     // Guardado OPTIMISTA (como las notas de la rejilla): se cierra el modal y se
     // pinta ya con lo introducido; la persistencia va por detrás y reconcilia.
@@ -5406,7 +5444,8 @@ var App = (function () {
       var optimista = {
         sesionId: id, titulo: payload.titulo, descripcion: payload.descripcion, tipo: tipo,
         criterios: payload.criterios.slice(), asignaciones: payload.asignaciones,
-        unidadId: payload.unidadId, creado: previa ? previa.creado : '', orden: previa ? previa.orden : 0
+        unidadId: payload.unidadId, paginas: payload.paginas, deberes: payload.deberes,
+        creado: previa ? previa.creado : '', orden: previa ? previa.orden : 0
       };
       actualizarSesionCache_(optimista);
       pintarPlanner();
@@ -5419,7 +5458,8 @@ var App = (function () {
       var nueva = {
         sesionId: tmpId, titulo: payload.titulo, descripcion: payload.descripcion, tipo: tipo,
         criterios: payload.criterios.slice(), asignaciones: payload.asignaciones,
-        unidadId: payload.unidadId, creado: new Date().toISOString(), orden: 1e9
+        unidadId: payload.unidadId, paginas: payload.paginas, deberes: payload.deberes,
+        creado: new Date().toISOString(), orden: 1e9
       };
       sesionesCache = (sesionesCache || []).concat([nueva]);
       pintarPlanner();
@@ -5533,6 +5573,7 @@ var App = (function () {
     plannerMesNav: plannerMesNav, plannerMatCursoSel: plannerMatCursoSel,
     nuevaPlanUnidad: nuevaPlanUnidad, editarPlanUnidadUI: editarPlanUnidadUI,
     eliminarPlanUnidadUI: eliminarPlanUnidadUI,
+    nuevaSesionEnUnidad: nuevaSesionEnUnidad, dragSesionUnidad: dragSesionUnidad,
     nuevaSesion: nuevaSesion, editarSesionUI: editarSesionUI,
     duplicarSesionUI: duplicarSesionUI, eliminarSesionUI: eliminarSesionUI,
     estadoSesionUI: estadoSesionUI, exportarPlanner: exportarPlanner,
