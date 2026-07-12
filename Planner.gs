@@ -64,6 +64,11 @@ function eliminarPlanUnidad(unidadId) {
   return Planner.eliminarU_(abrirCuaderno_(), unidadId);
 }
 
+/** Reordena las sesiones de una unidad según el nuevo orden de ids (arrastrar). */
+function reordenarSesionesUnidad(unidadId, ids) {
+  return Planner.reordenarSesionesUnidad_(abrirCuaderno_(), ids);
+}
+
 var Planner = (function () {
 
   var ESTADOS = { pendiente: true, hecha: true, aplazada: true };
@@ -79,7 +84,8 @@ var Planner = (function () {
       out.push({
         sesionId: f[0], titulo: f[1], descripcion: f[2],
         criterios: parse_(f[3]), asignaciones: parse_(f[4]),
-        creado: f[5], orden: Number(f[6]) || 0, tipo: f[7] || 'clase', unidadId: f[8] || ''
+        creado: f[5], orden: Number(f[6]) || 0, tipo: f[7] || 'clase', unidadId: f[8] || '',
+        paginas: f[9] || '', deberes: f[10] || ''
       });
     }
     out.sort(function (a, b) { return a.orden - b.orden; });
@@ -90,11 +96,12 @@ var Planner = (function () {
     var sh = hoja_(ss);
     var fila = Datos.filaDeId_(sh, sesionId);
     if (fila < 0) throw new Error('Sesión no encontrada.');
-    var f = sh.getRange(fila, 1, 1, 9).getValues()[0];
+    var f = sh.getRange(fila, 1, 1, 11).getValues()[0];
     return {
       sesionId: f[0], titulo: f[1], descripcion: f[2],
       criterios: parse_(f[3]), asignaciones: parse_(f[4]),
-      creado: f[5], orden: Number(f[6]) || 0, tipo: f[7] || 'clase', unidadId: f[8] || ''
+      creado: f[5], orden: Number(f[6]) || 0, tipo: f[7] || 'clase', unidadId: f[8] || '',
+      paginas: f[9] || '', deberes: f[10] || ''
     };
   }
 
@@ -105,7 +112,7 @@ var Planner = (function () {
     hoja_(ss).appendRow([
       id, limpio.titulo, limpio.descripcion, JSON.stringify(limpio.criterios),
       JSON.stringify(limpio.asignaciones), new Date().toISOString(), orden, limpio.tipo,
-      limpio.unidadId
+      limpio.unidadId, limpio.paginas, limpio.deberes
     ]);
     return obtener_(ss, id);
   }
@@ -120,9 +127,16 @@ var Planner = (function () {
       limpio.titulo, limpio.descripcion,
       JSON.stringify(limpio.criterios), JSON.stringify(limpio.asignaciones)
     ]]);
-    sh.getRange(fila, 8).setValue(limpio.tipo);       // col 8 = tipo
-    sh.getRange(fila, 9).setValue(limpio.unidadId);   // col 9 = unidad de planificación
+    // cols 8-11 = tipo, unidadId, paginas, deberes
+    sh.getRange(fila, 8, 1, 4).setValues([[
+      limpio.tipo, limpio.unidadId, limpio.paginas, limpio.deberes
+    ]]);
     return obtener_(ss, sesionId);
+  }
+
+  /** Reordena las sesiones de una unidad (col 7 = orden) según la lista de ids. */
+  function reordenarSesionesUnidad_(ss, ids) {
+    return Datos.reordenarPorIds_(hoja_(ss), 7, ids);
   }
 
   function eliminar_(ss, sesionId) {
@@ -140,7 +154,8 @@ var Planner = (function () {
     // el mismo contenido en otras fechas u otras clases.
     return crear_(ss, {
       titulo: orig.titulo + ' (copia)', descripcion: orig.descripcion,
-      criterios: orig.criterios, asignaciones: [], tipo: orig.tipo, unidadId: orig.unidadId
+      criterios: orig.criterios, asignaciones: [], tipo: orig.tipo, unidadId: orig.unidadId,
+      paginas: orig.paginas, deberes: orig.deberes
     });
   }
 
@@ -268,7 +283,10 @@ var Planner = (function () {
       criterios: tipo === 'clase' ? codigos_(payload && payload.criterios) : [],
       asignaciones: asignaciones,
       // Unidad de planificación a la que pertenece (opcional).
-      unidadId: String((payload && payload.unidadId) || '').trim()
+      unidadId: String((payload && payload.unidadId) || '').trim(),
+      // Campos rápidos (opcionales): páginas y deberes/ejercicios.
+      paginas: String((payload && payload.paginas) || '').slice(0, 200),
+      deberes: String((payload && payload.deberes) || '').slice(0, 200)
     };
   }
 
@@ -357,6 +375,7 @@ var Planner = (function () {
     listar_: listar_, obtener_: obtener_, crear_: crear_, editar_: editar_,
     eliminar_: eliminar_, duplicar_: duplicar_, cambiarEstado_: cambiarEstado_,
     migrarProvisionales_: migrarProvisionales_,
-    listarU_: listarU_, crearU_: crearU_, editarU_: editarU_, eliminarU_: eliminarU_
+    listarU_: listarU_, crearU_: crearU_, editarU_: editarU_, eliminarU_: eliminarU_,
+    reordenarSesionesUnidad_: reordenarSesionesUnidad_
   };
 })();
