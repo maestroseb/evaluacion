@@ -1257,6 +1257,23 @@
   /* Campos rápidos del modal (páginas / deberes) en una fila */
   .ses-rapidos { display: flex; flex-wrap: wrap; gap: 10px 16px; }
   .ses-rapidos label { flex: 1 1 160px; }
+  /* Editor de texto enriquecido (descripción de la sesión) */
+  .rt-editor { border: 1px solid var(--borde-fuerte); border-radius: 8px; overflow: hidden;
+    margin-bottom: 14px; }
+  .rt-toolbar { display: flex; gap: 2px; padding: 4px; background: var(--bg);
+    border-bottom: 1px solid var(--borde); }
+  .rt-toolbar button { width: 30px; height: 28px; border: 0; background: transparent;
+    border-radius: 6px; cursor: pointer; font: inherit; font-size: 14px; color: var(--texto-2);
+    display: inline-flex; align-items: center; justify-content: center; }
+  .rt-toolbar button:hover { background: var(--acento-suave); color: var(--acento-fuerte); }
+  .rt-toolbar .svg-ico { width: 15px; height: 15px; }
+  .rt-body { min-height: 96px; max-height: 260px; overflow: auto; padding: 8px 10px;
+    font: inherit; font-size: 14px; line-height: 1.5; }
+  .rt-body:focus { outline: none; }
+  .rt-body:empty::before { content: attr(data-ph); color: var(--texto-3); }
+  .rt-body a { color: var(--acento-fuerte); }
+  .rt-body ul, .rt-body ol { margin: 4px 0 4px 22px; }
+  .rt-body p { margin: 0 0 6px; }
   .planner-hor-dias { display: flex; flex-wrap: wrap; gap: 8px; }
   .planner-chip-dia { flex: 0 0 auto; display: inline-flex; align-items: center;
     justify-content: center; width: 34px; height: 34px; padding: 0; line-height: 1;
