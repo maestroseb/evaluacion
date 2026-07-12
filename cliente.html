@@ -4469,6 +4469,10 @@ var App = (function () {
     if (clase) pintarSelectorPlanner_();
     document.getElementById('planner-cont').innerHTML =
       semana ? htmlSemana_() : mes ? htmlMes_() : unidades ? htmlUnidades_() : htmlPorClase_();
+    // En Unidades con panel (PC), cablea el editor recién pintado si hay algo abierto.
+    if (unidades && plannerConPanel_() && document.getElementById('ses-desc-body')) {
+      montarEditorSesion_();
+    }
   }
 
   /** Rellena el selector de clase conservando la selección actual. */
@@ -4952,6 +4956,44 @@ var App = (function () {
 
   // ---------- vista Unidades (unidades de planificación por materia + curso) ----------
   var plannerMatCurso = null; // 'area||curso' seleccionado en la vista Unidades
+  var sesUnidadSel = '';      // sesión mostrada en el panel de detalle (PC)
+  var panelNuevoUid = '';     // unidad para la que el panel muestra una sesión nueva
+
+  /** En PC hay panel de detalle a la derecha; en móvil se edita en el modal. */
+  function plannerConPanel_() { return !esMovil(); }
+
+  /** Abre una sesión: en PC la muestra en el panel; en móvil, en el modal. */
+  function abrirSesionUnidad(id) {
+    if (plannerConPanel_()) { sesUnidadSel = id; panelNuevoUid = ''; pintarPlanner(); }
+    else editarSesionUI(id);
+  }
+  /** Guarda desde el panel (sin modal): edición o alta según haya sesión nueva. */
+  function guardarSesionPanel_() {
+    guardarSesion_(panelNuevoUid ? null : sesUnidadSel, true);
+  }
+  /** HTML del panel de detalle (editor de la sesión seleccionada o alta nueva). */
+  function htmlDetalleSesion_() {
+    var nueva = !!panelNuevoUid;
+    var s = nueva
+      ? { titulo: '', descripcion: '', criterios: [], asignaciones: [], unidadId: panelNuevoUid, tipo: 'clase' }
+      : (sesUnidadSel ? (sesionesCache || []).filter(function (x) { return x.sesionId === sesUnidadSel; })[0] : null);
+    if (!s) {
+      return '<div class="pl-detail-vacio">Selecciona una sesión de la izquierda para editarla aquí, ' +
+        'o pulsa «+ Nueva sesión» en una unidad.</div>';
+    }
+    prepararEditorSesion_(s, nueva ? null : s.sesionId);
+    var acc = nueva ? '' :
+      '<span class="pl-detail-acc">' +
+        '<button class="btn btn-icono" title="Duplicar" onclick="App.duplicarSesionUI(\'' + s.sesionId + '\')">' +
+          svgUI('duplicar') + '</button>' +
+        '<button class="btn peligro btn-icono" title="Eliminar" onclick="App.eliminarSesionUI(\'' + s.sesionId + '\')">' +
+          svgUI('papelera') + '</button>' +
+      '</span>';
+    return '<div class="pl-detail-head"><strong>' + (nueva ? 'Nueva sesión' : 'Editar') + '</strong>' + acc + '</div>' +
+      sesionFormHtml_(s) +
+      '<div class="pl-detail-guardar"><button class="btn primario" onclick="App.guardarSesionPanel_()">' +
+        (nueva ? 'Crear sesión' : 'Guardar') + '</button></div>';
+  }
 
   function matCursoKey_(area, curso) { return (area || '') + '||' + (curso || ''); }
   /** Etiqueta legible de una materia+curso ('' → «General»). */
@@ -4992,12 +5034,16 @@ var App = (function () {
     var unidades = (planUnidadesCache || []).filter(function (u) {
       return (u.area || '') === area && (u.curso || '') === curso;
     });
-    if (!unidades.length) {
-      return barra + '<div class="vacio">No hay unidades de planificación en «' +
-        esc(etqMatCurso_(area, curso)) + '». Crea una y luego asígnala a tus sesiones ' +
-        'desde el modal de sesión.</div>';
+    var cuerpo = unidades.length
+      ? unidades.map(tarjetaPlanUnidad_).join('')
+      : '<div class="vacio">No hay unidades de planificación en «' + esc(etqMatCurso_(area, curso)) +
+        '». Crea una y luego asígnale sesiones.</div>';
+    // En PC: dos columnas (lista + panel de detalle). En móvil: solo la lista.
+    if (plannerConPanel_()) {
+      return barra + '<div class="pl-uni-layout"><div class="pl-uni-list">' + cuerpo + '</div>' +
+        '<aside class="pl-uni-detail">' + htmlDetalleSesion_() + '</aside></div>';
     }
-    return barra + unidades.map(tarjetaPlanUnidad_).join('');
+    return barra + cuerpo;
   }
 
   function tarjetaPlanUnidad_(u) {
@@ -5030,7 +5076,8 @@ var App = (function () {
             '<span class="pl-uni-grip" title="Arrastrar para reordenar" ' +
               'onpointerdown="App.dragSesionUnidad(event)">⠿</span>' +
             '<span class="pl-uni-num">' + ('0' + (idx + 1)).slice(-2) + '</span>' +
-            '<button class="pl-uni-ses-cuerpo" onclick="App.editarSesionUI(\'' + s.sesionId + '\')">' +
+            '<button class="pl-uni-ses-cuerpo' + (s.sesionId === sesUnidadSel ? ' pl-uni-ses-sel' : '') +
+              '" onclick="App.abrirSesionUnidad(\'' + s.sesionId + '\')">' +
               '<span class="pl-uni-ses-tit">' + esc(s.titulo || 'Sin título') + '</span>' +
               (info.length ? '<span class="pl-uni-ses-info">' + esc(info.join(' · ')) + '</span>' : '') +
             '</button>' +
@@ -5054,8 +5101,9 @@ var App = (function () {
     '</div>';
   }
 
-  /** Nueva sesión ya colgada de esta unidad (abre el modal para rellenarla). */
+  /** Nueva sesión ya colgada de esta unidad (panel en PC, modal en móvil). */
   function nuevaSesionEnUnidad(unidadId) {
+    if (plannerConPanel_()) { panelNuevoUid = unidadId; sesUnidadSel = ''; pintarPlanner(); return; }
     abrirModalSesion_('Crear', null,
       { titulo: '', descripcion: '', criterios: [], asignaciones: [], unidadId: unidadId, tipo: 'clase' });
   }
@@ -5320,12 +5368,9 @@ var App = (function () {
     return html;
   }
 
-  function abrirModalSesion_(textoAceptar, id, s) {
-    sesionCritSel = {};
-    sesModalId = id;
-    (s.criterios || []).forEach(function (c) { sesionCritSel[c] = true; });
+  /** HTML del formulario de sesión (reutilizado por el modal y el panel de PC). */
+  function sesionFormHtml_(s) {
     var tipoActual = s.tipo || 'clase';
-    // Evento/aviso: una sola asignación general; su fecha prellenaría el campo.
     var eventoFecha = (tipoActual !== 'clase' && s.asignaciones && s.asignaciones[0])
       ? (s.asignaciones[0].fecha || '') : '';
     var asigDe = {};
@@ -5343,8 +5388,7 @@ var App = (function () {
           esc((a && a.observaciones) || '') + '">' +
       '</div>';
     }).join('');
-    abrirModal(tituloSesion_(id, tipoActual),
-      '<label>Título' +
+    return '<label>Título' +
         '<input id="ses-titulo" type="text" placeholder="Ej.: Los ecosistemas: salida al parque" value="' +
         esc(s.titulo) + '"></label>' +
       '<label>Descripción / desarrollo (opcional)</label>' +
@@ -5392,19 +5436,33 @@ var App = (function () {
       '<div id="ses-sec-evento"' + (tipoActual === 'clase' ? ' hidden' : '') + '>' +
         '<label>Fecha' +
           '<input id="ses-evento-fecha" type="date" value="' + esc(eventoFecha) + '"></label>' +
-      '</div>',
-      textoAceptar,
-      function () { guardarSesion_(id); },
-      { sinFoco: !!id, ancho: true });
+      '</div>';
+  }
+
+  /** Cablea el editor recién pintado (modal o panel): secciones, criterios, pegado. */
+  function montarEditorSesion_() {
     sesTipoCambiado();            // ajusta secciones, ayuda y título al tipo actual
     refrescarCriteriosSesion_();  // pinta las casillas según las clases ya marcadas
-    // Pegar en el editor: siempre como texto limpio, con las URLs enlazadas.
     var ed = document.getElementById('ses-desc-body');
     if (ed) ed.addEventListener('paste', function (e) {
       e.preventDefault();
       var t = ((e.clipboardData || window.clipboardData).getData('text')) || '';
       try { document.execCommand('insertHTML', false, plainToHtmlConLinks_(t)); } catch (x) {}
     });
+  }
+
+  /** Prepara el estado del editor para la sesión s (criterios marcados, id). */
+  function prepararEditorSesion_(s, id) {
+    sesionCritSel = {};
+    sesModalId = id;
+    (s.criterios || []).forEach(function (c) { sesionCritSel[c] = true; });
+  }
+
+  function abrirModalSesion_(textoAceptar, id, s) {
+    prepararEditorSesion_(s, id);
+    abrirModal(tituloSesion_(id, s.tipo || 'clase'), sesionFormHtml_(s),
+      textoAceptar, function () { guardarSesion_(id); }, { sinFoco: !!id, ancho: true });
+    montarEditorSesion_();
   }
 
   function sesTipoElegido_() {
@@ -5492,7 +5550,7 @@ var App = (function () {
     else delete sesionCritSel[input.value];
   }
 
-  function guardarSesion_(id) {
+  function guardarSesion_(id, enPanel) {
     var titulo = val('ses-titulo').trim();
     if (!titulo) return aviso('Pon un título a la sesión.');
     var tipo = sesTipoElegido_();
@@ -5526,7 +5584,8 @@ var App = (function () {
     };
     // Guardado OPTIMISTA (como las notas de la rejilla): se cierra el modal y se
     // pinta ya con lo introducido; la persistencia va por detrás y reconcilia.
-    cerrarModal();
+    // En el panel de PC no hay modal: se queda mostrando la sesión guardada.
+    if (!enPanel) cerrarModal();
     if (id) {
       var optimista = {
         sesionId: id, titulo: payload.titulo, descripcion: payload.descripcion, tipo: tipo,
@@ -5549,16 +5608,19 @@ var App = (function () {
         creado: new Date().toISOString(), orden: 1e9
       };
       sesionesCache = (sesionesCache || []).concat([nueva]);
+      if (enPanel) { sesUnidadSel = tmpId; panelNuevoUid = ''; } // el panel sigue mostrando la nueva
       pintarPlanner();
       avisoOk('Sesión creada.');
       llamarConFallo_('crearSesion', [payload],
         function (r) {
           var idx = sesionesCache.indexOf(nueva);
           if (idx >= 0) sesionesCache[idx] = r; else actualizarSesionCache_(r);
+          if (sesUnidadSel === tmpId) sesUnidadSel = r.sesionId; // pasa al id real
           pintarPlanner();
         },
         function (err) {
           sesionesCache = (sesionesCache || []).filter(function (x) { return x !== nueva; });
+          if (sesUnidadSel === tmpId) sesUnidadSel = '';
           pintarPlanner();
           aviso('No se pudo crear la sesión: ' + err);
         });
@@ -5662,6 +5724,7 @@ var App = (function () {
     nuevaPlanUnidad: nuevaPlanUnidad, editarPlanUnidadUI: editarPlanUnidadUI,
     eliminarPlanUnidadUI: eliminarPlanUnidadUI,
     nuevaSesionEnUnidad: nuevaSesionEnUnidad, dragSesionUnidad: dragSesionUnidad,
+    abrirSesionUnidad: abrirSesionUnidad, guardarSesionPanel_: guardarSesionPanel_,
     nuevaSesion: nuevaSesion, editarSesionUI: editarSesionUI,
     duplicarSesionUI: duplicarSesionUI, eliminarSesionUI: eliminarSesionUI,
     estadoSesionUI: estadoSesionUI, exportarPlanner: exportarPlanner,
