@@ -236,8 +236,8 @@ var App = (function () {
 
   function invalidarCaches() {
     evalCache = {}; rejillaCache = {}; claseCache = {}; enVuelo = {};
-    // El planner se recarga al reabrir (sesiones, unidades y criterios evaluados).
-    sesionesCache = null; planUnidadesCache = null; critEvaluadosCache = null;
+    // El planner se recarga al reabrir (sesiones, unidades, criterios y calendario).
+    sesionesCache = null; planUnidadesCache = null; critEvaluadosCache = null; calendarioCache = null;
   }
 
   /**
@@ -4309,29 +4309,59 @@ var App = (function () {
 
   var planUnidadesCache = null;   // unidades de planificación (por materia)
   var critEvaluadosCache = null;  // códigos de criterio ya asignados a alguna actividad
+  var calendarioCache = null;     // calendario del curso activo {inicio, fin, festivos}
 
   function irAPlanner() {
     registrarHistorial({ v: 'planner' });
     setTitulo('Planificador');
     mostrar('vista-planner');
-    if (sesionesCache && planUnidadesCache && critEvaluadosCache) { pintarPlanner(); return; }
+    if (sesionesCache && planUnidadesCache && critEvaluadosCache && calendarioCache) {
+      pintarPlanner(); return;
+    }
     document.getElementById('planner-cont').innerHTML = spinner();
     cargarPlannerDatos_(pintarPlanner);
   }
 
-  /** Carga sesiones, unidades de planificación y criterios evaluados (los que falten). */
+  /** Carga sesiones, unidades, criterios evaluados y calendario (los que falten). */
   function cargarPlannerDatos_(cb) {
     var pend = 0;
     function done() { if (--pend === 0) cb(); }
-    function pedir(fn, set) {
+    function pedir(fn, args, set, vacio) {
       pend++;
-      google.script.run.withSuccessHandler(function (l) { set(l || []); done(); })
-        .withFailureHandler(function () { set([]); done(); })[fn]();
+      google.script.run.withSuccessHandler(function (l) { set(l != null ? l : vacio); done(); })
+        .withFailureHandler(function () { set(vacio); done(); })[fn].apply(google.script.run, args || []);
     }
-    if (!sesionesCache) pedir('listarSesiones', function (l) { sesionesCache = l; });
-    if (!planUnidadesCache) pedir('listarPlanUnidades', function (l) { planUnidadesCache = l; });
-    if (!critEvaluadosCache) pedir('criteriosEvaluados', function (l) { critEvaluadosCache = l; });
+    if (!sesionesCache) pedir('listarSesiones', [], function (l) { sesionesCache = l; }, []);
+    if (!planUnidadesCache) pedir('listarPlanUnidades', [], function (l) { planUnidadesCache = l; }, []);
+    if (!critEvaluadosCache) pedir('criteriosEvaluados', [], function (l) { critEvaluadosCache = l; }, []);
+    if (!calendarioCache) {
+      pedir('getCalendario', [(estado.cursos && estado.cursos.activo) || ''],
+        function (c) { calendarioCache = c; }, { inicio: '', fin: '', festivos: [] });
+    }
     if (pend === 0) cb();
+  }
+
+  // ---------- días lectivos (calendario del curso) ----------
+  function esFestivo_(iso) {
+    var f = (calendarioCache && calendarioCache.festivos) || [];
+    return f.some(function (r) { return iso >= r.desde && iso <= (r.hasta || r.desde); });
+  }
+  /** Día lectivo: L–V, dentro del curso (si está definido) y no festivo. */
+  function esLectivo_(iso) {
+    var dia = diaSemanaIso_(iso);
+    if (dia < 0 || dia > 4) return false;
+    var c = calendarioCache || {};
+    if (c.inicio && iso < c.inicio) return false;
+    if (c.fin && iso > c.fin) return false;
+    return !esFestivo_(iso);
+  }
+  /** Nombre del festivo de una fecha (para el tooltip), o ''. */
+  function festivoNombre_(iso) {
+    var f = (calendarioCache && calendarioCache.festivos) || [];
+    for (var i = 0; i < f.length; i++) {
+      if (iso >= f[i].desde && iso <= (f[i].hasta || f[i].desde)) return f[i].nombre || 'Festivo';
+    }
+    return '';
   }
   function unidadPlanDe_(id) {
     return (planUnidadesCache || []).filter(function (u) { return u.unidadId === id; })[0];
@@ -4541,6 +4571,77 @@ var App = (function () {
       });
   }
 
+  // ---------- calendario del curso (inicio/fin + festivos) ----------
+  var calDraft = null; // festivos en edición mientras el modal está abierto
+
+  function abrirCalendario() {
+    var c = calendarioCache || { inicio: '', fin: '', festivos: [] };
+    calDraft = (c.festivos || []).map(function (f) {
+      return { desde: f.desde, hasta: f.hasta || f.desde, nombre: f.nombre || '' };
+    });
+    var curso = (estado.cursos && estado.cursos.activo) || '';
+    abrirModal('Calendario del curso',
+      '<p class="ayuda">Curso académico <b>' + esc(curso) + '</b>. Se usa para sugerir fechas ' +
+        'saltando findes y festivos, y para marcar los días no lectivos.</p>' +
+      '<div class="cal-rango">' +
+        '<label>Inicio del curso<input id="cal-inicio" type="date" value="' + esc(c.inicio || '') + '"></label>' +
+        '<label>Fin del curso<input id="cal-fin" type="date" value="' + esc(c.fin || '') + '"></label>' +
+      '</div>' +
+      '<div class="campo-crit"><span class="etq">Festivos y vacaciones</span>' +
+        '<div id="cal-festivos">' + htmlFestivos_() + '</div>' +
+        '<button type="button" class="btn cal-add" onclick="App.calAddFestivo()">+ Añadir festivo</button>' +
+      '</div>',
+      'Guardar', guardarCalendarioUI_, { sinFoco: true, ancho: true });
+  }
+
+  function htmlFestivos_() {
+    if (!calDraft.length) return '<div class="planner-vacio">Sin festivos añadidos.</div>';
+    return calDraft.map(function (f, i) {
+      return '<div class="cal-fest-fila">' +
+        '<input type="date" class="cal-fest-desde" data-i="' + i + '" value="' + esc(f.desde) + '" title="Desde">' +
+        '<input type="date" class="cal-fest-hasta" data-i="' + i + '" value="' + esc(f.hasta) + '" title="Hasta (opcional)">' +
+        '<input type="text" class="cal-fest-nombre" data-i="' + i + '" value="' + esc(f.nombre) +
+          '" placeholder="Nombre (opcional)">' +
+        '<button type="button" class="btn peligro btn-icono" title="Quitar" ' +
+          'onclick="App.calQuitarFestivo(' + i + ')">' + svgUI('papelera') + '</button>' +
+      '</div>';
+    }).join('');
+  }
+  function leerFestivosDraft_() {
+    [].forEach.call(document.querySelectorAll('#cal-festivos .cal-fest-fila'), function (fila, i) {
+      if (!calDraft[i]) return;
+      var d = fila.querySelector('.cal-fest-desde'), h = fila.querySelector('.cal-fest-hasta'),
+          n = fila.querySelector('.cal-fest-nombre');
+      calDraft[i].desde = d ? d.value : '';
+      calDraft[i].hasta = h ? h.value : '';
+      calDraft[i].nombre = n ? n.value : '';
+    });
+  }
+  function calAddFestivo() {
+    leerFestivosDraft_();
+    calDraft.push({ desde: '', hasta: '', nombre: '' });
+    document.getElementById('cal-festivos').innerHTML = htmlFestivos_();
+  }
+  function calQuitarFestivo(i) {
+    leerFestivosDraft_();
+    calDraft.splice(i, 1);
+    document.getElementById('cal-festivos').innerHTML = htmlFestivos_();
+  }
+  function guardarCalendarioUI_() {
+    leerFestivosDraft_();
+    var payload = {
+      inicio: val('cal-inicio'), fin: val('cal-fin'),
+      festivos: calDraft.filter(function (f) { return f.desde; }).map(function (f) {
+        return { desde: f.desde, hasta: f.hasta || f.desde, nombre: f.nombre };
+      })
+    };
+    var curso = (estado.cursos && estado.cursos.activo) || '';
+    botonModalCargando('Guardando…');
+    llamar('guardarCalendario', [curso, payload], function (c) {
+      calendarioCache = c; cerrarModal(); pintarPlanner(); avisoOk('Calendario guardado.');
+    });
+  }
+
   /** Vuelca las horas escritas al borrador (antes de repintar o guardar). */
   function leerHorasDraft_() {
     [].forEach.call(document.querySelectorAll('.planner-hora-inp'), function (inp) {
@@ -4584,9 +4685,11 @@ var App = (function () {
     var dias = ((c && c.horario) || []).map(function (h) { return h.dia; });
     if (!dias.length) return;
     var d = new Date();
-    for (var i = 0; i < 14; i++) {
+    // Próximo día que toca esa clase Y es lectivo (salta findes y festivos).
+    for (var i = 0; i < 60; i++) {
       if (i) d.setDate(d.getDate() + 1);
-      if (dias.indexOf((d.getDay() + 6) % 7) >= 0) { f.value = isoLocal_(d); return; }
+      var iso = isoLocal_(d);
+      if (dias.indexOf(diaSemanaIso_(iso)) >= 0 && esLectivo_(iso)) { f.value = iso; return; }
     }
   }
 
@@ -4718,8 +4821,11 @@ var App = (function () {
     }
     var cel = ['<div class="pl-esq pl-cab"></div>'];
     ctx.isos.forEach(function (iso, i) {
-      cel.push('<div class="pl-cab' + (iso === ctx.hoy ? ' pl-hoy' : '') + '">' +
-        DIAS_SEM[i].slice(0, 3) + ' <span>' + fechaCorta_(iso) + '</span></div>');
+      var fest = festivoNombre_(iso);
+      cel.push('<div class="pl-cab' + (iso === ctx.hoy ? ' pl-hoy' : '') +
+        (fest ? ' pl-nolect' : '') + '"' + (fest ? ' title="' + esc(fest) + '"' : '') + '>' +
+        DIAS_SEM[i].slice(0, 3) + ' <span>' + fechaCorta_(iso) + (fest ? ' · ' + esc(fest) : '') +
+        '</span></div>');
     });
     clases.forEach(function (c) {
       cel.push('<div class="pl-esq pl-fila-lbl">' + esc(etiquetaClase_(c.id)) + '</div>');
@@ -4773,9 +4879,12 @@ var App = (function () {
         var ha = a.hora || '99:99', hb = b.hora || '99:99';
         return ha < hb ? -1 : ha > hb ? 1 : 0;
       });
+      var fest = festivoNombre_(iso);
       return '<div class="pl-col">' +
-        '<div class="pl-col-cab' + (iso === ctx.hoy ? ' pl-hoy' : '') + '">' +
-          DIAS_SEM[i].slice(0, 3) + ' <span>' + fechaCorta_(iso) + '</span></div>' +
+        '<div class="pl-col-cab' + (iso === ctx.hoy ? ' pl-hoy' : '') + (fest ? ' pl-nolect' : '') + '"' +
+          (fest ? ' title="' + esc(fest) + '"' : '') + '>' +
+          DIAS_SEM[i].slice(0, 3) + ' <span>' + fechaCorta_(iso) + (fest ? ' · ' + esc(fest) : '') +
+          '</span></div>' +
         (bloques.length ? bloques.map(function (b) { return b.html; }).join('')
           : '<div class="planner-vacio">—</div>') +
       '</div>';
@@ -4813,10 +4922,13 @@ var App = (function () {
         var d = new Date(inicio); d.setDate(d.getDate() + w * 7 + dd);
         var iso = isoLocal_(d);
         var fuera = (d.getMonth() !== m);
+        var fest = festivoNombre_(iso);
         var ens = porFecha[iso] || [];
         celdas += '<div class="pl-mes-dia' + (fuera ? ' pl-mes-fuera' : '') +
-            (iso === hoyIso ? ' pl-hoy' : '') + '">' +
-          '<div class="pl-mes-num">' + d.getDate() + '</div>' +
+            (fest ? ' pl-nolect' : '') + (iso === hoyIso ? ' pl-hoy' : '') + '"' +
+            (fest ? ' title="' + esc(fest) + '"' : '') + '>' +
+          '<div class="pl-mes-num">' + d.getDate() +
+            (fest ? '<span class="pl-mes-fest">' + esc(fest) + '</span>' : '') + '</div>' +
           ens.map(chipMes_).join('') +
         '</div>';
       }
@@ -5425,6 +5537,7 @@ var App = (function () {
     duplicarSesionUI: duplicarSesionUI, eliminarSesionUI: eliminarSesionUI,
     estadoSesionUI: estadoSesionUI, exportarPlanner: exportarPlanner,
     abrirHorario: abrirHorario, horToggleDia: horToggleDia, horChkCambiada: horChkCambiada,
+    abrirCalendario: abrirCalendario, calAddFestivo: calAddFestivo, calQuitarFestivo: calQuitarFestivo,
     asigChkCambiada: asigChkCambiada, critSesionCambiado: critSesionCambiado,
     sesTipoCambiado: sesTipoCambiado,
     crearClaseHorario: crearClaseHorario, agGrupoCambiado: agGrupoCambiado,
