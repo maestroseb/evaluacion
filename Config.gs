@@ -92,7 +92,10 @@ var CONFIG = {
   // v22: columna "curso" en _planUnidades: las unidades de planificación van por
   //      materia Y curso (una misma materia tiene unidades distintas en cursos
   //      distintos). Aditiva; las filas sin curso quedan como "sin curso".
-  ESQUEMA_VERSION: 22,
+  // v23: pestaña "_calendario": calendario de cada curso académico (fecha de
+  //      inicio y fin + festivos). Lo usa el planificador para sugerir fechas
+  //      saltando findes y festivos y para señalar los días no lectivos.
+  ESQUEMA_VERSION: 23,
 
   // Banderas de funcionalidad. Cada bandera es la lista de correos que la ven
   // (o '*' para todo el profesorado). Sirve para lanzar módulos "ocultos": se
@@ -127,5 +130,6 @@ var HOJAS = {
   RUBRICAS: '_rubricas',  // banco de rúbricas del profe (indicadores + niveles)
   PLANNER: '_planner',    // planificador de sesiones (asignables a varias clases)
   PROVISIONALES: '_provisionales', // clases provisionales del planificador (solo nombre)
-  PLAN_UNIDADES: '_planUnidades'   // unidades de planificación del profe (por materia/área)
+  PLAN_UNIDADES: '_planUnidades',  // unidades de planificación del profe (por materia/área)
+  CALENDARIO: '_calendario'        // calendario por curso académico (inicio/fin + festivos)
 };

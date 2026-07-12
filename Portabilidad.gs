@@ -38,6 +38,7 @@ function getExportacion() {
     planner: filas(HOJAS.PLANNER),
     provisionales: filas(HOJAS.PROVISIONALES),
     planUnidades: filas(HOJAS.PLAN_UNIDADES),
+    calendario: filas(HOJAS.CALENDARIO),
     // Observaciones en claro (como los nombres): al importar se re-cifran.
     notas: filas(HOJAS.NOTAS).map(function (r) { return [r[0], Notas.jsonEnClaro_(r[1])]; })
   };
@@ -81,6 +82,7 @@ function importarDatos(datos) {
   if (datos.planner) escribir(HOJAS.PLANNER, datos.planner);
   if (datos.provisionales) escribir(HOJAS.PROVISIONALES, datos.provisionales);
   if (datos.planUnidades) escribir(HOJAS.PLAN_UNIDADES, datos.planUnidades);
+  if (datos.calendario) escribir(HOJAS.CALENDARIO, datos.calendario);
   var notasRows = (datos.notas || []).map(function (r) {
     var items = {};
     try { items = JSON.parse(r[1] || '{}') || {}; } catch (e) {}

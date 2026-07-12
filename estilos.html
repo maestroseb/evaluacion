@@ -1173,6 +1173,22 @@
   .pl-celda-nueva:hover { border-color: var(--acento); background: var(--acento-suave); }
   .pl-celda-mas { color: var(--texto-3); font-weight: 700; font-size: 14px; line-height: 1; }
   .pl-celda-nueva:hover .pl-celda-mas { color: var(--acento); }
+  /* Días no lectivos (festivos / fuera del curso) */
+  .pl-cab.pl-nolect, .pl-col-cab.pl-nolect { color: var(--peligro); }
+  .pl-mes-dia.pl-nolect { background: var(--peligro-bg); }
+  .pl-mes-fest { display: block; font-size: 10px; font-weight: 600; color: var(--peligro);
+    line-height: 1.1; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* Calendario del curso (modal) */
+  .cal-rango { display: flex; flex-wrap: wrap; gap: 10px 16px; }
+  .cal-rango label { flex: 1 1 180px; }
+  .cal-fest-fila { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px;
+    padding: 6px 0; border-top: 1px solid var(--borde); }
+  .cal-fest-fila:first-child { border-top: 0; }
+  .cal-fest-desde, .cal-fest-hasta { flex: 0 0 auto; padding: 6px 8px;
+    border: 1px solid var(--borde-fuerte); border-radius: 8px; font: inherit; font-size: 14px; }
+  .cal-fest-nombre { flex: 1 1 140px; min-width: 120px; padding: 6px 8px;
+    border: 1px solid var(--borde-fuerte); border-radius: 8px; font: inherit; font-size: 14px; }
+  .cal-add { margin-top: 8px; }
   /* Banda superior de recordatorios (tipo aviso) */
   .pl-avisos { display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
     background: var(--g-media-bg); border: 1px solid var(--g-media-tx); border-radius: 10px;
