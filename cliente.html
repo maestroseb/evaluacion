@@ -738,7 +738,8 @@ var App = (function () {
     ojo:       '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>',
     expandir:  '<polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/>',
     contraer:  '<polyline points="11 17 6 12 11 7"/><polyline points="18 17 13 12 18 7"/>',
-    archivar:  '<polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/>'
+    archivar:  '<polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/>',
+    enlace:    '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>'
   };
   /** Icono SVG de interfaz por id. */
   function svgUI(id) {
@@ -5231,6 +5232,75 @@ var App = (function () {
   var sesionCritSel = {};        // códigos de criterio marcados en el modal abierto
   var criteriosAreaCache = {};   // 'curso||area' -> [{codigo,texto,…}] (cacheado del mapa)
 
+  // ---------- editor de texto enriquecido (descripción de la sesión) ----------
+  var RT_TAGS = { B: 1, STRONG: 1, I: 1, EM: 1, U: 1, A: 1, UL: 1, OL: 1, LI: 1, P: 1, BR: 1 };
+  /** Limpia HTML a una lista blanca de etiquetas (negrita, listas, enlaces…). */
+  function sanitizarHtml_(html) {
+    var doc = new DOMParser().parseFromString(String(html || ''), 'text/html');
+    return limpiarNodos_(doc.body);
+  }
+  function limpiarNodos_(node) {
+    var out = '';
+    [].forEach.call(node.childNodes, function (n) {
+      if (n.nodeType === 3) { out += esc(n.nodeValue); return; }   // texto
+      if (n.nodeType !== 1) return;
+      var tag = n.tagName;
+      if (!RT_TAGS[tag]) { out += limpiarNodos_(n); return; }       // etiqueta no permitida: solo su texto
+      if (tag === 'BR') { out += '<br>'; return; }
+      if (tag === 'A') {
+        var href = n.getAttribute('href') || '';
+        if (/^(https?:|mailto:)/i.test(href)) {
+          out += '<a href="' + esc(href) + '" target="_blank" rel="noopener">' + limpiarNodos_(n) + '</a>';
+        } else { out += limpiarNodos_(n); }
+        return;
+      }
+      out += '<' + tag.toLowerCase() + '>' + limpiarNodos_(n) + '</' + tag.toLowerCase() + '>';
+    });
+    return out;
+  }
+  /** Contenido inicial del editor: HTML saneado, o texto plano legado (con saltos). */
+  function descInicialHtml_(desc) {
+    desc = String(desc || '');
+    if (/<[a-z][\s\S]*>/i.test(desc)) return sanitizarHtml_(desc);
+    return esc(desc).replace(/\n/g, '<br>');
+  }
+  /** Texto plano → HTML con las URLs convertidas en enlaces y saltos en <br>. */
+  function plainToHtmlConLinks_(text) {
+    return esc(text)
+      .replace(/(https?:\/\/[^\s<]+)/g, function (u) {
+        return '<a href="' + u + '" target="_blank" rel="noopener">' + u + '</a>';
+      })
+      .replace(/\n/g, '<br>');
+  }
+  /** Valor actual del editor (HTML saneado) para guardar. */
+  function descEditorValor_() {
+    var ed = document.getElementById('ses-desc-body');
+    return ed ? sanitizarHtml_(ed.innerHTML) : '';
+  }
+  function rtCmd(cmd) {
+    var ed = document.getElementById('ses-desc-body');
+    if (ed) ed.focus();
+    try { document.execCommand(cmd, false, null); } catch (e) {}
+  }
+  function rtLink() {
+    var ed = document.getElementById('ses-desc-body');
+    if (ed) ed.focus();
+    var url = prompt('Dirección del enlace (https://…):', 'https://');
+    if (!url) return;
+    url = url.trim();
+    if (!/^(https?:|mailto:)/i.test(url)) url = 'https://' + url;
+    try { document.execCommand('createLink', false, url); } catch (e) {}
+  }
+  /** HTML de la descripción → texto plano (para la exportación en Markdown). */
+  function htmlAtexto_(html) {
+    html = String(html || '');
+    if (!/<[a-z][\s\S]*>/i.test(html)) return html;
+    var pre = html.replace(/<li[^>]*>/gi, '\n• ')
+      .replace(/<\/(p|div|li)>/gi, '\n').replace(/<br\s*\/?>/gi, '\n');
+    var doc = new DOMParser().parseFromString(pre, 'text/html');
+    return (doc.body.textContent || '').replace(/\n{3,}/g, '\n\n').replace(/^\n+|\n+$/g, '');
+  }
+
   /** Opciones del selector de unidad de planificación (agrupadas por materia+curso). */
   function opcionesUnidadesPlan_(sel) {
     var porGrupo = {};
@@ -5277,9 +5347,19 @@ var App = (function () {
       '<label>Título' +
         '<input id="ses-titulo" type="text" placeholder="Ej.: Los ecosistemas: salida al parque" value="' +
         esc(s.titulo) + '"></label>' +
-      '<label>Descripción / desarrollo (opcional)' +
-        '<textarea id="ses-desc" rows="4" placeholder="Qué se hace, materiales, deberes…">' +
-        esc(s.descripcion) + '</textarea></label>' +
+      '<label>Descripción / desarrollo (opcional)</label>' +
+      '<div class="rt-editor">' +
+        '<div class="rt-toolbar" onmousedown="event.preventDefault()">' +
+          '<button type="button" title="Negrita" onclick="App.rtCmd(\'bold\')"><b>B</b></button>' +
+          '<button type="button" title="Cursiva" onclick="App.rtCmd(\'italic\')"><i>i</i></button>' +
+          '<button type="button" title="Lista" onclick="App.rtCmd(\'insertUnorderedList\')">•</button>' +
+          '<button type="button" title="Lista numerada" onclick="App.rtCmd(\'insertOrderedList\')">1.</button>' +
+          '<button type="button" title="Enlace" onclick="App.rtLink()">' + svgUI('enlace') + '</button>' +
+        '</div>' +
+        '<div id="ses-desc-body" class="rt-body" contenteditable="true" ' +
+          'data-ph="Qué se hace, materiales, deberes… (pega un enlace y se vuelve clicable)">' +
+          descInicialHtml_(s.descripcion) + '</div>' +
+      '</div>' +
       '<div class="campo-crit"><span class="etq">Tipo</span>' +
         '<div class="tipos-act">' +
           ['clase', 'evento', 'aviso'].map(function (t) {
@@ -5318,6 +5398,13 @@ var App = (function () {
       { sinFoco: !!id, ancho: true });
     sesTipoCambiado();            // ajusta secciones, ayuda y título al tipo actual
     refrescarCriteriosSesion_();  // pinta las casillas según las clases ya marcadas
+    // Pegar en el editor: siempre como texto limpio, con las URLs enlazadas.
+    var ed = document.getElementById('ses-desc-body');
+    if (ed) ed.addEventListener('paste', function (e) {
+      e.preventDefault();
+      var t = ((e.clipboardData || window.clipboardData).getData('text')) || '';
+      try { document.execCommand('insertHTML', false, plainToHtmlConLinks_(t)); } catch (x) {}
+    });
   }
 
   function sesTipoElegido_() {
@@ -5430,7 +5517,7 @@ var App = (function () {
         estado: (prevA && prevA.estado) || 'pendiente', observaciones: '' }];
     }
     var payload = {
-      titulo: titulo, tipo: tipo, descripcion: val('ses-desc'),
+      titulo: titulo, tipo: tipo, descripcion: descEditorValor_(),
       criterios: tipo === 'clase' ? Object.keys(sesionCritSel) : [],
       asignaciones: asignaciones,
       unidadId: tipo === 'clase' ? (val('ses-unidad') || '') : '',
@@ -5537,7 +5624,8 @@ var App = (function () {
       if (a && a.estado === 'aplazada') meta.push('APLAZADA');
       if (meta.length) l += ' (' + meta.join(' · ') + ')';
       lineas.push(l);
-      if (s.descripcion) lineas.push('  ' + s.descripcion.replace(/\n/g, '\n  '));
+      var desc = htmlAtexto_(s.descripcion);
+      if (desc) lineas.push('  ' + desc.replace(/\n/g, '\n  '));
       if (a && a.observaciones) lineas.push('  _Obs.: ' + a.observaciones.replace(/\n/g, ' ') + '_');
     }
     if (plannerModoActual === 'semana') {
@@ -5580,7 +5668,7 @@ var App = (function () {
     abrirHorario: abrirHorario, horToggleDia: horToggleDia, horChkCambiada: horChkCambiada,
     abrirCalendario: abrirCalendario, calAddFestivo: calAddFestivo, calQuitarFestivo: calQuitarFestivo,
     asigChkCambiada: asigChkCambiada, critSesionCambiado: critSesionCambiado,
-    sesTipoCambiado: sesTipoCambiado,
+    sesTipoCambiado: sesTipoCambiado, rtCmd: rtCmd, rtLink: rtLink,
     crearClaseHorario: crearClaseHorario, agGrupoCambiado: agGrupoCambiado,
     irAEvaluaciones: irAEvaluaciones, irAClases: irAClases,
     toggleSidebar: toggleSidebar, cerrarSidebar: cerrarSidebar, filtrar: filtrar,
