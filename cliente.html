@@ -5514,11 +5514,14 @@ var App = (function () {
     asigs.forEach(function (x) { if (x !== found) byEval[String(x.evalId || '')] = x; });
     byEval[String(evalIdDest || '')] = found;
     s.asignaciones = Object.keys(byEval).map(function (k) { return byEval[k]; });
+    // Persistir ANTES de repintar: si el re-render fallara (p. ej. al cambiar de
+    // vista justo tras soltar), el cambio ya viaja al servidor de todos modos.
+    if (String(sesionId).indexOf('tmp_') !== 0) {
+      llamarConFallo_('moverSesion', [sesionId, evalIdOrig || '', evalIdDest || '', iso],
+        function (r) { actualizarSesionCache_(r); },
+        function () { recargarSesionesTrasError_('No se pudo mover la sesión.'); });
+    }
     pintarPlanner();
-    if (String(sesionId).indexOf('tmp_') === 0) return; // aún sin confirmar: solo local
-    llamarConFallo_('moverSesion', [sesionId, evalIdOrig || '', evalIdDest || '', iso],
-      function (r) { actualizarSesionCache_(r); },
-      function () { recargarSesionesTrasError_('No se pudo mover la sesión.'); });
   }
 
   // ---------- crear / editar ----------
@@ -5966,11 +5969,12 @@ var App = (function () {
         creado: previa ? previa.creado : '', orden: previa ? previa.orden : 0
       };
       actualizarSesionCache_(optimista);
-      if (!opts.noPintar) pintarPlanner();
-      if (!opts.silencioso) avisoOk('Sesión guardada.');
+      // Persistir antes de repintar (un fallo de render no debe perder el guardado).
       llamarConFallo_('editarSesion', [id, payload],
         function (r) { actualizarSesionCache_(r); if (!opts.noPintar) pintarPlanner(); },
         function (err) { recargarSesionesTrasError_('No se pudo guardar la sesión: ' + err); });
+      if (!opts.silencioso) avisoOk('Sesión guardada.');
+      if (!opts.noPintar) pintarPlanner();
     } else {
       var tmpId = 'tmp_' + (++sesionTmpSeq);
       var nueva = {
@@ -5981,8 +5985,7 @@ var App = (function () {
       };
       sesionesCache = (sesionesCache || []).concat([nueva]);
       if (enPanel) { sesUnidadSel = tmpId; panelNuevoUid = ''; } // el panel sigue mostrando la nueva
-      if (!opts.noPintar) pintarPlanner();
-      if (!opts.silencioso) avisoOk('Sesión creada.');
+      // Persistir antes de repintar (un fallo de render no debe perder el alta).
       llamarConFallo_('crearSesion', [payload],
         function (r) {
           var idx = sesionesCache.indexOf(nueva);
@@ -5996,6 +5999,8 @@ var App = (function () {
           pintarPlanner();
           aviso('No se pudo crear la sesión: ' + err);
         });
+      if (!opts.silencioso) avisoOk('Sesión creada.');
+      if (!opts.noPintar) pintarPlanner();
     }
   }
   var sesionTmpSeq = 0; // ids temporales para las sesiones aún sin confirmar del servidor
