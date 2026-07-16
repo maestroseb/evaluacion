@@ -27,8 +27,11 @@ var Calendario = (function () {
     var datos = hoja_(ss).getDataRange().getValues();
     for (var i = 1; i < datos.length; i++) {
       if (datos[i][0] === curso) {
-        return { cursoAcademico: curso, inicio: datos[i][1] || '', fin: datos[i][2] || '',
-          festivos: parse_(datos[i][3]) };
+        return { cursoAcademico: curso, inicio: aFechaStr_(datos[i][1]), fin: aFechaStr_(datos[i][2]),
+          festivos: parse_(datos[i][3]).map(function (f) {
+            return { desde: aFechaStr_(f && f.desde), hasta: aFechaStr_(f && f.hasta),
+              nombre: (f && f.nombre) || '' };
+          }) };
       }
     }
     return { cursoAcademico: curso, inicio: '', fin: '', festivos: [] };
@@ -57,6 +60,16 @@ var Calendario = (function () {
   function fecha_(v) {
     var s = String(v || '').trim();
     return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : '';
+  }
+  /**
+   * Normaliza a 'YYYY-MM-DD'. Al escribir 'YYYY-MM-DD' con setValues, Sheets
+   * convierte la celda en una fecha real, así que al releer llega un objeto Date
+   * (que serializado a JSON sería un ISO con hora y zona, ilegible para
+   * <input type=date>). Lo reconvertimos a texto con la zona del script.
+   */
+  function aFechaStr_(v) {
+    if (v instanceof Date) return Utilities.formatDate(v, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+    return fecha_(v);
   }
   function parse_(j) {
     if (!j) return [];
