@@ -4658,7 +4658,8 @@ var App = (function () {
       '<p class="ayuda">Curso académico <b>' + esc(curso) + '</b>. Se usa para sugerir fechas ' +
         'saltando findes y festivos, y para marcar los días no lectivos.</p>' +
       '<div class="cal-rango">' +
-        '<label>Inicio del curso<input id="cal-inicio" type="date" value="' + esc(c.inicio || '') + '"></label>' +
+        '<label>Inicio del curso<input id="cal-inicio" type="date" value="' + esc(c.inicio || '') +
+          '" onchange="App.calFinPorDefecto_()"></label>' +
         '<label>Fin del curso<input id="cal-fin" type="date" value="' + esc(c.fin || '') + '"></label>' +
       '</div>' +
       '<div class="campo-crit"><span class="etq">Festivos y vacaciones</span>' +
@@ -4674,7 +4675,8 @@ var App = (function () {
       return '<div class="cal-fest-fila">' +
         '<input type="text" class="cal-fest-nombre" data-i="' + i + '" value="' + esc(f.nombre) +
           '" placeholder="Nombre (p. ej. Navidad)">' +
-        '<input type="date" class="cal-fest-desde" data-i="' + i + '" value="' + esc(f.desde) + '" title="Desde">' +
+        '<input type="date" class="cal-fest-desde" data-i="' + i + '" value="' + esc(f.desde) +
+          '" title="Desde" onchange="App.calHastaPorDefecto_(' + i + ')">' +
         '<input type="date" class="cal-fest-hasta" data-i="' + i + '" value="' + esc(f.hasta) + '" title="Hasta (opcional)">' +
         '<button type="button" class="btn peligro btn-icono" title="Quitar" ' +
           'onclick="App.calQuitarFestivo(' + i + ')">' + svgUI('papelera') + '</button>' +
@@ -4695,6 +4697,18 @@ var App = (function () {
     leerFestivosDraft_();
     calDraft.push({ desde: '', hasta: '', nombre: '' });
     document.getElementById('cal-festivos').innerHTML = htmlFestivos_();
+  }
+  /** Al fijar el inicio del curso, propone el mismo día como fin (si está vacío). */
+  function calFinPorDefecto_() {
+    var ini = document.getElementById('cal-inicio'), fin = document.getElementById('cal-fin');
+    if (ini && fin && ini.value && !fin.value) fin.value = ini.value;
+  }
+  /** Al fijar «desde» de un festivo, propone el mismo día como «hasta» (si vacío). */
+  function calHastaPorDefecto_(i) {
+    var fila = document.querySelectorAll('#cal-festivos .cal-fest-fila')[i];
+    if (!fila) return;
+    var d = fila.querySelector('.cal-fest-desde'), h = fila.querySelector('.cal-fest-hasta');
+    if (d && h && d.value && !h.value) h.value = d.value;
   }
   function calQuitarFestivo(i) {
     leerFestivosDraft_();
@@ -4858,14 +4872,16 @@ var App = (function () {
       ? '<span class="pl-chip-grip" title="Arrastrar" onpointerdown="App.gripSesionDown(event)">⠿</span>'
       : '';
     // Previsualización: descripción con su formato (solo donde cabe: día y, en
-    // PC, semana). El clic va en la cabecera; así los enlaces del cuerpo funcionan.
+    // PC, semana). Al pulsar la tarjeta (cabecera o cuerpo) se edita; los enlaces
+    // del cuerpo siguen funcionando (editarSesionDesde_ los respeta).
     var descHtml = descInicialHtml_(s.descripcion || '');
+    var edit = 'onclick="App.editarSesionDesde_(event,\'' + s.sesionId + '\')"';
     var preview = (conPreview && descHtml)
-      ? '<div class="pl-chip-desc rt-render">' + descHtml + '</div>' : '';
+      ? '<div class="pl-chip-desc rt-render" ' + edit + '>' + descHtml + '</div>' : '';
     return '<div class="pl-chip' + (tipo === 'evento' ? ' pl-chip-evento' : '') +
         '" style="border-left-color:' + col + '"' + arr + '>' +
-      '<div class="pl-chip-cab" style="background:color-mix(in srgb, ' + col + ' 15%, var(--surface))" ' +
-        'onclick="App.editarSesionUI(\'' + s.sesionId + '\')" title="' + esc(s.titulo || 'Sin título') +
+      '<div class="pl-chip-cab" style="background:' + col + '" ' + edit +
+        ' title="' + esc(s.titulo || 'Sin título') +
         (a && a.observaciones ? ' — ' + esc(a.observaciones) : '') + '">' +
         grip +
         '<span class="pl-chip-txt"><span class="pl-chip-tit">' + esc(s.titulo || 'Sin título') +
@@ -5518,6 +5534,11 @@ var App = (function () {
     var s = (sesionesCache || []).filter(function (x) { return x.sesionId === id; })[0];
     if (s) abrirModalSesion_('Guardar cambios', id, s);
   }
+  /** Editar desde la tarjeta (cabecera o previsualización), salvo si es un enlace. */
+  function editarSesionDesde_(ev, id) {
+    if (ev && ev.target && ev.target.closest('a')) return; // deja funcionar los enlaces
+    editarSesionUI(id);
+  }
 
   var sesModalId = null; // id de la sesión abierta en el modal (null = nueva)
   /** Título del modal según el tipo (una sesión no es un aviso). */
@@ -5757,7 +5778,6 @@ var App = (function () {
           '<div class="vacio">Aún no tienes clases: añade una con su nombre desde el botón ' +
           '«Horario» del planificador.</div>') + '</div></div>' +
       '<div class="campo-crit"><span class="etq">Criterios trabajados</span>' +
-        '<p class="ayuda">Salen del área de las clases marcadas; solo tienes que marcarlos.</p>' +
         '<div id="ses-crit-lista" class="lista-crit planner-crit"></div>' +
       '</div>' +
     '</div>';
@@ -5818,7 +5838,7 @@ var App = (function () {
     });
     var ayuda = document.getElementById('ses-tipo-ayuda');
     if (ayuda) ayuda.textContent =
-      t === 'clase' ? 'Sesión de clase: se asigna a uno o varios grupos.'
+      t === 'clase' ? ''
       : t === 'evento' ? 'Evento sin grupo (reunión, examen, guardia…): aparece en la fila «Otros».'
       : 'Recordatorio de la semana: aparece en la banda «No olvidar».';
     // El título del modal sigue al tipo (una sesión no es un aviso).
@@ -6104,7 +6124,7 @@ var App = (function () {
     eliminarPlanUnidadUI: eliminarPlanUnidadUI,
     nuevaSesionEnUnidad: nuevaSesionEnUnidad, dragSesionUnidad: dragSesionUnidad,
     abrirSesionUnidad: abrirSesionUnidad, guardarSesionPanel_: guardarSesionPanel_,
-    nuevaSesion: nuevaSesion, editarSesionUI: editarSesionUI,
+    nuevaSesion: nuevaSesion, editarSesionUI: editarSesionUI, editarSesionDesde_: editarSesionDesde_,
     duplicarSesionUI: duplicarSesionUI, eliminarSesionUI: eliminarSesionUI,
     estadoSesionUI: estadoSesionUI, desplazarSesionUI: desplazarSesionUI,
     exportarPlanner: exportarPlanner,
@@ -6113,6 +6133,7 @@ var App = (function () {
     dragSesionSuelta: dragSesionSuelta,
     abrirHorario: abrirHorario, horToggleDia: horToggleDia, horChkCambiada: horChkCambiada,
     abrirCalendario: abrirCalendario, calAddFestivo: calAddFestivo, calQuitarFestivo: calQuitarFestivo,
+    calFinPorDefecto_: calFinPorDefecto_, calHastaPorDefecto_: calHastaPorDefecto_,
     asigChkCambiada: asigChkCambiada, critSesionCambiado: critSesionCambiado,
     sesTipoCambiado: sesTipoCambiado, rtCmd: rtCmd, rtLink: rtLink,
     crearClaseHorario: crearClaseHorario, agGrupoCambiado: agGrupoCambiado,
