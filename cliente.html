@@ -4481,19 +4481,19 @@ var App = (function () {
       return !e.archivado && !e.grupoArchivado;
     });
   }
+  // Solo el nombre de la clase (el profe ya suele incluir el grupo en él, p. ej.
+  // "Lengua 3º B"): no repetimos el grupo detrás para no duplicarlo.
   function etiquetaEval_(ev) {
-    var grupo = ev.claseId &&
-      (estado.clases || []).filter(function (c) { return c.claseId === ev.claseId; })[0];
-    return tituloEval(ev) + (grupo ? ' · ' + grupo.nombre : '');
+    return tituloEval(ev);
   }
   /**
    * Las "clases" con las que trabaja el planificador: las clases (evaluaciones)
    * visibles del curso activo, tengan grupo o no. Forma común:
-   * {id, etiqueta, horario, sinGrupo}.
+   * {id, etiqueta, color, horario, sinGrupo}.
    */
   function clasesPlanner_() {
     return evalsProgramables_().map(function (ev) {
-      return { id: ev.evalId, etiqueta: etiquetaEval_(ev),
+      return { id: ev.evalId, etiqueta: etiquetaEval_(ev), color: ev.color || '',
         horario: ev.horario || [], sinGrupo: !ev.claseId };
     });
   }
@@ -4504,6 +4504,11 @@ var App = (function () {
     var c = clasePlannerDe_(id);
     if (!c) return '(clase de otro curso)';
     return c.etiqueta + (c.sinGrupo ? ' · sin grupo' : '');
+  }
+  /** Color de la clase (el definido al crearla), o el acento por defecto. */
+  function colorClase_(evalId) {
+    var c = clasePlannerDe_(evalId);
+    return (c && c.color) || 'var(--acento)';
   }
 
   // ---------- pintado ----------
@@ -4830,12 +4835,22 @@ var App = (function () {
     var obs = (a && a.observaciones)
       ? '<span class="pl-chip-obs" title="' + esc(a.observaciones) + '">' + svgUI('lapiz') + '</span>'
       : '';
+    // Color de la clase (el definido al crearla) en el borde izquierdo del chip.
+    var col = (tipo === 'clase' && a && a.evalId) ? colorClase_(a.evalId) : '';
+    var estilo = col ? ' style="border-left-color:' + col + '"' : '';
+    // Arrastrable: mover la sesión a otro día u otra clase (evalId origen en el
+    // dataset). Los avisos no van en celda, así que no se arrastran.
+    var arr = (tipo !== 'aviso')
+      ? ' draggable="true" ondragstart="App.dragSesionIni(event,\'' + s.sesionId + '\',\'' +
+        ((a && a.evalId) || '') + '\')" ondragend="App.dragSesionFin(event)"'
+      : '';
     return '<div class="pl-chip ' + est + (tipo === 'evento' ? ' pl-chip-evento' : '') +
-        '" onclick="App.editarSesionUI(\'' + s.sesionId +
+        '"' + estilo + arr + ' onclick="App.editarSesionUI(\'' + s.sesionId +
         '\')" title="' + esc(s.titulo || 'Sin título') +
         (a && a.observaciones ? ' — ' + esc(a.observaciones) : '') + '">' +
-      (a ? '<span class="pl-chip-dot" title="Cambiar estado" ' +
-        'onclick="event.stopPropagation();App.estadoSesionUI(\'' + s.sesionId + '\',\'' +
+      (a ? '<span class="pl-chip-dot" title="Cambiar estado"' +
+        (col ? ' style="border-color:' + col + '"' : '') +
+        ' onclick="event.stopPropagation();App.estadoSesionUI(\'' + s.sesionId + '\',\'' +
         a.evalId + '\')"></span>' : '') +
       '<span class="pl-chip-txt"><span class="pl-chip-tit">' + esc(s.titulo || 'Sin título') +
         obs + '</span>' + sub + '</span>' +
@@ -4915,6 +4930,12 @@ var App = (function () {
     return ctx.isos.some(function (iso) { return (ctx.eventos[iso] || []).length; });
   }
 
+  /** Atributos de una celda que acepta soltar sesiones (arrastrar). */
+  function dropAttrs_(evalId, iso) {
+    return ' ondragover="App.dragSesionSobre(event)" ondragleave="App.dragSesionFuera(event)"' +
+      ' ondrop="App.dragSesionSuelta(event,\'' + (evalId || '') + '\',\'' + iso + '\')"';
+  }
+
   /** Rejilla grupos × días: una fila por clase, una columna por día lectivo. */
   function htmlSemanaGrupo_(ctx) {
     var clases = clasesPlanner_();
@@ -4930,18 +4951,22 @@ var App = (function () {
         '</span></div>');
     });
     clases.forEach(function (c) {
-      cel.push('<div class="pl-esq pl-fila-lbl">' + esc(etiquetaClase_(c.id)) + '</div>');
+      // Puntito con el color de la clase en la etiqueta de la fila.
+      var pico = '<span class="pl-fila-color" style="background:' + (c.color || 'var(--acento)') +
+        '"></span>';
+      cel.push('<div class="pl-esq pl-fila-lbl">' + pico + esc(etiquetaClase_(c.id)) + '</div>');
       ctx.isos.forEach(function (iso, i) {
         var ens = ctx.porClaseFecha[c.id + '|' + iso] || [];
         if (ens.length) {
-          cel.push('<div class="pl-celda">' +
+          cel.push('<div class="pl-celda"' + dropAttrs_(c.id, iso) + '>' +
             ens.map(function (en) { return chipSesion_(en, false); }).join('') + '</div>');
         } else {
           // Celda vacía: TODA la celda planifica (con clase y fecha ya puestas).
           // Un «+» marca los días de horario; el resto también es clicable.
           var esHor = c.horario.some(function (h) { return h.dia === i; });
-          cel.push('<div class="pl-celda pl-celda-nueva" title="Planificar aquí" ' +
-            'onclick="App.nuevaSesion(\'' + c.id + '\',\'' + iso + '\')">' +
+          cel.push('<div class="pl-celda pl-celda-nueva" title="Planificar aquí"' +
+            dropAttrs_(c.id, iso) +
+            ' onclick="App.nuevaSesion(\'' + c.id + '\',\'' + iso + '\')">' +
             (esHor ? '<span class="pl-celda-mas">+</span>' : '') + '</div>');
         }
       });
@@ -4951,7 +4976,7 @@ var App = (function () {
       cel.push('<div class="pl-esq pl-fila-lbl pl-fila-otros">Otros</div>');
       ctx.isos.forEach(function (iso) {
         var evs = ctx.eventos[iso] || [];
-        cel.push('<div class="pl-celda">' +
+        cel.push('<div class="pl-celda"' + dropAttrs_('', iso) + '>' +
           evs.map(function (en) { return chipSesion_(en, false); }).join('') + '</div>');
       });
     }
@@ -5333,6 +5358,67 @@ var App = (function () {
     llamar('estadoSesion', [sesionId, evalId, nuevo, null], function (r) {
       actualizarSesionCache_(r);
     });
+  }
+
+  // ---------- arrastrar sesiones entre días/clases (vista Semana por grupo) ----------
+  var arrastreSesion = null; // { sesionId, evalId } de la sesión en curso
+
+  function dragSesionIni(ev, sesionId, evalId) {
+    arrastreSesion = { sesionId: sesionId, evalId: evalId || '' };
+    try {
+      ev.dataTransfer.effectAllowed = 'move';
+      ev.dataTransfer.setData('text/plain', sesionId);
+    } catch (e) {}
+    if (ev.currentTarget && ev.currentTarget.classList) ev.currentTarget.classList.add('pl-chip-arrastrando');
+  }
+  function dragSesionFin(ev) {
+    arrastreSesion = null;
+    if (ev && ev.currentTarget && ev.currentTarget.classList) {
+      ev.currentTarget.classList.remove('pl-chip-arrastrando');
+    }
+    [].forEach.call(document.querySelectorAll('.pl-drop-ok'), function (el) {
+      el.classList.remove('pl-drop-ok');
+    });
+  }
+  function dragSesionSobre(ev) {
+    if (!arrastreSesion) return;
+    ev.preventDefault();
+    try { ev.dataTransfer.dropEffect = 'move'; } catch (e) {}
+    if (ev.currentTarget && ev.currentTarget.classList) ev.currentTarget.classList.add('pl-drop-ok');
+  }
+  function dragSesionFuera(ev) {
+    if (ev.currentTarget && ev.currentTarget.classList) ev.currentTarget.classList.remove('pl-drop-ok');
+  }
+  function dragSesionSuelta(ev, evalIdDest, iso) {
+    ev.preventDefault();
+    if (ev.currentTarget && ev.currentTarget.classList) ev.currentTarget.classList.remove('pl-drop-ok');
+    if (!arrastreSesion) return;
+    var a = arrastreSesion; arrastreSesion = null;
+    moverSesionA_(a.sesionId, a.evalId, evalIdDest || '', iso);
+  }
+  /** Mueve una asignación en el cliente (optimista) y lo persiste detrás. */
+  function moverSesionA_(sesionId, evalIdOrig, evalIdDest, iso) {
+    var s = (sesionesCache || []).filter(function (x) { return x.sesionId === sesionId; })[0];
+    if (!s) return;
+    var asigs = s.asignaciones || (s.asignaciones = []);
+    var found = null;
+    for (var i = 0; i < asigs.length; i++) {
+      if (String(asigs[i].evalId || '') === String(evalIdOrig || '')) { found = asigs[i]; break; }
+    }
+    // Sin cambios: mismo grupo y misma fecha.
+    if (found && String(found.evalId || '') === String(evalIdDest || '') && found.fecha === iso) return;
+    if (found) { found.evalId = evalIdDest; found.fecha = iso; }
+    else { found = { evalId: evalIdDest, fecha: iso, estado: 'pendiente', observaciones: '' }; asigs.push(found); }
+    // Funde duplicados por evalId: la asignación movida gana sobre la que hubiera.
+    var byEval = {};
+    asigs.forEach(function (x) { if (x !== found) byEval[String(x.evalId || '')] = x; });
+    byEval[String(evalIdDest || '')] = found;
+    s.asignaciones = Object.keys(byEval).map(function (k) { return byEval[k]; });
+    pintarPlanner();
+    if (String(sesionId).indexOf('tmp_') === 0) return; // aún sin confirmar: solo local
+    llamarConFallo_('moverSesion', [sesionId, evalIdOrig || '', evalIdDest || '', iso],
+      function (r) { actualizarSesionCache_(r); },
+      function () { recargarSesionesTrasError_('No se pudo mover la sesión.'); });
   }
 
   // ---------- crear / editar ----------
@@ -5835,6 +5921,9 @@ var App = (function () {
     nuevaSesion: nuevaSesion, editarSesionUI: editarSesionUI,
     duplicarSesionUI: duplicarSesionUI, eliminarSesionUI: eliminarSesionUI,
     estadoSesionUI: estadoSesionUI, exportarPlanner: exportarPlanner,
+    dragSesionIni: dragSesionIni, dragSesionFin: dragSesionFin,
+    dragSesionSobre: dragSesionSobre, dragSesionFuera: dragSesionFuera,
+    dragSesionSuelta: dragSesionSuelta,
     abrirHorario: abrirHorario, horToggleDia: horToggleDia, horChkCambiada: horChkCambiada,
     abrirCalendario: abrirCalendario, calAddFestivo: calAddFestivo, calQuitarFestivo: calQuitarFestivo,
     asigChkCambiada: asigChkCambiada, critSesionCambiado: critSesionCambiado,
