@@ -1061,6 +1061,27 @@
   .planner-modo:hover { color: var(--texto); }
   .planner-modo.activo { background: var(--surface); color: var(--acento);
     box-shadow: var(--sombra-1); }
+  /* Menú de configuración del planificador (popover bajo el botón ⚙). */
+  .planner-config-wrap { position: relative; }
+  .planner-config-menu { position: absolute; top: calc(100% + 6px); right: 0; z-index: 40;
+    min-width: 230px; padding: 6px; background: var(--surface); border: 1px solid var(--borde);
+    border-radius: 12px; box-shadow: var(--sombra-2, var(--sombra-1)); display: flex;
+    flex-direction: column; gap: 2px; }
+  .pcfg-item { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left;
+    padding: 8px 10px; border: 0; background: transparent; color: var(--texto); font: inherit;
+    font-size: 14px; border-radius: 8px; cursor: pointer; }
+  .pcfg-item:hover { background: var(--acento-suave); }
+  .pcfg-sep { height: 1px; background: var(--borde); margin: 5px 4px; }
+  .pcfg-group { padding: 6px 8px 8px; }
+  .pcfg-tit { display: block; font-size: 12px; font-weight: 600; color: var(--texto-3);
+    text-transform: uppercase; letter-spacing: .03em; margin-bottom: 6px; }
+  .pcfg-radios { display: inline-flex; padding: 3px; background: var(--borde);
+    border-radius: 9px; gap: 2px; width: 100%; }
+  .pcfg-opt { flex: 1; border: 0; background: transparent; color: var(--texto-2); font: inherit;
+    font-size: 13px; font-weight: 600; padding: 5px 8px; border-radius: 7px; cursor: pointer;
+    white-space: nowrap; }
+  .pcfg-opt:hover { color: var(--texto); }
+  .pcfg-opt.activo { background: var(--surface); color: var(--acento); box-shadow: var(--sombra-1); }
   /* Vista diaria: una jornada en columna, a lo ancho. */
   .pl-dia { display: flex; flex-direction: column; gap: 8px; max-width: 720px; }
   .pl-dia.pl-nolect { opacity: .85; }
@@ -1197,9 +1218,10 @@
   .cal-fest-fila { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px;
     padding: 6px 0; border-top: 1px solid var(--borde); }
   .cal-fest-fila:first-child { border-top: 0; }
-  .cal-fest-desde, .cal-fest-hasta { flex: 0 0 auto; padding: 6px 8px;
+  .cal-fest-desde, .cal-fest-hasta { flex: 0 0 auto; width: 148px; box-sizing: border-box;
+    padding: 6px 8px;
     border: 1px solid var(--borde-fuerte); border-radius: 8px; font: inherit; font-size: 14px; }
-  .cal-fest-nombre { flex: 1 1 140px; min-width: 120px; padding: 6px 8px;
+  .cal-fest-nombre { flex: 1 1 160px; min-width: 120px; padding: 6px 8px;
     border: 1px solid var(--borde-fuerte); border-radius: 8px; font: inherit; font-size: 14px; }
   .cal-add { margin-top: 8px; }
   /* Banda superior de recordatorios (tipo aviso) */

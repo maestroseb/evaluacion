@@ -4307,8 +4307,12 @@ var App = (function () {
     [].forEach.call(document.querySelectorAll('.solo-planner'), function (el) {
       el.hidden = false;
     });
-    // En móvil, la vista por defecto es «Día» (una jornada cabe en pantalla).
-    if (esMovil()) plannerModoActual = 'dia';
+    // Vista y layout con los que arranca (preferencia; en móvil, Día por defecto).
+    plannerModoActual = vistaDefecto_();
+    try {
+      var lay = localStorage.getItem('planner-layout');
+      if (lay === 'grupo' || lay === 'horario') plannerLayout = lay;
+    } catch (e) {}
   }
 
   var planUnidadesCache = null;   // unidades de planificación (por materia)
@@ -4402,7 +4406,46 @@ var App = (function () {
   /** Conmuta el layout de la vista semanal: grupos × días o por horario. */
   function setPlannerLayout(layout) {
     plannerLayout = layout;
+    try { localStorage.setItem('planner-layout', layout); } catch (e) {}
     pintarPlanner();
+  }
+
+  /** Vista con la que arranca el planificador (preferencia; móvil → Día). */
+  function vistaDefecto_() {
+    var v;
+    try { v = localStorage.getItem('planner-vista-def'); } catch (e) {}
+    if (v === 'dia' || v === 'semana' || v === 'mes') return v;
+    return esMovil() ? 'dia' : 'semana';
+  }
+  /** Fija la vista por defecto (preferencia) y salta a ella. */
+  function setVistaDefecto(modo) {
+    try { localStorage.setItem('planner-vista-def', modo); } catch (e) {}
+    plannerModoActual = modo;
+    pintarPlanner();
+  }
+  /** Abre/cierra el menú de configuración del planificador. */
+  function togglePlannerConfig(ev) {
+    if (ev) ev.stopPropagation();
+    var m = document.getElementById('planner-config-menu');
+    if (!m) return;
+    var abrir = m.hidden;
+    m.hidden = !abrir;
+    if (abrir) {
+      sincronizarConfigMenu_();
+      setTimeout(function () { document.addEventListener('click', cerrarConfigFuera_); }, 0);
+    }
+  }
+  function cerrarConfigFuera_(ev) {
+    var wrap = document.querySelector('.planner-config-wrap');
+    // Dentro del wrap el menú se mantiene (las opciones de vista se toggean sin
+    // cerrarlo); solo Calendario/Horario (.pcfg-item) lo cierran al abrir su modal.
+    if (wrap && wrap.contains(ev.target) && !ev.target.closest('.pcfg-item')) return;
+    cerrarConfigMenu_();
+  }
+  function cerrarConfigMenu_() {
+    var m = document.getElementById('planner-config-menu');
+    if (m) m.hidden = true;
+    document.removeEventListener('click', cerrarConfigFuera_);
   }
   /** Mueve la semana visible (+1/-1) o vuelve a la actual (0). */
   function plannerSemana(delta) {
@@ -4467,38 +4510,33 @@ var App = (function () {
   function pintarPlanner() {
     var modo = plannerModoActual;
     var dia = (modo === 'dia'), semana = (modo === 'semana'), mes = (modo === 'mes'),
-        clase = (modo === 'clase'), unidades = (modo === 'unidades');
+        unidades = (modo === 'unidades');
     document.getElementById('planner-modo-dia').classList.toggle('activo', dia);
     document.getElementById('planner-modo-semana').classList.toggle('activo', semana);
     document.getElementById('planner-modo-mes').classList.toggle('activo', mes);
     document.getElementById('planner-modo-unidades').classList.toggle('activo', unidades);
-    document.getElementById('planner-modo-clase').classList.toggle('activo', clase);
     document.getElementById('planner-nav-dia').hidden = !dia;
     document.getElementById('planner-nav-semana').hidden = !semana;
     document.getElementById('planner-nav-mes').hidden = !mes;
-    // Conmutador de layout: solo en modo semana.
-    var lay = document.getElementById('planner-layout');
-    if (lay) lay.hidden = !semana;
-    document.getElementById('planner-lay-grupo').classList.toggle('primario', plannerLayout === 'grupo');
-    document.getElementById('planner-lay-horario').classList.toggle('primario', plannerLayout === 'horario');
-    document.getElementById('planner-sel-clase').hidden = !clase;
-    if (clase) pintarSelectorPlanner_();
+    sincronizarConfigMenu_();
     document.getElementById('planner-cont').innerHTML =
-      dia ? htmlDia_() : semana ? htmlSemana_() : mes ? htmlMes_() : unidades ? htmlUnidades_() : htmlPorClase_();
+      dia ? htmlDia_() : semana ? htmlSemana_() : mes ? htmlMes_() : htmlUnidades_();
     // En Unidades con panel (PC), cablea el editor recién pintado si hay algo abierto.
     if (unidades && plannerConPanel_() && document.getElementById('ses-desc-body')) {
       montarEditorSesion_();
     }
   }
 
-  /** Rellena el selector de clase conservando la selección actual. */
-  function pintarSelectorPlanner_() {
-    var sel = document.getElementById('planner-clase');
-    var previo = sel.value;
-    sel.innerHTML = clasesPlanner_().map(function (c) {
-      return '<option value="' + c.id + '">' + esc(etiquetaClase_(c.id)) + '</option>';
-    }).join('');
-    if (previo) sel.value = previo;
+  /** Marca las opciones activas del menú de configuración (vista y layout). */
+  function sincronizarConfigMenu_() {
+    var def = document.getElementById('pcfg-def');
+    if (def) [].forEach.call(def.querySelectorAll('.pcfg-opt'), function (b, i) {
+      b.classList.toggle('activo', ['dia', 'semana', 'mes'][i] === vistaDefecto_());
+    });
+    var lay = document.getElementById('pcfg-lay');
+    if (lay) [].forEach.call(lay.querySelectorAll('.pcfg-opt'), function (b, i) {
+      b.classList.toggle('activo', ['grupo', 'horario'][i] === plannerLayout);
+    });
   }
 
   // ---------- horario semanal por clase ----------
@@ -4619,10 +4657,10 @@ var App = (function () {
     if (!calDraft.length) return '<div class="planner-vacio">Sin festivos añadidos.</div>';
     return calDraft.map(function (f, i) {
       return '<div class="cal-fest-fila">' +
+        '<input type="text" class="cal-fest-nombre" data-i="' + i + '" value="' + esc(f.nombre) +
+          '" placeholder="Nombre (p. ej. Navidad)">' +
         '<input type="date" class="cal-fest-desde" data-i="' + i + '" value="' + esc(f.desde) + '" title="Desde">' +
         '<input type="date" class="cal-fest-hasta" data-i="' + i + '" value="' + esc(f.hasta) + '" title="Hasta (opcional)">' +
-        '<input type="text" class="cal-fest-nombre" data-i="' + i + '" value="' + esc(f.nombre) +
-          '" placeholder="Nombre (opcional)">' +
         '<button type="button" class="btn peligro btn-icono" title="Quitar" ' +
           'onclick="App.calQuitarFestivo(' + i + ')">' + svgUI('papelera') + '</button>' +
       '</div>';
@@ -5244,23 +5282,6 @@ var App = (function () {
       });
   }
 
-  function htmlPorClase_() {
-    var evalId = document.getElementById('planner-clase').value;
-    if (!evalId) return '<div class="vacio">No tienes clases en este curso académico.</div>';
-    var lista = entradasPlanner_().filter(function (en) { return en.asig.evalId === evalId; });
-    // Por fecha ascendente; las que aún no tienen fecha, al final.
-    lista.sort(function (a, b) {
-      var fa = a.asig.fecha || '9999', fb = b.asig.fecha || '9999';
-      return fa < fb ? -1 : fa > fb ? 1 : 0;
-    });
-    if (!lista.length) {
-      return '<div class="vacio">Esta clase no tiene sesiones asignadas todavía.</div>';
-    }
-    return '<div class="planner-dia">' + lista.map(function (en) {
-      return lineaSesion_(en, true);
-    }).join('') + '</div>';
-  }
-
   /** Una línea de sesión: estado (clicable), contenido y acciones. */
   function lineaSesion_(en, conFecha) {
     var s = en.ses, a = en.asig;
@@ -5766,15 +5787,34 @@ var App = (function () {
         lineas.push('', '## ' + DIAS_SEM[i] + ' ' + iso, '');
         del.forEach(bloque);
       }
+    } else if (plannerModoActual === 'mes') {
+      var y = plannerMes.getFullYear(), m = plannerMes.getMonth();
+      lineas.push('# Planificación · ' + MESES_LARGO[m] + ' ' + y);
+      var diasMes = new Date(y, m + 1, 0).getDate();
+      for (var dm = 1; dm <= diasMes; dm++) {
+        var isoM = isoLocal_(new Date(y, m, dm));
+        var delM = entradasPlanner_().filter(function (en) { return en.asig && en.asig.fecha === isoM; });
+        if (!delM.length) continue;
+        lineas.push('', '## ' + fechaCorta_(isoM), '');
+        delM.forEach(bloque);
+      }
     } else {
-      var evalId = document.getElementById('planner-clase').value;
-      lineas.push('# Planificación · ' + etiquetaClase_(evalId), '');
-      var lista = entradasPlanner_().filter(function (en) { return en.asig.evalId === evalId; });
-      lista.sort(function (a, b) {
-        var fa = a.asig.fecha || '9999', fb = b.asig.fecha || '9999';
-        return fa < fb ? -1 : fa > fb ? 1 : 0;
+      // Unidades: contenido por unidad de planificación (sin fechas).
+      lineas.push('# Planificación · unidades', '');
+      var sinAsig = function (s) { return { ses: s, asig: (s.asignaciones || [])[0] || null }; };
+      (planUnidadesCache || []).forEach(function (u) {
+        var sesU = (sesionesCache || []).filter(function (s) { return s.unidadId === u.unidadId; })
+          .sort(function (a, b) { return (a.orden || 0) - (b.orden || 0); });
+        if (!sesU.length) return;
+        lineas.push('', '## ' + u.nombre + (u.curso ? ' · ' + u.curso : '') +
+          (u.area ? ' · ' + u.area : ''), '');
+        sesU.forEach(function (s) { bloque(sinAsig(s)); });
       });
-      lista.forEach(bloque);
+      var sueltas = (sesionesCache || []).filter(function (s) { return !s.unidadId; });
+      if (sueltas.length) {
+        lineas.push('', '## Sin unidad', '');
+        sueltas.forEach(function (s) { bloque(sinAsig(s)); });
+      }
     }
     if (lineas.length <= 2) return aviso('No hay nada que exportar en esta vista.');
     copiarAlPortapapeles(lineas.join('\n'),
@@ -5786,6 +5826,7 @@ var App = (function () {
     irAPlanner: irAPlanner, pintarPlanner: pintarPlanner,
     plannerModo: plannerModo, plannerSemana: plannerSemana, setPlannerLayout: setPlannerLayout,
     plannerMesNav: plannerMesNav, plannerDiaNav: plannerDiaNav,
+    setVistaDefecto: setVistaDefecto, togglePlannerConfig: togglePlannerConfig,
     plannerMatCursoSel: plannerMatCursoSel,
     nuevaPlanUnidad: nuevaPlanUnidad, editarPlanUnidadUI: editarPlanUnidadUI,
     eliminarPlanUnidadUI: eliminarPlanUnidadUI,
