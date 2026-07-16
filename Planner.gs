@@ -48,6 +48,11 @@ function estadoSesion(sesionId, evalId, estado, fecha) {
   return Planner.cambiarEstado_(abrirCuaderno_(), sesionId, evalId, estado, fecha);
 }
 
+/** Mueve una asignación (arrastrar): de evalIdOrig/fecha a evalIdDest/fecha. */
+function moverSesion(sesionId, evalIdOrig, evalIdDest, fecha) {
+  return Planner.mover_(abrirCuaderno_(), sesionId, evalIdOrig, evalIdDest, fecha);
+}
+
 /** Lista las unidades de planificación del profe (por materia/área). */
 function listarPlanUnidades() {
   return Planner.listarU_(abrirCuaderno_());
@@ -175,6 +180,42 @@ var Planner = (function () {
     });
     if (!tocada) throw new Error('Esta sesión no está asignada a esa clase.');
     sh.getRange(fila, 5).setValue(JSON.stringify(asigs));
+    return obtener_(ss, sesionId);
+  }
+
+  /**
+   * Mueve una asignación (arrastrar en la rejilla): la que apuntaba a
+   * `evalIdOrig` pasa a `evalIdDest` con la nueva `fecha`. Si la sesión no tenía
+   * asignación para ese origen (estaba suelta), crea una nueva. Si el destino ya
+   * tenía asignación, se funden en una (la recién movida gana, sin duplicar
+   * grupo). Conserva el estado y las observaciones de la asignación movida.
+   */
+  function mover_(ss, sesionId, evalIdOrig, evalIdDest, fecha) {
+    var sh = hoja_(ss);
+    var fila = Datos.filaDeId_(sh, sesionId);
+    if (fila < 0) throw new Error('Sesión no encontrada.');
+    var f = fechaValida_(fecha);
+    var orig = String(evalIdOrig || '').trim(), dest = String(evalIdDest || '').trim();
+    var asigs = parse_(sh.getRange(fila, 5).getValue()).map(mapAsig_);
+    var idx = -1;
+    for (var i = 0; i < asigs.length; i++) {
+      if (String(asigs[i].evalId || '').trim() === orig) { idx = i; break; }
+    }
+    var movida;
+    if (idx < 0) {
+      movida = { evalId: dest, fecha: f, estado: 'pendiente', observaciones: '' };
+      asigs.push(movida);
+    } else {
+      movida = asigs.splice(idx, 1)[0];
+      movida.evalId = dest;
+      movida.fecha = f;
+      asigs.push(movida); // al final: gana en la fusión por evalId
+    }
+    // Funde por evalId (el último gana, es decir, la movida).
+    var byEval = {};
+    asigs.forEach(function (a) { byEval[String(a.evalId || '').trim()] = a; });
+    var out = Object.keys(byEval).map(function (k) { return byEval[k]; });
+    sh.getRange(fila, 5).setValue(JSON.stringify(out));
     return obtener_(ss, sesionId);
   }
 
@@ -373,7 +414,7 @@ var Planner = (function () {
 
   return {
     listar_: listar_, obtener_: obtener_, crear_: crear_, editar_: editar_,
-    eliminar_: eliminar_, duplicar_: duplicar_, cambiarEstado_: cambiarEstado_,
+    eliminar_: eliminar_, duplicar_: duplicar_, cambiarEstado_: cambiarEstado_, mover_: mover_,
     migrarProvisionales_: migrarProvisionales_,
     listarU_: listarU_, crearU_: crearU_, editarU_: editarU_, eliminarU_: eliminarU_,
     reordenarSesionesUnidad_: reordenarSesionesUnidad_
