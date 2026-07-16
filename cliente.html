@@ -3687,6 +3687,8 @@ var App = (function () {
     // Evaluador de rúbrica abierto: cerrar como sea (fuera, Escape…) GUARDA
     // lo último seleccionado; nada se pierde por un toque fuera del modal.
     if (rubEvalSel) persistirEvaluador_();
+    // Editor de sesión en el modal: al cerrar por cualquier vía se guarda.
+    if (editorSesionCtx && !editorSesionCtx.enPanel) { autoguardarSesion_(); editorSesionCtx = null; }
     document.getElementById('modal-fondo').hidden = true;
     accionModal = null;
     var m = document.querySelector('.modal');
@@ -4403,6 +4405,7 @@ var App = (function () {
   }
 
   function plannerModo(modo) {
+    autoguardarSesion_();   // si estabas editando en el panel de Unidades, guarda antes
     plannerModoActual = modo;
     pintarPlanner();
   }
@@ -5104,12 +5107,14 @@ var App = (function () {
 
   /** Abre una sesión: en PC la muestra en el panel; en móvil, en el modal. */
   function abrirSesionUnidad(id) {
-    if (plannerConPanel_()) { sesUnidadSel = id; panelNuevoUid = ''; pintarPlanner(); }
-    else editarSesionUI(id);
+    if (plannerConPanel_()) {
+      autoguardarSesion_();            // guarda la que estabas editando antes de saltar
+      sesUnidadSel = id; panelNuevoUid = ''; pintarPlanner();
+    } else editarSesionUI(id);
   }
   /** Guarda desde el panel (sin modal): edición o alta según haya sesión nueva. */
   function guardarSesionPanel_() {
-    guardarSesion_(panelNuevoUid ? null : sesUnidadSel, true);
+    guardarSesion_(panelNuevoUid ? null : sesUnidadSel, { enPanel: true });
   }
   /** HTML del panel de detalle (editor de la sesión seleccionada o alta nueva). */
   function htmlDetalleSesion_() {
@@ -5118,10 +5123,12 @@ var App = (function () {
       ? { titulo: '', descripcion: '', criterios: [], asignaciones: [], unidadId: panelNuevoUid, tipo: 'clase' }
       : (sesUnidadSel ? (sesionesCache || []).filter(function (x) { return x.sesionId === sesUnidadSel; })[0] : null);
     if (!s) {
+      editorSesionCtx = null;
       return '<div class="pl-detail-vacio">Selecciona una sesión de la izquierda para editarla aquí, ' +
         'o pulsa «+ Nueva sesión» en una unidad.</div>';
     }
     prepararEditorSesion_(s, nueva ? null : s.sesionId);
+    editorSesionCtx = { id: nueva ? null : s.sesionId, enPanel: true };
     var acc = nueva ? '' :
       '<span class="pl-detail-acc">' +
         '<button class="btn btn-icono" title="Duplicar" onclick="App.duplicarSesionUI(\'' + s.sesionId + '\')">' +
@@ -5242,7 +5249,7 @@ var App = (function () {
 
   /** Nueva sesión ya colgada de esta unidad (panel en PC, modal en móvil). */
   function nuevaSesionEnUnidad(unidadId) {
-    if (plannerConPanel_()) { panelNuevoUid = unidadId; sesUnidadSel = ''; pintarPlanner(); return; }
+    if (plannerConPanel_()) { autoguardarSesion_(); panelNuevoUid = unidadId; sesUnidadSel = ''; pintarPlanner(); return; }
     abrirModalSesion_('Crear', null,
       { titulo: '', descripcion: '', criterios: [], asignaciones: [], unidadId: unidadId, tipo: 'clase' });
   }
@@ -5266,7 +5273,7 @@ var App = (function () {
     return min;
   }
 
-  function plannerMatCursoSel(k) { plannerMatCurso = k; pintarPlanner(); }
+  function plannerMatCursoSel(k) { autoguardarSesion_(); plannerMatCurso = k; pintarPlanner(); }
 
   function nuevaPlanUnidad() {
     var p = (plannerMatCurso || '||').split('||');
@@ -5400,17 +5407,17 @@ var App = (function () {
         if (r) sesionesCache = r;
         var s = (sesionesCache || []).filter(function (x) { return x.sesionId === sesionId; })[0];
         var modalAbierto = !document.getElementById('modal-fondo').hidden;
+        // Repinta ya el calendario/panel de fondo con las fechas nuevas.
+        pintarPlanner();
         if (modalAbierto && s) {
-          // Refresca las fechas en el editor abierto sin re-renderizarlo.
+          // Además refresca las fechas del editor abierto sin re-renderizarlo.
           (s.asignaciones || []).forEach(function (a) {
             var f = document.querySelector('.planner-asig-fecha[data-eval="' + a.evalId + '"]');
             if (f) f.value = a.fecha || '';
           });
           [].forEach.call(btns, function (b) { b.disabled = false; });
-        } else {
-          pintarPlanner(); // panel de Unidades u otra vista: se re-pinta con las fechas nuevas
         }
-        avisoOk(dir > 0 ? 'Sesión adelantada.' : 'Sesión retrasada.');
+        avisoOk(dir > 0 ? 'Sesión retrasada.' : 'Sesión adelantada.');
       },
       function (err) {
         [].forEach.call(btns, function (b) { b.disabled = false; });
@@ -5513,6 +5520,40 @@ var App = (function () {
 
   var sesionCritSel = {};        // códigos de criterio marcados en el modal abierto
   var criteriosAreaCache = {};   // 'curso||area' -> [{codigo,texto,…}] (cacheado del mapa)
+  var editorSesionCtx = null;    // { id, enPanel } del editor de sesión abierto (o null)
+  var editorFirmaInicial = '';   // firma del editor al abrirlo, para autoguardar solo si cambió
+
+  /** Firma del contenido actual del editor de sesión (para detectar cambios). */
+  function firmaEditorSesion_() {
+    if (!document.getElementById('ses-titulo')) return '';
+    var p = [];
+    p.push(val('ses-titulo') || '');
+    p.push(sesTipoElegido_());
+    p.push(descEditorValor_());
+    var u = document.getElementById('ses-unidad'); p.push(u ? u.value : '');
+    var ev = document.getElementById('ses-evento-fecha'); p.push(ev ? ev.value : '');
+    p.push(Object.keys(sesionCritSel).sort().join(','));
+    var asigs = [];
+    [].forEach.call(document.querySelectorAll('.planner-asig-chk'), function (chk) {
+      if (!chk.checked) return;
+      var id = chk.dataset.eval;
+      var f = document.querySelector('.planner-asig-fecha[data-eval="' + id + '"]');
+      var o = document.querySelector('.planner-asig-obs[data-eval="' + id + '"]');
+      asigs.push(id + '|' + ((f && f.value) || '') + '|' + ((o && o.value) || ''));
+    });
+    p.push(asigs.sort().join(';'));
+    return p.join('||');
+  }
+  /** ¿Hay un editor de sesión visible ahora mismo? */
+  function hayEditorSesion_() { return !!document.getElementById('ses-titulo'); }
+  /** Guarda el editor de sesión abierto si cambió algo (al salir: fuera, otra sesión…). */
+  function autoguardarSesion_() {
+    if (!editorSesionCtx || !hayEditorSesion_()) return;
+    if (firmaEditorSesion_() === editorFirmaInicial) return; // sin cambios: no persiste
+    var ctx = editorSesionCtx;
+    guardarSesion_(ctx.id, { enPanel: ctx.enPanel, auto: true, silencioso: true,
+      noCerrar: true, noPintar: true });
+  }
 
   // ---------- editor de texto enriquecido (descripción de la sesión) ----------
   var RT_TAGS = { B: 1, STRONG: 1, I: 1, EM: 1, U: 1, A: 1, UL: 1, OL: 1, LI: 1, P: 1, BR: 1 };
@@ -5638,13 +5679,14 @@ var App = (function () {
     var existente = s.sesionId && String(s.sesionId).indexOf('tmp_') !== 0;
     if (!existente) return '';
     return '<div class="ses-reprog" id="ses-reprog">' +
+      '<button type="button" class="btn ses-reprog-btn" title="Adelantar un día lectivo ' +
+        '(a una fecha anterior; empuja las contiguas)" ' +
+        'onclick="App.desplazarSesionUI(\'' + s.sesionId + '\',-1)">◀ Adelantar</button>' +
       '<span class="ses-reprog-etq">Reprogramar</span>' +
-      '<span class="grupo-btn">' +
-        '<button type="button" class="btn" title="Retrasar un día lectivo (empuja las contiguas)" ' +
-          'onclick="App.desplazarSesionUI(\'' + s.sesionId + '\',-1)">◀ Retrasar</button>' +
-        '<button type="button" class="btn" title="Adelantar un día lectivo (empuja las contiguas)" ' +
-          'onclick="App.desplazarSesionUI(\'' + s.sesionId + '\',1)">Adelantar ▶</button>' +
-      '</span></div>';
+      '<button type="button" class="btn ses-reprog-btn" title="Retrasar un día lectivo ' +
+        '(a una fecha posterior; empuja las contiguas)" ' +
+        'onclick="App.desplazarSesionUI(\'' + s.sesionId + '\',1)">Retrasar ▶</button>' +
+    '</div>';
   }
 
   /** HTML del formulario de sesión (reutilizado por el modal y el panel de PC). */
@@ -5723,6 +5765,8 @@ var App = (function () {
       var t = ((e.clipboardData || window.clipboardData).getData('text')) || '';
       try { document.execCommand('insertHTML', false, plainToHtmlConLinks_(t)); } catch (x) {}
     });
+    // Firma de partida: el autoguardado solo persiste si algo cambia respecto a esto.
+    editorFirmaInicial = firmaEditorSesion_();
   }
 
   /** Prepara el estado del editor para la sesión s (criterios marcados, id). */
@@ -5734,6 +5778,7 @@ var App = (function () {
 
   function abrirModalSesion_(textoAceptar, id, s) {
     prepararEditorSesion_(s, id);
+    editorSesionCtx = { id: id, enPanel: false };
     abrirModal(tituloSesion_(id, s.tipo || 'clase'), sesionFormHtml_(s),
       textoAceptar, function () { guardarSesion_(id); },
       { sinFoco: !!id, ancho: true, cabExtra: tipoSelectorHtml_(s.tipo || 'clase') });
@@ -5839,9 +5884,18 @@ var App = (function () {
     else delete sesionCritSel[input.value];
   }
 
-  function guardarSesion_(id, enPanel) {
-    var titulo = val('ses-titulo').trim();
-    if (!titulo) return aviso('Pon un título a la sesión.');
+  function guardarSesion_(id, opts) {
+    opts = opts || {};
+    var enPanel = opts.enPanel;
+    var tituloEl = document.getElementById('ses-titulo');
+    if (!tituloEl) return;
+    var titulo = tituloEl.value.trim();
+    if (!titulo) {
+      if (opts.auto) return;             // autoguardado: sin título, no molesta
+      return aviso('Pon un título a la sesión.');
+    }
+    // Al salir de la sesión, ya no hay cambios pendientes que autoguardar.
+    editorSesionCtx = null;
     var tipo = sesTipoElegido_();
     var previa = id && (sesionesCache || []).filter(function (x) { return x.sesionId === id; })[0];
     var estadoDe = {};
@@ -5873,7 +5927,7 @@ var App = (function () {
     // Guardado OPTIMISTA (como las notas de la rejilla): se cierra el modal y se
     // pinta ya con lo introducido; la persistencia va por detrás y reconcilia.
     // En el panel de PC no hay modal: se queda mostrando la sesión guardada.
-    if (!enPanel) cerrarModal();
+    if (!enPanel && !opts.noCerrar) cerrarModal();
     if (id) {
       var optimista = {
         sesionId: id, titulo: payload.titulo, descripcion: payload.descripcion, tipo: tipo,
@@ -5882,10 +5936,10 @@ var App = (function () {
         creado: previa ? previa.creado : '', orden: previa ? previa.orden : 0
       };
       actualizarSesionCache_(optimista);
-      pintarPlanner();
-      avisoOk('Sesión guardada.');
+      if (!opts.noPintar) pintarPlanner();
+      if (!opts.silencioso) avisoOk('Sesión guardada.');
       llamarConFallo_('editarSesion', [id, payload],
-        function (r) { actualizarSesionCache_(r); pintarPlanner(); },
+        function (r) { actualizarSesionCache_(r); if (!opts.noPintar) pintarPlanner(); },
         function (err) { recargarSesionesTrasError_('No se pudo guardar la sesión: ' + err); });
     } else {
       var tmpId = 'tmp_' + (++sesionTmpSeq);
@@ -5897,14 +5951,14 @@ var App = (function () {
       };
       sesionesCache = (sesionesCache || []).concat([nueva]);
       if (enPanel) { sesUnidadSel = tmpId; panelNuevoUid = ''; } // el panel sigue mostrando la nueva
-      pintarPlanner();
-      avisoOk('Sesión creada.');
+      if (!opts.noPintar) pintarPlanner();
+      if (!opts.silencioso) avisoOk('Sesión creada.');
       llamarConFallo_('crearSesion', [payload],
         function (r) {
           var idx = sesionesCache.indexOf(nueva);
           if (idx >= 0) sesionesCache[idx] = r; else actualizarSesionCache_(r);
           if (sesUnidadSel === tmpId) sesUnidadSel = r.sesionId; // pasa al id real
-          pintarPlanner();
+          if (!opts.noPintar) pintarPlanner();
         },
         function (err) {
           sesionesCache = (sesionesCache || []).filter(function (x) { return x !== nueva; });
