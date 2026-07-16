@@ -5615,7 +5615,7 @@ var App = (function () {
       var marcada = a || pre[c.id];
       var pico = '<span class="planner-asig-color" style="background:' + (c.color || 'var(--acento)') +
         '"></span>';
-      return '<div class="planner-asig-fila">' +
+      return '<div class="planner-asig-fila' + (marcada ? ' activa' : '') + '">' +
         '<label class="check planner-asig-nom"><input type="checkbox" class="planner-asig-chk" data-eval="' +
           c.id + '"' + (marcada ? ' checked' : '') +
           ' onchange="App.asigChkCambiada(this)"> ' + pico +
@@ -5725,6 +5725,9 @@ var App = (function () {
 
   /** Al (des)marcar una clase: sugiere fecha y recalcula los criterios del área. */
   function asigChkCambiada(chk) {
+    // Resalta (o no) la fila de la clase marcada.
+    var fila = chk.closest('.planner-asig-fila');
+    if (fila) fila.classList.toggle('activa', chk.checked);
     horChkCambiada(chk);
     refrescarCriteriosSesion_();
   }
