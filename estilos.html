@@ -436,31 +436,38 @@
     flex-wrap: wrap; margin: 0 0 18px; }
   #modal-cab-extra:empty { display: none; }
   /* Selector de Tipo (segmentado compacto) en la barra de título del editor. */
-  .ses-tipo-seg { display: inline-flex; padding: 3px; background: var(--borde); border-radius: 9px;
-    gap: 2px; }
-  .ses-tipo-opt { display: inline-flex; margin: 0; padding: 5px 12px; border-radius: 7px;
-    font-size: 13px; font-weight: 600; color: var(--texto-2); cursor: pointer; white-space: nowrap; }
-  .ses-tipo-opt input { position: absolute; opacity: 0; width: 0; height: 0; margin: 0; }
-  .ses-tipo-opt.activo { background: var(--surface); color: var(--acento); box-shadow: var(--sombra-1); }
+  .ses-tipo-seg { display: inline-flex; align-items: stretch; padding: 3px; background: var(--borde);
+    border-radius: 9px; gap: 2px; }
+  .ses-tipo-seg .ses-tipo-opt { display: inline-flex; align-items: center; justify-content: center;
+    margin: 0; padding: 6px 14px; border-radius: 7px; font-size: 13px; font-weight: 600;
+    color: var(--texto-2); cursor: pointer; white-space: nowrap; }
+  /* Radio nativo oculto (gana a .modal input[type=radio] con más especificidad). */
+  .ses-tipo-seg .ses-tipo-opt input { position: absolute; width: 1px; height: 1px; opacity: 0;
+    margin: 0; padding: 0; pointer-events: none; }
+  .ses-tipo-seg .ses-tipo-opt.activo { background: var(--surface); color: var(--acento);
+    box-shadow: var(--sombra-1); }
   /* Editor de sesión: dos columnas en pantallas anchas. */
   .ses-form { display: grid; grid-template-columns: 1fr; gap: 0 22px; }
   @media (min-width: 760px) { .ses-form { grid-template-columns: 1fr 1fr; } }
   .ses-col { min-width: 0; }
   .planner-asig-color { display: inline-block; width: 9px; height: 9px; border-radius: 50%;
     margin: 0 5px 0 2px; vertical-align: 1px; flex: 0 0 auto; }
-  .modal label { display: block; margin-bottom: 14px; font-size: 13px; font-weight: 600; color: var(--texto); }
-  .modal input, .modal select, .modal textarea {
+  .modal label, .ses-form label { display: block; margin-bottom: 14px; font-size: 13px; font-weight: 600; color: var(--texto); }
+  .modal input, .modal select, .modal textarea,
+  .ses-form input, .ses-form select, .ses-form textarea {
     width: 100%; margin-top: 6px; padding: 10px 11px; font-size: 14px; font-weight: 400;
     border: 1px solid var(--borde-fuerte); border-radius: 8px; font-family: inherit;
     color: var(--texto); background: var(--surface); transition: border-color .12s, box-shadow .12s;
   }
-  .modal input:focus, .modal select:focus, .modal textarea:focus {
+  .modal input:focus, .modal select:focus, .modal textarea:focus,
+  .ses-form input:focus, .ses-form select:focus, .ses-form textarea:focus {
     outline: none; border-color: var(--acento); box-shadow: 0 0 0 3px var(--acento-suave);
   }
   /* Checks y radios: controles nativos. El ancho 100%, el relleno y el halo de
      foco de los campos de texto los deformaban y hacían «parpadear» la casilla
      al tocarla (halo animado + resaltado de toque de iOS). */
-  .modal input[type="checkbox"], .modal input[type="radio"] {
+  .modal input[type="checkbox"], .modal input[type="radio"],
+  .ses-form input[type="checkbox"], .ses-form input[type="radio"] {
     width: auto; margin: 0; padding: 0; box-shadow: none; transition: none;
     flex: 0 0 auto; accent-color: var(--acento);
   }
@@ -1135,22 +1142,19 @@
   .ayuda-tipo { margin-top: 6px; }
   /* Fila clase + fecha + observaciones: en una sola línea que se reparte a lo
      ancho; si no cabe (móvil), los campos bajan de línea sin partir el nombre. */
-  .planner-asig-fila { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px;
+  /* Clase + fecha + observaciones en UNA sola línea (el nombre se recorta). */
+  .planner-asig-fila { display: flex; flex-wrap: nowrap; align-items: center; gap: 6px 8px;
     padding: 8px 0; border-top: 1px solid var(--borde); }
   .planner-asig-fila:first-child { border-top: 0; }
-  .planner-asig-fila .check.planner-asig-nom { flex: 1 1 140px; min-width: 120px; margin: 0;
+  .ses-form .planner-asig-nom { flex: 1 1 auto; min-width: 0; margin: 0; display: flex;
     align-items: center; line-height: 1.3; }
-  .planner-asig-fecha { flex: 0 0 auto; width: auto; max-width: 100%; box-sizing: border-box;
+  .planner-asig-nom-txt { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ses-form .planner-asig-fecha { flex: 0 0 auto; width: auto; max-width: 100%; box-sizing: border-box;
     margin: 0; padding: 6px 8px;
     border: 1px solid var(--borde-fuerte); border-radius: 8px; font: inherit; font-size: 13px; }
-  .planner-asig-obs { flex: 1 1 90px; min-width: 70px; box-sizing: border-box; margin: 0;
+  .ses-form .planner-asig-obs { flex: 1 1 80px; min-width: 60px; box-sizing: border-box; margin: 0;
     padding: 6px 8px;
     border: 1px solid var(--borde-fuerte); border-radius: 8px; font: inherit; font-size: 13px; }
-  /* En móvil la fila se apila: nombre a lo ancho y debajo fecha + observaciones. */
-  @media (max-width: 540px) {
-    .planner-asig-fila .check.planner-asig-nom { flex: 1 1 100%; }
-    .planner-asig-obs { flex: 1 1 auto; }
-  }
   /* Marca de observaciones en el chip de la rejilla y en la línea de la lista. */
   .pl-chip-obs { display: inline-flex; vertical-align: -1px; margin-left: 4px; color: var(--texto-2); }
   .pl-chip-obs .svg-ico { width: 12px; height: 12px; }
