@@ -3590,6 +3590,9 @@ var App = (function () {
   var accionModal = null;
   function abrirModal(titulo, cuerpoHtml, textoAceptar, onAceptar, opts) {
     document.getElementById('modal-titulo').textContent = titulo;
+    // Contenido extra en la barra de título (p. ej. el selector de Tipo de la sesión).
+    var extra = document.getElementById('modal-cab-extra');
+    if (extra) extra.innerHTML = (opts && opts.cabExtra) || '';
     document.getElementById('modal-cuerpo').innerHTML = cuerpoHtml;
     var b = document.getElementById('modal-aceptar');
     b.textContent = textoAceptar; b.disabled = false;
@@ -4838,16 +4841,20 @@ var App = (function () {
     // Color de la clase (el definido al crearla) en el borde izquierdo del chip.
     var col = (tipo === 'clase' && a && a.evalId) ? colorClase_(a.evalId) : '';
     var estilo = col ? ' style="border-left-color:' + col + '"' : '';
-    // Arrastrable: mover la sesión a otro día u otra clase (evalId origen en el
-    // dataset). Los avisos no van en celda, así que no se arrastran.
+    // Arrastrable desde el grip (6 puntitos): mover la sesión a otro día u otra
+    // clase. Los avisos no van en celda, así que no se arrastran.
     var arr = (tipo !== 'aviso')
-      ? ' draggable="true" ondragstart="App.dragSesionIni(event,\'' + s.sesionId + '\',\'' +
+      ? ' ondragstart="App.dragSesionIni(event,\'' + s.sesionId + '\',\'' +
         ((a && a.evalId) || '') + '\')" ondragend="App.dragSesionFin(event)"'
+      : '';
+    var grip = (tipo !== 'aviso')
+      ? '<span class="pl-chip-grip" title="Arrastrar" onpointerdown="App.gripSesionDown(event)">⠿</span>'
       : '';
     return '<div class="pl-chip ' + est + (tipo === 'evento' ? ' pl-chip-evento' : '') +
         '"' + estilo + arr + ' onclick="App.editarSesionUI(\'' + s.sesionId +
         '\')" title="' + esc(s.titulo || 'Sin título') +
         (a && a.observaciones ? ' — ' + esc(a.observaciones) : '') + '">' +
+      grip +
       (a ? '<span class="pl-chip-dot" title="Cambiar estado"' +
         (col ? ' style="border-color:' + col + '"' : '') +
         ' onclick="event.stopPropagation();App.estadoSesionUI(\'' + s.sesionId + '\',\'' +
@@ -5053,6 +5060,7 @@ var App = (function () {
         var ens = porFecha[iso] || [];
         celdas += '<div class="pl-mes-dia' + (fuera ? ' pl-mes-fuera' : '') +
             (fest ? ' pl-nolect' : '') + (iso === hoyIso ? ' pl-hoy' : '') + '"' +
+            dropAttrs_('@keep', iso) +
             (fest ? ' title="' + esc(fest) + '"' : '') + '>' +
           '<div class="pl-mes-num">' + d.getDate() +
             (fest ? '<span class="pl-mes-fest">' + esc(fest) + '</span>' : '') + '</div>' +
@@ -5072,8 +5080,18 @@ var App = (function () {
     var cls = 'pl-mes-chip ' + est +
       (tipo === 'evento' ? ' pl-chip-evento' : '') + (tipo === 'aviso' ? ' pl-mes-aviso' : '');
     var lab = (tipo === 'clase' && a && a.evalId) ? etiquetaClase_(a.evalId) + ': ' : '';
-    return '<button class="' + cls + '" onclick="App.editarSesionUI(\'' + s.sesionId + '\')" ' +
-      'title="' + esc(lab + (s.titulo || 'Sin título')) + '">' + esc(s.titulo || '—') + '</button>';
+    var col = (tipo === 'clase' && a && a.evalId) ? colorClase_(a.evalId) : '';
+    var estilo = col ? ' style="border-left-color:' + col + '"' : '';
+    var arr = (tipo !== 'aviso')
+      ? ' ondragstart="App.dragSesionIni(event,\'' + s.sesionId + '\',\'' +
+        ((a && a.evalId) || '') + '\')" ondragend="App.dragSesionFin(event)"'
+      : '';
+    var grip = (tipo !== 'aviso')
+      ? '<span class="pl-chip-grip pl-mes-grip" title="Arrastrar" onpointerdown="App.gripSesionDown(event)">⠿</span>'
+      : '';
+    return '<div class="' + cls + '"' + estilo + arr + ' onclick="App.editarSesionUI(\'' + s.sesionId + '\')" ' +
+      'title="' + esc(lab + (s.titulo || 'Sin título')) + '">' + grip +
+      '<span class="pl-mes-chip-tit">' + esc(s.titulo || '—') + '</span></div>';
   }
 
   // ---------- vista Unidades (unidades de planificación por materia + curso) ----------
@@ -5111,7 +5129,8 @@ var App = (function () {
         '<button class="btn peligro btn-icono" title="Eliminar" onclick="App.eliminarSesionUI(\'' + s.sesionId + '\')">' +
           svgUI('papelera') + '</button>' +
       '</span>';
-    return '<div class="pl-detail-head"><strong>' + (nueva ? 'Nueva sesión' : 'Editar') + '</strong>' + acc + '</div>' +
+    return '<div class="pl-detail-head"><strong>' + (nueva ? 'Nueva sesión' : 'Editar') + '</strong>' +
+        tipoSelectorHtml_(s.tipo || 'clase') + acc + '</div>' +
       sesionFormHtml_(s) +
       '<div class="pl-detail-guardar"><button class="btn primario" onclick="App.guardarSesionPanel_()">' +
         (nueva ? 'Crear sesión' : 'Guardar') + '</button></div>';
@@ -5191,8 +5210,6 @@ var App = (function () {
       ? ses.map(function (s, idx) {
           var f = primeraFecha_(s);
           var info = [];
-          if (s.paginas) info.push('pág. ' + s.paginas);
-          if (s.deberes) info.push('ej. ' + s.deberes);
           if (f !== '9999') info.push(fechaConAnio_(f));
           return '<div class="pl-uni-ses" data-id="' + s.sesionId + '">' +
             '<span class="pl-uni-grip" title="Arrastrar para reordenar" ' +
@@ -5325,7 +5342,17 @@ var App = (function () {
     var obs = (a && a.observaciones)
       ? '<span class="planner-sesion-obs">' + svgUI('lapiz') + ' ' + esc(a.observaciones) + '</span>'
       : '';
-    return '<div class="planner-sesion' + (a && a.estado === 'hecha' ? ' hecha' : '') + '">' +
+    // Arrastrable desde el grip: soltar en un día de la semana la programa.
+    var arr = (tipo !== 'aviso')
+      ? ' ondragstart="App.dragSesionIni(event,\'' + s.sesionId + '\',\'' +
+        ((a && a.evalId) || '') + '\')" ondragend="App.dragSesionFin(event)"'
+      : '';
+    var grip = (tipo !== 'aviso')
+      ? '<span class="pl-chip-grip planner-sesion-grip" title="Arrastrar a un día" ' +
+        'onpointerdown="App.gripSesionDown(event)">⠿</span>'
+      : '';
+    return '<div class="planner-sesion' + (a && a.estado === 'hecha' ? ' hecha' : '') + '"' + arr + '>' +
+      grip +
       estadoBtn +
       '<div class="planner-sesion-txt">' +
         '<span class="planner-sesion-tit">' + esc(s.titulo) + '</span>' +
@@ -5363,6 +5390,12 @@ var App = (function () {
   // ---------- arrastrar sesiones entre días/clases (vista Semana por grupo) ----------
   var arrastreSesion = null; // { sesionId, evalId } de la sesión en curso
 
+  /** El arrastre solo arranca desde el grip (6 puntitos): lo activamos al pulsarlo. */
+  function gripSesionDown(ev) {
+    ev.stopPropagation();
+    var el = ev.currentTarget.closest('.pl-chip, .pl-mes-chip, .planner-sesion');
+    if (el) el.setAttribute('draggable', 'true');
+  }
   function dragSesionIni(ev, sesionId, evalId) {
     arrastreSesion = { sesionId: sesionId, evalId: evalId || '' };
     try {
@@ -5373,8 +5406,9 @@ var App = (function () {
   }
   function dragSesionFin(ev) {
     arrastreSesion = null;
-    if (ev && ev.currentTarget && ev.currentTarget.classList) {
+    if (ev && ev.currentTarget) {
       ev.currentTarget.classList.remove('pl-chip-arrastrando');
+      ev.currentTarget.setAttribute('draggable', 'false');
     }
     [].forEach.call(document.querySelectorAll('.pl-drop-ok'), function (el) {
       el.classList.remove('pl-drop-ok');
@@ -5394,7 +5428,10 @@ var App = (function () {
     if (ev.currentTarget && ev.currentTarget.classList) ev.currentTarget.classList.remove('pl-drop-ok');
     if (!arrastreSesion) return;
     var a = arrastreSesion; arrastreSesion = null;
-    moverSesionA_(a.sesionId, a.evalId, evalIdDest || '', iso);
+    // '@keep' = destino sin grupo propio (mes, columna por horario): se conserva
+    // la clase de origen y solo cambia la fecha.
+    var dest = (evalIdDest === '@keep') ? a.evalId : (evalIdDest || '');
+    moverSesionA_(a.sesionId, a.evalId, dest, iso);
   }
   /** Mueve una asignación en el cliente (optimista) y lo persiste detrás. */
   function moverSesionA_(sesionId, evalIdOrig, evalIdDest, iso) {
@@ -5534,6 +5571,37 @@ var App = (function () {
     return html;
   }
 
+  /** Selector de Tipo (segmentado compacto) para la barra de título del editor. */
+  function tipoSelectorHtml_(tipoActual) {
+    return '<span class="ses-tipo-seg">' +
+      ['clase', 'evento', 'aviso'].map(function (t) {
+        var etq = t === 'clase' ? 'Clase' : (t === 'evento' ? 'Evento' : 'Aviso');
+        return '<label class="ses-tipo-opt' + (t === tipoActual ? ' activo' : '') + '">' +
+          '<input type="radio" name="f-ses-tipo" value="' + t + '"' +
+          (t === tipoActual ? ' checked' : '') + ' onchange="App.sesTipoCambiado()">' + etq + '</label>';
+      }).join('') + '</span>';
+  }
+
+  /**
+   * Preselección inteligente: en una sesión NUEVA colgada de una unidad, se
+   * premarcan las clases del mismo curso/área que la unidad (así salen ya
+   * marcadas y sus criterios cargados, sin tener que elegirlas a mano).
+   */
+  function preseleccionEvals_(s) {
+    var pre = {};
+    var yaTiene = (s.asignaciones || []).length;
+    if (yaTiene || !s.unidadId) return pre;
+    var u = unidadPlanDe_(s.unidadId);
+    if (!u) return pre;
+    clasesPlanner_().forEach(function (c) {
+      var ev = evalDe_(c.id);
+      if (ev && (ev.area || '') === (u.area || '') && (ev.curso || '') === (u.curso || '')) {
+        pre[c.id] = true;
+      }
+    });
+    return pre;
+  }
+
   /** HTML del formulario de sesión (reutilizado por el modal y el panel de PC). */
   function sesionFormHtml_(s) {
     var tipoActual = s.tipo || 'clase';
@@ -5541,20 +5609,25 @@ var App = (function () {
       ? (s.asignaciones[0].fecha || '') : '';
     var asigDe = {};
     (s.asignaciones || []).forEach(function (a) { asigDe[a.evalId] = a; });
+    var pre = preseleccionEvals_(s);
     var filas = clasesPlanner_().map(function (c) {
       var a = asigDe[c.id];
+      var marcada = a || pre[c.id];
+      var pico = '<span class="planner-asig-color" style="background:' + (c.color || 'var(--acento)') +
+        '"></span>';
       return '<div class="planner-asig-fila">' +
-        '<label class="check"><input type="checkbox" class="planner-asig-chk" data-eval="' +
-          c.id + '"' + (a ? ' checked' : '') +
-          ' onchange="App.asigChkCambiada(this)"> ' + esc(etiquetaClase_(c.id)) + '</label>' +
+        '<label class="check planner-asig-nom"><input type="checkbox" class="planner-asig-chk" data-eval="' +
+          c.id + '"' + (marcada ? ' checked' : '') +
+          ' onchange="App.asigChkCambiada(this)"> ' + pico + esc(etiquetaClase_(c.id)) + '</label>' +
         '<input type="date" class="planner-asig-fecha" data-eval="' + c.id + '" value="' +
-          esc((a && a.fecha) || '') + '">' +
+          esc((a && a.fecha) || '') + '" title="Fecha para este grupo">' +
         '<input type="text" class="planner-asig-obs" data-eval="' + c.id + '" ' +
-          'placeholder="Observaciones para este grupo (opcional)" value="' +
+          'placeholder="Obs." title="Observaciones para este grupo (opcional)" value="' +
           esc((a && a.observaciones) || '') + '">' +
       '</div>';
     }).join('');
-    return '<label>Título' +
+    var izq = '<div class="ses-col ses-col-izq">' +
+      '<label>Título' +
         '<input id="ses-titulo" type="text" placeholder="Ej.: Los ecosistemas: salida al parque" value="' +
         esc(s.titulo) + '"></label>' +
       '<label>Descripción / desarrollo (opcional)</label>' +
@@ -5570,39 +5643,27 @@ var App = (function () {
           'data-ph="Qué se hace, materiales, deberes… (pega un enlace y se vuelve clicable)">' +
           descInicialHtml_(s.descripcion) + '</div>' +
       '</div>' +
-      '<div class="campo-crit"><span class="etq">Tipo</span>' +
-        '<div class="tipos-act">' +
-          ['clase', 'evento', 'aviso'].map(function (t) {
-            var etq = t === 'clase' ? 'Clase' : (t === 'evento' ? 'Evento' : 'Aviso');
-            return '<label class="tipo-opt"><input type="radio" name="f-ses-tipo" value="' + t + '"' +
-              (t === tipoActual ? ' checked' : '') + ' onchange="App.sesTipoCambiado()">' + etq + '</label>';
-          }).join('') +
-        '</div>' +
-        '<p class="ayuda ayuda-tipo" id="ses-tipo-ayuda"></p></div>' +
-      '<div id="ses-sec-clase">' +
-        '<label>Unidad de planificación (opcional)' +
-          '<select id="ses-unidad">' + opcionesUnidadesPlan_(s.unidadId || '') + '</select></label>' +
-        '<div class="ses-rapidos">' +
-          '<label>Páginas<input id="ses-paginas" type="text" placeholder="Ej.: 12-13" value="' +
-            esc(s.paginas || '') + '"></label>' +
-          '<label>Deberes / ejercicios<input id="ses-deberes" type="text" placeholder="Ej.: 1-4" ' +
-            'value="' + esc(s.deberes || '') + '"></label>' +
-        '</div>' +
-        '<div class="campo-crit"><span class="etq">Clases donde se dará la sesión</span>' +
-          '<p class="ayuda">La misma planificación sirve para varios grupos; cada uno lleva su ' +
-            'fecha y su estado.</p>' +
-          '<div class="planner-asigs">' + (filas ||
-            '<div class="vacio">Aún no tienes clases: añade una con su nombre desde el botón ' +
-            '«Horario» del planificador.</div>') + '</div></div>' +
-        '<div class="campo-crit"><span class="etq">Criterios trabajados</span>' +
-          '<div id="ses-crit-lista" class="lista-crit planner-crit"></div>' +
-          '<p class="ayuda">Salen del área de las clases marcadas; solo tienes que marcarlos.</p>' +
-        '</div>' +
-      '</div>' +
+      '<label id="ses-sec-unidad">Unidad de planificación (opcional)' +
+        '<select id="ses-unidad">' + opcionesUnidadesPlan_(s.unidadId || '') + '</select></label>' +
       '<div id="ses-sec-evento"' + (tipoActual === 'clase' ? ' hidden' : '') + '>' +
         '<label>Fecha' +
           '<input id="ses-evento-fecha" type="date" value="' + esc(eventoFecha) + '"></label>' +
-      '</div>';
+      '</div>' +
+      '<p class="ayuda ayuda-tipo" id="ses-tipo-ayuda"></p>' +
+    '</div>';
+    var dcha = '<div class="ses-col ses-col-dcha" id="ses-col-dcha">' +
+      '<div class="campo-crit"><span class="etq">Clases donde se dará la sesión</span>' +
+        '<p class="ayuda">La misma planificación sirve para varios grupos; cada uno lleva su ' +
+          'fecha y su estado.</p>' +
+        '<div class="planner-asigs">' + (filas ||
+          '<div class="vacio">Aún no tienes clases: añade una con su nombre desde el botón ' +
+          '«Horario» del planificador.</div>') + '</div></div>' +
+      '<div class="campo-crit"><span class="etq">Criterios trabajados</span>' +
+        '<p class="ayuda">Salen del área de las clases marcadas; solo tienes que marcarlos.</p>' +
+        '<div id="ses-crit-lista" class="lista-crit planner-crit"></div>' +
+      '</div>' +
+    '</div>';
+    return '<div class="ses-form">' + izq + dcha + '</div>';
   }
 
   /** Cablea el editor recién pintado (modal o panel): secciones, criterios, pegado. */
@@ -5627,7 +5688,8 @@ var App = (function () {
   function abrirModalSesion_(textoAceptar, id, s) {
     prepararEditorSesion_(s, id);
     abrirModal(tituloSesion_(id, s.tipo || 'clase'), sesionFormHtml_(s),
-      textoAceptar, function () { guardarSesion_(id); }, { sinFoco: !!id, ancho: true });
+      textoAceptar, function () { guardarSesion_(id); },
+      { sinFoco: !!id, ancho: true, cabExtra: tipoSelectorHtml_(s.tipo || 'clase') });
     montarEditorSesion_();
   }
 
@@ -5638,10 +5700,18 @@ var App = (function () {
   /** Muestra la sección de clases (tipo clase) o la de fecha (evento/aviso). */
   function sesTipoCambiado() {
     var t = sesTipoElegido_();
-    var secClase = document.getElementById('ses-sec-clase');
+    var clase = (t === 'clase');
+    var secUnidad = document.getElementById('ses-sec-unidad');
+    var colDcha = document.getElementById('ses-col-dcha');
     var secEvento = document.getElementById('ses-sec-evento');
-    if (secClase) secClase.hidden = (t !== 'clase');
-    if (secEvento) secEvento.hidden = (t === 'clase');
+    if (secUnidad) secUnidad.hidden = !clase;
+    if (colDcha) colDcha.hidden = !clase;
+    if (secEvento) secEvento.hidden = clase;
+    // Resalta la opción activa del segmentado de Tipo.
+    [].forEach.call(document.querySelectorAll('.ses-tipo-opt'), function (o) {
+      var inp = o.querySelector('input');
+      o.classList.toggle('activo', !!(inp && inp.checked));
+    });
     var ayuda = document.getElementById('ses-tipo-ayuda');
     if (ayuda) ayuda.textContent =
       t === 'clase' ? 'Sesión de clase: se asigna a uno o varios grupos.'
@@ -5702,8 +5772,9 @@ var App = (function () {
       bloques += '<div class="planner-crit-area">Otros</div>' +
         otros.map(function (cod) { return critChkSesion_(cod, '', true); }).join('');
     }
-    cont.innerHTML = bloques ||
-      '<p class="ayuda">Marca arriba una clase con área para ver sus criterios.</p>';
+    // Sin criterios: dejamos el contenedor vacío (·:empty lo oculta) para no
+    // mostrar un recuadro vacío cuando aún no hay ninguna clase con área marcada.
+    cont.innerHTML = bloques;
   }
 
   function critChkSesion_(cod, texto, marcado) {
@@ -5745,8 +5816,7 @@ var App = (function () {
       criterios: tipo === 'clase' ? Object.keys(sesionCritSel) : [],
       asignaciones: asignaciones,
       unidadId: tipo === 'clase' ? (val('ses-unidad') || '') : '',
-      paginas: tipo === 'clase' ? (val('ses-paginas') || '') : '',
-      deberes: tipo === 'clase' ? (val('ses-deberes') || '') : ''
+      paginas: '', deberes: ''
     };
     // Guardado OPTIMISTA (como las notas de la rejilla): se cierra el modal y se
     // pinta ya con lo introducido; la persistencia va por detrás y reconcilia.
@@ -5921,7 +5991,7 @@ var App = (function () {
     nuevaSesion: nuevaSesion, editarSesionUI: editarSesionUI,
     duplicarSesionUI: duplicarSesionUI, eliminarSesionUI: eliminarSesionUI,
     estadoSesionUI: estadoSesionUI, exportarPlanner: exportarPlanner,
-    dragSesionIni: dragSesionIni, dragSesionFin: dragSesionFin,
+    dragSesionIni: dragSesionIni, dragSesionFin: dragSesionFin, gripSesionDown: gripSesionDown,
     dragSesionSobre: dragSesionSobre, dragSesionFuera: dragSesionFuera,
     dragSesionSuelta: dragSesionSuelta,
     abrirHorario: abrirHorario, horToggleDia: horToggleDia, horChkCambiada: horChkCambiada,
