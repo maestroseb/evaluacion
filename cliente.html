@@ -5618,7 +5618,8 @@ var App = (function () {
       return '<div class="planner-asig-fila">' +
         '<label class="check planner-asig-nom"><input type="checkbox" class="planner-asig-chk" data-eval="' +
           c.id + '"' + (marcada ? ' checked' : '') +
-          ' onchange="App.asigChkCambiada(this)"> ' + pico + esc(etiquetaClase_(c.id)) + '</label>' +
+          ' onchange="App.asigChkCambiada(this)"> ' + pico +
+          '<span class="planner-asig-nom-txt">' + esc(etiquetaClase_(c.id)) + '</span></label>' +
         '<input type="date" class="planner-asig-fecha" data-eval="' + c.id + '" value="' +
           esc((a && a.fecha) || '') + '" title="Fecha para este grupo">' +
         '<input type="text" class="planner-asig-obs" data-eval="' + c.id + '" ' +
