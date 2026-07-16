@@ -3596,6 +3596,10 @@ var App = (function () {
     document.getElementById('modal-cuerpo').innerHTML = cuerpoHtml;
     var b = document.getElementById('modal-aceptar');
     b.textContent = textoAceptar; b.disabled = false;
+    // Texto del botón secundario (por defecto «Cancelar»; el editor de sesión,
+    // que autoguarda, usa «Cerrar» para no dar falsa sensación de descartar).
+    var bc = document.getElementById('modal-cancelar');
+    if (bc) bc.textContent = (opts && opts.textoCancelar) || 'Cancelar';
     accionModal = onAceptar;
     b.onclick = function () { if (accionModal) accionModal(); };
     // Modal ancho (p. ej. el editor de rúbricas) en pantallas grandes.
@@ -4823,11 +4827,14 @@ var App = (function () {
       }).join('') + '</div>';
   }
 
-  /** Chip compacto de sesión para las celdas de la rejilla. */
-  function chipSesion_(en, conClase) {
+  /**
+   * Tarjeta de sesión para las celdas del calendario (estilo Planboard):
+   * cabecera con el color de la clase (título + hora/grupo) y, si conPreview,
+   * cuerpo con la descripción enriquecida (respeta saltos, listas y enlaces).
+   */
+  function chipSesion_(en, conClase, conPreview) {
     var s = en.ses, a = en.asig;
     var tipo = s.tipo || 'clase';
-    var est = a ? a.estado : 'pendiente';
     var sub = '';
     if (conClase && a) {
       if (tipo !== 'clase') {
@@ -4841,11 +4848,8 @@ var App = (function () {
     var obs = (a && a.observaciones)
       ? '<span class="pl-chip-obs" title="' + esc(a.observaciones) + '">' + svgUI('lapiz') + '</span>'
       : '';
-    // Color de la clase (el definido al crearla) en el borde izquierdo del chip.
-    var col = (tipo === 'clase' && a && a.evalId) ? colorClase_(a.evalId) : '';
-    var estilo = col ? ' style="border-left-color:' + col + '"' : '';
-    // Arrastrable desde el grip (6 puntitos): mover la sesión a otro día u otra
-    // clase. Los avisos no van en celda, así que no se arrastran.
+    // Color de la clase (el definido al crearla): borde y teñido de la cabecera.
+    var col = (tipo === 'clase' && a && a.evalId) ? colorClase_(a.evalId) : 'var(--acento)';
     var arr = (tipo !== 'aviso')
       ? ' ondragstart="App.dragSesionIni(event,\'' + s.sesionId + '\',\'' +
         ((a && a.evalId) || '') + '\')" ondragend="App.dragSesionFin(event)"'
@@ -4853,17 +4857,20 @@ var App = (function () {
     var grip = (tipo !== 'aviso')
       ? '<span class="pl-chip-grip" title="Arrastrar" onpointerdown="App.gripSesionDown(event)">⠿</span>'
       : '';
-    return '<div class="pl-chip ' + est + (tipo === 'evento' ? ' pl-chip-evento' : '') +
-        '"' + estilo + arr + ' onclick="App.editarSesionUI(\'' + s.sesionId +
-        '\')" title="' + esc(s.titulo || 'Sin título') +
+    // Previsualización: descripción con su formato (solo donde cabe: día y, en
+    // PC, semana). El clic va en la cabecera; así los enlaces del cuerpo funcionan.
+    var descHtml = descInicialHtml_(s.descripcion || '');
+    var preview = (conPreview && descHtml)
+      ? '<div class="pl-chip-desc rt-render">' + descHtml + '</div>' : '';
+    return '<div class="pl-chip' + (tipo === 'evento' ? ' pl-chip-evento' : '') +
+        '" style="border-left-color:' + col + '"' + arr + '>' +
+      '<div class="pl-chip-cab" style="background:color-mix(in srgb, ' + col + ' 15%, var(--surface))" ' +
+        'onclick="App.editarSesionUI(\'' + s.sesionId + '\')" title="' + esc(s.titulo || 'Sin título') +
         (a && a.observaciones ? ' — ' + esc(a.observaciones) : '') + '">' +
-      grip +
-      (a ? '<span class="pl-chip-dot" title="Cambiar estado"' +
-        (col ? ' style="border-color:' + col + '"' : '') +
-        ' onclick="event.stopPropagation();App.estadoSesionUI(\'' + s.sesionId + '\',\'' +
-        a.evalId + '\')"></span>' : '') +
-      '<span class="pl-chip-txt"><span class="pl-chip-tit">' + esc(s.titulo || 'Sin título') +
-        obs + '</span>' + sub + '</span>' +
+        grip +
+        '<span class="pl-chip-txt"><span class="pl-chip-tit">' + esc(s.titulo || 'Sin título') +
+          obs + '</span>' + sub + '</span>' +
+      '</div>' + preview +
     '</div>';
   }
 
@@ -4899,12 +4906,12 @@ var App = (function () {
       var ens = porClase[c.id] || [];
       var hora = horaDia_(c, idx);
       if (ens.length) {
-        ens.forEach(function (en) { bloques.push({ hora: hora, html: chipSesion_(en, true) }); });
+        ens.forEach(function (en) { bloques.push({ hora: hora, html: chipSesion_(en, true, true) }); });
       } else if (c.horario.some(function (h) { return h.dia === idx; })) {
         bloques.push({ hora: hora, html: huecoCelda_(c.id, iso, true) });
       }
     });
-    eventos.forEach(function (en) { bloques.push({ hora: '99:98', html: chipSesion_(en, true) }); });
+    eventos.forEach(function (en) { bloques.push({ hora: '99:98', html: chipSesion_(en, true, true) }); });
     bloques.sort(function (a, b) {
       var ha = a.hora || '99:99', hb = b.hora || '99:99';
       return ha < hb ? -1 : ha > hb ? 1 : 0;
@@ -4952,6 +4959,7 @@ var App = (function () {
     if (!clases.length) {
       return '<div class="vacio">Aún no tienes clases. Añade una desde el botón «Horario».</div>';
     }
+    var prev = !esMovil(); // previsualización solo en PC (en móvil la semana no cabe)
     var cel = ['<div class="pl-esq pl-cab"></div>'];
     ctx.isos.forEach(function (iso, i) {
       var fest = festivoNombre_(iso);
@@ -4969,7 +4977,7 @@ var App = (function () {
         var ens = ctx.porClaseFecha[c.id + '|' + iso] || [];
         if (ens.length) {
           cel.push('<div class="pl-celda"' + dropAttrs_(c.id, iso) + '>' +
-            ens.map(function (en) { return chipSesion_(en, false); }).join('') + '</div>');
+            ens.map(function (en) { return chipSesion_(en, false, prev); }).join('') + '</div>');
         } else {
           // Celda vacía: TODA la celda planifica (con clase y fecha ya puestas).
           // Un «+» marca los días de horario; el resto también es clicable.
@@ -4987,7 +4995,7 @@ var App = (function () {
       ctx.isos.forEach(function (iso) {
         var evs = ctx.eventos[iso] || [];
         cel.push('<div class="pl-celda"' + dropAttrs_('', iso) + '>' +
-          evs.map(function (en) { return chipSesion_(en, false); }).join('') + '</div>');
+          evs.map(function (en) { return chipSesion_(en, false, prev); }).join('') + '</div>');
       });
     }
     return '<div class="pl-scroll"><div class="pl-grid" style="--cols:' + DIAS_LECTIVOS + '">' +
@@ -4997,20 +5005,21 @@ var App = (function () {
   /** Vista por horario: cada día, sus clases (sesión o hueco) ordenadas por hora. */
   function htmlSemanaHorario_(ctx) {
     var clases = clasesPlanner_();
+    var prev = !esMovil(); // previsualización solo en PC
     var cols = ctx.isos.map(function (iso, i) {
       var bloques = [];
       clases.forEach(function (c) {
         var ens = ctx.porClaseFecha[c.id + '|' + iso] || [];
         var hora = horaDia_(c, i);
         if (ens.length) {
-          ens.forEach(function (en) { bloques.push({ hora: hora, html: chipSesion_(en, true) }); });
+          ens.forEach(function (en) { bloques.push({ hora: hora, html: chipSesion_(en, true, prev) }); });
         } else if (c.horario.some(function (h) { return h.dia === i; })) {
           bloques.push({ hora: hora, html: huecoCelda_(c.id, iso, true) });
         }
       });
       // Eventos sin grupo del día: al final de la columna (no tienen hora).
       (ctx.eventos[iso] || []).forEach(function (en) {
-        bloques.push({ hora: '99:98', html: chipSesion_(en, true) });
+        bloques.push({ hora: '99:98', html: chipSesion_(en, true, prev) });
       });
       bloques.sort(function (a, b) {
         var ha = a.hora || '99:99', hb = b.hora || '99:99';
@@ -5781,7 +5790,8 @@ var App = (function () {
     editorSesionCtx = { id: id, enPanel: false };
     abrirModal(tituloSesion_(id, s.tipo || 'clase'), sesionFormHtml_(s),
       textoAceptar, function () { guardarSesion_(id); },
-      { sinFoco: !!id, ancho: true, cabExtra: tipoSelectorHtml_(s.tipo || 'clase') });
+      { sinFoco: !!id, ancho: true, textoCancelar: 'Cerrar',
+        cabExtra: tipoSelectorHtml_(s.tipo || 'clase') });
     montarEditorSesion_();
   }
 
