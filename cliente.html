@@ -4879,7 +4879,7 @@ var App = (function () {
     var preview = (conPreview && descHtml)
       ? '<div class="pl-chip-desc rt-render" ' + edit + '>' + descHtml + '</div>' : '';
     return '<div class="pl-chip' + (tipo === 'evento' ? ' pl-chip-evento' : '') +
-        '" style="border-left-color:' + col + '"' + arr + '>' +
+        '" style="border-color:' + col + '"' + arr + '>' +
       '<div class="pl-chip-cab" style="background:' + col + '" ' + edit +
         ' title="' + esc(s.titulo || 'Sin título') +
         (a && a.observaciones ? ' — ' + esc(a.observaciones) : '') + '">' +
