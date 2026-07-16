@@ -1219,11 +1219,15 @@
   .pl-col-cab { font-size: 12px; font-weight: 700; color: var(--texto-2); text-transform: capitalize;
     padding: 2px 2px 2px; }
   .pl-hoy { color: var(--acento); }
-  /* Chip de sesión (celda) */
-  .pl-chip { display: flex; gap: 6px; align-items: flex-start; background: var(--acento-suave);
-    border-left: 4px solid var(--acento); border-radius: 6px; padding: 5px 7px; cursor: pointer; }
-  /* En la rejilla grupo×días, los chips llenan el alto de la celda (sin hueco). */
-  .pl-celda > .pl-chip { flex: 1 1 auto; align-items: center; }
+  /* Tarjeta de sesión (celda), estilo Planboard: cabecera de color + cuerpo. */
+  .pl-chip { display: flex; flex-direction: column; background: var(--surface);
+    border: 1px solid var(--borde); border-left: 4px solid var(--acento); border-radius: 6px;
+    overflow: hidden; }
+  /* En la rejilla grupo×días, las tarjetas llenan el alto de la celda. */
+  .pl-celda > .pl-chip { flex: 1 1 auto; }
+  .pl-chip-cab { display: flex; gap: 6px; align-items: flex-start; padding: 5px 7px; cursor: pointer; }
+  .pl-chip-desc { padding: 4px 8px 6px; border-top: 1px solid var(--borde); font-size: 11.5px;
+    color: var(--texto-2); line-height: 1.35; overflow-wrap: anywhere; }
   .pl-chip-arrastrando { opacity: .45; }
   /* Punto con el color de la clase junto a la etiqueta de fila. */
   .pl-fila-color { display: inline-block; width: 9px; height: 9px; border-radius: 50%;
@@ -1231,16 +1235,16 @@
   /* Celda resaltada mientras se arrastra una sesión encima. */
   .pl-celda.pl-drop-ok { border-color: var(--acento); background: var(--acento-suave);
     box-shadow: inset 0 0 0 1px var(--acento); }
-  .pl-chip.hecha { border-left-color: var(--g-top-tx); background: var(--g-top-bg); }
-  .pl-chip.aplazada { border-left-color: var(--g-baja-tx); background: var(--g-baja-bg); }
-  .pl-chip.hecha .pl-chip-tit { text-decoration: line-through; opacity: .8; }
-  .pl-chip-dot { flex: 0 0 auto; width: 12px; height: 12px; margin-top: 2px; border-radius: 50%;
-    border: 2px solid var(--acento); }
-  .pl-chip.hecha .pl-chip-dot { background: var(--g-top-tx); border-color: var(--g-top-tx); }
-  .pl-chip.aplazada .pl-chip-dot { border-color: var(--g-baja-tx); }
   .pl-chip-txt { min-width: 0; display: flex; flex-direction: column; }
   .pl-chip-tit { font-size: 12.5px; font-weight: 600; line-height: 1.25; word-break: break-word; }
   .pl-chip-sub { font-size: 11px; color: var(--texto-2); font-weight: 500; }
+  /* Render de texto enriquecido (previsualización de la descripción). */
+  .rt-render p { margin: 0 0 4px; }
+  .rt-render p:last-child { margin-bottom: 0; }
+  .rt-render ul, .rt-render ol { margin: 2px 0; padding-left: 18px; }
+  .rt-render li { margin: 1px 0; }
+  .rt-render a { color: var(--acento); }
+  .rt-render b, .rt-render strong { font-weight: 700; }
   /* Hueco "+ Planificar" compacto */
   .pl-hueco { width: 100%; text-align: left; border: 1px dashed var(--borde-fuerte);
     background: transparent; color: var(--texto-3); border-radius: 6px; padding: 4px 6px;
