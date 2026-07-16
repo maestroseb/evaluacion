@@ -3691,8 +3691,9 @@ var App = (function () {
     // Evaluador de rúbrica abierto: cerrar como sea (fuera, Escape…) GUARDA
     // lo último seleccionado; nada se pierde por un toque fuera del modal.
     if (rubEvalSel) persistirEvaluador_();
-    // Editor de sesión en el modal: al cerrar por cualquier vía se guarda.
-    if (editorSesionCtx && !editorSesionCtx.enPanel) { autoguardarSesion_(); editorSesionCtx = null; }
+    // Editor de sesión en el modal: al cerrar por cualquier vía se guarda y se
+    // repinta el planificador (para que la previsualización refleje el cambio ya).
+    if (editorSesionCtx && !editorSesionCtx.enPanel) { autoguardarSesion_({ pintar: true }); editorSesionCtx = null; }
     document.getElementById('modal-fondo').hidden = true;
     accionModal = null;
     var m = document.querySelector('.modal');
@@ -4410,6 +4411,9 @@ var App = (function () {
 
   function plannerModo(modo) {
     autoguardarSesion_();   // si estabas editando en el panel de Unidades, guarda antes
+    // Al cambiar de vista, el panel de Unidades no conserva la sesión abierta:
+    // al volver a Unidades aparecerá vacío hasta que se pulse otra sesión.
+    sesUnidadSel = ''; panelNuevoUid = '';
     plannerModoActual = modo;
     pintarPlanner();
   }
@@ -5298,7 +5302,13 @@ var App = (function () {
     return min;
   }
 
-  function plannerMatCursoSel(k) { autoguardarSesion_(); plannerMatCurso = k; pintarPlanner(); }
+  function plannerMatCursoSel(k) {
+    autoguardarSesion_();
+    // Al cambiar de materia, el panel de detalle vuelve a vacío (no deja abierta
+    // la edición de una sesión de otra materia).
+    sesUnidadSel = ''; panelNuevoUid = '';
+    plannerMatCurso = k; pintarPlanner();
+  }
 
   function nuevaPlanUnidad() {
     var p = (plannerMatCurso || '||').split('||');
@@ -5579,13 +5589,18 @@ var App = (function () {
   }
   /** ¿Hay un editor de sesión visible ahora mismo? */
   function hayEditorSesion_() { return !!document.getElementById('ses-titulo'); }
-  /** Guarda el editor de sesión abierto si cambió algo (al salir: fuera, otra sesión…). */
-  function autoguardarSesion_() {
+  /**
+   * Guarda el editor de sesión abierto si cambió algo (al salir: fuera, otra
+   * sesión…). Con cfg.pintar repinta el planificador para que la previsualización
+   * refleje el cambio ya (al cerrar el modal); en las transiciones del panel se
+   * omite porque el flujo que sigue ya repinta.
+   */
+  function autoguardarSesion_(cfg) {
     if (!editorSesionCtx || !hayEditorSesion_()) return;
     if (firmaEditorSesion_() === editorFirmaInicial) return; // sin cambios: no persiste
     var ctx = editorSesionCtx;
     guardarSesion_(ctx.id, { enPanel: ctx.enPanel, auto: true, silencioso: true,
-      noCerrar: true, noPintar: true });
+      noCerrar: true, noPintar: !(cfg && cfg.pintar) });
   }
 
   // ---------- editor de texto enriquecido (descripción de la sesión) ----------
