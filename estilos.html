@@ -1144,9 +1144,12 @@
      ancho; si no cabe (móvil), los campos bajan de línea sin partir el nombre. */
   /* Clase + fecha + observaciones en UNA sola línea (el nombre se recorta). */
   .planner-asig-fila { display: flex; flex-wrap: nowrap; align-items: center; gap: 6px 8px;
-    padding: 8px 0; border-top: 1px solid var(--borde); }
+    padding: 6px 8px; border-top: 1px solid var(--borde); border-radius: 8px; }
   .planner-asig-fila:first-child { border-top: 0; }
-  .ses-form .planner-asig-nom { flex: 1 1 auto; min-width: 0; margin: 0; display: flex;
+  /* Clase marcada: resaltada ligeramente (mantiene el orden, no salta). */
+  .planner-asig-fila.activa { background: var(--acento-suave); }
+  /* Nombre de la clase con ancho fijo para que fecha y observaciones alineen. */
+  .ses-form .planner-asig-nom { flex: 0 0 150px; width: 150px; min-width: 0; margin: 0; display: flex;
     align-items: center; line-height: 1.3; }
   .planner-asig-nom-txt { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .ses-form .planner-asig-fecha { flex: 0 0 auto; width: auto; max-width: 100%; box-sizing: border-box;
@@ -1213,6 +1216,8 @@
   /* Chip de sesión (celda) */
   .pl-chip { display: flex; gap: 6px; align-items: flex-start; background: var(--acento-suave);
     border-left: 4px solid var(--acento); border-radius: 6px; padding: 5px 7px; cursor: pointer; }
+  /* En la rejilla grupo×días, los chips llenan el alto de la celda (sin hueco). */
+  .pl-celda > .pl-chip { flex: 1 1 auto; align-items: center; }
   .pl-chip-arrastrando { opacity: .45; }
   /* Punto con el color de la clase junto a la etiqueta de fila. */
   .pl-fila-color { display: inline-block; width: 9px; height: 9px; border-radius: 50%;
