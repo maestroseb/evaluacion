@@ -53,6 +53,15 @@ function moverSesion(sesionId, evalIdOrig, evalIdDest, fecha) {
   return Planner.mover_(abrirCuaderno_(), sesionId, evalIdOrig, evalIdDest, fecha);
 }
 
+/**
+ * Adelanta (dir=+1) o retrasa (dir=-1) una sesión un día lectivo en TODOS sus
+ * grupos, empujando en cascada las sesiones contiguas del mismo grupo. Salta
+ * findes y festivos del curso académico dado. Devuelve la lista actualizada.
+ */
+function desplazarSesion(sesionId, dir, cursoAcademico) {
+  return Planner.desplazar_(abrirCuaderno_(), sesionId, dir, cursoAcademico);
+}
+
 /** Lista las unidades de planificación del profe (por materia/área). */
 function listarPlanUnidades() {
   return Planner.listarU_(abrirCuaderno_());
@@ -217,6 +226,78 @@ var Planner = (function () {
     var out = Object.keys(byEval).map(function (k) { return byEval[k]; });
     sh.getRange(fila, 5).setValue(JSON.stringify(out));
     return obtener_(ss, sesionId);
+  }
+
+  // ---------- adelantar / retrasar con cascada ----------
+  function isoADate_(iso) { var p = String(iso).split('-'); return new Date(Date.UTC(+p[0], +p[1] - 1, +p[2])); }
+  function dateAIso_(d) { return Utilities.formatDate(d, 'UTC', 'yyyy-MM-dd'); }
+  function esLectivo_(iso, festSet) {
+    var dow = isoADate_(iso).getUTCDay();
+    return dow !== 0 && dow !== 6 && !festSet[iso];
+  }
+  /** Siguiente (dir=+1) o anterior (dir=-1) día lectivo a partir de iso. */
+  function pasoLectivo_(iso, dir, festSet) {
+    var d = isoADate_(iso), lim = 0;
+    do { d.setUTCDate(d.getUTCDate() + dir); } while (!esLectivo_(dateAIso_(d), festSet) && ++lim < 400);
+    return dateAIso_(d);
+  }
+  /** Conjunto de días no lectivos (festivos y vacaciones) del curso académico. */
+  function festivosSet_(ss, curso) {
+    var set = {};
+    try {
+      var cal = Calendario.obtener_(ss, curso);
+      (cal.festivos || []).forEach(function (f) {
+        if (!f.desde) return;
+        var d = isoADate_(f.desde), fin = isoADate_(f.hasta || f.desde), lim = 0;
+        while (d <= fin && lim++ < 400) { set[dateAIso_(d)] = true; d.setUTCDate(d.getUTCDate() + 1); }
+      });
+    } catch (e) {}
+    return set;
+  }
+  /** Empuja en cascada dentro del mapa fecha→sesionId de un grupo. */
+  function empujarGrupo_(mapa, fecha, dir, festSet) {
+    var destino = pasoLectivo_(fecha, dir, festSet);
+    if (mapa[destino]) empujarGrupo_(mapa, destino, dir, festSet); // libera el destino antes
+    mapa[destino] = mapa[fecha];
+    delete mapa[fecha];
+    return destino;
+  }
+
+  function desplazar_(ss, sesionId, dir, cursoAcademico) {
+    dir = (Number(dir) < 0) ? -1 : 1;
+    var lista = listar_(ss);
+    var objetivo = null, byId = {};
+    lista.forEach(function (s) { byId[s.sesionId] = s; if (s.sesionId === sesionId) objetivo = s; });
+    if (!objetivo) throw new Error('Sesión no encontrada.');
+    var festSet = festivosSet_(ss, cursoAcademico);
+    var tocadas = {};
+    (objetivo.asignaciones || []).forEach(function (a) {
+      if (!a.evalId || !a.fecha) return;
+      var g = a.evalId;
+      // Mapa fecha→sesionId de todas las sesiones de ESE grupo (una por día).
+      var mapa = {}, fechaOrig = {};
+      lista.forEach(function (s) {
+        (s.asignaciones || []).forEach(function (x) {
+          if (x.evalId === g && x.fecha) mapa[x.fecha] = s.sesionId;
+        });
+      });
+      Object.keys(mapa).forEach(function (f) { fechaOrig[mapa[f]] = f; });
+      empujarGrupo_(mapa, a.fecha, dir, festSet);
+      // Reconstruye sesionId→fechaNueva y aplica los cambios de fecha del grupo.
+      var nueva = {};
+      Object.keys(mapa).forEach(function (f) { nueva[mapa[f]] = f; });
+      Object.keys(nueva).forEach(function (sid) {
+        if (nueva[sid] === fechaOrig[sid]) return;
+        (byId[sid].asignaciones || []).forEach(function (x) { if (x.evalId === g) x.fecha = nueva[sid]; });
+        tocadas[sid] = true;
+      });
+    });
+    var sh = hoja_(ss);
+    Object.keys(tocadas).forEach(function (sid) {
+      var fila = Datos.filaDeId_(sh, sid);
+      if (fila > 0) sh.getRange(fila, 5).setValue(JSON.stringify((byId[sid].asignaciones || []).map(mapAsig_)));
+    });
+    return listar_(ss);
   }
 
   // ---------- migración de clases provisionales (v18 → v19) ----------
@@ -415,6 +496,7 @@ var Planner = (function () {
   return {
     listar_: listar_, obtener_: obtener_, crear_: crear_, editar_: editar_,
     eliminar_: eliminar_, duplicar_: duplicar_, cambiarEstado_: cambiarEstado_, mover_: mover_,
+    desplazar_: desplazar_,
     migrarProvisionales_: migrarProvisionales_,
     listarU_: listarU_, crearU_: crearU_, editarU_: editarU_, eliminarU_: eliminarU_,
     reordenarSesionesUnidad_: reordenarSesionesUnidad_
