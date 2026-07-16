@@ -1216,8 +1216,9 @@
   .pl-esq { position: sticky; left: 0; background: var(--bg); z-index: 1; }
   .pl-fila-lbl { display: flex; align-items: center; font-size: 13px; font-weight: 600;
     padding: 6px 8px 6px 0; }
-  .pl-celda { background: var(--surface); border: 1px solid var(--borde); border-radius: 8px;
-    min-height: 44px; padding: 4px; display: flex; flex-direction: column; gap: 4px; }
+  /* Celda con sesión: la tarjeta la llena por completo (sin marco gris). El
+     cuadro blanco con borde solo se ve en los días vacíos (.pl-celda-nueva). */
+  .pl-celda { min-height: 44px; border-radius: 8px; display: flex; flex-direction: column; gap: 4px; }
   /* Layout "por horario": columnas apiladas por día. */
   .pl-cols { display: flex; gap: 8px; min-width: 680px; align-items: flex-start; }
   .pl-col { flex: 1; min-width: 148px; display: flex; flex-direction: column; gap: 6px; }
@@ -1241,9 +1242,8 @@
   /* Punto con el color de la clase junto a la etiqueta de fila. */
   .pl-fila-color { display: inline-block; width: 9px; height: 9px; border-radius: 50%;
     margin-right: 6px; vertical-align: 1px; flex: 0 0 auto; }
-  /* Celda resaltada mientras se arrastra una sesión encima. */
-  .pl-celda.pl-drop-ok { border-color: var(--acento); background: var(--acento-suave);
-    box-shadow: inset 0 0 0 1px var(--acento); }
+  /* Celda resaltada mientras se arrastra una sesión encima (con o sin marco). */
+  .pl-celda.pl-drop-ok { box-shadow: inset 0 0 0 2px var(--acento); }
   .pl-chip-txt { min-width: 0; display: flex; flex-direction: column; }
   .pl-chip-tit { font-size: 12.5px; font-weight: 600; line-height: 1.25; word-break: break-word; }
   .pl-chip-sub { font-size: 11px; color: var(--texto-2); font-weight: 500; }
@@ -1260,8 +1260,10 @@
     font: inherit; font-size: 12px; cursor: pointer; }
   .pl-hueco:hover { border-color: var(--acento); color: var(--acento); }
   .pl-sueltas { margin-top: 14px; }
-  /* Celda vacía de la rejilla por grupo: toda ella planifica al pulsarla. */
-  .pl-celda-nueva { cursor: pointer; align-items: flex-start; justify-content: flex-start; }
+  /* Celda vacía de la rejilla por grupo: cuadro blanco con borde; toda ella
+     planifica al pulsarla (el marco solo aparece en los días sin sesión). */
+  .pl-celda-nueva { background: var(--surface); border: 1px solid var(--borde); border-radius: 8px;
+    padding: 4px; cursor: pointer; align-items: flex-start; justify-content: flex-start; }
   .pl-celda-nueva:hover { border-color: var(--acento); background: var(--acento-suave); }
   .pl-celda-mas { color: var(--texto-3); font-weight: 700; font-size: 14px; line-height: 1; }
   .pl-celda-nueva:hover .pl-celda-mas { color: var(--acento); }
