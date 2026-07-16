@@ -5387,6 +5387,37 @@ var App = (function () {
     });
   }
 
+  /** Adelanta (+1) o retrasa (-1) la sesión un día lectivo, con cascada. */
+  function desplazarSesionUI(sesionId, dir) {
+    var s0 = (sesionesCache || []).filter(function (x) { return x.sesionId === sesionId; })[0];
+    var tieneFecha = s0 && (s0.asignaciones || []).some(function (a) { return a.evalId && a.fecha; });
+    if (!tieneFecha) return aviso('Primero ponle una fecha a la sesión en algún grupo.');
+    var curso = (estado.cursos && estado.cursos.activo) || '';
+    var btns = document.querySelectorAll('#ses-reprog button');
+    [].forEach.call(btns, function (b) { b.disabled = true; });
+    llamarConFallo_('desplazarSesion', [sesionId, dir, curso],
+      function (r) {
+        if (r) sesionesCache = r;
+        var s = (sesionesCache || []).filter(function (x) { return x.sesionId === sesionId; })[0];
+        var modalAbierto = !document.getElementById('modal-fondo').hidden;
+        if (modalAbierto && s) {
+          // Refresca las fechas en el editor abierto sin re-renderizarlo.
+          (s.asignaciones || []).forEach(function (a) {
+            var f = document.querySelector('.planner-asig-fecha[data-eval="' + a.evalId + '"]');
+            if (f) f.value = a.fecha || '';
+          });
+          [].forEach.call(btns, function (b) { b.disabled = false; });
+        } else {
+          pintarPlanner(); // panel de Unidades u otra vista: se re-pinta con las fechas nuevas
+        }
+        avisoOk(dir > 0 ? 'Sesión adelantada.' : 'Sesión retrasada.');
+      },
+      function (err) {
+        [].forEach.call(btns, function (b) { b.disabled = false; });
+        aviso('No se pudo reprogramar: ' + err);
+      });
+  }
+
   // ---------- arrastrar sesiones entre días/clases (vista Semana por grupo) ----------
   var arrastreSesion = null; // { sesionId, evalId } de la sesión en curso
 
@@ -5602,6 +5633,20 @@ var App = (function () {
     return pre;
   }
 
+  /** Botones «retrasar / adelantar» (solo en una sesión de clase ya guardada). */
+  function reprogHtml_(s) {
+    var existente = s.sesionId && String(s.sesionId).indexOf('tmp_') !== 0;
+    if (!existente) return '';
+    return '<div class="ses-reprog" id="ses-reprog">' +
+      '<span class="ses-reprog-etq">Reprogramar</span>' +
+      '<span class="grupo-btn">' +
+        '<button type="button" class="btn" title="Retrasar un día lectivo (empuja las contiguas)" ' +
+          'onclick="App.desplazarSesionUI(\'' + s.sesionId + '\',-1)">◀ Retrasar</button>' +
+        '<button type="button" class="btn" title="Adelantar un día lectivo (empuja las contiguas)" ' +
+          'onclick="App.desplazarSesionUI(\'' + s.sesionId + '\',1)">Adelantar ▶</button>' +
+      '</span></div>';
+  }
+
   /** HTML del formulario de sesión (reutilizado por el modal y el panel de PC). */
   function sesionFormHtml_(s) {
     var tipoActual = s.tipo || 'clase';
@@ -5650,6 +5695,7 @@ var App = (function () {
         '<label>Fecha' +
           '<input id="ses-evento-fecha" type="date" value="' + esc(eventoFecha) + '"></label>' +
       '</div>' +
+      reprogHtml_(s) +
       '<p class="ayuda ayuda-tipo" id="ses-tipo-ayuda"></p>' +
     '</div>';
     var dcha = '<div class="ses-col ses-col-dcha" id="ses-col-dcha">' +
@@ -5705,9 +5751,11 @@ var App = (function () {
     var secUnidad = document.getElementById('ses-sec-unidad');
     var colDcha = document.getElementById('ses-col-dcha');
     var secEvento = document.getElementById('ses-sec-evento');
+    var reprog = document.getElementById('ses-reprog');
     if (secUnidad) secUnidad.hidden = !clase;
     if (colDcha) colDcha.hidden = !clase;
     if (secEvento) secEvento.hidden = clase;
+    if (reprog) reprog.hidden = !clase;
     // Resalta la opción activa del segmentado de Tipo.
     [].forEach.call(document.querySelectorAll('.ses-tipo-opt'), function (o) {
       var inp = o.querySelector('input');
@@ -5994,7 +6042,8 @@ var App = (function () {
     abrirSesionUnidad: abrirSesionUnidad, guardarSesionPanel_: guardarSesionPanel_,
     nuevaSesion: nuevaSesion, editarSesionUI: editarSesionUI,
     duplicarSesionUI: duplicarSesionUI, eliminarSesionUI: eliminarSesionUI,
-    estadoSesionUI: estadoSesionUI, exportarPlanner: exportarPlanner,
+    estadoSesionUI: estadoSesionUI, desplazarSesionUI: desplazarSesionUI,
+    exportarPlanner: exportarPlanner,
     dragSesionIni: dragSesionIni, dragSesionFin: dragSesionFin, gripSesionDown: gripSesionDown,
     dragSesionSobre: dragSesionSobre, dragSesionFuera: dragSesionFuera,
     dragSesionSuelta: dragSesionSuelta,
