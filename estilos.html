@@ -1051,6 +1051,19 @@
   /* ---------- Planificador (tras la bandera FLAGS.planner) ---------- */
   .planner-barra { display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
     margin: 0 0 16px; }
+  /* Selector de modo tipo control segmentado (como Planboard). */
+  .planner-modos { display: inline-flex; align-items: stretch; padding: 3px;
+    background: var(--fondo-2, var(--borde)); border: 1px solid var(--borde);
+    border-radius: 10px; gap: 2px; }
+  .planner-modo { appearance: none; border: 0; background: transparent; color: var(--texto-2);
+    font: inherit; font-size: 14px; font-weight: 600; padding: 6px 14px; border-radius: 7px;
+    cursor: pointer; white-space: nowrap; transition: background .12s, color .12s; }
+  .planner-modo:hover { color: var(--texto); }
+  .planner-modo.activo { background: var(--surface); color: var(--acento);
+    box-shadow: var(--sombra-1); }
+  /* Vista diaria: una jornada en columna, a lo ancho. */
+  .pl-dia { display: flex; flex-direction: column; gap: 8px; max-width: 720px; }
+  .pl-dia.pl-nolect { opacity: .85; }
   .planner-nav { display: inline-flex; align-items: center; gap: 6px; }
   .planner-semana-etq { font-weight: 600; font-size: 14px; min-width: 190px;
     text-align: center; }
@@ -1256,7 +1269,7 @@
   .pl-uni-add { margin-top: 8px; }
   .pl-uni-ses-sel { background: var(--acento-suave); border-radius: 6px; }
   /* Panel de detalle a la derecha (solo PC) */
-  .pl-uni-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(340px, 400px);
+  .pl-uni-layout { display: grid; grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
     gap: 16px; align-items: start; }
   .pl-uni-list { min-width: 0; }
   .pl-uni-detail { position: sticky; top: 8px; border: 1px solid var(--borde);
