@@ -503,7 +503,11 @@
   .link { color: var(--acento-fuerte); }
   .link-peligro { color: var(--peligro); }
   .link:hover, .link-peligro:hover { text-decoration: underline; }
-  .modal-acciones { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
+  .modal-acciones { display: flex; align-items: center; justify-content: flex-end; gap: 10px;
+    margin-top: 10px; }
+  /* Acción extra (papelera de la sesión): a la izquierda, empuja los botones a la derecha. */
+  #modal-acc-extra:not(:empty) { margin-right: auto; }
+  #modal-acc-extra:empty { display: none; }
 
   /* ---------- Toast ---------- */
   .toast {
@@ -1421,7 +1425,10 @@
     gap: 10px; margin-bottom: 10px; }
   .pl-detail-head strong { font-size: 15px; }
   .pl-detail-acc { display: inline-flex; gap: 4px; }
-  .pl-detail-guardar { margin-top: 12px; text-align: right; }
+  .pl-detail-guardar { margin-top: 12px; display: flex; align-items: center;
+    justify-content: flex-end; gap: 10px; }
+  /* Papelera a la izquierda; el botón de guardar queda a la derecha. */
+  .pl-detail-guardar .peligro { margin-right: auto; }
   /* Dentro del panel, el editor va más compacto que en el modal */
   .pl-uni-detail .lista-crit, .pl-uni-detail .planner-crit { max-height: 160px; }
   .pl-uni-detail .rt-body { min-height: 72px; max-height: 180px; }
