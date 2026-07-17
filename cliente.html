@@ -4768,21 +4768,45 @@ var App = (function () {
     });
   }
 
+  /**
+   * Fecha sugerida para programar la clase evalId: parte de la última sesión de
+   * la unidad (si se pasa unidadId y hay alguna con fecha en esa clase; si no,
+   * de hoy) y avanza al siguiente día que toque según su horario — o, sin
+   * horario, al siguiente día lectivo (salta findes y festivos).
+   */
+  function fechaSugerida_(evalId, unidadId) {
+    // Última fecha de esa clase dentro de la unidad (la «sesión anterior»).
+    var base = '';
+    if (unidadId) {
+      (sesionesCache || []).forEach(function (s) {
+        if (s.unidadId !== unidadId) return;
+        (s.asignaciones || []).forEach(function (a) {
+          if (a.evalId === evalId && a.fecha && a.fecha > base) base = a.fecha;
+        });
+      });
+    }
+    var d;
+    if (base) { var p = base.split('-'); d = new Date(+p[0], +p[1] - 1, +p[2]); }
+    else { d = new Date(); d.setDate(d.getDate() - 1); } // sin anterior: desde hoy
+    var c = clasePlannerDe_(evalId);
+    var dias = ((c && c.horario) || []).map(function (h) { return h.dia; });
+    for (var i = 0; i < 120; i++) {
+      d.setDate(d.getDate() + 1);
+      var iso = isoLocal_(d);
+      if (!esLectivo_(iso)) continue;
+      if (!dias.length || dias.indexOf(diaSemanaIso_(iso)) >= 0) return iso;
+    }
+    return '';
+  }
+
   /** Al marcar una clase sin fecha en el modal de sesión, sugiere la próxima que le toque. */
   function horChkCambiada(chk) {
     if (!chk.checked) return;
     var f = document.querySelector('.planner-asig-fecha[data-eval="' + chk.dataset.eval + '"]');
     if (!f || f.value) return;
-    var c = clasePlannerDe_(chk.dataset.eval);
-    var dias = ((c && c.horario) || []).map(function (h) { return h.dia; });
-    if (!dias.length) return;
-    var d = new Date();
-    // Próximo día que toca esa clase Y es lectivo (salta findes y festivos).
-    for (var i = 0; i < 60; i++) {
-      if (i) d.setDate(d.getDate() + 1);
-      var iso = isoLocal_(d);
-      if (dias.indexOf(diaSemanaIso_(iso)) >= 0 && esLectivo_(iso)) { f.value = iso; return; }
-    }
+    var sel = document.getElementById('ses-unidad');
+    var iso = fechaSugerida_(chk.dataset.eval, (sel && sel.value) || '');
+    if (iso) f.value = iso;
   }
 
   /** Entradas {ses, asig} de todas las sesiones (una por asignación). */
@@ -5281,7 +5305,12 @@ var App = (function () {
 
   /** Nueva sesión ya colgada de esta unidad (panel en PC, modal en móvil). */
   function nuevaSesionEnUnidad(unidadId) {
-    if (plannerConPanel_()) { autoguardarSesion_(); panelNuevoUid = unidadId; sesUnidadSel = ''; pintarPlanner(); return; }
+    if (plannerConPanel_()) {
+      autoguardarSesion_(); panelNuevoUid = unidadId; sesUnidadSel = ''; pintarPlanner();
+      var t = document.getElementById('ses-titulo'); // foco directo para escribir
+      if (t) t.focus();
+      return;
+    }
     abrirModalSesion_('Crear', null,
       { titulo: '', descripcion: '', criterios: [], asignaciones: [], unidadId: unidadId, tipo: 'clase' });
   }
@@ -5754,6 +5783,9 @@ var App = (function () {
     var filas = clasesPlanner_().map(function (c) {
       var a = asigDe[c.id];
       var marcada = a || pre[c.id];
+      // Preseleccionada (sesión nueva de una unidad): fecha sugerida a partir de
+      // la sesión anterior de la unidad, según horario o siguiente día lectivo.
+      var fecha = (a && a.fecha) || (pre[c.id] ? fechaSugerida_(c.id, s.unidadId || '') : '');
       var pico = '<span class="planner-asig-color" style="background:' + (c.color || 'var(--acento)') +
         '"></span>';
       return '<div class="planner-asig-fila' + (marcada ? ' activa' : '') + '">' +
@@ -5762,7 +5794,7 @@ var App = (function () {
           ' onchange="App.asigChkCambiada(this)"> ' + pico +
           '<span class="planner-asig-nom-txt">' + esc(etiquetaClase_(c.id)) + '</span></label>' +
         '<input type="date" class="planner-asig-fecha" data-eval="' + c.id + '" value="' +
-          esc((a && a.fecha) || '') + '" title="Fecha para este grupo">' +
+          esc(fecha) + '" title="Fecha para este grupo">' +
         '<input type="text" class="planner-asig-obs" data-eval="' + c.id + '" ' +
           'placeholder="Obs." title="Observaciones para este grupo (opcional)" value="' +
           esc((a && a.observaciones) || '') + '">' +
@@ -5818,6 +5850,15 @@ var App = (function () {
       var t = ((e.clipboardData || window.clipboardData).getData('text')) || '';
       try { document.execCommand('insertHTML', false, plainToHtmlConLinks_(t)); } catch (x) {}
     });
+    // Intro en el título pasa el foco a la descripción (seguir escribiendo).
+    var tit = document.getElementById('ses-titulo');
+    if (tit) tit.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        var d = document.getElementById('ses-desc-body');
+        if (d) d.focus();
+      }
+    });
     // Firma de partida: el autoguardado solo persiste si algo cambia respecto a esto.
     editorFirmaInicial = firmaEditorSesion_();
   }
@@ -5832,11 +5873,21 @@ var App = (function () {
   function abrirModalSesion_(textoAceptar, id, s) {
     prepararEditorSesion_(s, id);
     editorSesionCtx = { id: id, enPanel: false };
+    // Al editar, papelera en la cabecera (como en el panel de Unidades).
+    var extra = tipoSelectorHtml_(s.tipo || 'clase') +
+      (id ? ' <button type="button" class="btn peligro btn-icono" title="Eliminar sesión" ' +
+        'onclick="App.eliminarSesionDesdeEditor_(\'' + id + '\')">' + svgUI('papelera') + '</button>' : '');
     abrirModal(tituloSesion_(id, s.tipo || 'clase'), sesionFormHtml_(s),
       textoAceptar, function () { guardarSesion_(id); },
-      { sinFoco: !!id, ancho: true, textoCancelar: 'Cerrar',
-        cabExtra: tipoSelectorHtml_(s.tipo || 'clase') });
+      { sinFoco: !!id, ancho: true, textoCancelar: 'Cerrar', cabExtra: extra });
     montarEditorSesion_();
+  }
+
+  /** Papelera del editor: guarda lo pendiente y pide confirmación de borrado. */
+  function eliminarSesionDesdeEditor_(id) {
+    autoguardarSesion_();
+    editorSesionCtx = null; // la confirmación reutiliza el modal: sin editor ya
+    eliminarSesionUI(id);
   }
 
   function sesTipoElegido_() {
@@ -6156,6 +6207,7 @@ var App = (function () {
     abrirSesionUnidad: abrirSesionUnidad, guardarSesionPanel_: guardarSesionPanel_,
     nuevaSesion: nuevaSesion, editarSesionUI: editarSesionUI, editarSesionDesde_: editarSesionDesde_,
     duplicarSesionUI: duplicarSesionUI, eliminarSesionUI: eliminarSesionUI,
+    eliminarSesionDesdeEditor_: eliminarSesionDesdeEditor_,
     estadoSesionUI: estadoSesionUI, desplazarSesionUI: desplazarSesionUI,
     exportarPlanner: exportarPlanner,
     dragSesionIni: dragSesionIni, dragSesionFin: dragSesionFin, gripSesionDown: gripSesionDown,
