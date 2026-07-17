@@ -5415,18 +5415,41 @@ var App = (function () {
 
   var reordenPendiente = null; // ids de un reorden que espera a que confirme un tmp
 
-  /** Reparte, por clase, las fechas ya asignadas sobre la nueva secuencia. */
+  /** Siguiente fecha que le toca a la clase: por horario o el siguiente lectivo. */
+  function siguienteFechaClaseCli_(iso, dias) {
+    var p = iso.split('-'), d = new Date(+p[0], +p[1] - 1, +p[2]), lim = 0;
+    do {
+      d.setDate(d.getDate() + 1);
+      var it = isoLocal_(d);
+      if (esLectivo_(it) && (!dias.length || dias.indexOf(diaSemanaIso_(it)) >= 0)) return it;
+    } while (++lim < 400);
+    return iso;
+  }
+  /**
+   * Recalcula, por clase, las fechas sobre la nueva secuencia (igual que el
+   * servidor): ancladas en la más temprana, las siguientes por horario o
+   * siguiente día lectivo. Optimista: el resultado se ve ya, sin esperar al
+   * servidor y sin «salto» cuando este responde.
+   */
   function repartirFechasUnidad_(sesiones) {
-    var porClase = {};
+    var horarios = {}, ancla = {};
     sesiones.forEach(function (s) {
       (s.asignaciones || []).forEach(function (a) {
-        if (a.evalId && a.fecha) (porClase[a.evalId] = porClase[a.evalId] || []).push(a.fecha);
+        if (!a.evalId || !a.fecha) return;
+        if (!(a.evalId in horarios)) {
+          var c = clasePlannerDe_(a.evalId);
+          horarios[a.evalId] = ((c && c.horario) || []).map(function (h) { return h.dia; });
+        }
+        if (!ancla[a.evalId] || a.fecha < ancla[a.evalId]) ancla[a.evalId] = a.fecha;
       });
     });
-    Object.keys(porClase).forEach(function (g) { porClase[g].sort(); });
+    var cursor = {};
     sesiones.forEach(function (s) {
       (s.asignaciones || []).forEach(function (a) {
-        if (a.evalId && a.fecha) a.fecha = porClase[a.evalId].shift();
+        if (!a.evalId || !a.fecha) return;
+        var g = a.evalId;
+        a.fecha = (cursor[g] == null) ? ancla[g] : siguienteFechaClaseCli_(cursor[g], horarios[g] || []);
+        cursor[g] = a.fecha;
       });
     });
   }

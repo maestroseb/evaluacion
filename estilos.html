@@ -1417,9 +1417,10 @@
   /* Panel de detalle a la derecha (solo PC) */
   .pl-uni-layout { display: grid; grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
     gap: 16px; align-items: start; }
-  /* La lista no crece sin límite: mismo tope que el panel de la derecha, con
-     su propio scroll (así ambas columnas acaban a la misma altura). */
-  .pl-uni-list { min-width: 0; max-height: calc(100vh - 130px); overflow-y: auto; padding-right: 2px; }
+  /* La lista no crece sin límite: se ancla como el panel (sticky) y tiene su
+     propio scroll acotado al alto de la ventana (así no se sale por abajo). */
+  .pl-uni-list { min-width: 0; position: sticky; top: 8px;
+    max-height: calc(100vh - 130px); overflow-y: auto; padding-right: 2px; }
   .pl-uni-detail { position: sticky; top: 8px; border: 1px solid var(--borde);
     border-radius: var(--radio); background: var(--surface); box-shadow: var(--sombra-1);
     padding: 14px; max-height: calc(100vh - 130px); overflow: auto; }
