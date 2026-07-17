@@ -5711,7 +5711,7 @@ var App = (function () {
 
   function editarSesionUI(id) {
     var s = (sesionesCache || []).filter(function (x) { return x.sesionId === id; })[0];
-    if (s) abrirModalSesion_('Guardar cambios', id, s);
+    if (s) abrirModalSesion_('Guardar', id, s);
   }
   /** Editar desde la tarjeta (cabecera o previsualización), salvo si es un enlace. */
   function editarSesionDesde_(ev, id) {
@@ -5993,8 +5993,28 @@ var App = (function () {
         if (d) d.focus();
       }
     });
+    ajustarAnchoNombresAsig_();  // fechas alineadas: nombre = el de la clase más larga
     // Firma de partida: el autoguardado solo persiste si algo cambia respecto a esto.
     editorFirmaInicial = firmaEditorSesion_();
+  }
+
+  /**
+   * Da a la columna del nombre de clase el ancho del nombre MÁS LARGO, para que
+   * todas las fechas queden alineadas y no sobre aire. Con un mínimo (para que
+   * quepa un nombre corto) y un máximo (para no comerse la columna). En móvil la
+   * fila se apila, así que se deja el ancho flexible del CSS.
+   */
+  function ajustarAnchoNombresAsig_() {
+    if (esMovil()) return;
+    var noms = document.querySelectorAll('#ses-col-dcha .planner-asig-nom-txt');
+    if (!noms.length) return;
+    var maxCh = 0;
+    [].forEach.call(noms, function (n) { maxCh = Math.max(maxCh, (n.textContent || '').length); });
+    // ~7.8 px por carácter (14px) + checkbox, punto de color y separaciones (~46).
+    var w = Math.min(240, Math.max(96, Math.round(maxCh * 7.8) + 46));
+    [].forEach.call(document.querySelectorAll('#ses-col-dcha .planner-asig-nom'), function (l) {
+      l.style.flex = '0 0 ' + w + 'px'; l.style.width = w + 'px';
+    });
   }
 
   /** Prepara el estado del editor para la sesión s (criterios marcados, id). */
@@ -6009,7 +6029,8 @@ var App = (function () {
     editorSesionCtx = { id: id, enPanel: false };
     // Al editar, papelera abajo, a la izquierda del botón «Cerrar».
     var acc = id ? '<button type="button" class="btn peligro" title="Eliminar sesión" ' +
-      'onclick="App.eliminarSesionDesdeEditor_(\'' + id + '\')">' + svgUI('papelera') + ' Eliminar</button>' : '';
+      'onclick="App.eliminarSesionDesdeEditor_(\'' + id + '\')">' + svgUI('papelera') +
+      '<span class="btn-txt-movil"> Eliminar</span></button>' : '';
     abrirModal(tituloSesion_(id, s.tipo || 'clase'), sesionFormHtml_(s),
       textoAceptar, function () { guardarSesion_(id); },
       { sinFoco: !!id, ancho: true, textoCancelar: 'Cerrar',
