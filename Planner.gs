@@ -20,6 +20,17 @@
  * Funciones públicas (sin guion bajo) = invocables desde el frontend.
  */
 
+/**
+ * Convierte un HTML autónomo en PDF (para compartir una planificación). Usa
+ * Utilities (sin librerías ni permisos extra): el cliente arma el HTML con sus
+ * datos y aquí solo se hace la conversión. Devuelve el PDF en base64.
+ */
+function generarPdf(html, nombre) {
+  nombre = String(nombre || 'planificacion').replace(/[^\w .\-]/g, '_').slice(0, 80);
+  var pdf = Utilities.newBlob(String(html || ''), 'text/html', nombre + '.html').getAs('application/pdf');
+  return { b64: Utilities.base64Encode(pdf.getBytes()), nombre: nombre + '.pdf' };
+}
+
 /** payload: {titulo, descripcion, criterios:[codigos], asignaciones:[{evalId,fecha,estado}]} */
 function crearSesion(payload) {
   return Planner.crear_(abrirCuaderno_(), payload);
