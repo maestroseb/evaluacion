@@ -148,9 +148,38 @@ var Planner = (function () {
     return obtener_(ss, sesionId);
   }
 
-  /** Reordena las sesiones de una unidad (col 7 = orden) según la lista de ids. */
+  /**
+   * Reordena las sesiones de una unidad (col 7 = orden) según la lista de ids
+   * y REPARTE sus fechas siguiendo el nuevo orden: por cada clase, las fechas
+   * ya asignadas (las mismas) se recolocan cronológicamente sobre la nueva
+   * secuencia, de modo que reordenar la lista reordena también el calendario.
+   */
   function reordenarSesionesUnidad_(ss, ids) {
-    return Datos.reordenarPorIds_(hoja_(ss), 7, ids);
+    var sh = hoja_(ss);
+    Datos.reordenarPorIds_(sh, 7, ids);
+    var byId = {};
+    listar_(ss).forEach(function (s) { byId[s.sesionId] = s; });
+    var sesiones = (ids || []).map(function (id) { return byId[id]; }).filter(Boolean);
+    var porClase = {}; // evalId -> fechas asignadas (se reparten en orden)
+    sesiones.forEach(function (s) {
+      (s.asignaciones || []).forEach(function (a) {
+        if (a.evalId && a.fecha) (porClase[a.evalId] = porClase[a.evalId] || []).push(a.fecha);
+      });
+    });
+    Object.keys(porClase).forEach(function (g) { porClase[g].sort(); });
+    var tocadas = {};
+    sesiones.forEach(function (s) {
+      (s.asignaciones || []).forEach(function (a) {
+        if (!a.evalId || !a.fecha) return;
+        var f = porClase[a.evalId].shift();
+        if (f !== a.fecha) { a.fecha = f; tocadas[s.sesionId] = true; }
+      });
+    });
+    Object.keys(tocadas).forEach(function (sid) {
+      var fila = Datos.filaDeId_(sh, sid);
+      if (fila > 0) sh.getRange(fila, 5).setValue(JSON.stringify((byId[sid].asignaciones || []).map(mapAsig_)));
+    });
+    return { ok: true };
   }
 
   function eliminar_(ss, sesionId) {
