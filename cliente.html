@@ -5442,9 +5442,10 @@ var App = (function () {
         pintarPlanner();
         return;
       }
-      repartirFechasUnidad_(sesiones); // ids reales: reparto local + persistencia
-      llamarConFallo_('reordenarSesionesUnidad', ['', ids],
-        function () {},
+      repartirFechasUnidad_(sesiones); // feedback inmediato (aprox.); el servidor recalcula
+      var curso = (estado.cursos && estado.cursos.activo) || '';
+      llamarConFallo_('reordenarSesionesUnidad', ['', ids, curso],
+        function (r) { if (r) { sesionesCache = r; pintarPlanner(); } },
         function () { recargarSesionesTrasError_('No se pudo reordenar.'); });
       pintarPlanner();
     });
@@ -5455,9 +5456,10 @@ var App = (function () {
     reordenPendiente = reordenPendiente.map(function (id) { return id === tmpId ? realId : id; });
     if (reordenPendiente.some(function (id) { return String(id).indexOf('tmp_') === 0; })) return;
     var ids = reordenPendiente; reordenPendiente = null;
-    // El servidor reparte las fechas sobre un estado ya consistente y refrescamos.
-    llamarSilencioso('reordenarSesionesUnidad', ['', ids], function () {
-      llamarSilencioso('listarSesiones', [], function (l) { sesionesCache = l || []; pintarPlanner(); });
+    var curso = (estado.cursos && estado.cursos.activo) || '';
+    // El servidor recalcula las fechas sobre un estado ya consistente y devuelve la lista.
+    llamarSilencioso('reordenarSesionesUnidad', ['', ids, curso], function (r) {
+      if (r) { sesionesCache = r; pintarPlanner(); }
     });
   }
 
@@ -6269,10 +6271,20 @@ var App = (function () {
       'La sesión «' + ((s && s.titulo) || '') + '» irá a la papelera (con todas sus ' +
       'asignaciones). ¿Continuar?',
       'Eliminar', function () {
-        llamar('eliminarSesion', [id], function () {
-          sesionesCache = (sesionesCache || []).filter(function (x) { return x.sesionId !== id; });
-          pintarPlanner(); avisoOk('Sesión movida a la papelera.');
-        });
+        // Optimista: desaparece ya de la pantalla; el borrado va por detrás.
+        var quitada = (sesionesCache || []).filter(function (x) { return x.sesionId === id; });
+        sesionesCache = (sesionesCache || []).filter(function (x) { return x.sesionId !== id; });
+        if (sesUnidadSel === id) sesUnidadSel = '';
+        pintarPlanner();
+        avisoOk('Sesión movida a la papelera.');
+        if (String(id).indexOf('tmp_') === 0) return; // aún sin confirmar: solo local
+        llamarConFallo_('eliminarSesion', [id],
+          function () {},
+          function (err) {
+            sesionesCache = (sesionesCache || []).concat(quitada); // deshacer si falla
+            pintarPlanner();
+            aviso('No se pudo eliminar: ' + err);
+          });
       });
   }
 

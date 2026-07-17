@@ -1163,7 +1163,7 @@
   .planner-estado.aplazada { background: var(--g-baja-bg); color: var(--g-baja-tx); }
   .planner-estado.borrador { background: var(--bg); color: var(--texto-3); cursor: default; }
   .planner-asigs { max-height: 240px; overflow-y: auto; border: 1px solid var(--borde);
-    border-radius: 8px; padding: 6px 10px; }
+    border-radius: 8px; padding: 8px; display: flex; flex-direction: column; gap: 6px; }
   /* Hint bajo los botones de tipo: sin el margen superior negativo de .ayuda
      (que lo montaba encima de los botones). */
   .ayuda-tipo { margin-top: 6px; }
@@ -1172,10 +1172,9 @@
   /* Clase + fecha + observaciones en una línea; si no caben (panel estrecho),
      las observaciones bajan a la segunda. */
   .planner-asig-fila { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px;
-    padding: 6px 8px; border-top: 1px solid var(--borde); border-radius: 8px; }
-  .planner-asig-fila:first-child { border-top: 0; }
-  /* Clase marcada: resaltada ligeramente (mantiene el orden, no salta). */
-  .planner-asig-fila.activa { background: var(--acento-suave); }
+    padding: 8px; border-radius: 10px; }
+  /* Clase marcada: tarjeta resaltada, separada de la siguiente (gap del contenedor). */
+  .planner-asig-fila.activa { background: var(--acento-suave); border: 1px solid var(--borde); }
   /* Sin marcar: no se muestran su fecha ni sus observaciones (aún no aplican). */
   .planner-asig-fila:not(.activa) .planner-asig-fecha,
   .planner-asig-fila:not(.activa) .planner-asig-obs { display: none; }
@@ -1189,11 +1188,13 @@
   .ses-reprog-etq { flex: 0 0 auto; display: inline-flex; align-items: center; padding: 0 12px;
     font-size: 13px; font-weight: 600; color: var(--texto-2); background: var(--bg);
     border: 1px solid var(--borde); border-radius: 8px; white-space: nowrap; }
-  /* Fecha con el ancho justo de dd/mm/aaaa (sin apariencia nativa, que la infla). */
+  /* Fecha con el ancho justo de dd/mm/aaaa; empujada a la derecha (margin-left
+     auto) para que su borde derecho coincida con el de las observaciones. */
   .ses-form .planner-asig-fecha { flex: 0 0 auto; width: 122px; max-width: 100%; box-sizing: border-box;
-    margin: 0; padding: 6px 8px; -webkit-appearance: none; appearance: none; overflow: hidden;
+    margin: 0 0 0 auto; padding: 6px 8px; -webkit-appearance: none; appearance: none; overflow: hidden;
     border: 1px solid var(--borde-fuerte); border-radius: 8px; font: inherit; font-size: 13px; }
-  .ses-form .planner-asig-obs { flex: 1 1 90px; min-width: 80px; box-sizing: border-box; margin: 0;
+  /* Observaciones siempre en su propia línea, a todo el ancho de la fila. */
+  .ses-form .planner-asig-obs { flex: 1 1 100%; box-sizing: border-box; margin: 0;
     padding: 6px 8px;
     border: 1px solid var(--borde-fuerte); border-radius: 8px; font: inherit; font-size: 13px; }
   /* Marca de observaciones en el chip de la rejilla y en la línea de la lista. */
@@ -1416,7 +1417,9 @@
   /* Panel de detalle a la derecha (solo PC) */
   .pl-uni-layout { display: grid; grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
     gap: 16px; align-items: start; }
-  .pl-uni-list { min-width: 0; }
+  /* La lista no crece sin límite: mismo tope que el panel de la derecha, con
+     su propio scroll (así ambas columnas acaban a la misma altura). */
+  .pl-uni-list { min-width: 0; max-height: calc(100vh - 130px); overflow-y: auto; padding-right: 2px; }
   .pl-uni-detail { position: sticky; top: 8px; border: 1px solid var(--borde);
     border-radius: var(--radio); background: var(--surface); box-shadow: var(--sombra-1);
     padding: 14px; max-height: calc(100vh - 130px); overflow: auto; }
