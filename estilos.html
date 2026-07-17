@@ -1283,14 +1283,20 @@
   .pl-mes-dia.pl-nolect { background: var(--peligro-bg); }
   .pl-mes-fest { display: block; font-size: 10px; font-weight: 600; color: var(--peligro);
     line-height: 1.1; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  /* Calendario del curso (modal) */
-  .cal-rango { display: flex; flex-wrap: wrap; gap: 10px 16px; }
-  .cal-rango label { flex: 1 1 180px; }
+  /* Calendario del curso (modal). Inicio/fin destacados en una tarjeta propia
+     (fondo acento) y cada festivo en su tarjeta, para separar bien las zonas. */
+  .cal-rango { display: flex; flex-wrap: wrap; gap: 10px 14px; background: var(--acento-suave);
+    border: 1px solid var(--borde); border-radius: 12px; padding: 12px 14px 14px;
+    margin-bottom: 18px; }
+  .cal-rango label { flex: 1 1 150px; min-width: 0; margin-bottom: 0; }
+  .cal-rango input { background: var(--surface); }
   /* Festivo en UNA línea: nombre + desde + hasta. Prefijo .cal-fest-fila para
-     ganar a «.modal input { width:100% }» (que si no los apila a lo ancho). */
+     ganar a «.modal input { width:100% }» (que si no los apila a lo ancho).
+     Cada festivo es una tarjeta propia: se distingue bien del siguiente. */
   .cal-fest-fila { display: flex; flex-wrap: nowrap; align-items: center; gap: 6px 8px;
-    padding: 6px 0; border-top: 1px solid var(--borde); }
-  .cal-fest-fila:first-child { border-top: 0; }
+    padding: 10px; background: var(--bg); border: 1px solid var(--borde);
+    border-radius: 10px; margin-bottom: 8px; }
+  .cal-fest-fila input { background: var(--surface); }
   .cal-fest-fila .cal-fest-desde, .cal-fest-fila .cal-fest-hasta { flex: 0 0 auto; width: 140px;
     box-sizing: border-box; margin: 0; padding: 6px 8px;
     border: 1px solid var(--borde-fuerte); border-radius: 8px; font: inherit; font-size: 13px; }
@@ -1309,7 +1315,8 @@
     .cal-fest-fila .btn { order: 1; flex: 0 0 auto; }
     .cal-fest-fila .cal-fest-desde { order: 2; flex: 1 1 42%; width: auto; }
     .cal-fest-fila .cal-fest-hasta { order: 3; flex: 1 1 42%; width: auto; }
-    .cal-rango label { flex: 1 1 100%; }
+    /* Inicio/fin lado a lado dentro de su tarjeta (las fechas caben de sobra). */
+    .cal-rango label { flex: 1 1 40%; }
   }
   .cal-add { margin-top: 8px; }
   /* Banda superior de recordatorios (tipo aviso) */
