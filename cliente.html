@@ -4950,10 +4950,13 @@ var App = (function () {
       'Semana del ' + fechaCorta_(ctx.isos[0]) + ' al ' + fechaCorta_(ctx.isos[ctx.isos.length - 1]);
     var grid = (plannerLayout === 'horario') ? htmlSemanaHorario_(ctx) : htmlSemanaGrupo_(ctx);
     // Tira inferior de sesiones sin programar (sin asignaciones o sin fecha).
+    // UNA entrada por sesión, aunque tenga varias asignaciones sin fecha (si no,
+    // la misma sesión salía repetida).
     var sueltas = [];
     (sesionesCache || []).forEach(function (s) {
-      if (!(s.asignaciones || []).length) sueltas.push({ ses: s, asig: null });
-      else s.asignaciones.forEach(function (a) { if (!a.fecha) sueltas.push({ ses: s, asig: a }); });
+      if (!(s.asignaciones || []).length) { sueltas.push({ ses: s, asig: null }); return; }
+      var sinFecha = s.asignaciones.filter(function (a) { return !a.fecha; });
+      if (sinFecha.length) sueltas.push({ ses: s, asig: sinFecha[0] });
     });
     var extra = sueltas.length
       ? '<div class="planner-dia pl-sueltas"><h3>Sin programar</h3>' +
@@ -5710,7 +5713,10 @@ var App = (function () {
   function preseleccionEvals_(s) {
     var pre = {};
     var yaTiene = (s.asignaciones || []).length;
-    if (yaTiene || !s.unidadId) return pre;
+    // Solo para sesiones NUEVAS: en una existente premarcaría clases que el
+    // profe no eligió y el autoguardado las persistiría (asignaciones sin
+    // fecha de más → la sesión salía repetida en «Sin programar»).
+    if (s.sesionId || yaTiene || !s.unidadId) return pre;
     var u = unidadPlanDe_(s.unidadId);
     if (!u) return pre;
     clasesPlanner_().forEach(function (c) {
@@ -5985,9 +5991,13 @@ var App = (function () {
       };
       actualizarSesionCache_(optimista);
       // Persistir antes de repintar (un fallo de render no debe perder el guardado).
-      llamarConFallo_('editarSesion', [id, payload],
-        function (r) { actualizarSesionCache_(r); if (!opts.noPintar) pintarPlanner(); },
-        function (err) { recargarSesionesTrasError_('No se pudo guardar la sesión: ' + err); });
+      // Id temporal = la CREACIÓN aún viaja al servidor: solo se actualiza en
+      // local (editar un tmp en el servidor fallaba y descuadraba la cache).
+      if (String(id).indexOf('tmp_') !== 0) {
+        llamarConFallo_('editarSesion', [id, payload],
+          function (r) { actualizarSesionCache_(r); if (!opts.noPintar) pintarPlanner(); },
+          function (err) { recargarSesionesTrasError_('No se pudo guardar la sesión: ' + err); });
+      }
       if (!opts.silencioso) avisoOk('Sesión guardada.');
       if (!opts.noPintar) pintarPlanner();
     } else {
