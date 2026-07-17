@@ -519,6 +519,16 @@
   .spinner { width: 28px; height: 28px; border: 3px solid var(--borde-fuerte);
     border-top-color: var(--acento); border-radius: 50%; animation: girar .7s linear infinite; }
   @keyframes girar { to { transform: rotate(360deg); } }
+  /* Spinner en línea (dentro de un botón mientras trabaja). */
+  .spinner-inline { display: inline-block; width: 13px; height: 13px; vertical-align: -2px;
+    border: 2px solid currentColor; border-top-color: transparent; border-radius: 50%;
+    animation: girar .7s linear infinite; }
+  /* Categorías de la papelera. */
+  .papelera-cat { margin-bottom: 22px; }
+  .papelera-cat-tit { font-size: 15px; font-weight: 700; margin: 0 0 10px;
+    display: flex; align-items: center; gap: 8px; }
+  .papelera-cat-num { font-size: 12px; font-weight: 600; color: var(--texto-2);
+    background: var(--bg); border: 1px solid var(--borde); border-radius: 999px; padding: 1px 8px; }
 
   /* ---------- Cabeceras (rejilla compacta / tarjeta de clase) ----------
      Una fila: icono volver · [icono color] · título+meta · acciones dcha. */
