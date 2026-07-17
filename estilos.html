@@ -1086,8 +1086,19 @@
     box-shadow: var(--sombra-1); }
   /* Menú de configuración del planificador (popover bajo el botón ⚙). */
   .planner-config-wrap { position: relative; }
-  /* En móvil, el botón Configuración se queda solo con el engranaje. */
-  @media (max-width: 820px) { .btn-txt-movil { display: none; } }
+  /* Texto que solo se ve en PC (móvil: iconos más compactos). */
+  .solo-movil-inline { display: none; }
+  @media (max-width: 820px) {
+    .btn-txt-movil { display: none; }           /* Configuración/Exportar: solo icono */
+    .solo-pc-inline { display: none; }
+    .solo-movil-inline { display: inline; }
+    /* Selector de modos a todo el ancho. */
+    .planner-modos { display: flex; width: 100%; }
+    .planner-modo { flex: 1; padding: 6px 4px; }
+    /* Navegación de fecha a todo el ancho: fecha ancha y «Hoy» a la derecha. */
+    .planner-nav { display: flex; width: 100%; align-items: center; }
+    .planner-nav .planner-semana-etq { flex: 1; min-width: 0; }
+  }
   .planner-config-menu { position: absolute; top: calc(100% + 6px); right: 0; z-index: 40;
     min-width: 230px; padding: 6px; background: var(--surface); border: 1px solid var(--borde);
     border-radius: 12px; box-shadow: var(--sombra-2, var(--sombra-1)); display: flex;
