@@ -4323,6 +4323,13 @@ var App = (function () {
       var lay = localStorage.getItem('planner-layout');
       if (lay === 'grupo' || lay === 'horario') plannerLayout = lay;
     } catch (e) {}
+    // Pulsar en cualquier sitio FUERA del panel de edición guarda lo pendiente
+    // y lo repinta (mismo espíritu que cerrar el modal tocando fuera).
+    document.addEventListener('click', function (ev) {
+      if (!editorSesionCtx || !editorSesionCtx.enPanel) return;
+      if (ev.target.closest && ev.target.closest('.pl-uni-detail')) return;
+      autoguardarSesion_({ pintar: true });
+    });
   }
 
   var planUnidadesCache = null;   // unidades de planificación (por materia)
@@ -4434,8 +4441,7 @@ var App = (function () {
   /** Fija la vista por defecto (preferencia) y salta a ella. */
   function setVistaDefecto(modo) {
     try { localStorage.setItem('planner-vista-def', modo); } catch (e) {}
-    plannerModoActual = modo;
-    pintarPlanner();
+    plannerModo(modo); // como cualquier cambio de vista: autoguarda y limpia el panel
   }
   /** Abre/cierra el menú de configuración del planificador. */
   function togglePlannerConfig(ev) {
@@ -5306,24 +5312,91 @@ var App = (function () {
   /** Nueva sesión ya colgada de esta unidad (panel en PC, modal en móvil). */
   function nuevaSesionEnUnidad(unidadId) {
     if (plannerConPanel_()) {
-      autoguardarSesion_(); panelNuevoUid = unidadId; sesUnidadSel = ''; pintarPlanner();
+      autoguardarSesion_();
+      // La sesión se crea YA (aparece en la lista al momento) con las clases del
+      // curso premarcadas y su fecha sugerida; el panel queda editándola.
+      var pre = preseleccionEvals_({ unidadId: unidadId, asignaciones: [] });
+      var asignaciones = Object.keys(pre).map(function (evalId) {
+        return { evalId: evalId, fecha: fechaSugerida_(evalId, unidadId),
+          estado: 'pendiente', observaciones: '' };
+      });
+      var payload = { titulo: 'Sin título', tipo: 'clase', descripcion: '', criterios: [],
+        asignaciones: asignaciones, unidadId: unidadId, paginas: '', deberes: '' };
+      var tmpId = 'tmp_' + (++sesionTmpSeq);
+      sesionesCache = (sesionesCache || []).concat([{
+        sesionId: tmpId, titulo: payload.titulo, tipo: 'clase', descripcion: '',
+        criterios: [], asignaciones: asignaciones, unidadId: unidadId,
+        paginas: '', deberes: '', creado: new Date().toISOString(), orden: 1e9
+      }]);
+      sesUnidadSel = tmpId; panelNuevoUid = '';
+      llamarConFallo_('crearSesion', [payload],
+        function (r) { reconciliarCreacion_(tmpId, r, payload); },
+        function (err) {
+          sesionesCache = (sesionesCache || []).filter(function (x) { return x.sesionId !== tmpId; });
+          if (sesUnidadSel === tmpId) sesUnidadSel = '';
+          pintarPlanner();
+          aviso('No se pudo crear la sesión: ' + err);
+        });
+      pintarPlanner();
       var t = document.getElementById('ses-titulo'); // foco directo para escribir
-      if (t) t.focus();
+      if (t) { t.focus(); t.select(); }
       return;
     }
     abrirModalSesion_('Crear', null,
       { titulo: '', descripcion: '', criterios: [], asignaciones: [], unidadId: unidadId, tipo: 'clase' });
   }
 
+  /** Forma canónica de una sesión para comparar/sincronizar con el servidor. */
+  function payloadDeSesion_(s) {
+    return { titulo: s.titulo || '', tipo: s.tipo || 'clase', descripcion: s.descripcion || '',
+      criterios: (s.criterios || []).slice(), asignaciones: s.asignaciones || [],
+      unidadId: s.unidadId || '', paginas: '', deberes: '' };
+  }
+  /**
+   * La creación confirma: el tmp pasa al id real CONSERVANDO lo que se haya
+   * editado en local mientras viajaba; si difiere de lo enviado, se sincroniza
+   * el servidor con una edición silenciosa (nada se pierde por ir deprisa).
+   */
+  function reconciliarCreacion_(tmpId, r, payloadOriginal) {
+    var local = (sesionesCache || []).filter(function (x) { return x.sesionId === tmpId; })[0];
+    if (!local) { actualizarSesionCache_(r); return; }
+    local.sesionId = r.sesionId;
+    local.creado = r.creado;
+    local.orden = r.orden;
+    if (sesUnidadSel === tmpId) sesUnidadSel = r.sesionId;
+    if (editorSesionCtx && editorSesionCtx.id === tmpId) editorSesionCtx.id = r.sesionId;
+    var p = payloadDeSesion_(local);
+    if (JSON.stringify(p) !== JSON.stringify(payloadDeSesion_(payloadOriginal))) {
+      llamarSilencioso('editarSesion', [r.sesionId, p], function () {});
+    }
+  }
+
   /** Arrastrar una fila de sesión para reordenar la secuencia de la unidad. */
   function dragSesionUnidad(e) {
     dragInicio(e, '.pl-uni-ses', function (ids) {
-      ids.forEach(function (id, i) {
-        var s = (sesionesCache || []).filter(function (x) { return x.sesionId === id; })[0];
-        if (s) s.orden = i + 1; // renumera 01, 02… localmente
+      var byId = {};
+      (sesionesCache || []).forEach(function (s) { byId[s.sesionId] = s; });
+      var sesiones = ids.map(function (id) { return byId[id]; }).filter(Boolean);
+      sesiones.forEach(function (s, i) { s.orden = i + 1; }); // renumera 01, 02…
+      // Reparte las fechas ya asignadas según el nuevo orden (por clase): las
+      // mismas fechas, recolocadas cronológicamente sobre la nueva secuencia.
+      var porClase = {};
+      sesiones.forEach(function (s) {
+        (s.asignaciones || []).forEach(function (a) {
+          if (a.evalId && a.fecha) (porClase[a.evalId] = porClase[a.evalId] || []).push(a.fecha);
+        });
       });
+      Object.keys(porClase).forEach(function (g) { porClase[g].sort(); });
+      sesiones.forEach(function (s) {
+        (s.asignaciones || []).forEach(function (a) {
+          if (a.evalId && a.fecha) a.fecha = porClase[a.evalId].shift();
+        });
+      });
+      // Persistir antes de repintar (el servidor hace el mismo reparto).
+      llamarConFallo_('reordenarSesionesUnidad', ['', ids],
+        function () {},
+        function () { recargarSesionesTrasError_('No se pudo reordenar.'); });
       pintarPlanner();
-      llamar('reordenarSesionesUnidad', ['', ids], function () {});
     });
   }
 
