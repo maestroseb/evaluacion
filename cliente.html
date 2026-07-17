@@ -4656,7 +4656,7 @@ var App = (function () {
     var c = calendarioCache || { inicio: '', fin: '', festivos: [] };
     calDraft = (c.festivos || []).map(function (f) {
       return { desde: f.desde, hasta: f.hasta || f.desde, nombre: f.nombre || '' };
-    });
+    }).sort(function (a, b) { return a.desde < b.desde ? -1 : a.desde > b.desde ? 1 : 0; });
     var curso = (estado.cursos && estado.cursos.activo) || '';
     abrirModal('Calendario del curso',
       '<p class="ayuda">Curso académico <b>' + esc(curso) + '</b>. Se usa para sugerir fechas ' +
