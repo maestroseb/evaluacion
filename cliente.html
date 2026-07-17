@@ -363,19 +363,45 @@ var App = (function () {
     document.getElementById('lista-papelera').innerHTML = spinner();
     llamar('listarPapelera', [], pintarPapelera);
   }
+  // Categorías de la papelera, en orden de aparición.
+  var PAPELERA_CATS = [
+    { tipo: 'grupo', titulo: 'Grupos' },
+    { tipo: 'clase', titulo: 'Clases' },
+    { tipo: 'unidad', titulo: 'Unidades' },
+    { tipo: 'actividad', titulo: 'Actividades evaluables' },
+    { tipo: 'rubrica', titulo: 'Rúbricas' },
+    { tipo: 'sesion', titulo: 'Sesiones del planificador' },
+    { tipo: 'traspaso', titulo: 'Traspasos' }
+  ];
   function pintarPapelera(items) {
     var cont = document.getElementById('lista-papelera');
     if (!items.length) { cont.innerHTML = '<div class="vacio">La papelera está vacía.</div>'; return; }
-    cont.innerHTML = items.map(function (it) {
-      return '<div class="tarjeta tarjeta-color" style="border-left-color:var(--texto-3)">' +
-        '<h3>' + esc(it.etiqueta) + '</h3>' +
-        '<div class="meta">Borrado: ' + esc(fechaCorta(it.fecha)) + '</div>' +
-        '<div style="margin-top:10px"><button class="btn" ' +
-        'onclick="App.restaurarItem(\'' + it.papeleraId + '\')">Restaurar</button></div>' +
-        '</div>';
-    }).join('');
+    // Reparte por categoría conservando el orden recibido (más reciente primero).
+    var porTipo = {};
+    items.forEach(function (it) { (porTipo[it.tipo] = porTipo[it.tipo] || []).push(it); });
+    var cats = PAPELERA_CATS.slice();
+    // Cualquier tipo no previsto va a una categoría «Otros» al final.
+    Object.keys(porTipo).forEach(function (t) {
+      if (!cats.some(function (c) { return c.tipo === t; })) cats.push({ tipo: t, titulo: 'Otros' });
+    });
+    cont.innerHTML = cats.filter(function (c) { return (porTipo[c.tipo] || []).length; })
+      .map(function (c) {
+        var tarjetas = porTipo[c.tipo].map(function (it) {
+          return '<div class="tarjeta tarjeta-color" style="border-left-color:var(--texto-3)">' +
+            '<h3>' + esc(it.etiqueta) + '</h3>' +
+            '<div class="meta">Borrado: ' + esc(fechaCorta(it.fecha)) + '</div>' +
+            '<div style="margin-top:10px"><button class="btn" id="pap-btn-' + it.papeleraId + '" ' +
+            'onclick="App.restaurarItem(\'' + it.papeleraId + '\')">Restaurar</button></div>' +
+            '</div>';
+        }).join('');
+        return '<section class="papelera-cat"><h2 class="papelera-cat-tit">' + esc(c.titulo) +
+          ' <span class="papelera-cat-num">' + porTipo[c.tipo].length + '</span></h2>' +
+          '<div class="tarjetas">' + tarjetas + '</div></section>';
+      }).join('');
   }
   function restaurarItem(id) {
+    var btn = document.getElementById('pap-btn-' + id);
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-inline"></span> Restaurando…'; }
     llamar('restaurarPapelera', [id], function () {
       invalidarCaches();
       llamar('getEstadoInicial', [], function (e) { estado = e; });
