@@ -52,7 +52,7 @@ var Respaldo = (function () {
   return { siToca_: siToca_, ahora_: ahora_ };
 })();
 
-/** Ejecuta una copia de seguridad manual desde el editor de Apps Script. */
+/** Copia de seguridad manual: botón «Hacer copia ahora» (o desde el editor). */
 function copiaDeSeguridadAhora() {
   var r = Respaldo.ahora_(abrirCuaderno_());
   Logger.log('Copia creada: ' + (r && r.fecha));

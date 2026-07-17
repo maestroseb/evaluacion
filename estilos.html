@@ -635,12 +635,6 @@
   .rc-grip:hover { background: var(--bg); color: var(--texto-2); }
   .rc-grip:active { cursor: grabbing; }
   .rc-meta { color: var(--texto-2); font-size: 13px; }
-  .rc-crits { display: flex; flex-wrap: wrap; gap: 6px; }
-  .chip-crit { display: inline-flex; align-items: center; gap: 4px; font-size: 11px;
-    font-weight: 600; color: var(--acento-fuerte); background: var(--acento-suave);
-    border-radius: 999px; padding: 2px 9px; }
-  .chip-x { border: 0; background: transparent; color: var(--acento-fuerte); cursor: pointer;
-    font-size: 13px; line-height: 1; padding: 0; }
   .rc-acciones { display: flex; gap: 8px; margin-top: 2px; }
   .rc-acciones .btn { padding: 6px 10px; font-size: 13px; }
 
@@ -651,8 +645,6 @@
     display: inline-flex; align-items: center; justify-content: center; font-size: 15px; }
   .mini-x:hover { background: var(--bg); color: var(--texto); }
   .rub-add { align-self: flex-start; }
-  .rub-crit-sels { display: flex; gap: 8px; margin: 8px 0; }
-  .rub-crit-sels select { flex: 1 1 auto; min-width: 0; }
   /* Interruptor de modo de criterios. Se resetea el ancho del radio porque
      .modal input lo pone al 100% (deformaba la fila). */
   .rub-modo { display: flex; gap: 8px 20px; margin: 8px 0 12px; flex-wrap: wrap; }
@@ -664,7 +656,7 @@
     background: var(--surface); color: var(--texto); }
   /* La caja de criterios y los chips no aparecen hasta que hay contenido
      (es decir, hasta que se elige curso + área). */
-  .lista-crit:empty, .rc-crits:empty { display: none; }
+  .lista-crit:empty { display: none; }
 
   /* Editor de rúbrica: estado sin datos y barra superior */
   .rub-vacio { color: var(--texto-3); padding: 22px; text-align: center; font-size: 14px;
@@ -998,8 +990,6 @@
     /* Editor de rúbricas: en móvil los criterios se apilan para que el modal
        no tenga scroll horizontal (los radios y los selects no caben en fila). */
     .rub-modo { flex-direction: column; gap: 8px; }
-    .rub-crit-sels { flex-direction: column; }
-
     /* Evaluador de rúbrica: solo las flechas ‹ › (el nombre necesita el sitio). */
     .rub-eval-nav .rub-nav-txt { display: none; }
 
@@ -1138,14 +1128,10 @@
   .planner-nav { display: inline-flex; align-items: center; gap: 6px; }
   .planner-semana-etq { font-weight: 600; font-size: 14px; min-width: 190px;
     text-align: center; }
-  .planner-sel-clase select { padding: 8px 10px; border: 1px solid var(--borde-fuerte);
-    border-radius: 8px; background: var(--surface); font: inherit; font-size: 14px; }
   .planner-dia { background: var(--surface); border: 1px solid var(--borde);
     border-radius: var(--radio); box-shadow: var(--sombra-1); padding: 12px 14px;
     margin-bottom: 12px; }
   .planner-dia h3 { margin: 0 0 8px; font-size: 14px; text-transform: capitalize; }
-  .planner-dia-fecha { color: var(--texto-3); font-weight: 500; }
-  .planner-hoy { border-color: var(--acento); }
   .planner-vacio { color: var(--texto-3); font-size: 13px; padding: 2px 0 4px; }
   .planner-sesion { display: flex; align-items: center; gap: 10px; padding: 8px 0;
     border-top: 1px solid var(--borde); }
@@ -1208,22 +1194,12 @@
   .planner-crit-area { font-size: 12px; font-weight: 700; color: var(--texto-2);
     text-transform: uppercase; letter-spacing: .02em; margin: 8px 0 4px; }
   .planner-crit-area:first-child { margin-top: 0; }
-  /* Huecos del horario sin sesión planificada (vista semanal) */
-  .planner-hueco { display: flex; align-items: center; justify-content: space-between;
-    gap: 10px; padding: 6px 10px; margin: 6px 0; border: 1px dashed var(--borde-fuerte);
-    border-radius: 8px; }
-  .planner-hueco-txt { color: var(--texto-2); font-size: 13px; }
-  .planner-hueco-btn { padding: 3px 10px; font-size: 12px; }
   /* Editor de horario (modal) */
   .planner-hor-clase { padding: 10px 0; border-top: 1px solid var(--borde); }
   .planner-hor-clase:first-of-type { border-top: 0; }
   .planner-hor-cab { display: flex; align-items: center; justify-content: space-between;
     gap: 10px; margin-bottom: 6px; }
   .planner-hor-nombre { font-weight: 600; font-size: 14px; }
-  .planner-hor-prov { display: inline-flex; align-items: center; gap: 6px; }
-  .planner-prov-vinc { padding: 4px 6px; border: 1px solid var(--borde-fuerte);
-    border-radius: 6px; font: inherit; font-size: 12px; color: var(--texto-2);
-    background: var(--surface); max-width: 190px; }
   .planner-prov-add { display: flex; gap: 8px; margin-top: 12px; padding-top: 10px;
     border-top: 1px solid var(--borde); }
   .planner-prov-add input { flex: 1; min-width: 0; padding: 7px 10px;
@@ -1233,7 +1209,6 @@
   .cc-sin-grupo { color: var(--texto-3); font-style: italic; }
 
   /* ---------- Rejilla semanal del planificador (grupos × días / por horario) ---------- */
-  .planner-layouts { margin-left: 4px; }
   .pl-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 6px; }
   /* Layout "por grupo": rejilla con 1ª columna fija (etiqueta de clase). */
   .pl-grid { display: grid; grid-template-columns: 132px repeat(var(--cols), minmax(120px, 1fr));
@@ -1436,9 +1411,6 @@
   /* Dentro del panel, el editor va más compacto que en el modal */
   .pl-uni-detail .lista-crit, .pl-uni-detail .planner-crit { max-height: 160px; }
   .pl-uni-detail .rt-body { min-height: 72px; max-height: 180px; }
-  /* Campos rápidos del modal (páginas / deberes) en una fila */
-  .ses-rapidos { display: flex; flex-wrap: wrap; gap: 10px 16px; }
-  .ses-rapidos label { flex: 1 1 160px; }
   /* Editor de texto enriquecido (descripción de la sesión) */
   .rt-editor { border: 1px solid var(--borde-fuerte); border-radius: 8px; overflow: hidden;
     margin-bottom: 14px; }
