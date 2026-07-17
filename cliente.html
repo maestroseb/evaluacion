@@ -4353,10 +4353,14 @@ var App = (function () {
       if (lay === 'grupo' || lay === 'horario') plannerLayout = lay;
     } catch (e) {}
     // Pulsar en cualquier sitio FUERA del panel de edición guarda lo pendiente
-    // y lo repinta (mismo espíritu que cerrar el modal tocando fuera).
+    // y lo repinta (mismo espíritu que cerrar el modal tocando fuera). Se excluyen
+    // los clics dentro de un modal (p. ej. el de confirmar borrado), que no deben
+    // disparar guardados a destiempo.
     document.addEventListener('click', function (ev) {
       if (!editorSesionCtx || !editorSesionCtx.enPanel) return;
-      if (ev.target.closest && ev.target.closest('.pl-uni-detail')) return;
+      var t = ev.target;
+      if (!t.closest) return;
+      if (t.closest('.pl-uni-detail') || t.closest('.modal, .modal-fondo')) return;
       autoguardarSesion_({ pintar: true });
     });
   }
@@ -6273,8 +6277,25 @@ var App = (function () {
       'Eliminar', function () {
         // Optimista: desaparece ya de la pantalla; el borrado va por detrás.
         var quitada = (sesionesCache || []).filter(function (x) { return x.sesionId === id; });
+        var eliminada = quitada[0];
         sesionesCache = (sesionesCache || []).filter(function (x) { return x.sesionId !== id; });
-        if (sesUnidadSel === id) sesUnidadSel = '';
+        // Si era la sesión abierta en el panel de Unidades, seleccionamos una
+        // vecina de la misma unidad para que el editor no se quede en blanco.
+        if (sesUnidadSel === id) {
+          sesUnidadSel = '';
+          editorSesionCtx = null;
+          if (plannerConPanel_() && eliminada && eliminada.unidadId) {
+            var hermanas = (sesionesCache || []).filter(function (s) {
+              return s.unidadId === eliminada.unidadId;
+            }).sort(function (a, b) { return (a.orden || 0) - (b.orden || 0); });
+            if (hermanas.length) {
+              // La que ahora ocupa su posición (o la última si borró la última).
+              var pos = 0;
+              hermanas.forEach(function (s, i) { if ((s.orden || 0) < (eliminada.orden || 0)) pos = i + 1; });
+              sesUnidadSel = (hermanas[pos] || hermanas[hermanas.length - 1]).sesionId;
+            }
+          }
+        }
         pintarPlanner();
         avisoOk('Sesión movida a la papelera.');
         if (String(id).indexOf('tmp_') === 0) return; // aún sin confirmar: solo local
