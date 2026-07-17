@@ -48,7 +48,9 @@ var Calendario = (function () {
         var d1 = fecha_(f && f.desde), d2 = fecha_(f && f.hasta) || d1;
         return { desde: d1, hasta: (d2 && d2 >= d1 ? d2 : d1), nombre: String((f && f.nombre) || '').slice(0, 80) };
       })
-      .filter(function (f) { return f.desde; });
+      .filter(function (f) { return f.desde; })
+      // Orden cronológico, se añadan cuando se añadan.
+      .sort(function (a, b) { return a.desde < b.desde ? -1 : a.desde > b.desde ? 1 : 0; });
     var sh = hoja_(ss);
     var fila = Datos.filaDeId_(sh, curso); // col 1 = cursoAcademico (hace de id)
     var vals = [curso, inicio, fin, JSON.stringify(festivos)];
