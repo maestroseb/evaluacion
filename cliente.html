@@ -3619,6 +3619,9 @@ var App = (function () {
     // Contenido extra en la barra de título (p. ej. el selector de Tipo de la sesión).
     var extra = document.getElementById('modal-cab-extra');
     if (extra) extra.innerHTML = (opts && opts.cabExtra) || '';
+    // Acción extra a la izquierda de los botones (p. ej. la papelera de la sesión).
+    var accExtra = document.getElementById('modal-acc-extra');
+    if (accExtra) accExtra.innerHTML = (opts && opts.accionExtra) || '';
     document.getElementById('modal-cuerpo').innerHTML = cuerpoHtml;
     var b = document.getElementById('modal-aceptar');
     b.textContent = textoAceptar; b.disabled = false;
@@ -5217,17 +5220,20 @@ var App = (function () {
     }
     prepararEditorSesion_(s, nueva ? null : s.sesionId);
     editorSesionCtx = { id: nueva ? null : s.sesionId, enPanel: true };
+    // Arriba solo duplicar; la papelera va abajo, a la izquierda del Guardar.
     var acc = nueva ? '' :
       '<span class="pl-detail-acc">' +
         '<button class="btn btn-icono" title="Duplicar" onclick="App.duplicarSesionUI(\'' + s.sesionId + '\')">' +
           svgUI('duplicar') + '</button>' +
-        '<button class="btn peligro btn-icono" title="Eliminar" onclick="App.eliminarSesionUI(\'' + s.sesionId + '\')">' +
-          svgUI('papelera') + '</button>' +
       '</span>';
+    var papelera = nueva ? '' :
+      '<button class="btn peligro" title="Eliminar" onclick="App.eliminarSesionUI(\'' + s.sesionId + '\')">' +
+        svgUI('papelera') + ' Eliminar</button>';
     return '<div class="pl-detail-head"><strong>' + (nueva ? 'Nueva sesión' : 'Editar') + '</strong>' +
         tipoSelectorHtml_(s.tipo || 'clase') + acc + '</div>' +
       sesionFormHtml_(s) +
-      '<div class="pl-detail-guardar"><button class="btn primario" onclick="App.guardarSesionPanel_()">' +
+      '<div class="pl-detail-guardar">' + papelera +
+        '<button class="btn primario" onclick="App.guardarSesionPanel_()">' +
         (nueva ? 'Crear sesión' : 'Guardar') + '</button></div>';
   }
 
@@ -5385,7 +5391,7 @@ var App = (function () {
    */
   function reconciliarCreacion_(tmpId, r, payloadOriginal) {
     var local = (sesionesCache || []).filter(function (x) { return x.sesionId === tmpId; })[0];
-    if (!local) { actualizarSesionCache_(r); return; }
+    if (!local) { actualizarSesionCache_(r); finReordenDiferido_(tmpId, r.sesionId); return; }
     local.sesionId = r.sesionId;
     local.creado = r.creado;
     local.orden = r.orden;
@@ -5393,8 +5399,32 @@ var App = (function () {
     if (editorSesionCtx && editorSesionCtx.id === tmpId) editorSesionCtx.id = r.sesionId;
     var p = payloadDeSesion_(local);
     if (JSON.stringify(p) !== JSON.stringify(payloadDeSesion_(payloadOriginal))) {
-      llamarSilencioso('editarSesion', [r.sesionId, p], function () {});
+      // Persistir la edición ANTES del reorden diferido (ambos tocan las
+      // asignaciones; encadenado para que no se pisen).
+      llamarSilencioso('editarSesion', [r.sesionId, p], function () {
+        finReordenDiferido_(tmpId, r.sesionId);
+      });
+    } else {
+      finReordenDiferido_(tmpId, r.sesionId);
     }
+  }
+
+  var reordenPendiente = null; // ids de un reorden que espera a que confirme un tmp
+
+  /** Reparte, por clase, las fechas ya asignadas sobre la nueva secuencia. */
+  function repartirFechasUnidad_(sesiones) {
+    var porClase = {};
+    sesiones.forEach(function (s) {
+      (s.asignaciones || []).forEach(function (a) {
+        if (a.evalId && a.fecha) (porClase[a.evalId] = porClase[a.evalId] || []).push(a.fecha);
+      });
+    });
+    Object.keys(porClase).forEach(function (g) { porClase[g].sort(); });
+    sesiones.forEach(function (s) {
+      (s.asignaciones || []).forEach(function (a) {
+        if (a.evalId && a.fecha) a.fecha = porClase[a.evalId].shift();
+      });
+    });
   }
 
   /** Arrastrar una fila de sesión para reordenar la secuencia de la unidad. */
@@ -5404,25 +5434,30 @@ var App = (function () {
       (sesionesCache || []).forEach(function (s) { byId[s.sesionId] = s; });
       var sesiones = ids.map(function (id) { return byId[id]; }).filter(Boolean);
       sesiones.forEach(function (s, i) { s.orden = i + 1; }); // renumera 01, 02…
-      // Reparte las fechas ya asignadas según el nuevo orden (por clase): las
-      // mismas fechas, recolocadas cronológicamente sobre la nueva secuencia.
-      var porClase = {};
-      sesiones.forEach(function (s) {
-        (s.asignaciones || []).forEach(function (a) {
-          if (a.evalId && a.fecha) (porClase[a.evalId] = porClase[a.evalId] || []).push(a.fecha);
-        });
-      });
-      Object.keys(porClase).forEach(function (g) { porClase[g].sort(); });
-      sesiones.forEach(function (s) {
-        (s.asignaciones || []).forEach(function (a) {
-          if (a.evalId && a.fecha) a.fecha = porClase[a.evalId].shift();
-        });
-      });
-      // Persistir antes de repintar (el servidor hace el mismo reparto).
+      // Si hay alguna sesión recién creada (id temporal), NO tocamos fechas ni
+      // llamamos al servidor: crear y reordenar competirían y descuadran las
+      // fechas. Se difiere hasta que la creación confirme (reconciliarCreacion_).
+      if (ids.some(function (id) { return String(id).indexOf('tmp_') === 0; })) {
+        reordenPendiente = ids.slice();
+        pintarPlanner();
+        return;
+      }
+      repartirFechasUnidad_(sesiones); // ids reales: reparto local + persistencia
       llamarConFallo_('reordenarSesionesUnidad', ['', ids],
         function () {},
         function () { recargarSesionesTrasError_('No se pudo reordenar.'); });
       pintarPlanner();
+    });
+  }
+  /** Ejecuta el reorden diferido cuando ya no quedan ids temporales. */
+  function finReordenDiferido_(tmpId, realId) {
+    if (!reordenPendiente) return;
+    reordenPendiente = reordenPendiente.map(function (id) { return id === tmpId ? realId : id; });
+    if (reordenPendiente.some(function (id) { return String(id).indexOf('tmp_') === 0; })) return;
+    var ids = reordenPendiente; reordenPendiente = null;
+    // El servidor reparte las fechas sobre un estado ya consistente y refrescamos.
+    llamarSilencioso('reordenarSesionesUnidad', ['', ids], function () {
+      llamarSilencioso('listarSesiones', [], function (l) { sesionesCache = l || []; pintarPlanner(); });
     });
   }
 
@@ -5972,13 +6007,13 @@ var App = (function () {
   function abrirModalSesion_(textoAceptar, id, s) {
     prepararEditorSesion_(s, id);
     editorSesionCtx = { id: id, enPanel: false };
-    // Al editar, papelera en la cabecera (como en el panel de Unidades).
-    var extra = tipoSelectorHtml_(s.tipo || 'clase') +
-      (id ? ' <button type="button" class="btn peligro btn-icono" title="Eliminar sesión" ' +
-        'onclick="App.eliminarSesionDesdeEditor_(\'' + id + '\')">' + svgUI('papelera') + '</button>' : '');
+    // Al editar, papelera abajo, a la izquierda del botón «Cerrar».
+    var acc = id ? '<button type="button" class="btn peligro" title="Eliminar sesión" ' +
+      'onclick="App.eliminarSesionDesdeEditor_(\'' + id + '\')">' + svgUI('papelera') + ' Eliminar</button>' : '';
     abrirModal(tituloSesion_(id, s.tipo || 'clase'), sesionFormHtml_(s),
       textoAceptar, function () { guardarSesion_(id); },
-      { sinFoco: !!id, ancho: true, textoCancelar: 'Cerrar', cabExtra: extra });
+      { sinFoco: !!id, ancho: true, textoCancelar: 'Cerrar',
+        cabExtra: tipoSelectorHtml_(s.tipo || 'clase'), accionExtra: acc });
     montarEditorSesion_();
   }
 
