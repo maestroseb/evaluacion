@@ -79,8 +79,8 @@ function eliminarPlanUnidad(unidadId) {
 }
 
 /** Reordena las sesiones de una unidad según el nuevo orden de ids (arrastrar). */
-function reordenarSesionesUnidad(unidadId, ids) {
-  return Planner.reordenarSesionesUnidad_(abrirCuaderno_(), ids);
+function reordenarSesionesUnidad(unidadId, ids, cursoAcademico) {
+  return Planner.reordenarSesionesUnidad_(abrirCuaderno_(), ids, cursoAcademico);
 }
 
 var Planner = (function () {
@@ -148,38 +148,66 @@ var Planner = (function () {
     return obtener_(ss, sesionId);
   }
 
+  /** Índice del día de la semana (0 = lunes) de un iso. */
+  function diaSemUtc_(iso) { return (isoADate_(iso).getUTCDay() + 6) % 7; }
+  /** Días (0=lunes) del horario de una clase (evalId), leídos de _evaluaciones. */
+  function horarioDeEval_(ss, evalId) {
+    var sh = ss.getSheetByName(HOJAS.EVALUACIONES);
+    var fila = Datos.filaDeId_(sh, evalId);
+    if (fila < 0) return [];
+    var h = parse_(sh.getRange(fila, 11).getValue()); // col 11 = horario
+    return (Array.isArray(h) ? h : []).map(function (x) { return x.dia; });
+  }
+  /** Siguiente fecha que le toca a la clase: por horario, o el siguiente lectivo. */
+  function siguienteFechaClase_(iso, dias, festSet) {
+    var d = isoADate_(iso), lim = 0;
+    do {
+      d.setUTCDate(d.getUTCDate() + 1);
+      var it = dateAIso_(d);
+      if (esLectivo_(it, festSet) && (!dias.length || dias.indexOf(diaSemUtc_(it)) >= 0)) return it;
+    } while (++lim < 400);
+    return dateAIso_(d);
+  }
+
   /**
-   * Reordena las sesiones de una unidad (col 7 = orden) según la lista de ids
-   * y REPARTE sus fechas siguiendo el nuevo orden: por cada clase, las fechas
-   * ya asignadas (las mismas) se recolocan cronológicamente sobre la nueva
-   * secuencia, de modo que reordenar la lista reordena también el calendario.
+   * Reordena las sesiones de una unidad (col 7 = orden) y RECALCULA sus fechas
+   * según el nuevo orden: por cada clase, ancladas en la fecha más temprana ya
+   * asignada, las siguientes se recolocan según su horario (o el siguiente día
+   * lectivo). Así reordenar reordena el calendario y rellena los huecos que deja
+   * una sesión eliminada, respetando findes y festivos.
    */
-  function reordenarSesionesUnidad_(ss, ids) {
+  function reordenarSesionesUnidad_(ss, ids, cursoAcademico) {
     var sh = hoja_(ss);
     Datos.reordenarPorIds_(sh, 7, ids);
     var byId = {};
     listar_(ss).forEach(function (s) { byId[s.sesionId] = s; });
     var sesiones = (ids || []).map(function (id) { return byId[id]; }).filter(Boolean);
-    var porClase = {}; // evalId -> fechas asignadas (se reparten en orden)
-    sesiones.forEach(function (s) {
-      (s.asignaciones || []).forEach(function (a) {
-        if (a.evalId && a.fecha) (porClase[a.evalId] = porClase[a.evalId] || []).push(a.fecha);
-      });
-    });
-    Object.keys(porClase).forEach(function (g) { porClase[g].sort(); });
-    var tocadas = {};
+    var festSet = festivosSet_(ss, cursoAcademico);
+    // Clases implicadas (con alguna asignación con fecha) y su horario.
+    var horarios = {}, ancla = {};
     sesiones.forEach(function (s) {
       (s.asignaciones || []).forEach(function (a) {
         if (!a.evalId || !a.fecha) return;
-        var f = porClase[a.evalId].shift();
-        if (f !== a.fecha) { a.fecha = f; tocadas[s.sesionId] = true; }
+        if (!(a.evalId in horarios)) horarios[a.evalId] = horarioDeEval_(ss, a.evalId);
+        if (!ancla[a.evalId] || a.fecha < ancla[a.evalId]) ancla[a.evalId] = a.fecha;
+      });
+    });
+    var cursor = {}, tocadas = {};
+    sesiones.forEach(function (s) {
+      (s.asignaciones || []).forEach(function (a) {
+        if (!a.evalId || !a.fecha) return;
+        var g = a.evalId;
+        var nueva = (cursor[g] == null) ? ancla[g]
+          : siguienteFechaClase_(cursor[g], horarios[g] || [], festSet);
+        cursor[g] = nueva;
+        if (nueva !== a.fecha) { a.fecha = nueva; tocadas[s.sesionId] = true; }
       });
     });
     Object.keys(tocadas).forEach(function (sid) {
       var fila = Datos.filaDeId_(sh, sid);
       if (fila > 0) sh.getRange(fila, 5).setValue(JSON.stringify((byId[sid].asignaciones || []).map(mapAsig_)));
     });
-    return { ok: true };
+    return listar_(ss);
   }
 
   function eliminar_(ss, sesionId) {
