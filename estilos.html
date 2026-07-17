@@ -1297,13 +1297,15 @@
   .cal-fest-fila .cal-fest-nombre { flex: 1 1 100px; min-width: 80px; box-sizing: border-box;
     margin: 0; padding: 6px 8px;
     border: 1px solid var(--borde-fuerte); border-radius: 8px; font: inherit; font-size: 14px; }
-  /* En móvil: 1ª línea nombre + papelera; 2ª línea las dos fechas. */
+  /* Fechas alineadas a la izquierda (iOS las centra y dejan hueco a la derecha). */
+  .cal-rango input, .cal-fest-fila .cal-fest-desde, .cal-fest-fila .cal-fest-hasta { text-align: left; }
+  /* En móvil: 1ª línea nombre + papelera; 2ª línea las dos fechas (máx. 2 líneas). */
   @media (max-width: 560px) {
-    .cal-fest-fila { flex-wrap: wrap; }
-    .cal-fest-fila .cal-fest-nombre { order: 0; flex: 1 1 auto; }
-    .cal-fest-fila .btn { order: 1; }
-    .cal-fest-fila .cal-fest-desde { order: 2; flex: 1 1 45%; width: auto; }
-    .cal-fest-fila .cal-fest-hasta { order: 3; flex: 1 1 45%; width: auto; }
+    .cal-fest-fila { flex-wrap: wrap; row-gap: 8px; }
+    .cal-fest-fila .cal-fest-nombre { order: 0; flex: 1 1 auto; min-width: 55%; }
+    .cal-fest-fila .btn { order: 1; flex: 0 0 auto; }
+    .cal-fest-fila .cal-fest-desde { order: 2; flex: 1 1 40%; min-width: 40%; width: auto; }
+    .cal-fest-fila .cal-fest-hasta { order: 3; flex: 1 1 40%; min-width: 40%; width: auto; }
     .cal-rango label { flex: 1 1 100%; }
   }
   .cal-add { margin-top: 8px; }
