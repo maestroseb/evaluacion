@@ -196,6 +196,7 @@
         </div>
         <div class="acciones-unidad">
           <label class="check"><input type="checkbox" id="ver-unidades-resumen" checked onchange="App.pintarResumen()"> Columnas por unidad</label>
+          <label class="check" title="Además de la nota actual (media de lo evaluado), muestra la nota si lo no evaluado contara 0"><input type="checkbox" id="ver-acumulada-resumen" onchange="App.pintarResumen()"> Nota acumulada</label>
           <button class="btn solo-escritorio" onclick="App.copiarResumenSeneca()"><svg class="svg-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg> Copiar para Séneca</button>
         </div>
       </div>

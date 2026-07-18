@@ -421,7 +421,8 @@ var App = (function () {
         return '<div class="tarjeta-crit"><div class="tc-info">' +
           '<b>' + esc(b.area || '—') + '</b>' +
           '<span class="meta">' + esc(b.curso) + ' · ' + b.numRA + ' RA · ' + b.numCriterios + ' criterios</span>' +
-          '</div><button class="btn peligro btn-icono" title="Eliminar bloque" aria-label="Eliminar bloque" ' +
+          '</div><button class="btn" onclick="App.abrirPesosUI(' + i + ')">' + svgUI('lapiz') + ' Pesos</button>' +
+          '<button class="btn peligro btn-icono" title="Eliminar bloque" aria-label="Eliminar bloque" ' +
           'onclick="App.borrarMapaPropioUI(' + i + ')">' + svgUI('papelera') + '</button></div>';
       }).join('');
     });
@@ -452,6 +453,52 @@ var App = (function () {
         });
       },
       { ancho: true, sinFoco: true });
+  }
+
+  /** Editor de pesos de un bloque: % de cada RA y de sus criterios. */
+  function abrirPesosUI(i) {
+    var b = criteriosBloques[i];
+    if (!b) return;
+    llamar('getMapaPropioDetalle', [b.curso, b.area], function (d) {
+      var h = '<p class="ayuda">Pesos que fija el centro. Vacío = reparto igualitario. ' +
+        'Lo normal es que los RA sumen 100 (se avisa si no, sin bloquear).</p>';
+      d.ras.forEach(function (g, gi) {
+        h += '<div class="campo-crit"><span class="etq">' +
+          (g.ra ? esc(g.ra) : 'Sin RA') +
+          (g.ra ? ' — peso <input type="number" class="campo-corto peso-ra" data-ra="' + esc(g.ra) +
+            '" value="' + (g.peso === '' ? '' : g.peso) + '" min="0" step="any" style="width:70px;display:inline-block;margin-left:6px">' : '') +
+          '</span>';
+        g.criterios.forEach(function (c) {
+          h += '<div class="cal-fest-fila"><span class="planner-asig-nom-txt" style="flex:1" title="' +
+            esc(c.texto) + '">' + esc(c.codigo) + '</span>' +
+            '<input type="number" class="peso-cr" data-cod="' + esc(c.codigo) +
+            '" value="' + (c.peso === '' ? '' : c.peso) + '" min="0" step="any" ' +
+            'style="width:80px;flex:0 0 auto" placeholder="—"></div>';
+        });
+        h += '</div>';
+      });
+      abrirModal('Pesos — ' + b.area, h, 'Guardar', function () {
+        var pr = {}, pc = {}, sumRA = 0, hayRA = false;
+        [].forEach.call(document.querySelectorAll('.peso-ra'), function (inp) {
+          pr[inp.dataset.ra] = inp.value; hayRA = true; sumRA += Number(inp.value) || 0;
+        });
+        [].forEach.call(document.querySelectorAll('.peso-cr'), function (inp) {
+          pc[inp.dataset.cod] = inp.value;
+        });
+        var seguir = function () {
+          botonModalCargando('Guardando…');
+          llamar('guardarPesosMapaPropio', [b.curso, b.area, { ras: pr, criterios: pc }], function () {
+            cerrarModal(); pintarCriterios(); avisoOk('Pesos guardados.');
+          });
+        };
+        // Aviso no bloqueante si los RA con peso no suman 100.
+        if (hayRA && sumRA > 0 && Math.abs(sumRA - 100) > 0.01) {
+          confirmar('Los pesos de RA suman ' + sumRA,
+            'Lo habitual es que sumen 100. Puedes guardar igualmente (se renormaliza solo).',
+            'Guardar así', seguir);
+        } else seguir();
+      }, { ancho: true, sinFoco: true });
+    });
   }
 
   function borrarMapaPropioUI(i) {
@@ -1662,6 +1709,10 @@ var App = (function () {
         '<span class="act-nom">' + esc(u.nombre) + '</span></th>';
     });
     h += '<th class="nota sep">FINAL</th>';
+    // «Acumulada» (opcional): lo no evaluado cuenta 0 — lo asegurado hoy.
+    var chkAcum = document.getElementById('ver-acumulada-resumen');
+    var verAcum = !!(chkAcum && chkAcum.checked && R.finalAcum);
+    if (verAcum) h += '<th class="nota sep" title="Si lo no evaluado contara 0">ACUM.</th>';
     // Columnas por RA (solo FP: criterios propios agrupados; nota ponderada).
     var ras = R.ras || [];
     ras.forEach(function (ra) {
@@ -1678,6 +1729,7 @@ var App = (function () {
         h += celdaNum((R.unidadNota[al.id] || {})[u.unidadId]);
       });
       h += celdaNum(R.final[al.id], ' nota sep');
+      if (verAcum) h += celdaNum(R.finalAcum[al.id], ' nota sep');
       ras.forEach(function (ra) {
         h += celdaNum((R.raNota && R.raNota[al.id] || {})[ra], ' crit-col ra-col');
       });
@@ -6878,7 +6930,7 @@ var App = (function () {
     avisoAlcanceEliminar: avisoAlcanceEliminar,
     cambiarCurso: cambiarCurso, editarCursoUI: editarCursoUI, nuevoCursoUI: nuevoCursoUI,
     irACriterios: irACriterios, abrirImportarCriterios: abrirImportarCriterios,
-    borrarMapaPropioUI: borrarMapaPropioUI,
+    borrarMapaPropioUI: borrarMapaPropioUI, abrirPesosUI: abrirPesosUI,
     toggleBuscador: toggleBuscador,
     irARubricas: irARubricas, nuevaRubrica: nuevaRubrica,
     editarRubricaUI: editarRubricaUI, duplicarRubricaUI: duplicarRubricaUI,

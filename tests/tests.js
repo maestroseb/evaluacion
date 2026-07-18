@@ -296,6 +296,15 @@ ok(aprox(r4.ras.RA1, 6) && aprox(r4.final, 6), 'RA sin pesos → medias simples 
 var r5 = agregadoPonderado_({ 'RA1.a': 10, 'LCL.3.1': 4 }, { 'RA1.a': { ra: 'RA1', pRA: '', pCr: '' } });
 ok(aprox(r5.final, 7), 'criterio sin RA cuenta como grupo propio');
 
+// Nota acumulada: lo no evaluado cuenta 0 (y sin nada evaluado, no hay nota).
+eval(bloque(srv, 'function notasAcumuladas_(notas, todosCods)'));
+var ac = notasAcumuladas_({ a: 6 }, ['a', 'b', 'c']);
+ok(aprox(agregadoPonderado_(ac, {}).final, 2), 'acumulada: 6 de 3 criterios → 2');
+ok(agregadoPonderado_(notasAcumuladas_({}, ['a', 'b']), {}).final === null,
+  'acumulada: sin nada evaluado → null');
+var ac2 = notasAcumuladas_({ viejo: 8 }, ['a']); // criterio ya fuera del mapa
+ok(aprox(agregadoPonderado_(ac2, {}).final, 4), 'acumulada: criterio borrado del mapa cuenta');
+
 // ════════════════════════════════════════════════════════════════════
 console.log('');
 if (fallos) {
