@@ -21,9 +21,18 @@ var Resumen = (function () {
     var alumnos = ev.clase.alumnos;
     var unidades = Unidades.listar_(ss, evalId);
 
+    var propias = MapaPropio.filas_(ss);
     var criteriosInfo = {};
-    Curriculo.criteriosDe(ev.curso, ev.area, MapaPropio.filas_(ss)).forEach(function (c) {
+    Curriculo.criteriosDe(ev.curso, ev.area, propias).forEach(function (c) {
       criteriosInfo[c.codigo] = { texto: c.texto, descripcion: c.descripcion };
+    });
+    // Pesos/RA SOLO de los criterios propios de esta área (FP): el mapa
+    // central no agrupa ni pondera, así Primaria/Secundaria no cambia un ápice.
+    var pesos = {};
+    propias.forEach(function (f) {
+      if (f.curso === ev.curso && f.area === ev.area && f.codigo) {
+        pesos[f.codigo] = { ra: f.competencia || '', pRA: f.pesoRA, pCr: f.pesoCriterio };
+      }
     });
 
     // Lectura única de _actividades y _notas (indexadas por unidadId): el coste
@@ -85,19 +94,28 @@ var Resumen = (function () {
       });
     });
 
-    // Global por criterio y nota final.
+    // Global por criterio, nota por RA (si hay criterios propios con RA) y
+    // nota final (ponderada; sin pesos equivale exactamente a la media simple).
+    var raNota = {};
     alumnos.forEach(function (al) {
       critGlobal[al.id] = {};
-      var globales = [];
       Object.keys(acumCrit[al.id]).forEach(function (cod) {
-        var g = media_(acumCrit[al.id][cod]);
-        critGlobal[al.id][cod] = g;
-        globales.push(g);
+        critGlobal[al.id][cod] = media_(acumCrit[al.id][cod]);
       });
-      finalNota[al.id] = globales.length ? media_(globales) : null;
+      var agg = agregadoPonderado_(critGlobal[al.id], pesos);
+      finalNota[al.id] = agg.final;
+      if (Object.keys(agg.ras).length) raNota[al.id] = agg.ras;
+    });
+
+    // RA presentes entre los criterios evaluados (para las columnas del resumen).
+    var rasUsados = {};
+    Object.keys(critsUsados).forEach(function (cod) {
+      if (pesos[cod] && pesos[cod].ra) rasUsados[pesos[cod].ra] = true;
     });
 
     return {
+      ras: Object.keys(rasUsados).sort(),
+      raNota: raNota,
       area: ev.area, curso: ev.curso, color: ev.color || '',
       claseNombre: ev.clase.nombre,
       alumnos: alumnos,
@@ -179,6 +197,45 @@ var Resumen = (function () {
     var mapa = act.rubMap || [];
     if (mapa.length) return notaRub_(def, picks, function (i) { return (mapa[i] || '') === cod; });
     return notaRub_(def, picks, null);
+  }
+
+  /**
+   * Agrega las notas globales de criterio a nota final (y por RA), con pesos
+   * opcionales. `notas` = {cod: nota}; `pesos` = {cod: {ra, pRA, pCr}} (solo
+   * criterios propios; puede estar vacío).
+   *
+   * - Cada criterio pertenece al RA de su fila propia; sin RA, es su propio
+   *   grupo con peso 1 → con `pesos` vacío el resultado es EXACTAMENTE la
+   *   media simple de siempre (mismo número, mismo redondeo).
+   * - Nota de RA = media de sus criterios ponderada por pesoCriterio (defecto 1).
+   * - Nota final = media de los grupos ponderada por pesoRA (defecto 1). Los RA
+   *   sin nota aún no cuentan (se renormaliza sobre lo evaluado).
+   */
+  function agregadoPonderado_(notas, pesos) {
+    var grupos = {}; // clave -> {ra, pRA, sum, sumW}
+    Object.keys(notas).forEach(function (cod) {
+      var n = notas[cod];
+      if (n == null) return;
+      var p = pesos[cod] || {};
+      var clave = p.ra ? 'ra:' + p.ra : 'cod:' + cod;
+      var g = grupos[clave] || (grupos[clave] = { ra: p.ra || '', pRA: null, sum: 0, sumW: 0 });
+      var w = (p.pCr === '' || p.pCr == null) ? 1 : Number(p.pCr);
+      if (!(w > 0)) w = 1;
+      g.sum += n * w; g.sumW += w;
+      // Peso del RA: el primero definido entre sus criterios (todas las filas
+      // del RA deberían llevar el mismo).
+      if (g.pRA == null && p.pRA !== '' && p.pRA != null) g.pRA = Number(p.pRA);
+    });
+    var ras = {}, sum = 0, sumW = 0;
+    Object.keys(grupos).forEach(function (clave) {
+      var g = grupos[clave];
+      if (!g.sumW) return;
+      var nota = g.sum / g.sumW;
+      if (g.ra) ras[g.ra] = nota;
+      var w = (g.pRA == null || !(g.pRA > 0)) ? 1 : g.pRA;
+      sum += nota * w; sumW += w;
+    });
+    return { final: sumW ? sum / sumW : null, ras: ras };
   }
 
   function media_(arr) {

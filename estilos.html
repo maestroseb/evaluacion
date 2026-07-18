@@ -1321,6 +1321,8 @@
     box-shadow: var(--sombra-1); }
   .tarjeta-crit .tc-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
   .tarjeta-crit .tc-info b { font-size: 15px; }
+  /* Columnas de nota por RA en el resumen (FP): fondo suave para distinguirlas. */
+  .rejilla th.ra-col, .rejilla td.ra-col { background: var(--acento-suave); }
   /* Los input date de iOS traen un ancho mínimo intrínseco que les hacía
      sobresalir de la tarjeta (y pegarse entre sí). Sin apariencia nativa y con
      min-width 0 encogen de verdad con su columna. */

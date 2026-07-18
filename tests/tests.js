@@ -259,6 +259,44 @@ if (porCurso[origen] && porCurso[destino]) {
 ok(remapearCriterios_(['CA.02.1.1'], '', '5', {}).length === 0, 'Infantil → sin remapeo');
 
 // ════════════════════════════════════════════════════════════════════
+// 4. AGREGADO PONDERADO (FP: RA + pesos; sin pesos = media simple exacta)
+// ════════════════════════════════════════════════════════════════════
+console.log('4. Agregado ponderado (RA y pesos de FP)');
+
+eval(bloque(srv, 'function agregadoPonderado_(notas, pesos)'));
+
+// Sin pesos (Primaria): idéntico a la media simple, y sin RA en la salida.
+var r1 = agregadoPonderado_({ a: 4, b: 6, c: 8 }, {});
+ok(aprox(r1.final, 6), 'sin pesos → media simple (6)');
+ok(Object.keys(r1.ras).length === 0, 'sin pesos → sin notas de RA');
+ok(agregadoPonderado_({}, {}).final === null, 'sin notas → final null');
+
+// FP: dos RA con pesos 30/70 y pesos de criterio dentro del RA1.
+var pesosFP = {
+  'RA1.a': { ra: 'RA1', pRA: 30, pCr: 20 },
+  'RA1.b': { ra: 'RA1', pRA: 30, pCr: 80 },
+  'RA2.a': { ra: 'RA2', pRA: 70, pCr: '' }
+};
+var r2 = agregadoPonderado_({ 'RA1.a': 10, 'RA1.b': 5, 'RA2.a': 8 }, pesosFP);
+ok(aprox(r2.ras.RA1, (10 * 20 + 5 * 80) / 100), 'nota RA1 ponderada por criterio (6)');
+ok(aprox(r2.ras.RA2, 8), 'nota RA2 (un criterio)');
+ok(aprox(r2.final, (6 * 30 + 8 * 70) / 100), 'final ponderada por RA (7.4)');
+
+// RA sin evaluar aún: se renormaliza sobre lo evaluado (proyección).
+var r3 = agregadoPonderado_({ 'RA1.a': 10, 'RA1.b': 5 }, pesosFP);
+ok(aprox(r3.final, 6), 'RA2 sin notas → renormaliza sobre RA1');
+
+// RA sin pesos: media simple de criterios dentro del RA, y RA a peso 1.
+var r4 = agregadoPonderado_(
+  { x: 4, y: 8, z: 6 },
+  { x: { ra: 'RA1', pRA: '', pCr: '' }, y: { ra: 'RA1', pRA: '', pCr: '' }, z: { ra: 'RA2', pRA: '', pCr: '' } });
+ok(aprox(r4.ras.RA1, 6) && aprox(r4.final, 6), 'RA sin pesos → medias simples por grupo');
+
+// Mixto: un criterio propio con RA + uno del mapa central (sin entrada en pesos).
+var r5 = agregadoPonderado_({ 'RA1.a': 10, 'LCL.3.1': 4 }, { 'RA1.a': { ra: 'RA1', pRA: '', pCr: '' } });
+ok(aprox(r5.final, 7), 'criterio sin RA cuenta como grupo propio');
+
+// ════════════════════════════════════════════════════════════════════
 console.log('');
 if (fallos) {
   console.error('✗ ' + fallos + ' de ' + pruebas + ' comprobaciones han fallado.');
