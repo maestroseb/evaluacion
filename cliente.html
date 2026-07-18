@@ -468,6 +468,7 @@ var App = (function () {
       '<p class="mensaje">La app guarda una <b>copia automática</b> de tus datos a diario en tu Drive ' +
       '(las últimas 7). Además puedes descargar una copia o restaurarla:</p>' +
       '<div class="acciones-modal">' +
+      '<button type="button" class="btn" onclick="App.copiaAhoraUI()">' + svgUI('guardar') + ' Hacer copia ahora</button>' +
       '<button type="button" class="btn" onclick="App.exportarDatos()">' + svgUI('descargar') + ' Descargar copia (JSON)</button>' +
       '<button type="button" class="btn" onclick="App.pedirImportar()">' + svgUI('restaurar') + ' Restaurar desde archivo</button>' +
       '</div>' +
@@ -505,6 +506,13 @@ var App = (function () {
       rd.readAsText(f);
     };
     inp.click();
+  }
+
+  /** Fuerza una copia de seguridad en Drive ahora mismo (además de la diaria). */
+  function copiaAhoraUI() {
+    llamar('copiaDeSeguridadAhora', [], function (r) {
+      avisoOk('Copia guardada en tu Drive' + (r && r.fecha ? ' (' + r.fecha + ')' : '') + '.');
+    });
   }
 
   function exportarDatos() {
@@ -6520,7 +6528,7 @@ var App = (function () {
     irAEvaluaciones: irAEvaluaciones, irAClases: irAClases,
     toggleSidebar: toggleSidebar, cerrarSidebar: cerrarSidebar, filtrar: filtrar,
     irAPapelera: irAPapelera, restaurarItem: restaurarItem, vaciarPapeleraUI: vaciarPapeleraUI,
-    abrirCopia: abrirCopia, exportarDatos: exportarDatos, pedirImportar: pedirImportar,
+    abrirCopia: abrirCopia, copiaAhoraUI: copiaAhoraUI, exportarDatos: exportarDatos, pedirImportar: pedirImportar,
     abrirMas: abrirMas, abrirAcercaDe: abrirAcercaDe,
     compartirGruposUI: compartirGruposUI, recibirGruposUI: recibirGruposUI,
     nuevaEvaluacion: nuevaEvaluacion, claseCambiada: claseCambiada,
