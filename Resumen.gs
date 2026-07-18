@@ -96,7 +96,8 @@ var Resumen = (function () {
 
     // Global por criterio, nota por RA (si hay criterios propios con RA) y
     // nota final (ponderada; sin pesos equivale exactamente a la media simple).
-    var raNota = {};
+    var raNota = {}, finalAcum = {};
+    var todosCods = Object.keys(criteriosInfo);
     alumnos.forEach(function (al) {
       critGlobal[al.id] = {};
       Object.keys(acumCrit[al.id]).forEach(function (cod) {
@@ -105,6 +106,10 @@ var Resumen = (function () {
       var agg = agregadoPonderado_(critGlobal[al.id], pesos);
       finalNota[al.id] = agg.final;
       if (Object.keys(agg.ras).length) raNota[al.id] = agg.ras;
+      // «Nota acumulada»: los criterios del área AÚN no evaluados cuentan 0
+      // (la otra verdad: lo asegurado hoy si el resto siguiera en blanco).
+      finalAcum[al.id] = agregadoPonderado_(
+        notasAcumuladas_(critGlobal[al.id], todosCods), pesos).final;
     });
 
     // RA presentes entre los criterios evaluados (para las columnas del resumen).
@@ -124,7 +129,8 @@ var Resumen = (function () {
       criteriosInfo: criteriosInfo,
       unidadNota: unidadNota,
       critGlobal: critGlobal,
-      final: finalNota
+      final: finalNota,
+      finalAcum: finalAcum
     };
   }
 
@@ -236,6 +242,22 @@ var Resumen = (function () {
       sum += nota * w; sumW += w;
     });
     return { final: sumW ? sum / sumW : null, ras: ras };
+  }
+
+  /**
+   * Notas para la «acumulada»: las evaluadas tal cual y el resto de criterios
+   * del área a 0. Sin criterios evaluados no hay acumulada (todo null).
+   */
+  function notasAcumuladas_(notas, todosCods) {
+    var alguna = Object.keys(notas).some(function (c) { return notas[c] != null; });
+    if (!alguna) return {};
+    var out = {};
+    todosCods.forEach(function (cod) { out[cod] = notas[cod] != null ? notas[cod] : 0; });
+    // Criterios evaluados que ya no estén en el mapa (borrados): cuentan igual.
+    Object.keys(notas).forEach(function (cod) {
+      if (notas[cod] != null && out[cod] == null) out[cod] = notas[cod];
+    });
+    return out;
   }
 
   function media_(arr) {

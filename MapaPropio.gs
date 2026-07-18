@@ -121,7 +121,46 @@ var MapaPropio = (function () {
     return { ok: true, resumen: resumen_(ss) };
   }
 
-  return { filas_: filas_, resumen_: resumen_, importar_: importar_, borrar_: borrar_ };
+  /** Detalle de un bloque para el editor de pesos: RA con sus criterios. */
+  function detalle_(ss, curso, area) {
+    var ras = {}, orden = [];
+    filas_(ss).forEach(function (f) {
+      if (f.curso !== curso || f.area !== area) return;
+      var k = f.competencia || '';
+      if (!ras[k]) { ras[k] = { ra: k, peso: f.pesoRA, criterios: [] }; orden.push(k); }
+      if (ras[k].peso === '' && f.pesoRA !== '') ras[k].peso = f.pesoRA;
+      ras[k].criterios.push({ codigo: f.codigo, texto: f.texto, peso: f.pesoCriterio });
+    });
+    return { curso: curso, area: area, ras: orden.map(function (k) { return ras[k]; }) };
+  }
+
+  /**
+   * Actualiza SOLO los pesos de un bloque. pesos = {ras: {raTexto: peso},
+   * criterios: {codigo: peso}} ('' = sin peso). No toca textos ni códigos.
+   */
+  function guardarPesos_(ss, curso, area, pesos) {
+    var sh = hoja_(ss);
+    if (sh.getLastRow() < 2) return { ok: true };
+    var n = sh.getLastRow() - 1;
+    var datos = sh.getRange(2, 1, n, 7).getValues();
+    var pr = (pesos && pesos.ras) || {}, pc = (pesos && pesos.criterios) || {};
+    var num = function (v) {
+      if (v === '' || v == null) return '';
+      var x = Number(String(v).replace(',', '.'));
+      return isNaN(x) ? '' : x;
+    };
+    datos.forEach(function (f) {
+      if (String(f[0]).trim() !== curso || String(f[1]).trim() !== area) return;
+      var ra = String(f[2]).trim(), cod = String(f[4]).trim();
+      if (ra in pr) f[3] = num(pr[ra]);
+      if (cod in pc) f[6] = num(pc[cod]);
+    });
+    sh.getRange(2, 1, n, 7).setValues(datos);
+    return { ok: true };
+  }
+
+  return { filas_: filas_, resumen_: resumen_, importar_: importar_, borrar_: borrar_,
+    detalle_: detalle_, guardarPesos_: guardarPesos_ };
 })();
 
 /** Bloques de criterios propios del profe (curso+área con nº de RA/criterios). */
@@ -137,4 +176,14 @@ function importarMapaPropio(texto) {
 /** Elimina un bloque curso+área de criterios propios. */
 function eliminarMapaPropio(curso, area) {
   return MapaPropio.borrar_(abrirCuaderno_(), curso, area);
+}
+
+/** Detalle de un bloque (RA + criterios con pesos) para el editor. */
+function getMapaPropioDetalle(curso, area) {
+  return MapaPropio.detalle_(abrirCuaderno_(), curso, area);
+}
+
+/** Guarda los pesos editados de un bloque. */
+function guardarPesosMapaPropio(curso, area, pesos) {
+  return MapaPropio.guardarPesos_(abrirCuaderno_(), curso, area, pesos);
 }
