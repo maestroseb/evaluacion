@@ -1638,6 +1638,12 @@ var App = (function () {
     });
   }
 
+  /** Cabecera compacta de un RA: "RA1" de "RA1: Recepciona…" (o el texto entero). */
+  function raCorto_(ra) {
+    var m = /^([A-Za-z]{1,4}\s?\d+)\s*[:.\-–]/.exec(ra || '');
+    return m ? m[1] : ra;
+  }
+
   function pintarResumen() {
     ajustarAltoRejillas(); // la cabecera ya está pintada: mide el hueco real
     var cont = document.getElementById('resumen-cont');
@@ -1656,6 +1662,11 @@ var App = (function () {
         '<span class="act-nom">' + esc(u.nombre) + '</span></th>';
     });
     h += '<th class="nota sep">FINAL</th>';
+    // Columnas por RA (solo FP: criterios propios agrupados; nota ponderada).
+    var ras = R.ras || [];
+    ras.forEach(function (ra) {
+      h += '<th class="crit-col ra-col" title="' + esc(ra) + '">' + esc(raCorto_(ra)) + '</th>';
+    });
     R.criterios.forEach(function (cod) {
       h += '<th class="crit-col" title="' + esc(infoCritR(cod).completo) + '">' + esc(cod) + '</th>';
     });
@@ -1667,6 +1678,9 @@ var App = (function () {
         h += celdaNum((R.unidadNota[al.id] || {})[u.unidadId]);
       });
       h += celdaNum(R.final[al.id], ' nota sep');
+      ras.forEach(function (ra) {
+        h += celdaNum((R.raNota && R.raNota[al.id] || {})[ra], ' crit-col ra-col');
+      });
       R.criterios.forEach(function (cod) {
         h += celdaNum((R.critGlobal[al.id] || {})[cod], ' crit-col');
       });
