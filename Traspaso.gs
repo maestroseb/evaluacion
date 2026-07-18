@@ -63,6 +63,14 @@ var Traspaso = (function () {
     var rubUsadas = {};
     actividades.forEach(function (r) { if (r[8]) rubUsadas[r[8]] = true; });
     var rubricas = filas_(ss, HOJAS.RUBRICAS).filter(function (r) { return rubUsadas[r[0]]; });
+    // Criterios propios (FP) de las áreas traspasadas: sin ellos el receptor
+    // vería códigos sin texto ni pesos. Se filtra por curso+área (cols 3-4 de
+    // _evaluaciones = área; el curso escolar es la col 3 de la clase).
+    var areasEv = {};
+    evals.forEach(function (r) { areasEv[r[2]] = true; }); // r[2] = area
+    var mapaPropio = filas_(ss, HOJAS.MAPA_PROPIO).filter(function (r) {
+      return areasEv[String(r[1]).trim()];
+    });
     // Observaciones en claro en el archivo (como los nombres): quien recibe
     // las re-cifra con su propia clave.
     var notas = filas_(ss, HOJAS.NOTAS).filter(function (r) { return setU[r[0]]; })
@@ -84,6 +92,7 @@ var Traspaso = (function () {
       unidades: unidades,
       actividades: actividades,
       rubricas: rubricas,
+      mapaPropio: mapaPropio,
       notas: notas
     };
   }
@@ -161,6 +170,17 @@ var Traspaso = (function () {
       anexar_(ss, HOJAS.RUBRICAS, filasR);
       anexar_(ss, HOJAS.ACTIVIDADES, filasA);
       anexar_(ss, HOJAS.NOTAS, filasN);
+      // Criterios propios (FP) que acompañan al traspaso: solo los códigos que
+      // el receptor aún no tenga (aditivo; sus definiciones propias mandan).
+      var codMios = {};
+      filas_(ss, HOJAS.MAPA_PROPIO).forEach(function (r) {
+        codMios[String(r[0]).trim() + '||' + String(r[1]).trim() + '||' + String(r[4]).trim()] = 1;
+      });
+      var filasMP = (d.mapaPropio || []).filter(function (r) {
+        return r[0] && r[4] &&
+          !codMios[String(r[0]).trim() + '||' + String(r[1]).trim() + '||' + String(r[4]).trim()];
+      });
+      if (filasMP.length) anexar_(ss, HOJAS.MAPA_PROPIO, filasMP);
       // Grupos propios coincidentes: se archivan (nunca se borran) para que el
       // traspaso recién recibido no conviva duplicado con la versión antigua.
       (archivarClaseIds || []).forEach(function (id) {

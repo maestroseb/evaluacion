@@ -39,6 +39,9 @@ function getExportacion() {
     provisionales: filas(HOJAS.PROVISIONALES),
     planUnidades: filas(HOJAS.PLAN_UNIDADES),
     calendario: filas(HOJAS.CALENDARIO),
+    // Cursos como entidad y criterios propios (v26-27): contenido pedagógico.
+    cursos: filas(HOJAS.CURSOS),
+    mapaPropio: filas(HOJAS.MAPA_PROPIO),
     // Observaciones en claro (como los nombres): al importar se re-cifran.
     notas: filas(HOJAS.NOTAS).map(function (r) { return [r[0], Notas.jsonEnClaro_(r[1])]; })
   };
@@ -83,6 +86,9 @@ function importarDatos(datos) {
   if (datos.provisionales) escribir(HOJAS.PROVISIONALES, datos.provisionales);
   if (datos.planUnidades) escribir(HOJAS.PLAN_UNIDADES, datos.planUnidades);
   if (datos.calendario) escribir(HOJAS.CALENDARIO, datos.calendario);
+  // Copias anteriores a v26/v27 no traen estas pestañas: no se borran.
+  if (datos.cursos) escribir(HOJAS.CURSOS, datos.cursos);
+  if (datos.mapaPropio) escribir(HOJAS.MAPA_PROPIO, datos.mapaPropio);
   var notasRows = (datos.notas || []).map(function (r) {
     var items = {};
     try { items = JSON.parse(r[1] || '{}') || {}; } catch (e) {}
