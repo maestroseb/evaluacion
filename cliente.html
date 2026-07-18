@@ -261,7 +261,6 @@ var App = (function () {
   }
 
   function abrirModalCurso_(x, esNuevo) {
-    var cfg = x.config || {};
     var cuerpo =
       '<label>Año académico' +
         '<input id="cur-anio" type="text" value="' + esc(x.anio || '') + '" ' +
@@ -272,32 +271,27 @@ var App = (function () {
       '<label>Centro (opcional)' +
         '<input id="cur-centro" type="text" value="' + esc(x.centro || '') + '" ' +
           'placeholder="p. ej. IES Los Álamos" autocomplete="off"></label>' +
-      '<label class="check check-suelto"><input id="cur-fp" type="checkbox"' +
-        (cfg.fp ? ' checked' : '') + '> Curso de FP (Formación Profesional)</label>' +
-      '<p class="ayuda">Actívalo para preparar este curso de cara a las opciones de FP ' +
-        '(Resultados de Aprendizaje y ponderaciones). El módulo de FP se está terminando: ' +
-        'de momento solo se guarda tu elección.</p>' +
       (esNuevo ? '' :
-        '<div class="acciones-modal" style="margin-top:14px">' +
+        '<div class="acciones-modal" style="margin-top:4px">' +
         '<button type="button" class="btn" onclick="App.abrirCalendario()">Calendario y festivos</button>' +
         '</div>');
     var opts = esNuevo ? {} : { accionExtra:
       '<button type="button" class="btn" onclick="App.nuevoCursoUI()">+ Otro curso</button>' };
     abrirModal(esNuevo ? 'Nuevo curso académico' : 'Curso académico', cuerpo, 'Guardar',
-      function () { guardarCursoUI_(x.id, esNuevo); }, opts);
+      function () { guardarCursoUI_(x, esNuevo); }, opts);
   }
 
-  function guardarCursoUI_(id, esNuevo) {
+  function guardarCursoUI_(x, esNuevo) {
     var anio = val('cur-anio').trim();
     if (anio && !/^\d{4}-\d{4}$/.test(anio)) {
       return aviso('El año académico debe tener el formato 2025-2026.');
     }
     var payload = {
-      id: esNuevo ? '' : id,
+      id: esNuevo ? '' : x.id,
       anio: anio,
       nombre: val('cur-nombre').trim(),
       centro: val('cur-centro').trim(),
-      config: { fp: document.getElementById('cur-fp').checked }
+      config: x.config || {} // se conserva tal cual (la config de FP llega en su fase)
     };
     botonModalCargando('Guardando…');
     llamar('guardarCurso', [payload], function (r) {
