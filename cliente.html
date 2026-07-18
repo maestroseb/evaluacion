@@ -4781,6 +4781,73 @@ var App = (function () {
     });
   }
 
+  // ---------- compartir con familias (calendario de Google por clase) ----------
+  var famCalIds = {}; // evalId -> calendarId ya publicado
+
+  /** Enlaces públicos a partir del id del calendario (misma fórmula que el server). */
+  function enlacesDeCalId_(calId) {
+    var cid = btoa(calId).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    return {
+      verUrl: 'https://calendar.google.com/calendar/embed?src=' + encodeURIComponent(calId) + '&ctz=Europe%2FMadrid',
+      addUrl: 'https://calendar.google.com/calendar/r?cid=' + cid,
+      icalUrl: 'https://calendar.google.com/calendar/ical/' + encodeURIComponent(calId) + '/public/basic.ics'
+    };
+  }
+  function famAccHtml_(evalId) {
+    var calId = famCalIds[evalId];
+    var links = calId
+      ? '<span class="fam-links">' +
+          '<button class="btn" onclick="App.copiarEnlaceFamilias_(\'' + evalId + '\')">' +
+            svgUI('enlace') + ' Copiar enlace</button>' +
+          '<a class="btn" href="' + enlacesDeCalId_(calId).verUrl + '" target="_blank" rel="noopener">Ver</a>' +
+        '</span>'
+      : '';
+    return links +
+      '<button class="btn' + (calId ? '' : ' primario') + '" id="fam-btn-' + evalId + '" ' +
+      'onclick="App.publicarClaseCalendar(\'' + evalId + '\')">' + (calId ? 'Actualizar' : 'Publicar') + '</button>';
+  }
+  function abrirCompartirFamilias() {
+    var clases = clasesPlanner_();
+    if (!clases.length) return aviso('Primero crea alguna clase (desde «Horario»).');
+    abrirModal('Compartir con familias',
+      '<p class="ayuda">Publica las sesiones de una clase en un calendario de Google (público) y ' +
+        'comparte el enlace con las familias. Es de solo lectura para ellas y se actualiza cuando ' +
+        'pulses «Actualizar».</p>' +
+      '<div id="fam-lista">' + spinner() + '</div>', 'Cerrar', function () { cerrarModal(); },
+      { sinFoco: true, ancho: true });
+    llamar('estadoCalendariosClases', [], function (mapa) {
+      famCalIds = mapa || {};
+      var cont = document.getElementById('fam-lista');
+      if (!cont) return;
+      cont.innerHTML = clases.map(function (c) {
+        return '<div class="fam-fila" id="fam-' + c.id + '">' +
+          '<span class="fam-nom"><span class="planner-asig-color" style="background:' +
+            (c.color || 'var(--acento)') + '"></span>' + esc(etiquetaClase_(c.id)) + '</span>' +
+          '<span class="fam-acc">' + famAccHtml_(c.id) + '</span></div>';
+      }).join('');
+    });
+  }
+  function publicarClaseCalendar(evalId) {
+    var btn = document.getElementById('fam-btn-' + evalId);
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-inline"></span> Publicando…'; }
+    llamarConFallo_('sincronizarClaseCalendar', [evalId],
+      function (r) {
+        famCalIds[evalId] = r.calendarId;
+        var fila = document.getElementById('fam-' + evalId);
+        if (fila) fila.querySelector('.fam-acc').innerHTML = famAccHtml_(evalId);
+        avisoOk('Publicado: ' + r.n + ' sesión(es). Ya puedes compartir el enlace.');
+      },
+      function (err) {
+        if (btn) { btn.disabled = false; btn.innerHTML = 'Publicar'; }
+        aviso('No se pudo publicar: ' + err);
+      });
+  }
+  function copiarEnlaceFamilias_(evalId) {
+    var calId = famCalIds[evalId];
+    if (calId) copiarAlPortapapeles(enlacesDeCalId_(calId).verUrl,
+      'Enlace copiado: compártelo con las familias (verán el calendario de la clase).');
+  }
+
   /** Vuelca las horas escritas al borrador (antes de repintar o guardar). */
   function leerHorasDraft_() {
     [].forEach.call(document.querySelectorAll('.planner-hora-inp'), function (inp) {
@@ -6521,6 +6588,8 @@ var App = (function () {
     dragSesionSuelta: dragSesionSuelta,
     abrirHorario: abrirHorario, horToggleDia: horToggleDia, horChkCambiada: horChkCambiada,
     abrirCalendario: abrirCalendario, calAddFestivo: calAddFestivo, calQuitarFestivo: calQuitarFestivo,
+    abrirCompartirFamilias: abrirCompartirFamilias, publicarClaseCalendar: publicarClaseCalendar,
+    copiarEnlaceFamilias_: copiarEnlaceFamilias_,
     calFinPorDefecto_: calFinPorDefecto_, calHastaPorDefecto_: calHastaPorDefecto_,
     asigChkCambiada: asigChkCambiada, critSesionCambiado: critSesionCambiado,
     sesTipoCambiado: sesTipoCambiado, rtCmd: rtCmd, rtLink: rtLink,

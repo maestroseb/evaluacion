@@ -99,7 +99,11 @@ var CONFIG = {
   //      sesión, p. ej. «12-13» y «1-4»). Aditivas. El orden de las sesiones
   //      dentro de una unidad de planificación se guarda en la columna "orden"
   //      ya existente (reordenables arrastrando).
-  ESQUEMA_VERSION: 24,
+  // v25: pestaña "_calsync": vínculo clase↔calendario de Google (para compartir
+  //      con las familias). Una fila por clase: evalId + calendarId creado por la
+  //      app (scope calendar.app.created). Aditiva. La sincronización es
+  //      unidireccional (EvaluAnda manda) y va tras FLAGS.planner.
+  ESQUEMA_VERSION: 25,
 
   // Banderas de funcionalidad. Cada bandera es la lista de correos que la ven
   // (o '*' para todo el profesorado). Sirve para lanzar módulos "ocultos": se
@@ -135,5 +139,6 @@ var HOJAS = {
   PLANNER: '_planner',    // planificador de sesiones (asignables a varias clases)
   PROVISIONALES: '_provisionales', // clases provisionales del planificador (solo nombre)
   PLAN_UNIDADES: '_planUnidades',  // unidades de planificación del profe (por materia/área)
-  CALENDARIO: '_calendario'        // calendario por curso académico (inicio/fin + festivos)
+  CALENDARIO: '_calendario',       // calendario por curso académico (inicio/fin + festivos)
+  CALSYNC: '_calsync'              // vínculo clase↔calendario de Google (compartir con familias)
 };

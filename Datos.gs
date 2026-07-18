@@ -34,6 +34,8 @@ var ESQUEMA = {
   // Calendario por curso académico (v23): inicio/fin del curso y 'festivos'
   // (JSON [{desde, hasta, nombre}]). Una fila por curso académico.
   _calendario: ['cursoAcademico', 'inicio', 'fin', 'festivos'],
+  // Vínculo clase↔calendario de Google (v25): una fila por clase publicada.
+  _calsync: ['evalId', 'calendarId', 'creado'],
   // Clases provisionales del planificador (v18): solo un nombre y su horario,
   // para planificar antes de crear grupos/clases. 'horario' como en
   // _evaluaciones (JSON [{dia,hora}]). Al vincular a una clase real, la fila

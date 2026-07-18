@@ -1315,6 +1315,13 @@
     .cal-rango label { flex: 1 1 40%; }
   }
   .cal-add { margin-top: 8px; }
+  /* Compartir con familias (calendarios de Google por clase). */
+  .fam-fila { display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    flex-wrap: wrap; padding: 10px 0; border-top: 1px solid var(--borde); }
+  .fam-fila:first-child { border-top: 0; }
+  .fam-nom { display: flex; align-items: center; font-weight: 600; font-size: 14px; min-width: 0; }
+  .fam-acc { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .fam-links { display: inline-flex; align-items: center; gap: 6px; }
   /* Banda superior de recordatorios (tipo aviso) */
   .pl-avisos { display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
     background: var(--g-media-bg); border: 1px solid var(--g-media-tx); border-radius: 10px;
