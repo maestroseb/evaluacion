@@ -22,6 +22,18 @@ function sincronizarClaseCalendar(evalId) {
 function estadoCalendariosClases() {
   return CalSync.estado_(abrirCuaderno_());
 }
+/** Activa/desactiva la actualización automática (a las 14:00 y a las 02:00). */
+function activarAutoCalSync(activar) {
+  return CalSync.activarAuto_(!!activar);
+}
+/** ¿Está activada la actualización automática para este profe? */
+function estadoAutoCalSync() {
+  return CalSync.autoActivo_();
+}
+/** Tarea programada: resincroniza todos los calendarios publicados del profe. */
+function autoCalSyncTick() {
+  try { CalSync.sincronizarTodas_(abrirCuaderno_()); } catch (e) {}
+}
 
 var CalSync = (function () {
 
@@ -200,5 +212,36 @@ var CalSync = (function () {
     return mapa; // { evalId: calendarId }
   }
 
-  return { sincronizar_: sincronizar_, estado_: estado_ };
+  // --- actualización automática (triggers programados del propio profe) ---
+  var TICK = 'autoCalSyncTick';
+
+  function triggersTick_() {
+    return ScriptApp.getProjectTriggers().filter(function (t) {
+      return t.getHandlerFunction() === TICK;
+    });
+  }
+  function autoActivo_() { return triggersTick_().length > 0; }
+
+  function activarAuto_(activar) {
+    // Limpia los existentes (evita duplicados) y, si procede, crea 14:00 y 02:00.
+    triggersTick_().forEach(function (t) { ScriptApp.deleteTrigger(t); });
+    if (activar) {
+      ScriptApp.newTrigger(TICK).timeBased().atHour(14).everyDays(1).create();
+      ScriptApp.newTrigger(TICK).timeBased().atHour(2).everyDays(1).create();
+    }
+    return { activo: activar };
+  }
+
+  /** Resincroniza todas las clases ya publicadas (una a una, sin cortar por un fallo). */
+  function sincronizarTodas_(ss) {
+    var datos = hoja_(ss).getDataRange().getValues(), n = 0;
+    for (var i = 1; i < datos.length; i++) {
+      if (!datos[i][0]) continue;
+      try { sincronizar_(ss, datos[i][0]); n++; } catch (e) {}
+    }
+    return { clases: n };
+  }
+
+  return { sincronizar_: sincronizar_, estado_: estado_,
+    activarAuto_: activarAuto_, autoActivo_: autoActivo_, sincronizarTodas_: sincronizarTodas_ };
 })();

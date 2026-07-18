@@ -4813,8 +4813,14 @@ var App = (function () {
       '<p class="ayuda">Publica las sesiones de una clase en un calendario de Google (público) y ' +
         'comparte el enlace con las familias. Es de solo lectura para ellas y se actualiza cuando ' +
         'pulses «Actualizar».</p>' +
+      '<label class="check fam-auto"><input type="checkbox" id="fam-auto-chk" ' +
+        'onchange="App.toggleAutoFamilias_(this)"> Actualizar automáticamente cada día ' +
+        '(a las 14:00 y a las 02:00)</label>' +
       '<div id="fam-lista">' + spinner() + '</div>', 'Cerrar', function () { cerrarModal(); },
       { sinFoco: true, ancho: true });
+    llamar('estadoAutoCalSync', [], function (activo) {
+      var chk = document.getElementById('fam-auto-chk'); if (chk) chk.checked = !!activo;
+    });
     llamar('estadoCalendariosClases', [], function (mapa) {
       famCalIds = mapa || {};
       var cont = document.getElementById('fam-lista');
@@ -4846,6 +4852,17 @@ var App = (function () {
     var calId = famCalIds[evalId];
     if (calId) copiarAlPortapapeles(enlacesDeCalId_(calId).verUrl,
       'Enlace copiado: compártelo con las familias (verán el calendario de la clase).');
+  }
+  function toggleAutoFamilias_(chk) {
+    chk.disabled = true;
+    llamarConFallo_('activarAutoCalSync', [chk.checked],
+      function () {
+        chk.disabled = false;
+        avisoOk(chk.checked
+          ? 'Actualización automática activada (14:00 y 02:00).'
+          : 'Actualización automática desactivada.');
+      },
+      function (err) { chk.disabled = false; chk.checked = !chk.checked; aviso('No se pudo cambiar: ' + err); });
   }
 
   /** Vuelca las horas escritas al borrador (antes de repintar o guardar). */
@@ -6589,7 +6606,7 @@ var App = (function () {
     abrirHorario: abrirHorario, horToggleDia: horToggleDia, horChkCambiada: horChkCambiada,
     abrirCalendario: abrirCalendario, calAddFestivo: calAddFestivo, calQuitarFestivo: calQuitarFestivo,
     abrirCompartirFamilias: abrirCompartirFamilias, publicarClaseCalendar: publicarClaseCalendar,
-    copiarEnlaceFamilias_: copiarEnlaceFamilias_,
+    copiarEnlaceFamilias_: copiarEnlaceFamilias_, toggleAutoFamilias_: toggleAutoFamilias_,
     calFinPorDefecto_: calFinPorDefecto_, calHastaPorDefecto_: calHastaPorDefecto_,
     asigChkCambiada: asigChkCambiada, critSesionCambiado: critSesionCambiado,
     sesTipoCambiado: sesTipoCambiado, rtCmd: rtCmd, rtLink: rtLink,
