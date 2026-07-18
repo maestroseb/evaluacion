@@ -22,7 +22,7 @@ var Resumen = (function () {
     var unidades = Unidades.listar_(ss, evalId);
 
     var criteriosInfo = {};
-    Curriculo.criteriosDe(ev.curso, ev.area).forEach(function (c) {
+    Curriculo.criteriosDe(ev.curso, ev.area, MapaPropio.filas_(ss)).forEach(function (c) {
       criteriosInfo[c.codigo] = { texto: c.texto, descripcion: c.descripcion };
     });
 

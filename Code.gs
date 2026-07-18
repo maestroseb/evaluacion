@@ -51,7 +51,7 @@ function getEstadoInicial() {
     nombre: nombreDe_(),  // nombre visible del perfil (o '' si no se puede leer)
     esquemaVersion: CONFIG.ESQUEMA_VERSION,
     flags: flags,
-    areas: Curriculo.listarAreasCursos(),
+    areas: Curriculo.listarAreasCursos(MapaPropio.filas_(ss)),
     cursos: Cursos.info_(ss, clases),
     clases: Cursos.filtrar_(clases, activo),
     evaluaciones: Cursos.filtrar_(Evaluaciones.listar_(ss, clases), activo)

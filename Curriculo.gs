@@ -233,8 +233,10 @@ var Curriculo = (function () {
   }
 
   // ---------- API pública ----------
-  function listarAreasCursos() {
-    var filas = leerFilas_();
+  // Todas aceptan filas `propias` opcionales (criterios del profe, p. ej. FP)
+  // que se fusionan con el mapa central: para el resto de la app son iguales.
+  function listarAreasCursos(propias) {
+    var filas = leerFilas_().concat(propias || []);
     var vistos = {}, out = [];
     filas.forEach(function (f) {
       var clave = f.curso + '||' + f.area;
@@ -245,8 +247,8 @@ var Curriculo = (function () {
     return out;
   }
 
-  function criteriosDe(curso, area) {
-    return leerFilas_()
+  function criteriosDe(curso, area, propias) {
+    return leerFilas_().concat(propias || [])
       .filter(function (f) { return f.curso === curso && f.area === area; })
       .map(function (f) {
         return {
@@ -284,7 +286,7 @@ var Curriculo = (function () {
  * personales), así que no necesita más protección que la sesión del dominio.
  */
 function getCriterios(curso, area) {
-  return Curriculo.criteriosDe(curso, area);
+  return Curriculo.criteriosDe(curso, area, MapaPropio.filas_(abrirCuaderno_()));
 }
 
 /**
