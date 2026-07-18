@@ -84,8 +84,14 @@ var CalSync = (function () {
   function asegurarCalendario_(ss, evalId, info) {
     var calId = calIdDe_(ss, evalId);
     if (calId) {
-      // Verifica que sigue existiendo (el profe pudo borrarlo a mano).
-      try { Calendar.Calendars.get(calId); return calId; } catch (e) {}
+      // ¿Sigue existiendo? (el profe pudo borrarlo a mano).
+      try { Calendar.Calendars.get(calId); } catch (e) { calId = ''; }
+    }
+    if (calId) {
+      // Asegura que es público: un intento anterior pudo crearlo sin llegar
+      // a compartirlo (p. ej. cuando faltaba el permiso de ACL).
+      asegurarPublico_(calId);
+      return calId;
     }
     var creado;
     try {
@@ -104,15 +110,22 @@ var CalSync = (function () {
     }
     calId = creado.id;
     guardarCalId_(ss, evalId, calId);
-    // Público (cualquiera con el enlace puede ver). En dominios educativos el
-    // administrador puede prohibir calendarios públicos: se avisa en vez de callar.
+    asegurarPublico_(calId);
+    return calId;
+  }
+
+  /**
+   * Hace público el calendario (idempotente: reinsertar la misma regla no
+   * duplica). En dominios educativos el administrador puede prohibirlo: se
+   * avisa en vez de callar (el enlace no serviría fuera del dominio).
+   */
+  function asegurarPublico_(calId) {
     try {
       Calendar.Acl.insert({ role: 'reader', scope: { type: 'default' } }, calId);
-    } catch (e2) {
-      throw new Error('Calendario creado, pero tu dominio no permite hacerlo público ' +
-        '(las familias fuera del dominio no lo verían). Motivo: ' + motivo_(e2));
+    } catch (e) {
+      throw new Error('Calendario creado, pero no se pudo hacer público ' +
+        '(las familias fuera del dominio no lo verían). Motivo: ' + motivo_(e));
     }
-    return calId;
   }
 
   // --- id determinista del evento (idempotencia sin guardar eventIds) ---
