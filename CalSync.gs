@@ -10,8 +10,11 @@
  *   resincronizar se actualiza, no se duplica; lo que ya no existe se borra).
  * - El calendario se hace público; se comparte por su enlace / .ics.
  *
- * Todo tras FLAGS.planner. Se usa la API REST de Calendar con el token OAuth del
- * propio profe (UrlFetch), para respetar el scope acotado.
+ * Todo tras FLAGS.planner. Se usa el SERVICIO AVANZADO de Calendar (no UrlFetch
+ * a la API REST): con el proyecto GCP por defecto de Apps Script la API no se
+ * puede habilitar a mano (403 «API has not been used in project»), mientras que
+ * el servicio avanzado la habilita solo. Los scopes del manifiesto mandan, así
+ * que se mantiene el acotado calendar.app.created.
  */
 
 /** Sincroniza (crea/actualiza) el calendario de la clase y devuelve sus enlaces. */
@@ -37,22 +40,13 @@ function autoCalSyncTick() {
 
 var CalSync = (function () {
 
-  var API = 'https://www.googleapis.com/calendar/v3';
   var TZ = 'Europe/Madrid';
 
   function hoja_(ss) { return ss.getSheetByName(HOJAS.CALSYNC); }
 
-  function fetch_(method, path, payload) {
-    var opt = {
-      method: method, muteHttpExceptions: true, contentType: 'application/json',
-      headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() }
-    };
-    if (payload) opt.payload = JSON.stringify(payload);
-    var resp = UrlFetchApp.fetch(API + path, opt);
-    var body = resp.getContentText(), json = {};
-    try { json = body ? JSON.parse(body) : {}; } catch (e) {}
-    return { code: resp.getResponseCode(), json: json };
-  }
+  /** Traduce los errores del servicio avanzado a mensajes accionables. */
+  function motivo_(e) { return String((e && e.message) || e || ''); }
+  function esPermisos_(e) { return /insufficient|scope|PERMISSION_DENIED/i.test(motivo_(e)); }
 
   // --- vínculo clase → calendarId (pestaña _calsync) ---
   function calIdDe_(ss, evalId) {
@@ -91,35 +85,32 @@ var CalSync = (function () {
     var calId = calIdDe_(ss, evalId);
     if (calId) {
       // Verifica que sigue existiendo (el profe pudo borrarlo a mano).
-      var chk = fetch_('get', '/calendars/' + encodeURIComponent(calId), null);
-      if (chk.code < 300) return calId;
+      try { Calendar.Calendars.get(calId); return calId; } catch (e) {}
     }
-    var r = fetch_('post', '/calendars', {
-      summary: 'EvaluAnda · ' + info.etiqueta, timeZone: TZ,
-      description: 'Sesiones de «' + info.etiqueta + '» publicadas desde EvaluAnda.'
-    });
-    if (r.code >= 300 || !r.json.id) {
-      var motivo = (r.json.error && r.json.error.message) || '';
-      // 403 típico: la sesión se autorizó ANTES de que la app pidiera el
-      // permiso de Calendario → el token va sin ese permiso hasta re-autorizar.
-      if (r.code === 403 && /insufficient|scope/i.test(motivo)) {
+    var creado;
+    try {
+      creado = Calendar.Calendars.insert({
+        summary: 'EvaluAnda · ' + info.etiqueta, timeZone: TZ,
+        description: 'Sesiones de «' + info.etiqueta + '» publicadas desde EvaluAnda.'
+      });
+    } catch (e) {
+      // Caso típico: la sesión se autorizó ANTES de que la app pidiera el
+      // permiso de Calendario → re-autorizar.
+      if (esPermisos_(e)) {
         throw new Error('Falta el permiso de Calendario: recarga la app y acepta ' +
           'la pantalla de permisos nueva (si no aparece, cierra sesión y vuelve a entrar).');
       }
-      throw new Error('No se pudo crear el calendario (' + r.code +
-        (motivo ? ': ' + motivo : '') + ').');
+      throw new Error('No se pudo crear el calendario: ' + motivo_(e));
     }
-    calId = r.json.id;
-    // Público (cualquiera con el enlace puede ver). En dominios educativos el
-    // administrador puede prohibir calendarios públicos: en ese caso se avisa
-    // (el enlace solo funcionaría dentro del dominio) en vez de callar.
-    var acl = fetch_('post', '/calendars/' + encodeURIComponent(calId) + '/acl',
-      { role: 'reader', scope: { type: 'default' } });
+    calId = creado.id;
     guardarCalId_(ss, evalId, calId);
-    if (acl.code >= 300) {
+    // Público (cualquiera con el enlace puede ver). En dominios educativos el
+    // administrador puede prohibir calendarios públicos: se avisa en vez de callar.
+    try {
+      Calendar.Acl.insert({ role: 'reader', scope: { type: 'default' } }, calId);
+    } catch (e2) {
       throw new Error('Calendario creado, pero tu dominio no permite hacerlo público ' +
-        '(las familias fuera del dominio no lo verían). Motivo: ' +
-        ((acl.json.error && acl.json.error.message) || acl.code));
+        '(las familias fuera del dominio no lo verían). Motivo: ' + motivo_(e2));
     }
     return calId;
   }
@@ -171,11 +162,10 @@ var CalSync = (function () {
   }
 
   function volcar_(calId, ev) {
-    var r = fetch_('post', '/calendars/' + encodeURIComponent(calId) + '/events', ev);
-    if (r.code === 409) { // ya existía: actualizar
-      r = fetch_('put', '/calendars/' + encodeURIComponent(calId) + '/events/' + ev.id, ev);
+    try { Calendar.Events.insert(ev, calId); }
+    catch (e) { // ya existía (u otro conflicto): actualizar
+      try { Calendar.Events.update(ev, calId, ev.id); } catch (e2) {}
     }
-    return r;
   }
 
   function sincronizar_(ss, evalId) {
@@ -197,13 +187,14 @@ var CalSync = (function () {
     });
 
     // Borra los eventos que ya no correspondan a ninguna sesión (huérfanos).
-    var lst = fetch_('get', '/calendars/' + encodeURIComponent(calId) +
-      '/events?maxResults=2500&showDeleted=false', null);
-    (lst.json.items || []).forEach(function (it) {
-      if (it.id && !esperados[it.id]) {
-        fetch_('delete', '/calendars/' + encodeURIComponent(calId) + '/events/' + it.id, null);
-      }
-    });
+    try {
+      var lst = Calendar.Events.list(calId, { maxResults: 2500, showDeleted: false });
+      (lst.items || []).forEach(function (it) {
+        if (it.id && !esperados[it.id]) {
+          try { Calendar.Events.remove(calId, it.id); } catch (e) {}
+        }
+      });
+    } catch (e) { /* la limpieza nunca rompe la publicación */ }
 
     return enlaces_(calId, Object.keys(esperados).length);
   }
