@@ -145,6 +145,16 @@
   }
   .buscador input:focus { outline: none; border-color: var(--acento);
     box-shadow: 0 0 0 3px var(--acento-suave); }
+  /* Lupa que colapsa el buscador (solo móvil; en escritorio se oculta). */
+  .buscador-toggle { display: none; align-items: center; justify-content: center;
+    border: none; background: transparent; cursor: pointer; color: var(--texto-2);
+    padding: 6px 8px; border-radius: 8px; margin-left: auto; }
+  .buscador-toggle:hover { background: var(--bg); color: var(--texto); }
+  .buscador-toggle .ico-cerrar { display: none; }
+  /* El curso académico no aplica en Rúbricas ni Papelera (una rúbrica se
+     reutiliza entre cursos): se oculta el selector en ambas plataformas. */
+  .topbar.sin-curso > .curso-chip,
+  .topbar.sin-curso > .curso-editar { display: none; }
 
   /* Marca de la app en la barra superior: solo se ve en móvil (en escritorio
      la marca vive en la barra lateral). Misma tipografía de logo que .marca-txt. */
@@ -163,14 +173,10 @@
   .curso-chip select { border: none; background: transparent; font-family: inherit;
     font-size: 13px; font-weight: 600; color: var(--texto); cursor: pointer;
     padding: 0 2px; margin: 0; outline: none; }
-  /* Réplica del selector en las cabeceras de Clases/Grupos: solo móvil. */
-  .curso-chip-lista { display: none; }
-  /* Botón «Editar curso» junto al selector: sigue la visibilidad de su chip
-     (en escritorio, el de la topbar; en móvil, los de las cabeceras). */
+  /* Botón «Editar curso», junto al selector en la barra superior. */
   .curso-editar { display: inline-flex; align-items: center; justify-content: center;
     padding: 7px 9px; }
   .curso-editar .svg-ico { width: 15px; height: 15px; }
-  .acciones-seccion .curso-editar { display: none; }
   .acciones-seccion { display: flex; align-items: center; gap: 10px; }
 
   /* Velo para sidebar en móvil */
@@ -1009,16 +1015,22 @@
     /* Barra superior: la MARCA fija a la izquierda + buscador. El título de
        sección lo da la tab bar, y el curso baja a las listas de Clases/Grupos
        (solo hace falta al elegir grupo o clase). */
-    .topbar { padding: 0 16px; gap: 10px; }
-    .topbar-marca { display: block; margin-right: auto; }
+    .topbar { padding: 0 16px; gap: 8px; }
+    .topbar-marca { display: block; margin-right: auto; min-width: 0;
+      overflow: hidden; text-overflow: ellipsis; }
     .topbar-titulo { display: none; }
-    .topbar > .curso-chip { display: none; }
-    .topbar > .curso-editar { display: none; }
-    .buscador { width: auto; flex: 0 1 170px; }
     .curso-chip { padding: 5px 8px; }
     .curso-chip-ico { display: none; }
-    .curso-chip-lista { display: inline-flex; }
-    .acciones-seccion .curso-editar { display: inline-flex; }
+    /* El buscador se colapsa en la lupa: oculto salvo cuando está «buscando»,
+       y entonces se despliega ocupando la barra (encima de marca y curso). */
+    .buscador-toggle { display: inline-flex; margin-left: 0; }
+    .buscador { display: none; }
+    .topbar.buscando .buscador {
+      display: flex; position: absolute; left: 12px; right: 52px; width: auto;
+      z-index: 5; }
+    .topbar.buscando .buscador input { width: 100%; }
+    .topbar.buscando .ico-lupa { display: none; }
+    .topbar.buscando .ico-cerrar { display: block; }
 
     /* Cabecera de las listas (Mis clases / Mis grupos) en UNA sola línea:
        título compacto que cede espacio y acciones que no se parten. */
