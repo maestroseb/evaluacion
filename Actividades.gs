@@ -265,7 +265,7 @@ var Actividades = (function () {
 
     // Info de los criterios del área: código -> {texto corto, descripción larga}.
     var criteriosInfo = {};
-    Curriculo.criteriosDe(ev.curso, ev.area).forEach(function (c) {
+    Curriculo.criteriosDe(ev.curso, ev.area, MapaPropio.filas_(ss)).forEach(function (c) {
       criteriosInfo[c.codigo] = { texto: c.texto, descripcion: c.descripcion };
     });
 

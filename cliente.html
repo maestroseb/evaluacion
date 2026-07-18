@@ -328,7 +328,14 @@ var App = (function () {
       '<div class="campo-crit"><span class="etq">Festivos y vacaciones</span>' +
         '<div id="cal-festivos">' + htmlFestivos_() + '</div>' +
         '<button type="button" class="btn cal-add" onclick="App.calAddFestivo()">+ Añadir festivo</button>' +
-      '</div>';
+      '</div>' +
+      (esNuevo ? '' :
+        '<div class="campo-crit"><span class="etq">Criterios propios (FP y otras enseñanzas)</span>' +
+        '<p class="ayuda">Si tu enseñanza no está en el mapa (p. ej. un módulo de FP con sus RA), ' +
+          'puedes añadir tus propios criterios pegándolos desde una hoja de cálculo.</p>' +
+        '<div class="acciones-modal" style="margin-top:8px">' +
+          '<button type="button" class="btn" onclick="App.abrirMapaPropioUI()">Mis criterios propios</button>' +
+        '</div></div>');
     var opts = { sinFoco: true, ancho: true };
     if (!esNuevo) opts.accionExtra =
       '<button type="button" class="btn" onclick="App.nuevoCursoUI()">+ Otro curso</button>';
@@ -371,6 +378,64 @@ var App = (function () {
       else { irAEvaluaciones(); precargarEvaluaciones(); }
       avisoOk(esNuevo ? 'Curso creado.' : 'Curso actualizado.');
     });
+  }
+
+  // ---------- criterios propios (FP: RA + criterios, con pesos del centro) ----------
+  function abrirMapaPropioUI() {
+    llamar('getMapaPropio', [], function (bloques) { modalMapaPropio_(bloques); });
+  }
+
+  function modalMapaPropio_(bloques) {
+    var lista = (bloques && bloques.length)
+      ? bloques.map(function (b) {
+          return '<div class="cal-fest-fila"><span class="planner-asig-nom-txt" style="flex:1">' +
+            '<b>' + esc(b.area) + '</b> · ' + esc(b.curso) +
+            ' <span class="ayuda-inline">(' + b.numRA + ' RA, ' + b.numCriterios + ' criterios)</span></span>' +
+            '<button type="button" class="btn peligro btn-icono" title="Eliminar bloque" ' +
+              'onclick="App.borrarMapaPropioUI(\'' + esc(b.curso) + '\',\'' + esc(b.area) + '\')">' +
+              svgUI('papelera') + '</button></div>';
+        }).join('')
+      : '<div class="planner-vacio">Aún no has añadido criterios propios.</div>';
+    abrirModal('Mis criterios propios',
+      '<div class="campo-crit"><span class="etq">Bloques añadidos</span>' + lista + '</div>' +
+      '<div class="campo-crit"><span class="etq">Importar (pegar desde una hoja de cálculo)</span>' +
+      '<p class="ayuda">Columnas, en este orden: <b>curso · área/módulo · RA · peso RA · ' +
+        'código · texto · peso criterio</b> (los pesos son opcionales). Copia las filas de tu ' +
+        'hoja y pégalas aquí. Reimportar un mismo curso+área lo reemplaza (no duplica).</p>' +
+      '<textarea id="mp-texto" rows="7" placeholder="1º Cocina\tProcesos básicos\tRA1: Recepciona materias primas\t30\tRA1.a\tIdentifica las materias primas\t20"></textarea></div>',
+      'Importar',
+      function () {
+        var t = val('mp-texto');
+        if (!t.trim()) return aviso('Pega antes las filas de criterios.');
+        botonModalCargando('Importando…');
+        llamar('importarMapaPropio', [t], function (r) {
+          if (!r.ok) {
+            document.getElementById('modal-aceptar').disabled = false;
+            document.getElementById('modal-aceptar').textContent = 'Importar';
+            return aviso(r.error || 'No se pudo importar.');
+          }
+          recargarAreas_();
+          modalMapaPropio_(r.resumen);
+          avisoOk('Importadas ' + r.filas + ' filas (' + r.bloques + ' bloque/s).' +
+            (r.descartadas && r.descartadas.length ? ' Descartadas: ' + r.descartadas.length + '.' : ''));
+        });
+      },
+      { ancho: true, sinFoco: true, textoCancelar: 'Cerrar' });
+  }
+
+  function borrarMapaPropioUI(curso, area) {
+    confirmar('Eliminar bloque', 'Se eliminarán los criterios propios de «' + area + '» (' + curso +
+      '). Las clases que ya los usen conservarán sus notas, pero perderán el texto del criterio.',
+      'Eliminar', function () {
+        llamar('eliminarMapaPropio', [curso, area], function (r) {
+          recargarAreas_(); modalMapaPropio_(r.resumen); avisoOk('Bloque eliminado.');
+        });
+      });
+  }
+
+  /** Recarga la lista de áreas/cursos (el mapa fusionado cambió). */
+  function recargarAreas_() {
+    llamar('getEstadoInicial', [], function (e) { estado.areas = e.areas; });
   }
 
   /** Siguiente curso académico ("2024-2025" -> "2025-2026"), o '' si no encaja. */
@@ -6760,6 +6825,7 @@ var App = (function () {
     restaurarGrupo: restaurarGrupo, restaurarEval: restaurarEval,
     avisoAlcanceEliminar: avisoAlcanceEliminar,
     cambiarCurso: cambiarCurso, editarCursoUI: editarCursoUI, nuevoCursoUI: nuevoCursoUI,
+    abrirMapaPropioUI: abrirMapaPropioUI, borrarMapaPropioUI: borrarMapaPropioUI,
     toggleBuscador: toggleBuscador,
     irARubricas: irARubricas, nuevaRubrica: nuevaRubrica,
     editarRubricaUI: editarRubricaUI, duplicarRubricaUI: duplicarRubricaUI,

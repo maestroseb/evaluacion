@@ -42,6 +42,10 @@ var ESQUEMA = {
   // campo cursoAcademico de _clases y _evaluaciones guarda este cursoId (para
   // los cursos-año, el propio año, así los datos existentes no migran).
   _cursos: ['cursoId', 'anio', 'nombre', 'centro', 'config', 'orden', 'creado'],
+  // Criterios propios del profe (v27), pensado para FP: area = módulo,
+  // competencia = RA. Pesos opcionales (los fija el centro); el motor los
+  // aplicará en la fase de cálculo ponderado.
+  _mapaPropio: ['curso', 'area', 'competencia', 'pesoRA', 'codigo', 'texto', 'pesoCriterio'],
   // Vínculo clase↔calendario de Google (v25): una fila por clase publicada.
   _calsync: ['evalId', 'calendarId', 'creado'],
   // Clases provisionales del planificador (v18): solo un nombre y su horario,
