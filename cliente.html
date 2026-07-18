@@ -244,10 +244,9 @@ var App = (function () {
     return m[0] || null;
   }
 
-  /** Etiqueta visible de un curso: su nombre propio o el año, + centro si lo tiene. */
+  /** Etiqueta visible de un curso: su título personalizado o, si no, el año. */
   function etiquetaCurso_(x) {
-    var base = (x.nombre && x.nombre.trim()) ? x.nombre.trim() : cursoCorto_(x.anio || x.id);
-    return x.centro ? base + ' · ' + x.centro : base;
+    return (x.nombre && x.nombre.trim()) ? x.nombre.trim() : cursoCorto_(x.anio || x.id);
   }
 
   /** Cambia el curso activo: recarga Clases y Grupos ya filtrados del servidor. */
@@ -273,8 +272,20 @@ var App = (function () {
     });
   }
 
-  // ---------- editar / crear curso académico (nombre, centro, config) ----------
-  /** Abre el panel del curso ACTIVO para renombrarlo, ponerle centro o config. */
+  // ---------- editar / crear curso académico (título, calendario, config) ----------
+  /** Desplegable de años académicos alrededor del natural (evita erratas al teclear). */
+  function selectAnioHtml_(sel) {
+    var nat = (estado.cursos && estado.cursos.actual) || '';
+    var base = parseInt((nat.match(/^(\d{4})/) || [])[1], 10) || new Date().getFullYear();
+    var anios = [];
+    for (var y = base + 2; y >= base - 4; y--) anios.push(y + '-' + (y + 1));
+    if (sel && anios.indexOf(sel) < 0) anios.unshift(sel); // conserva uno fuera de rango
+    return '<select id="cur-anio">' + anios.map(function (a) {
+      return '<option value="' + esc(a) + '"' + (a === sel ? ' selected' : '') + '>' + esc(a) + '</option>';
+    }).join('') + '</select>';
+  }
+
+  /** Abre el panel del curso ACTIVO para retitularlo o ajustar su calendario. */
   function editarCursoUI() {
     var x = cursoActivo_();
     if (!x) return;
@@ -292,7 +303,7 @@ var App = (function () {
   /** Abre el panel en blanco para CREAR otro curso (p. ej. un 2º centro). */
   function nuevoCursoUI() {
     abrirModalCurso_({ id: '', anio: (estado.cursos && estado.cursos.actual) || '',
-      nombre: '', centro: '', config: {} }, true, { inicio: '', fin: '', festivos: [] });
+      nombre: '', config: {} }, true, { inicio: '', fin: '', festivos: [] });
   }
 
   function abrirModalCurso_(x, esNuevo, cal) {
@@ -301,15 +312,10 @@ var App = (function () {
       return { desde: f.desde, hasta: f.hasta || f.desde, nombre: f.nombre || '' };
     }).sort(function (a, b) { return a.desde < b.desde ? -1 : a.desde > b.desde ? 1 : 0; });
     var cuerpo =
-      '<label>Año académico' +
-        '<input id="cur-anio" type="text" value="' + esc(x.anio || '') + '" ' +
-          'placeholder="2025-2026" autocomplete="off"></label>' +
-      '<label>Nombre (opcional)' +
+      '<label>Año académico' + selectAnioHtml_(x.anio || '') + '</label>' +
+      '<label>Título (opcional)' +
         '<input id="cur-nombre" type="text" value="' + esc(x.nombre || '') + '" ' +
-          'placeholder="' + esc(cursoCorto_(x.anio || '')) + '" autocomplete="off"></label>' +
-      '<label>Centro (opcional)' +
-        '<input id="cur-centro" type="text" value="' + esc(x.centro || '') + '" ' +
-          'placeholder="p. ej. IES Los Álamos" autocomplete="off"></label>' +
+          'placeholder="p. ej. FP Cocina · IES Los Álamos" autocomplete="off"></label>' +
       '<div class="campo-crit"><span class="etq">Calendario del curso</span>' +
         '<div class="cal-rango">' +
           '<label>Inicio<input id="cal-inicio" type="date" value="' + esc(cal.inicio || '') + '"></label>' +
@@ -331,10 +337,7 @@ var App = (function () {
   }
 
   function guardarCursoUI_(x, esNuevo) {
-    var anio = val('cur-anio').trim();
-    if (anio && !/^\d{4}-\d{4}$/.test(anio)) {
-      return aviso('El año académico debe tener el formato 2025-2026.');
-    }
+    var anio = val('cur-anio').trim(); // viene de un desplegable: siempre "YYYY-YYYY"
     var inicio = val('cal-inicio'), fin = val('cal-fin');
     if (inicio && fin && fin < inicio) {
       return aviso('El fin del curso es anterior al inicio.');
@@ -344,7 +347,6 @@ var App = (function () {
       id: esNuevo ? '' : x.id,
       anio: anio,
       nombre: val('cur-nombre').trim(),
-      centro: val('cur-centro').trim(),
       config: x.config || {}, // se conserva tal cual (la config de FP llega en su fase)
       calendario: {
         inicio: inicio, fin: fin,

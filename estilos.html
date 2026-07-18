@@ -446,9 +446,15 @@
   .modal-fondo[hidden] { display: none; }
   .modal {
     background: var(--surface); border-radius: 16px; padding: 24px;
-    width: 100%; max-width: 480px; max-height: 90vh; overflow: auto;
+    width: 100%; max-width: 480px; max-height: 90vh; overflow: hidden;
     box-shadow: 0 12px 40px rgba(16,18,24,.22); animation: modal-in .16s ease;
+    /* Columna: cabecera y acciones fijas; solo el cuerpo hace scroll. Así los
+       botones (Guardar/Cancelar…) quedan siempre a la vista sin bajar. */
+    display: flex; flex-direction: column;
   }
+  .modal-cab { flex: 0 0 auto; }
+  #modal-cuerpo { flex: 0 1 auto; min-height: 0; overflow-y: auto; }
+  .modal-acciones { flex: 0 0 auto; }
   @keyframes modal-in { from { opacity: 0; transform: translateY(8px) scale(.99); } to { opacity: 1; } }
   .modal h2 { margin: 0; font-size: 18px; }
   .modal-cab { display: flex; align-items: center; justify-content: space-between; gap: 12px;
@@ -1331,6 +1337,12 @@
      el input: hay que alinear el pseudo-elemento del valor. */
   input[type="date"] { text-align: left; }
   input[type="date"]::-webkit-date-and-time-value { text-align: left; }
+  /* Los input date de iOS traen un ancho mínimo intrínseco: a lo ancho del modal
+     (p. ej. la «Fecha» de un evento en el planificador) desbordaban. Sin
+     apariencia nativa y con min-width:0 se ciñen al contenedor. */
+  .modal input[type="date"], .ses-form input[type="date"] {
+    min-width: 0; max-width: 100%; -webkit-appearance: none; appearance: none;
+  }
   /* En móvil: 1ª línea nombre + papelera; 2ª línea las dos fechas (máx. 2 líneas).
      El nombre arranca ancho (basis 70%) para que ninguna fecha suba a su línea. */
   @media (max-width: 560px) {
@@ -1497,5 +1509,7 @@
     .rt-body, [contenteditable="true"] { font-size: 16px; }
     /* A 16px la fecha necesita algo más de ancho para no recortar dd/mm/aaaa. */
     .ses-form .planner-asig-fecha { width: 142px; }
+    /* Pie del modal fijo: una hairline lo separa del cuerpo al hacer scroll. */
+    .modal-acciones { border-top: 1px solid var(--borde); padding-top: 12px; margin-top: 12px; }
   }
 </style>
