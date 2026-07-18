@@ -201,12 +201,26 @@ var App = (function () {
     if (!estado || !estado.cursos) return;
     var c = estado.cursos;
     var html = (c.lista || []).map(function (x) {
-      return '<option value="' + esc(x) + '"' + (x === c.activo ? ' selected' : '') +
-        '>' + esc(cursoCorto_(x)) + '</option>';
+      return '<option value="' + esc(x.id) + '"' + (x.id === c.activo ? ' selected' : '') +
+        '>' + esc(etiquetaCurso_(x)) + '</option>';
     }).join('');
     [].forEach.call(document.querySelectorAll('.curso-select'), function (sel) {
       sel.innerHTML = html;
     });
+  }
+
+  /** Ficha (objeto) del curso activo, o null. */
+  function cursoActivo_() {
+    if (!estado || !estado.cursos) return null;
+    var id = estado.cursos.activo;
+    var m = (estado.cursos.lista || []).filter(function (x) { return x.id === id; });
+    return m[0] || null;
+  }
+
+  /** Etiqueta visible de un curso: su nombre propio o el año, + centro si lo tiene. */
+  function etiquetaCurso_(x) {
+    var base = (x.nombre && x.nombre.trim()) ? x.nombre.trim() : cursoCorto_(x.anio || x.id);
+    return x.centro ? base + ' · ' + x.centro : base;
   }
 
   /** Cambia el curso activo: recarga Clases y Grupos ya filtrados del servidor. */
@@ -229,6 +243,73 @@ var App = (function () {
       pintarSelectorCurso();
       irAEvaluaciones(); // vuelve a la lista de clases del curso elegido
       precargarEvaluaciones();
+    });
+  }
+
+  // ---------- editar / crear curso académico (nombre, centro, config) ----------
+  /** Abre el panel del curso ACTIVO para renombrarlo, ponerle centro o config. */
+  function editarCursoUI() {
+    var x = cursoActivo_();
+    if (!x) return;
+    abrirModalCurso_(x, false);
+  }
+
+  /** Abre el panel en blanco para CREAR otro curso (p. ej. un 2º centro). */
+  function nuevoCursoUI() {
+    abrirModalCurso_({ id: '', anio: (estado.cursos && estado.cursos.actual) || '',
+      nombre: '', centro: '', config: {} }, true);
+  }
+
+  function abrirModalCurso_(x, esNuevo) {
+    var cfg = x.config || {};
+    var cuerpo =
+      '<label>Año académico' +
+        '<input id="cur-anio" type="text" value="' + esc(x.anio || '') + '" ' +
+          'placeholder="2025-2026" autocomplete="off"></label>' +
+      '<label>Nombre (opcional)' +
+        '<input id="cur-nombre" type="text" value="' + esc(x.nombre || '') + '" ' +
+          'placeholder="' + esc(cursoCorto_(x.anio || '')) + '" autocomplete="off"></label>' +
+      '<label>Centro (opcional)' +
+        '<input id="cur-centro" type="text" value="' + esc(x.centro || '') + '" ' +
+          'placeholder="p. ej. IES Los Álamos" autocomplete="off"></label>' +
+      '<label class="check check-suelto"><input id="cur-fp" type="checkbox"' +
+        (cfg.fp ? ' checked' : '') + '> Curso de FP (Formación Profesional)</label>' +
+      '<p class="ayuda">Actívalo para preparar este curso de cara a las opciones de FP ' +
+        '(Resultados de Aprendizaje y ponderaciones). El módulo de FP se está terminando: ' +
+        'de momento solo se guarda tu elección.</p>' +
+      (esNuevo ? '' :
+        '<div class="acciones-modal" style="margin-top:14px">' +
+        '<button type="button" class="btn" onclick="App.abrirCalendario()">Calendario y festivos</button>' +
+        '</div>');
+    var opts = esNuevo ? {} : { accionExtra:
+      '<button type="button" class="btn" onclick="App.nuevoCursoUI()">+ Otro curso</button>' };
+    abrirModal(esNuevo ? 'Nuevo curso académico' : 'Curso académico', cuerpo, 'Guardar',
+      function () { guardarCursoUI_(x.id, esNuevo); }, opts);
+  }
+
+  function guardarCursoUI_(id, esNuevo) {
+    var anio = val('cur-anio').trim();
+    if (anio && !/^\d{4}-\d{4}$/.test(anio)) {
+      return aviso('El año académico debe tener el formato 2025-2026.');
+    }
+    var payload = {
+      id: esNuevo ? '' : id,
+      anio: anio,
+      nombre: val('cur-nombre').trim(),
+      centro: val('cur-centro').trim(),
+      config: { fp: document.getElementById('cur-fp').checked }
+    };
+    botonModalCargando('Guardando…');
+    llamar('guardarCurso', [payload], function (r) {
+      estado.cursos = r.cursos;
+      estado.clases = r.clases;
+      estado.evaluaciones = r.evaluaciones;
+      invalidarCaches();
+      pintarSelectorCurso();
+      cerrarModal();
+      irAEvaluaciones();
+      precargarEvaluaciones();
+      avisoOk(esNuevo ? 'Curso creado.' : 'Curso actualizado.');
     });
   }
 
@@ -6659,7 +6740,7 @@ var App = (function () {
     archivarGrupoUI: archivarGrupoUI, archivarEvalUI: archivarEvalUI,
     restaurarGrupo: restaurarGrupo, restaurarEval: restaurarEval,
     avisoAlcanceEliminar: avisoAlcanceEliminar,
-    cambiarCurso: cambiarCurso,
+    cambiarCurso: cambiarCurso, editarCursoUI: editarCursoUI, nuevoCursoUI: nuevoCursoUI,
     irARubricas: irARubricas, nuevaRubrica: nuevaRubrica,
     editarRubricaUI: editarRubricaUI, duplicarRubricaUI: duplicarRubricaUI,
     previsualizarRubrica: previsualizarRubrica,

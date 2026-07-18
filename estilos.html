@@ -165,6 +165,12 @@
     padding: 0 2px; margin: 0; outline: none; }
   /* Réplica del selector en las cabeceras de Clases/Grupos: solo móvil. */
   .curso-chip-lista { display: none; }
+  /* Botón «Editar curso» junto al selector: sigue la visibilidad de su chip
+     (en escritorio, el de la topbar; en móvil, los de las cabeceras). */
+  .curso-editar { display: inline-flex; align-items: center; justify-content: center;
+    padding: 7px 9px; }
+  .curso-editar .svg-ico { width: 15px; height: 15px; }
+  .acciones-seccion .curso-editar { display: none; }
   .acciones-seccion { display: flex; align-items: center; gap: 10px; }
 
   /* Velo para sidebar en móvil */
@@ -1007,10 +1013,12 @@
     .topbar-marca { display: block; margin-right: auto; }
     .topbar-titulo { display: none; }
     .topbar > .curso-chip { display: none; }
+    .topbar > .curso-editar { display: none; }
     .buscador { width: auto; flex: 0 1 170px; }
     .curso-chip { padding: 5px 8px; }
     .curso-chip-ico { display: none; }
     .curso-chip-lista { display: inline-flex; }
+    .acciones-seccion .curso-editar { display: inline-flex; }
 
     /* Cabecera de las listas (Mis clases / Mis grupos) en UNA sola línea:
        título compacto que cede espacio y acciones que no se parten. */
