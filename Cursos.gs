@@ -32,14 +32,22 @@ function cambiarCurso(curso) {
  * existentes siguen enganchados). Devuelve el estado del curso ya activo.
  */
 function guardarCurso(payload) {
+  payload = payload || {};
   var ss = abrirCuaderno_();
-  var id = Cursos.guardar_(ss, payload || {});
+  var id = Cursos.guardar_(ss, payload);
   Cursos.fijar_(id);
+  // El calendario del curso (inicio/fin/festivos) vive en su propia pestaña,
+  // con la misma clave (cursoId). Se guarda aquí para que todo el curso —datos
+  // y calendario— se edite desde un único panel.
+  var cal = payload.calendario
+    ? Calendario.guardar_(ss, id, payload.calendario)
+    : Calendario.obtener_(ss, id);
   var clases = Clases.listar_(ss);
   return {
     cursos: Cursos.info_(ss, clases),
     clases: Cursos.filtrar_(clases, id),
-    evaluaciones: Cursos.filtrar_(Evaluaciones.listar_(ss, clases), id)
+    evaluaciones: Cursos.filtrar_(Evaluaciones.listar_(ss, clases), id),
+    calendario: cal
   };
 }
 

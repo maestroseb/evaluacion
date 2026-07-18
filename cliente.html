@@ -278,16 +278,28 @@ var App = (function () {
   function editarCursoUI() {
     var x = cursoActivo_();
     if (!x) return;
-    abrirModalCurso_(x, false);
+    // El calendario (inicio/fin/festivos) vive en su pestaña; lo traemos para
+    // editarlo en el mismo panel. Si ya está en caché para este curso, directo.
+    if (calendarioCache && calendarioCache.cursoAcademico === x.id) {
+      abrirModalCurso_(x, false, calendarioCache);
+    } else {
+      llamar('getCalendario', [x.id], function (c) {
+        calendarioCache = c; abrirModalCurso_(x, false, c);
+      });
+    }
   }
 
   /** Abre el panel en blanco para CREAR otro curso (p. ej. un 2º centro). */
   function nuevoCursoUI() {
     abrirModalCurso_({ id: '', anio: (estado.cursos && estado.cursos.actual) || '',
-      nombre: '', centro: '', config: {} }, true);
+      nombre: '', centro: '', config: {} }, true, { inicio: '', fin: '', festivos: [] });
   }
 
-  function abrirModalCurso_(x, esNuevo) {
+  function abrirModalCurso_(x, esNuevo, cal) {
+    cal = cal || { inicio: '', fin: '', festivos: [] };
+    calDraft = (cal.festivos || []).map(function (f) {
+      return { desde: f.desde, hasta: f.hasta || f.desde, nombre: f.nombre || '' };
+    }).sort(function (a, b) { return a.desde < b.desde ? -1 : a.desde > b.desde ? 1 : 0; });
     var cuerpo =
       '<label>Año académico' +
         '<input id="cur-anio" type="text" value="' + esc(x.anio || '') + '" ' +
@@ -298,12 +310,22 @@ var App = (function () {
       '<label>Centro (opcional)' +
         '<input id="cur-centro" type="text" value="' + esc(x.centro || '') + '" ' +
           'placeholder="p. ej. IES Los Álamos" autocomplete="off"></label>' +
-      (esNuevo ? '' :
-        '<div class="acciones-modal" style="margin-top:4px">' +
-        '<button type="button" class="btn" onclick="App.abrirCalendario()">Calendario y festivos</button>' +
-        '</div>');
-    var opts = esNuevo ? {} : { accionExtra:
-      '<button type="button" class="btn" onclick="App.nuevoCursoUI()">+ Otro curso</button>' };
+      '<div class="campo-crit"><span class="etq">Calendario del curso</span>' +
+        '<div class="cal-rango">' +
+          '<label>Inicio<input id="cal-inicio" type="date" value="' + esc(cal.inicio || '') + '"></label>' +
+          '<label>Fin <span class="opcional">(opcional)</span>' +
+            '<input id="cal-fin" type="date" value="' + esc(cal.fin || '') + '"></label>' +
+        '</div>' +
+      '</div>' +
+      '<p class="ayuda">Si dejas el fin vacío, el curso se toma como abierto hasta final de curso. ' +
+        'Sirve para sugerir fechas saltando findes y festivos y marcar los días no lectivos.</p>' +
+      '<div class="campo-crit"><span class="etq">Festivos y vacaciones</span>' +
+        '<div id="cal-festivos">' + htmlFestivos_() + '</div>' +
+        '<button type="button" class="btn cal-add" onclick="App.calAddFestivo()">+ Añadir festivo</button>' +
+      '</div>';
+    var opts = { sinFoco: true, ancho: true };
+    if (!esNuevo) opts.accionExtra =
+      '<button type="button" class="btn" onclick="App.nuevoCursoUI()">+ Otro curso</button>';
     abrirModal(esNuevo ? 'Nuevo curso académico' : 'Curso académico', cuerpo, 'Guardar',
       function () { guardarCursoUI_(x, esNuevo); }, opts);
   }
@@ -313,12 +335,23 @@ var App = (function () {
     if (anio && !/^\d{4}-\d{4}$/.test(anio)) {
       return aviso('El año académico debe tener el formato 2025-2026.');
     }
+    var inicio = val('cal-inicio'), fin = val('cal-fin');
+    if (inicio && fin && fin < inicio) {
+      return aviso('El fin del curso es anterior al inicio.');
+    }
+    leerFestivosDraft_();
     var payload = {
       id: esNuevo ? '' : x.id,
       anio: anio,
       nombre: val('cur-nombre').trim(),
       centro: val('cur-centro').trim(),
-      config: x.config || {} // se conserva tal cual (la config de FP llega en su fase)
+      config: x.config || {}, // se conserva tal cual (la config de FP llega en su fase)
+      calendario: {
+        inicio: inicio, fin: fin,
+        festivos: calDraft.filter(function (f) { return f.desde; }).map(function (f) {
+          return { desde: f.desde, hasta: f.hasta || f.desde, nombre: f.nombre };
+        })
+      }
     };
     botonModalCargando('Guardando…');
     llamar('guardarCurso', [payload], function (r) {
@@ -326,10 +359,14 @@ var App = (function () {
       estado.clases = r.clases;
       estado.evaluaciones = r.evaluaciones;
       invalidarCaches();
+      calendarioCache = r.calendario || null; // tras invalidar, refresca el calendario del curso activo
       pintarSelectorCurso();
       cerrarModal();
-      irAEvaluaciones();
-      precargarEvaluaciones();
+      // Al crear un curso nuevo vamos a su lista de clases; al editar, nos
+      // quedamos donde estábamos (si es el planificador, lo repintamos con el
+      // calendario ya actualizado) para no expulsar al profe de su vista.
+      if (!esNuevo && vistaActual === 'vista-planner') pintarPlanner();
+      else { irAEvaluaciones(); precargarEvaluaciones(); }
       avisoOk(esNuevo ? 'Curso creado.' : 'Curso actualizado.');
     });
   }
@@ -4812,27 +4849,6 @@ var App = (function () {
   // ---------- calendario del curso (inicio/fin + festivos) ----------
   var calDraft = null; // festivos en edición mientras el modal está abierto
 
-  function abrirCalendario() {
-    var c = calendarioCache || { inicio: '', fin: '', festivos: [] };
-    calDraft = (c.festivos || []).map(function (f) {
-      return { desde: f.desde, hasta: f.hasta || f.desde, nombre: f.nombre || '' };
-    }).sort(function (a, b) { return a.desde < b.desde ? -1 : a.desde > b.desde ? 1 : 0; });
-    var curso = (estado.cursos && estado.cursos.activo) || '';
-    abrirModal('Calendario del curso',
-      '<p class="ayuda">Curso académico <b>' + esc(curso) + '</b>. Se usa para sugerir fechas ' +
-        'saltando findes y festivos, y para marcar los días no lectivos.</p>' +
-      '<div class="cal-rango">' +
-        '<label>Inicio del curso<input id="cal-inicio" type="date" value="' + esc(c.inicio || '') +
-          '" onchange="App.calFinPorDefecto_()"></label>' +
-        '<label>Fin del curso<input id="cal-fin" type="date" value="' + esc(c.fin || '') + '"></label>' +
-      '</div>' +
-      '<div class="campo-crit"><span class="etq">Festivos y vacaciones</span>' +
-        '<div id="cal-festivos">' + htmlFestivos_() + '</div>' +
-        '<button type="button" class="btn cal-add" onclick="App.calAddFestivo()">+ Añadir festivo</button>' +
-      '</div>',
-      'Guardar', guardarCalendarioUI_, { sinFoco: true, ancho: true });
-  }
-
   function htmlFestivos_() {
     if (!calDraft.length) return '<div class="planner-vacio">Sin festivos añadidos.</div>';
     return calDraft.map(function (f, i) {
@@ -4862,11 +4878,6 @@ var App = (function () {
     calDraft.push({ desde: '', hasta: '', nombre: '' });
     document.getElementById('cal-festivos').innerHTML = htmlFestivos_();
   }
-  /** Al fijar el inicio del curso, propone el mismo día como fin (si está vacío). */
-  function calFinPorDefecto_() {
-    var ini = document.getElementById('cal-inicio'), fin = document.getElementById('cal-fin');
-    if (ini && fin && ini.value && !fin.value) fin.value = ini.value;
-  }
   /** Al fijar «desde» de un festivo, propone el mismo día como «hasta» (si vacío). */
   function calHastaPorDefecto_(i) {
     var fila = document.querySelectorAll('#cal-festivos .cal-fest-fila')[i];
@@ -4879,21 +4890,6 @@ var App = (function () {
     calDraft.splice(i, 1);
     document.getElementById('cal-festivos').innerHTML = htmlFestivos_();
   }
-  function guardarCalendarioUI_() {
-    leerFestivosDraft_();
-    var payload = {
-      inicio: val('cal-inicio'), fin: val('cal-fin'),
-      festivos: calDraft.filter(function (f) { return f.desde; }).map(function (f) {
-        return { desde: f.desde, hasta: f.hasta || f.desde, nombre: f.nombre };
-      })
-    };
-    var curso = (estado.cursos && estado.cursos.activo) || '';
-    botonModalCargando('Guardando…');
-    llamar('guardarCalendario', [curso, payload], function (c) {
-      calendarioCache = c; cerrarModal(); pintarPlanner(); avisoOk('Calendario guardado.');
-    });
-  }
-
   // ---------- compartir con familias (calendario de Google por clase) ----------
   var famCalIds = {}; // evalId -> calendarId ya publicado
 
@@ -6717,10 +6713,10 @@ var App = (function () {
     dragSesionSobre: dragSesionSobre, dragSesionFuera: dragSesionFuera,
     dragSesionSuelta: dragSesionSuelta,
     abrirHorario: abrirHorario, horToggleDia: horToggleDia, horChkCambiada: horChkCambiada,
-    abrirCalendario: abrirCalendario, calAddFestivo: calAddFestivo, calQuitarFestivo: calQuitarFestivo,
+    calAddFestivo: calAddFestivo, calQuitarFestivo: calQuitarFestivo,
     abrirCompartirFamilias: abrirCompartirFamilias, publicarClaseCalendar: publicarClaseCalendar,
     copiarEnlaceFamilias_: copiarEnlaceFamilias_, toggleAutoFamilias_: toggleAutoFamilias_,
-    calFinPorDefecto_: calFinPorDefecto_, calHastaPorDefecto_: calHastaPorDefecto_,
+    calHastaPorDefecto_: calHastaPorDefecto_,
     asigChkCambiada: asigChkCambiada, critSesionCambiado: critSesionCambiado,
     sesTipoCambiado: sesTipoCambiado, rtCmd: rtCmd, rtLink: rtLink,
     crearClaseHorario: crearClaseHorario, agGrupoCambiado: agGrupoCambiado,
