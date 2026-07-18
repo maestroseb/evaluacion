@@ -66,16 +66,20 @@
   .marca-icono {
     width: 34px; height: 34px; flex: 0 0 34px; border-radius: 9px;
     display: inline-flex; align-items: center; justify-content: center; font-size: 18px;
-    background: linear-gradient(135deg, var(--acento), #7a7af0); color: #fff;
+    background: linear-gradient(135deg, var(--acento), #059669); color: #fff;
     box-shadow: var(--sombra-1);
   }
-  /* Logotipo tipográfico (sidebar y topbar móvil): Outfit 800, tinta índigo
-     oscura y acento verde en la parte final ("Anda"), que marca
-     decorarMarca() en el cliente. */
+  /* Logotipo tipográfico (sidebar y topbar móvil): Outfit 800 con un único
+     degradado que recorre toda la palabra, del índigo del acento (--acento) al
+     verde "Andalucía", igual que el icono. decorarMarca() sigue envolviendo la
+     última sílaba en .marca-acento, pero aquí esa parte es transparente para
+     que el degradado del contenedor fluya sin cortes por todo el nombre. */
   .marca-txt { font-family: 'Outfit', 'Inter', sans-serif; font-weight: 800;
-    font-size: 19px; letter-spacing: -.02em; color: #1e1b4b;
-    white-space: nowrap; overflow: hidden; }
-  .marca-acento { color: #059669; }
+    font-size: 19px; letter-spacing: -.02em;
+    white-space: nowrap; overflow: hidden;
+    background: linear-gradient(90deg, var(--acento) 0%, #059669 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .marca-acento { color: transparent; }
 
   .perfil {
     display: flex; align-items: center; gap: 10px; padding: 8px;
@@ -90,7 +94,8 @@
   .perfil-info { display: flex; flex-direction: column; min-width: 0; }
   .perfil-nombre { font-size: 13px; font-weight: 600; color: var(--texto);
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .perfil-rol { font-size: 11px; color: var(--texto-3); }
+  .perfil-rol { font-size: 11px; color: var(--texto-3);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
   .menu-lat { display: flex; flex-direction: column; gap: 3px; }
   .menu-lat-pie { margin-top: auto; padding-top: 8px; border-top: 1px solid var(--borde); }
@@ -144,8 +149,10 @@
   /* Marca de la app en la barra superior: solo se ve en móvil (en escritorio
      la marca vive en la barra lateral). Misma tipografía de logo que .marca-txt. */
   .topbar-marca { display: none; font-family: 'Outfit', 'Inter', sans-serif;
-    font-weight: 800; font-size: 23px; letter-spacing: -.02em; color: #1e1b4b;
-    white-space: nowrap; }
+    font-weight: 800; font-size: 23px; letter-spacing: -.02em;
+    white-space: nowrap;
+    background: linear-gradient(90deg, var(--acento) 0%, #059669 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent; }
 
   /* Selector de curso académico en la barra superior */
   .curso-chip { display: inline-flex; align-items: center; gap: 6px;

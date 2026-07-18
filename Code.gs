@@ -48,6 +48,7 @@ function getEstadoInicial() {
   if (flags.planner) Planner.migrarProvisionales_(ss);
   return {
     usuario: email,
+    nombre: nombreDe_(),  // nombre visible del perfil (o '' si no se puede leer)
     esquemaVersion: CONFIG.ESQUEMA_VERSION,
     flags: flags,
     areas: Curriculo.listarAreasCursos(),
@@ -72,6 +73,37 @@ function flagsDe_(email) {
       (Array.isArray(permitidos) && permitidos.indexOf(email) >= 0);
   });
   return out;
+}
+
+/**
+ * Nombre visible del profe, tal y como figura en su perfil de Google (p. ej.
+ * "Sergio G."), para enseñarlo en la cabecera de la cuenta en lugar del correo.
+ *
+ * El correo institucional suele ser un código (sgirjim495@…) que no dice nada,
+ * así que el nombre solo se puede sacar del perfil vía el endpoint estándar de
+ * OpenID (necesita el scope userinfo.profile). Para NO penalizar el arranque, el
+ * resultado se cachea en las propiedades del usuario: solo la primera carga paga
+ * la llamada de red; las siguientes son instantáneas. Si algo falla (permiso
+ * denegado, red, dominio que lo restrinja), devuelve '' y el cliente sigue
+ * mostrando el correo, exactamente como antes.
+ */
+function nombreDe_() {
+  var props = PropertiesService.getUserProperties();
+  var cache = props.getProperty('nombrePerfil');
+  if (cache) return cache; // ya lo teníamos; '' no se cachea, así se reintenta
+  var nombre = '';
+  try {
+    var resp = UrlFetchApp.fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() },
+      muteHttpExceptions: true
+    });
+    if (resp.getResponseCode() === 200) {
+      var info = JSON.parse(resp.getContentText());
+      nombre = String(info.name || info.given_name || '').trim();
+    }
+  } catch (e) { /* nos quedamos con el correo, sin ruido */ }
+  if (nombre) props.setProperty('nombrePerfil', nombre);
+  return nombre;
 }
 
 /**
