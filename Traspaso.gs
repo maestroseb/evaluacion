@@ -48,6 +48,13 @@ var Traspaso = (function () {
     if (!claseIds.length) throw new Error('Elige al menos un grupo para traspasar.');
     var setC = {};
     claseIds.forEach(function (id) { setC[id] = true; });
+    // Un curso con título usa un id opaco que nada significa en el cuaderno del
+    // receptor: en el traspaso viaja su AÑO (el receptor lo ve como curso normal).
+    var cursosMat = Cursos.materializados_(ss);
+    function cursoPortable_(id) {
+      id = String(id || '').trim();
+      return (cursosMat[id] && cursosMat[id].anio) || id;
+    }
 
     var clases = filas_(ss, HOJAS.CLASES).filter(function (r) { return setC[r[0]]; });
     if (!clases.length) throw new Error('No se encontraron los grupos elegidos.');
@@ -85,10 +92,12 @@ var Traspaso = (function () {
       clases: clases.map(function (r) {
         return { claseId: r[0], nombre: r[1], curso: r[2], creado: r[3],
           alumnos: alumnosEnClaro_(r[4]), color: r[5] || '', icono: r[6] || '',
-          cursoAcademico: r[8] || '', bajas: alumnosEnClaro_(r[9]) };
+          cursoAcademico: cursoPortable_(r[8]), bajas: alumnosEnClaro_(r[9]) };
       }),
       // El resto, filas crudas de sus pestañas (los ids se remapean al recibir).
-      evaluaciones: evals,
+      evaluaciones: evals.map(function (r) {
+        r = r.slice(); r[8] = cursoPortable_(r[8]); return r;
+      }),
       unidades: unidades,
       actividades: actividades,
       rubricas: rubricas,

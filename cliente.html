@@ -3851,8 +3851,10 @@ var App = (function () {
   /** Duplica el grupo actual en otro curso académico (estructura, sin notas). */
   function promocionarGrupoUI() {
     var cl = claseActual;
-    var activo = (estado.cursos && estado.cursos.activo) || '';
-    var sugeridoAcad = siguienteCurso_(activo) || '';
+    // El activo puede ser un curso con título (id opaco): para sugerir el
+    // siguiente año se usa su AÑO, no el id.
+    var xa = cursoActivo_();
+    var sugeridoAcad = siguienteCurso_((xa && xa.anio) || (estado.cursos && estado.cursos.activo) || '') || '';
     var nivelActual = cl.curso || '';
     var sugeridoNivel = siguienteNivel_(nivelActual);
     var optNiveles = opcionesCursosHtml(sugeridoNivel);
@@ -6936,7 +6938,6 @@ var App = (function () {
     editarRubricaUI: editarRubricaUI, duplicarRubricaUI: duplicarRubricaUI,
     previsualizarRubrica: previsualizarRubrica,
     eliminarRubricaUI: eliminarRubricaUI, dragRubrica: dragRubrica,
-    detectarRubricaPegada: detectarRubricaPegada,
     empezarRubricaEnBlanco: empezarRubricaEnBlanco, limpiarRubrica: limpiarRubrica,
     rubAnadirNivel: rubAnadirNivel, rubQuitarNivel: rubQuitarNivel,
     rubAnadirIndicador: rubAnadirIndicador, rubQuitarIndicador: rubQuitarIndicador,

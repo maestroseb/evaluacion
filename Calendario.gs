@@ -13,10 +13,8 @@ function getCalendario(cursoAcademico) {
   return Calendario.obtener_(abrirCuaderno_(), cursoAcademico);
 }
 
-/** Guarda el calendario de un curso académico. payload: {inicio, fin, festivos:[{desde,hasta,nombre}]} */
-function guardarCalendario(cursoAcademico, payload) {
-  return Calendario.guardar_(abrirCuaderno_(), cursoAcademico, payload);
-}
+// (El guardado va dentro de guardarCurso —panel «Editar curso»—, que llama a
+// Calendario.guardar_ con la misma clave cursoId.)
 
 var Calendario = (function () {
 
