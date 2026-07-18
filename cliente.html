@@ -62,6 +62,7 @@ var App = (function () {
       document.getElementById('cargando').hidden = true;
       activarRubricasSiFlag_(); // revela el módulo de rúbricas si el usuario lo tiene
       activarPlannerSiFlag_();  // ídem con el planificador (en pruebas)
+      refrescarModuloCriterios_(); // módulo «Criterios» según el toggle FP del curso activo
       pintarSelectorCurso();
       // Si la URL trae una vista (recarga o enlace copiado), se restaura;
       // si no, se abre la lista de clases como siempre.
@@ -81,7 +82,7 @@ var App = (function () {
   // ---------- navegación ----------
   var SECCIONES = ['vista-evaluaciones', 'vista-clases', 'vista-clase',
     'vista-evaluacion', 'vista-unidad', 'vista-resumen', 'vista-papelera', 'vista-rubricas',
-    'vista-planner'];
+    'vista-planner', 'vista-criterios'];
   var vistaActual = null; // vista visible: descarta respuestas tardías del servidor
   function mostrar(id) {
     flushNotas(); // guarda notas pendientes de la unidad al cambiar de vista
@@ -96,9 +97,10 @@ var App = (function () {
       (id === 'vista-papelera') ? 'papelera' :
       (id === 'vista-rubricas') ? 'rubricas' :
       (id === 'vista-planner') ? 'planner' :
+      (id === 'vista-criterios') ? 'criterios' :
       (id === 'vista-evaluaciones' || id === 'vista-evaluacion' ||
        id === 'vista-unidad' || id === 'vista-resumen') ? 'eval' : '';
-    ['eval', 'clases', 'papelera', 'rubricas', 'planner'].forEach(function (k) {
+    ['eval', 'clases', 'papelera', 'rubricas', 'planner', 'criterios'].forEach(function (k) {
       [].forEach.call(document.querySelectorAll('[data-nav="' + k + '"]'), function (el) {
         el.classList.toggle('activo', k === clave);
       });
@@ -108,7 +110,7 @@ var App = (function () {
     // cursos). La barra de búsqueda se cierra al cambiar de vista.
     var tb = document.querySelector('.topbar');
     if (tb) {
-      tb.classList.toggle('sin-curso', clave === 'rubricas' || clave === 'papelera');
+      tb.classList.toggle('sin-curso', clave === 'rubricas' || clave === 'papelera' || clave === 'criterios');
       cerrarBuscador_();
     }
     cerrarSidebar(); // en móvil, cierra el panel tras navegar
@@ -187,6 +189,11 @@ var App = (function () {
         case 'planner':
           if (estado.flags && estado.flags.planner) irAPlanner(); else irAEvaluaciones();
           break;
+        case 'criterios': {
+          var xc = cursoActivo_();
+          if (xc && xc.config && xc.config.fp) irACriterios(); else irAEvaluaciones();
+          break;
+        }
         case 'clase':
           if (claseCache[st.id] || claseDe(st.id)) abrirClase(st.id);
           else irAClases(); // ya no existe (borrado / otro curso)
@@ -267,6 +274,7 @@ var App = (function () {
       estado.evaluaciones = r.evaluaciones;
       invalidarCaches();
       pintarSelectorCurso();
+      refrescarModuloCriterios_(); // el módulo depende del curso ahora activo
       irAEvaluaciones(); // vuelve a la lista de clases del curso elegido
       precargarEvaluaciones();
     });
@@ -329,13 +337,10 @@ var App = (function () {
         '<div id="cal-festivos">' + htmlFestivos_() + '</div>' +
         '<button type="button" class="btn cal-add" onclick="App.calAddFestivo()">+ Añadir festivo</button>' +
       '</div>' +
-      (esNuevo ? '' :
-        '<div class="campo-crit"><span class="etq">Criterios propios (FP y otras enseñanzas)</span>' +
-        '<p class="ayuda">Si tu enseñanza no está en el mapa (p. ej. un módulo de FP con sus RA), ' +
-          'puedes añadir tus propios criterios pegándolos desde una hoja de cálculo.</p>' +
-        '<div class="acciones-modal" style="margin-top:8px">' +
-          '<button type="button" class="btn" onclick="App.abrirMapaPropioUI()">Mis criterios propios</button>' +
-        '</div></div>');
+      '<label class="check check-suelto"><input id="cur-fp" type="checkbox"' +
+        ((x.config && x.config.fp) ? ' checked' : '') + '> Criterios propios (FP u otras enseñanzas)</label>' +
+      '<p class="ayuda">Activa un módulo «Criterios» bajo el Planificador para añadir tus propios ' +
+        'criterios (en FP, sus RA y pesos). Solo aparece en este curso.</p>';
     var opts = { sinFoco: true, ancho: true };
     if (!esNuevo) opts.accionExtra =
       '<button type="button" class="btn" onclick="App.nuevoCursoUI()">+ Otro curso</button>';
@@ -350,11 +355,13 @@ var App = (function () {
       return aviso('El fin del curso es anterior al inicio.');
     }
     leerFestivosDraft_();
+    var cfg = x.config || {};
+    cfg.fp = document.getElementById('cur-fp').checked;
     var payload = {
       id: esNuevo ? '' : x.id,
       anio: anio,
       nombre: val('cur-nombre').trim(),
-      config: x.config || {}, // se conserva tal cual (la config de FP llega en su fase)
+      config: cfg,
       calendario: {
         inicio: inicio, fin: fin,
         festivos: calDraft.filter(function (f) { return f.desde; }).map(function (f) {
@@ -370,6 +377,7 @@ var App = (function () {
       invalidarCaches();
       calendarioCache = r.calendario || null; // tras invalidar, refresca el calendario del curso activo
       pintarSelectorCurso();
+      refrescarModuloCriterios_(); // muestra/oculta el módulo según el toggle FP del curso
       cerrarModal();
       // Al crear un curso nuevo vamos a su lista de clases; al editar, nos
       // quedamos donde estábamos (si es el planificador, lo repintamos con el
@@ -380,29 +388,51 @@ var App = (function () {
     });
   }
 
-  // ---------- criterios propios (FP: RA + criterios, con pesos del centro) ----------
-  function abrirMapaPropioUI() {
-    llamar('getMapaPropio', [], function (bloques) { modalMapaPropio_(bloques); });
+  // ---------- criterios propios: módulo revelado por el toggle FP del curso ----------
+  var criteriosBloques = []; // último resumen pintado (para borrar por índice)
+
+  /** Muestra/oculta el módulo «Criterios» según el toggle FP del curso activo. */
+  function refrescarModuloCriterios_() {
+    var x = cursoActivo_();
+    var on = !!(x && x.config && x.config.fp);
+    [].forEach.call(document.querySelectorAll('.solo-crit'), function (el) { el.hidden = !on; });
+    // Si estabas en el módulo y el nuevo curso no lo tiene, sal a las clases.
+    if (!on && vistaActual === 'vista-criterios') irAEvaluaciones();
   }
 
-  function modalMapaPropio_(bloques) {
-    var lista = (bloques && bloques.length)
-      ? bloques.map(function (b) {
-          return '<div class="cal-fest-fila"><span class="planner-asig-nom-txt" style="flex:1">' +
-            '<b>' + esc(b.area) + '</b> · ' + esc(b.curso) +
-            ' <span class="ayuda-inline">(' + b.numRA + ' RA, ' + b.numCriterios + ' criterios)</span></span>' +
-            '<button type="button" class="btn peligro btn-icono" title="Eliminar bloque" ' +
-              'onclick="App.borrarMapaPropioUI(\'' + esc(b.curso) + '\',\'' + esc(b.area) + '\')">' +
-              svgUI('papelera') + '</button></div>';
-        }).join('')
-      : '<div class="planner-vacio">Aún no has añadido criterios propios.</div>';
-    abrirModal('Mis criterios propios',
-      '<div class="campo-crit"><span class="etq">Bloques añadidos</span>' + lista + '</div>' +
-      '<div class="campo-crit"><span class="etq">Importar (pegar desde una hoja de cálculo)</span>' +
+  function irACriterios() {
+    registrarHistorial({ v: 'criterios' });
+    setTitulo('Criterios propios');
+    mostrar('vista-criterios');
+    pintarCriterios();
+  }
+
+  function pintarCriterios() {
+    var cont = document.getElementById('lista-criterios');
+    cont.innerHTML = '<div class="aviso">Cargando…</div>';
+    llamar('getMapaPropio', [], function (bloques) {
+      criteriosBloques = bloques || [];
+      if (!criteriosBloques.length) {
+        cont.innerHTML = '<div class="vacio">Aún no has añadido criterios propios. ' +
+          'Pulsa «+ Importar» y pégalos desde tu hoja de cálculo.</div>';
+        return;
+      }
+      cont.innerHTML = criteriosBloques.map(function (b, i) {
+        return '<div class="tarjeta-crit"><div class="tc-info">' +
+          '<b>' + esc(b.area || '—') + '</b>' +
+          '<span class="meta">' + esc(b.curso) + ' · ' + b.numRA + ' RA · ' + b.numCriterios + ' criterios</span>' +
+          '</div><button class="btn peligro btn-icono" title="Eliminar bloque" aria-label="Eliminar bloque" ' +
+          'onclick="App.borrarMapaPropioUI(' + i + ')">' + svgUI('papelera') + '</button></div>';
+      }).join('');
+    });
+  }
+
+  function abrirImportarCriterios() {
+    abrirModal('Importar criterios',
       '<p class="ayuda">Una fila por criterio. Con RA y pesos (FP): <b>curso · área · RA · ' +
         'peso RA · código · texto · peso criterio</b>. Sin RA (estilo Primaria), pega solo ' +
         '<b>curso · área · código · texto</b>. Reimportar un mismo curso+área lo reemplaza (no duplica).</p>' +
-      '<textarea id="mp-texto" rows="7" placeholder="1º Cocina\tProcesos básicos\tRA1: Recepciona materias primas\t30\tRA1.a\tIdentifica las materias primas\t20"></textarea></div>',
+      '<textarea id="mp-texto" rows="8" placeholder="1º Cocina\tProcesos básicos\tRA1: Recepciona materias primas\t30\tRA1.a\tIdentifica las materias primas\t20"></textarea>',
       'Importar',
       function () {
         var t = val('mp-texto');
@@ -410,25 +440,28 @@ var App = (function () {
         botonModalCargando('Importando…');
         llamar('importarMapaPropio', [t], function (r) {
           if (!r.ok) {
-            document.getElementById('modal-aceptar').disabled = false;
-            document.getElementById('modal-aceptar').textContent = 'Importar';
+            var b = document.getElementById('modal-aceptar');
+            b.disabled = false; b.textContent = 'Importar';
             return aviso(r.error || 'No se pudo importar.');
           }
           recargarAreas_();
-          modalMapaPropio_(r.resumen);
+          cerrarModal();
+          pintarCriterios();
           avisoOk('Importadas ' + r.filas + ' filas (' + r.bloques + ' bloque/s).' +
             (r.descartadas && r.descartadas.length ? ' Descartadas: ' + r.descartadas.length + '.' : ''));
         });
       },
-      { ancho: true, sinFoco: true, textoCancelar: 'Cerrar' });
+      { ancho: true, sinFoco: true });
   }
 
-  function borrarMapaPropioUI(curso, area) {
-    confirmar('Eliminar bloque', 'Se eliminarán los criterios propios de «' + area + '» (' + curso +
+  function borrarMapaPropioUI(i) {
+    var b = criteriosBloques[i];
+    if (!b) return;
+    confirmar('Eliminar bloque', 'Se eliminarán los criterios propios de «' + b.area + '» (' + b.curso +
       '). Las clases que ya los usen conservarán sus notas, pero perderán el texto del criterio.',
       'Eliminar', function () {
-        llamar('eliminarMapaPropio', [curso, area], function (r) {
-          recargarAreas_(); modalMapaPropio_(r.resumen); avisoOk('Bloque eliminado.');
+        llamar('eliminarMapaPropio', [b.curso, b.area], function () {
+          recargarAreas_(); pintarCriterios(); avisoOk('Bloque eliminado.');
         });
       });
   }
@@ -6825,7 +6858,8 @@ var App = (function () {
     restaurarGrupo: restaurarGrupo, restaurarEval: restaurarEval,
     avisoAlcanceEliminar: avisoAlcanceEliminar,
     cambiarCurso: cambiarCurso, editarCursoUI: editarCursoUI, nuevoCursoUI: nuevoCursoUI,
-    abrirMapaPropioUI: abrirMapaPropioUI, borrarMapaPropioUI: borrarMapaPropioUI,
+    irACriterios: irACriterios, abrirImportarCriterios: abrirImportarCriterios,
+    borrarMapaPropioUI: borrarMapaPropioUI,
     toggleBuscador: toggleBuscador,
     irARubricas: irARubricas, nuevaRubrica: nuevaRubrica,
     editarRubricaUI: editarRubricaUI, duplicarRubricaUI: duplicarRubricaUI,
