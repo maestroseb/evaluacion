@@ -399,9 +399,9 @@ var App = (function () {
     abrirModal('Mis criterios propios',
       '<div class="campo-crit"><span class="etq">Bloques añadidos</span>' + lista + '</div>' +
       '<div class="campo-crit"><span class="etq">Importar (pegar desde una hoja de cálculo)</span>' +
-      '<p class="ayuda">Columnas, en este orden: <b>curso · área/módulo · RA · peso RA · ' +
-        'código · texto · peso criterio</b> (los pesos son opcionales). Copia las filas de tu ' +
-        'hoja y pégalas aquí. Reimportar un mismo curso+área lo reemplaza (no duplica).</p>' +
+      '<p class="ayuda">Una fila por criterio. Con RA y pesos (FP): <b>curso · área · RA · ' +
+        'peso RA · código · texto · peso criterio</b>. Sin RA (estilo Primaria), pega solo ' +
+        '<b>curso · área · código · texto</b>. Reimportar un mismo curso+área lo reemplaza (no duplica).</p>' +
       '<textarea id="mp-texto" rows="7" placeholder="1º Cocina\tProcesos básicos\tRA1: Recepciona materias primas\t30\tRA1.a\tIdentifica las materias primas\t20"></textarea></div>',
       'Importar',
       function () {

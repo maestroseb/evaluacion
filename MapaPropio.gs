@@ -56,6 +56,18 @@ var MapaPropio = (function () {
    * Reemplaza los bloques curso+área que vengan en el texto (reimportar no
    * duplica) y conserva el resto.
    */
+  /**
+   * Ordena las columnas pegadas a [curso, área, RA, pesoRA, código, texto,
+   * pesoCriterio] según cuántas haya, para que valga tanto FP como criterios
+   * «estilo Primaria» (sin RA ni pesos):
+   *   7+ → completo (FP);  5-6 → curso|área|RA|código|texto;  ≤4 → curso|área|código|texto.
+   */
+  function mapear_(c) {
+    if (c.length >= 7) return [c[0], c[1], c[2], c[3], c[4], c[5], c[6]];
+    if (c.length >= 5) return [c[0], c[1], c[2], '', c[3], c[4], ''];
+    return [c[0], c[1], '', '', c[2], c[3], ''];
+  }
+
   function importar_(ss, texto) {
     var filasNuevas = [], descartadas = [];
     String(texto || '').split(/\r?\n/).forEach(function (linea, i) {
@@ -63,15 +75,16 @@ var MapaPropio = (function () {
       var c = linea.split(linea.indexOf('\t') >= 0 ? '\t' : ';').map(function (x) { return String(x).trim(); });
       // Cabecera: la saltamos si huele a nombres de columna.
       if (i === 0 && /curso/i.test(c[0] || '') && /c(ó|o)digo/i.test(linea)) return;
-      if (!c[0] || !c[4] || !c[5]) {
+      var r = mapear_(c); // [curso, área, RA, pesoRA, código, texto, pesoCriterio]
+      if (!r[0] || !r[4] || !r[5]) {
         descartadas.push('Línea ' + (i + 1) + ': faltan curso, código o texto.');
         return;
       }
-      var pRA = c[3] === '' ? '' : Number(String(c[3]).replace(',', '.'));
-      var pCr = c[6] == null || c[6] === '' ? '' : Number(String(c[6]).replace(',', '.'));
+      var pRA = r[3] === '' ? '' : Number(String(r[3]).replace(',', '.'));
+      var pCr = r[6] === '' || r[6] == null ? '' : Number(String(r[6]).replace(',', '.'));
       if (pRA !== '' && isNaN(pRA)) { descartadas.push('Línea ' + (i + 1) + ': peso de RA no numérico.'); return; }
       if (pCr !== '' && isNaN(pCr)) { descartadas.push('Línea ' + (i + 1) + ': peso de criterio no numérico.'); return; }
-      filasNuevas.push([c[0], c[1] || '', c[2] || '', pRA, c[4], c[5], pCr]);
+      filasNuevas.push([r[0], r[1] || '', r[2] || '', pRA, r[4], r[5], pCr]);
     });
     if (!filasNuevas.length) {
       return { ok: false, error: 'No se encontró ninguna fila válida.', descartadas: descartadas };
