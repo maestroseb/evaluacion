@@ -98,12 +98,29 @@ var CalSync = (function () {
       summary: 'EvaluAnda · ' + info.etiqueta, timeZone: TZ,
       description: 'Sesiones de «' + info.etiqueta + '» publicadas desde EvaluAnda.'
     });
-    if (r.code >= 300 || !r.json.id) throw new Error('No se pudo crear el calendario (' + r.code + ').');
+    if (r.code >= 300 || !r.json.id) {
+      var motivo = (r.json.error && r.json.error.message) || '';
+      // 403 típico: la sesión se autorizó ANTES de que la app pidiera el
+      // permiso de Calendario → el token va sin ese permiso hasta re-autorizar.
+      if (r.code === 403 && /insufficient|scope/i.test(motivo)) {
+        throw new Error('Falta el permiso de Calendario: recarga la app y acepta ' +
+          'la pantalla de permisos nueva (si no aparece, cierra sesión y vuelve a entrar).');
+      }
+      throw new Error('No se pudo crear el calendario (' + r.code +
+        (motivo ? ': ' + motivo : '') + ').');
+    }
     calId = r.json.id;
-    // Público (cualquiera con el enlace puede ver).
-    fetch_('post', '/calendars/' + encodeURIComponent(calId) + '/acl',
+    // Público (cualquiera con el enlace puede ver). En dominios educativos el
+    // administrador puede prohibir calendarios públicos: en ese caso se avisa
+    // (el enlace solo funcionaría dentro del dominio) en vez de callar.
+    var acl = fetch_('post', '/calendars/' + encodeURIComponent(calId) + '/acl',
       { role: 'reader', scope: { type: 'default' } });
     guardarCalId_(ss, evalId, calId);
+    if (acl.code >= 300) {
+      throw new Error('Calendario creado, pero tu dominio no permite hacerlo público ' +
+        '(las familias fuera del dominio no lo verían). Motivo: ' +
+        ((acl.json.error && acl.json.error.message) || acl.code));
+    }
     return calId;
   }
 
