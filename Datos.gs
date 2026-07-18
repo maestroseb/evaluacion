@@ -34,6 +34,14 @@ var ESQUEMA = {
   // Calendario por curso académico (v23): inicio/fin del curso y 'festivos'
   // (JSON [{desde, hasta, nombre}]). Una fila por curso académico.
   _calendario: ['cursoAcademico', 'inicio', 'fin', 'festivos'],
+  // Cursos académicos como entidad (v26). Lo NORMAL es que un curso sea solo su
+  // año ("2025-2026") y NO tenga fila aquí: se comporta como siempre. Se
+  // "materializa" una fila cuando el profe le pone nombre/centro/config, o
+  // cuando crea un SEGUNDO curso del mismo año (interino con varios centros);
+  // entonces 'cursoId' es un id opaco. 'config' es JSON ({fp:bool, ...}). El
+  // campo cursoAcademico de _clases y _evaluaciones guarda este cursoId (para
+  // los cursos-año, el propio año, así los datos existentes no migran).
+  _cursos: ['cursoId', 'anio', 'nombre', 'centro', 'config', 'orden', 'creado'],
   // Vínculo clase↔calendario de Google (v25): una fila por clase publicada.
   _calsync: ['evalId', 'calendarId', 'creado'],
   // Clases provisionales del planificador (v18): solo un nombre y su horario,

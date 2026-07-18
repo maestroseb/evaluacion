@@ -103,7 +103,7 @@ var CONFIG = {
   //      con las familias). Una fila por clase: evalId + calendarId creado por la
   //      app (scope calendar.app.created). Aditiva. La sincronización es
   //      unidireccional (EvaluAnda manda) y va tras FLAGS.planner.
-  ESQUEMA_VERSION: 25,
+  ESQUEMA_VERSION: 26,
 
   // Banderas de funcionalidad. Cada bandera es la lista de correos que la ven
   // (o '*' para todo el profesorado). Sirve para lanzar módulos "ocultos": se
@@ -140,5 +140,6 @@ var HOJAS = {
   PROVISIONALES: '_provisionales', // clases provisionales del planificador (solo nombre)
   PLAN_UNIDADES: '_planUnidades',  // unidades de planificación del profe (por materia/área)
   CALENDARIO: '_calendario',       // calendario por curso académico (inicio/fin + festivos)
+  CURSOS: '_cursos',               // cursos académicos como entidad (nombre, centro, config)
   CALSYNC: '_calsync'              // vínculo clase↔calendario de Google (compartir con familias)
 };
