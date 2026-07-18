@@ -677,8 +677,13 @@ var App = (function () {
 
   /** En el móvil, Papelera / Copia / Acerca de viven bajo la pestaña "Más". */
   function abrirMas() {
+    // El módulo de criterios propios solo aparece si el curso activo lo activa.
+    var xc = cursoActivo_();
+    var conCrit = !!(xc && xc.config && xc.config.fp);
     abrirModal('Más',
       '<div class="acciones-modal acciones-mas">' +
+      (conCrit ? '<button type="button" class="btn" onclick="App.cerrarModal();App.irACriterios()">' +
+        svgUI('check') + ' Criterios propios</button>' : '') +
       '<button type="button" class="btn" onclick="App.cerrarModal();App.irAPapelera()">' +
         svgUI('papelera') + ' Papelera</button>' +
       '<button type="button" class="btn" onclick="App.abrirCopia()">' +
