@@ -103,7 +103,34 @@ var App = (function () {
         el.classList.toggle('activo', k === clave);
       });
     });
+    // El curso académico solo aplica a Clases, Grupos y Planificador; en
+    // Rúbricas y Papelera se oculta el selector (una rúbrica se reutiliza entre
+    // cursos). La barra de búsqueda se cierra al cambiar de vista.
+    var tb = document.querySelector('.topbar');
+    if (tb) {
+      tb.classList.toggle('sin-curso', clave === 'rubricas' || clave === 'papelera');
+      cerrarBuscador_();
+    }
     cerrarSidebar(); // en móvil, cierra el panel tras navegar
+  }
+
+  /** Despliega u oculta el buscador colapsado (lupa) de la barra en móvil. */
+  function toggleBuscador() {
+    var tb = document.querySelector('.topbar');
+    if (!tb) return;
+    var abrir = !tb.classList.contains('buscando');
+    tb.classList.toggle('buscando', abrir);
+    var inp = document.getElementById('buscador');
+    if (abrir) { inp.focus(); }
+    else if (inp && inp.value) { inp.value = ''; filtrar(''); }
+  }
+  /** Cierra el buscador desplegado y limpia el filtro si había texto. */
+  function cerrarBuscador_() {
+    var tb = document.querySelector('.topbar');
+    if (!tb || !tb.classList.contains('buscando')) return;
+    tb.classList.remove('buscando');
+    var inp = document.getElementById('buscador');
+    if (inp && inp.value) { inp.value = ''; filtrar(''); }
   }
   function irAEvaluaciones() { registrarHistorial({ v: 'evaluaciones' }); evalActual = null; setTitulo('Clases'); mostrar('vista-evaluaciones'); pintarEvaluaciones(); }
   function irAClases() { registrarHistorial({ v: 'clases' }); claseActual = null; setTitulo('Grupos'); mostrar('vista-clases'); pintarClases(); }
@@ -6735,6 +6762,7 @@ var App = (function () {
     restaurarGrupo: restaurarGrupo, restaurarEval: restaurarEval,
     avisoAlcanceEliminar: avisoAlcanceEliminar,
     cambiarCurso: cambiarCurso, editarCursoUI: editarCursoUI, nuevoCursoUI: nuevoCursoUI,
+    toggleBuscador: toggleBuscador,
     irARubricas: irARubricas, nuevaRubrica: nuevaRubrica,
     editarRubricaUI: editarRubricaUI, duplicarRubricaUI: duplicarRubricaUI,
     previsualizarRubrica: previsualizarRubrica,
