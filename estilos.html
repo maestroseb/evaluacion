@@ -1315,6 +1315,12 @@
     margin-bottom: 18px; }
   .cal-rango label { flex: 1 1 150px; min-width: 0; margin-bottom: 0; }
   .opcional { font-weight: 400; color: var(--texto-3); }
+  /* Tarjetas del módulo «Criterios propios». */
+  .tarjeta-crit { display: flex; align-items: center; gap: 12px; padding: 14px 16px;
+    background: var(--surface); border: 1px solid var(--borde); border-radius: var(--radio);
+    box-shadow: var(--sombra-1); }
+  .tarjeta-crit .tc-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+  .tarjeta-crit .tc-info b { font-size: 15px; }
   /* Los input date de iOS traen un ancho mínimo intrínseco que les hacía
      sobresalir de la tarjeta (y pegarse entre sí). Sin apariencia nativa y con
      min-width 0 encogen de verdad con su columna. */

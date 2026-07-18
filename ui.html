@@ -41,6 +41,9 @@
         <!-- Planificador: oculto salvo para quien tenga la bandera (App lo revela al arrancar). -->
         <a id="nav-planner" class="item-lat solo-planner" hidden tabindex="0" role="button" data-nav="planner" onclick="App.irAPlanner()" title="Planificador">
           <span class="item-ico"><svg class="svg-ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M9 16l2 2 4-4"/></svg></span><span class="item-txt">Planificador</span></a>
+        <!-- Criterios propios (FP y otras enseñanzas): oculto salvo si el curso activo lo activa. -->
+        <a id="nav-criterios" class="item-lat solo-crit" hidden tabindex="0" role="button" data-nav="criterios" onclick="App.irACriterios()" title="Criterios propios">
+          <span class="item-ico"><svg class="svg-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span><span class="item-txt">Criterios</span></a>
       </nav>
 
       <!-- Utilidades: un escalón por debajo de Clases/Grupos. -->
@@ -269,6 +272,17 @@
         </span>
       </div>
       <div id="planner-cont"></div>
+    </section>
+
+    <!-- CRITERIOS PROPIOS (oculto salvo si el curso activo lo activa) -->
+    <section id="vista-criterios" hidden>
+      <div class="cabecera-seccion">
+        <h1>Criterios propios</h1>
+        <button class="btn primario" onclick="App.abrirImportarCriterios()">+ Importar</button>
+      </div>
+      <p class="meta">Tus RA y criterios propios (FP u otras enseñanzas). Al añadirlos, el curso+área
+        aparece como un área más al crear una clase, y sus criterios funcionan como los del mapa oficial.</p>
+      <div id="lista-criterios" class="tarjetas"></div>
     </section>
 
     <!-- PAPELERA -->
