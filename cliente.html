@@ -45,9 +45,20 @@ var App = (function () {
     setupHistorial();
     llamar('getEstadoInicial', [], function (e) {
       estado = e;
-      document.getElementById('usuario').textContent = e.usuario;
-      document.getElementById('usuario').title = e.usuario;
-      document.getElementById('perfil-avatar').textContent = iniciales(e.usuario);
+      // Cabecera de cuenta: si Google nos da el nombre, se muestra arriba y el
+      // correo pasa a la línea pequeña de debajo; si no, se queda el correo
+      // arriba y "Profesorado" debajo, como antes.
+      var nombre = (e.nombre && e.nombre.trim()) || '';
+      var principal = nombre || e.usuario;
+      var elNombre = document.getElementById('usuario');
+      elNombre.textContent = principal;
+      elNombre.title = e.usuario;
+      if (nombre) {
+        var elSub = document.getElementById('perfil-sub');
+        elSub.textContent = e.usuario;
+        elSub.title = e.usuario;
+      }
+      document.getElementById('perfil-avatar').textContent = iniciales(principal);
       document.getElementById('cargando').hidden = true;
       activarRubricasSiFlag_(); // revela el módulo de rúbricas si el usuario lo tiene
       activarPlannerSiFlag_();  // ídem con el planificador (en pruebas)
