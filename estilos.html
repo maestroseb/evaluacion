@@ -1198,8 +1198,8 @@
   .planner-asig-fila:not(.activa) .planner-asig-fecha,
   .planner-asig-fila:not(.activa) .planner-asig-obs { display: none; }
   /* Nombre de la clase con ancho fijo para que fecha y observaciones alineen. */
-  .ses-form .planner-asig-nom { flex: 0 0 150px; width: 150px; min-width: 0; margin: 0; display: flex;
-    align-items: center; line-height: 1.3; }
+  .ses-form .planner-asig-nom { flex: 0 0 145px; width: 145px; min-width: 0; margin: 0; display: flex;
+    align-items: center; gap: 4px; line-height: 1.3; }
   .planner-asig-nom-txt { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   /* Reprogramar: Adelantar (izq) · Reprogramar (centro) · Retrasar (der). */
   .ses-reprog { display: flex; align-items: stretch; gap: 8px; margin-bottom: 14px; }
@@ -1209,9 +1209,9 @@
     border: 1px solid var(--borde); border-radius: 8px; white-space: nowrap; }
   /* Fecha con el ancho justo de dd/mm/aaaa; empujada a la derecha (margin-left
      auto) para que su borde derecho coincida con el de las observaciones. */
-  .ses-form .planner-asig-fecha { flex: 0 0 auto; width: 122px; max-width: 100%; box-sizing: border-box;
+  .ses-form .planner-asig-fecha { flex: 0 0 auto; width: 125px; max-width: 100%; box-sizing: border-box;
     margin: 0 0 0 auto; padding: 6px 8px; -webkit-appearance: none; appearance: none; overflow: hidden;
-    border: 1px solid var(--borde-fuerte); border-radius: 8px; font: inherit; font-size: 13px; }
+    border: 1px solid var(--borde-fuerte); border-radius: 8px; font: inherit; font-size: 15px; }
   /* Observaciones siempre en su propia línea, a todo el ancho de la fila. */
   .ses-form .planner-asig-obs { flex: 1 1 100%; box-sizing: border-box; margin: 0;
     padding: 6px 8px;
@@ -1482,7 +1482,7 @@
   .rt-body:focus { outline: none; }
   .rt-body:empty::before { content: attr(data-ph); color: var(--texto-3); }
   .rt-body a { color: var(--acento-fuerte); }
-  .rt-body ul, .rt-body ol { margin: 4px 0 4px 22px; }
+  .rt-body ul, .rt-body ol { margin: 2px 0 2px 11px; }
   .rt-body p { margin: 0 0 6px; }
   .planner-hor-dias { display: flex; flex-wrap: wrap; gap: 8px; }
   .planner-chip-dia { flex: 0 0 auto; display: inline-flex; align-items: center;
@@ -1515,8 +1515,20 @@
     .ses-form .planner-asig-fecha, .ses-form .planner-asig-obs,
     .cal-fest-fila .cal-fest-nombre, .cal-fest-fila .cal-fest-desde, .cal-fest-fila .cal-fest-hasta,
     .rt-body, [contenteditable="true"] { font-size: 16px; }
-    /* A 16px la fecha necesita algo más de ancho para no recortar dd/mm/aaaa. */
-    .ses-form .planner-asig-fecha { width: 142px; }
+    /* Modal más ceñido en móvil: gana espacio horizontal para el formulario. */
+    .modal { padding: 20px; }
+    /* Selector de Tipo: menos aire lateral para que las tres opciones quepan. */
+    .ses-tipo-seg { padding: 6px; }
+    .ses-tipo-seg .ses-tipo-opt { padding: 6px 10px; }
+    /* Reprogramar en su fila de tres: padding compacto para que «◀ Adelantar»,
+       «Reprogramar» y «Retrasar ▶» quepan cada uno en una sola línea. */
+    .ses-reprog-btn { padding: 8px; white-space: nowrap; }
+    .ses-reprog-etq { padding: 0 8px; }
+    /* Fila de clase: el nombre cede (con elipsis) y la fecha, compacta, no baja
+       de línea. El picker de fecha en iOS es nativo (no hay teclado), así que
+       15px aquí no dispara el zoom automático. */
+    .ses-form .planner-asig-nom { flex: 1 1 auto; width: auto; }
+    .ses-form .planner-asig-fecha { width: 125px; font-size: 15px; padding: 6px; }
     /* Pie del modal fijo: una hairline lo separa del cuerpo al hacer scroll. */
     .modal-acciones { border-top: 1px solid var(--borde); padding-top: 12px; margin-top: 12px; }
   }
