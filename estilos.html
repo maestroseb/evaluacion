@@ -837,7 +837,7 @@
   /* position sticky (y no relative): si no, esta regla —más específica— anularía
      el sticky de "thead th" y las columnas de actividades no se quedarían fijas
      al hacer scroll. Sticky también sirve de contenedor para grip/edit (absolute). */
-  table.rejilla th.act { position: sticky; cursor: default; font-weight: 600; padding: 7px 22px; }
+  table.rejilla th.act { position: sticky; cursor: default; font-weight: 600; padding: 7px 14px; }
   table.rejilla th.act.act-rub-col { cursor: pointer; } /* la cabecera de rúbrica se toca para expandir */
   table.rejilla th.act.arrastrando-col { opacity: .45; }
   table.rejilla th.act.soltar-antes { box-shadow: inset 3px 0 0 var(--acento); }
@@ -848,10 +848,12 @@
     transition: opacity .12s; pointer-events: auto; cursor: grab; padding: 2px; z-index: 1; }
   table.rejilla th.act:hover .grip-act { opacity: 1; }
   table.rejilla .grip-act:active { cursor: grabbing; }
-  /* Chevron que indica que una columna rúbrica se puede desplegar. */
-  table.rejilla .rub-exp-ico { position: absolute; bottom: 3px; right: 5px; color: var(--acento);
-    opacity: .7; pointer-events: none; }
-  table.rejilla .rub-exp-ico .svg-ico { width: 11px; height: 11px; display: block; }
+  /* Chevron que indica que una columna rúbrica se puede desplegar: como un
+     botoncito acentuado, bien visible (antes era un icono de 11px al 70%). */
+  table.rejilla .rub-exp-ico { position: absolute; bottom: 3px; right: 3px; color: var(--acento);
+    background: var(--acento-suave); border-radius: 6px; padding: 3px; line-height: 0;
+    pointer-events: none; }
+  table.rejilla .rub-exp-ico .svg-ico { width: 14px; height: 14px; display: block; stroke-width: 2.4; }
   table.rejilla th.act .act-nom { display: block; }
   table.rejilla th.act small { display: block; font-weight: 400; color: var(--texto-3); font-size: 10px; }
   /* Cabecera en 3 líneas: título · (ítems/tipo) · criterios (abajo del todo). */
@@ -957,11 +959,11 @@
   table.rejilla td.celda-des-prim { color: var(--texto); font-weight: 500; }
   table.rejilla td.celda-desglose.vacia .svg-ico { width: 14px; height: 14px; vertical-align: -2px;
     color: var(--texto-3); }
-  /* Multinota expandida: sub-celdas por criterio (banda de árbol, estrechas). */
+  /* Multinota expandida: sub-celdas por criterio (banda de árbol, estrechas).
+     El input hereda el estilo GENERAL de los inputs de la rejilla (mismo ancho,
+     borde, cuerpo…): que no se distinga de una casilla normal. */
   table.rejilla td.celda-sub { border-left: 1px dashed var(--borde); min-width: 40px; }
-  table.rejilla td.celda-sub input.celda-sub-inp { width: 40px; text-align: center;
-    border: 1px solid var(--borde); border-radius: 6px; padding: 4px 2px; background: var(--bg);
-    font-size: 16px; font-variant-numeric: tabular-nums; }
+  table.rejilla td.celda-sub input.celda-sub-inp { font-variant-numeric: tabular-nums; }
   /* Selector flotante de nivel (escalas): los 5 niveles + vaciar, a un toque. */
   .pop-nivel { position: fixed; z-index: 60; display: flex; gap: 4px; padding: 6px;
     background: var(--surface); border: 1px solid var(--borde-fuerte);
