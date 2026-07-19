@@ -1164,7 +1164,21 @@
 
   /* ---------- Planificador (tras la bandera FLAGS.planner) ---------- */
   .planner-barra { display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
-    margin: 0 0 16px; }
+    margin: 0 0 16px; position: relative; }
+  /* En PC, como Planboard: navegación de fecha a la IZQUIERDA y el selector de
+     vistas (filtros) a la DERECHA, en la misma línea. */
+  @media (min-width: 821px) {
+    .planner-barra { justify-content: space-between; }
+    .planner-barra .planner-nav { order: -1; }
+  }
+  /* La etiqueta de fecha se pulsa para saltar a cualquier fecha. */
+  .planner-semana-etq[role="button"] { cursor: pointer; border-radius: 8px;
+    padding: 4px 6px; }
+  .planner-semana-etq[role="button"]:hover { background: var(--acento-suave);
+    color: var(--acento-fuerte); }
+  /* Input de fecha oculto: solo presta su selector nativo (showPicker). */
+  .planner-fecha-inp { position: absolute; left: 0; bottom: 0; width: 1px; height: 1px;
+    opacity: 0; border: 0; padding: 0; pointer-events: none; }
   /* Selector de modo tipo control segmentado (como Planboard). */
   .planner-modos { display: inline-flex; align-items: stretch; padding: 3px;
     background: var(--fondo-2, var(--borde)); border: 1px solid var(--borde);
