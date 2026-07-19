@@ -428,12 +428,43 @@ var App = (function () {
     });
   }
 
+  /** Filas de ejemplo del importador (separadas por tabulador, como en una hoja). */
+  var EJEMPLO_IMP_ = [
+    ['1º Cocina', 'Procesos básicos', 'RA1: Recepciona materias primas', '30', 'RA1.a', 'Identifica las materias primas', '60'],
+    ['1º Cocina', 'Procesos básicos', 'RA1: Recepciona materias primas', '30', 'RA1.b', 'Comprueba el etiquetado', '40']
+  ];
+  /** Rellena el cuadro del importador con el ejemplo (para verlo con sus tabuladores). */
+  function pegarEjemploImp() {
+    var t = document.getElementById('mp-texto');
+    if (t) t.value = EJEMPLO_IMP_.map(function (f) { return f.join('\t'); }).join('\n');
+  }
+
   function abrirImportarCriterios() {
+    var cab = ['curso', 'área', 'RA', 'peso RA', 'código', 'texto', 'peso criterio'];
+    var chips = function (cols) {
+      return '<span class="imp-cols">' + cols.map(function (c) {
+        return '<i>' + c + '</i>';
+      }).join('') + '</span>';
+    };
+    var ejemplo = '<table class="imp-tabla"><thead><tr>' +
+      cab.map(function (c) { return '<th>' + c + '</th>'; }).join('') +
+      '</tr></thead><tbody>' +
+      EJEMPLO_IMP_.map(function (f) {
+        return '<tr>' + f.map(function (v) { return '<td>' + esc(v) + '</td>'; }).join('') + '</tr>';
+      }).join('') + '</tbody></table>';
     abrirModal('Importar criterios',
-      '<p class="ayuda">Una fila por criterio. Con RA y pesos (FP): <b>curso · área · RA · ' +
-        'peso RA · código · texto · peso criterio</b>. Sin RA (estilo Primaria), pega solo ' +
-        '<b>curso · área · código · texto</b>. Reimportar un mismo curso+área lo reemplaza (no duplica).</p>' +
-      '<textarea id="mp-texto" rows="8" placeholder="1º Cocina\tProcesos básicos\tRA1: Recepciona materias primas\t30\tRA1.a\tIdentifica las materias primas\t20"></textarea>',
+      '<p class="ayuda">Prepara los criterios en tu hoja de cálculo (Excel, Sheets…), ' +
+        '<b>una fila por criterio</b>, y copia y pega aquí las filas: las columnas llegan ' +
+        'separadas por tabulador ya solas. Orden de las columnas:</p>' +
+      '<div class="imp-fmt"><span class="etq">Con RA y pesos (FP)</span>' +
+        chips(cab) + '</div>' +
+      '<div class="imp-fmt"><span class="etq">Sin RA (estilo Primaria)</span>' +
+        chips(['curso', 'área', 'código', 'texto']) + '</div>' +
+      '<div class="imp-fmt"><span class="etq">Ejemplo con RA (dos criterios del mismo RA) · ' +
+        '<button type="button" class="link" onclick="App.pegarEjemploImp()">insertar en el cuadro' +
+        '</button></span><div class="imp-ej-scroll">' + ejemplo + '</div></div>' +
+      '<textarea id="mp-texto" rows="7" placeholder="Pega aquí tus filas…"></textarea>' +
+      '<p class="ayuda">Reimportar un mismo curso+área lo reemplaza (no duplica).</p>',
       'Importar',
       function () {
         var t = val('mp-texto');
@@ -4014,7 +4045,9 @@ var App = (function () {
     // Acción extra a la izquierda de los botones (p. ej. la papelera de la sesión).
     var accExtra = document.getElementById('modal-acc-extra');
     if (accExtra) accExtra.innerHTML = (opts && opts.accionExtra) || '';
-    document.getElementById('modal-cuerpo').innerHTML = cuerpoHtml;
+    var cuerpo = document.getElementById('modal-cuerpo');
+    cuerpo.innerHTML = cuerpoHtml;
+    cuerpo.scrollTop = 0; // el cuerpo conserva el scroll del modal anterior: siempre arriba
     var b = document.getElementById('modal-aceptar');
     b.textContent = textoAceptar; b.disabled = false;
     // Texto del botón secundario (por defecto «Cancelar»; el editor de sesión,
@@ -7037,6 +7070,7 @@ var App = (function () {
     avisoAlcanceEliminar: avisoAlcanceEliminar,
     cambiarCurso: cambiarCurso, editarCursoUI: editarCursoUI, nuevoCursoUI: nuevoCursoUI,
     irACriterios: irACriterios, abrirImportarCriterios: abrirImportarCriterios,
+    pegarEjemploImp: pegarEjemploImp,
     borrarMapaPropioUI: borrarMapaPropioUI, abrirPesosUI: abrirPesosUI,
     toggleBuscador: toggleBuscador,
     irARubricas: irARubricas, nuevaRubrica: nuevaRubrica,
