@@ -2673,15 +2673,22 @@ var App = (function () {
     }
     rubEvalSel = { actId: actId, alId: alId, picks: picks };
     var niveles = def.niveles || [], maxP = rubMaxPts_(def);
-    // Color de cada nivel según su puntuación /10. Tramos propios del evaluador
-    // (no claseNota): en una rúbrica de 4 niveles, el semáforo de la rejilla
-    // pintaba el 3 en verde claro, casi igual que el 4. Aquí cada nivel cae en
-    // una gama bien distinta: verde / amarillo / naranja / rojo.
-    var gNivel = niveles.map(function (n) {
-      var v = maxP > 0 ? (Number(n.valor) || 0) / maxP * 10 : null;
-      if (v == null) return '';
-      return v < 5 ? 'g-susp' : v < 6.5 ? 'g-baja' : v < 8.5 ? 'g-media' : 'g-top';
-    });
+    // Color de cada nivel por su RANGO (no por su nota absoluta): se ordenan
+    // por puntuación y se reparten las gamas según cuántos niveles haya, de
+    // modo que niveles contiguos nunca comparten color. Con 4: verde /
+    // amarillo / naranja / rojo (el verde claro se salta: se confundía con el
+    // verde). Con 5 entran las cinco gamas; con más, se interpola.
+    var pal = niveles.length <= 2 ? ['g-top', 'g-susp']
+      : niveles.length === 3 ? ['g-top', 'g-media', 'g-susp']
+      : niveles.length === 4 ? ['g-top', 'g-media', 'g-baja', 'g-susp']
+      : ['g-top', 'g-alta', 'g-media', 'g-baja', 'g-susp'];
+    var gNivel = [];
+    niveles.map(function (n, j) { return { j: j, v: Number(n.valor) || 0 }; })
+      .sort(function (a, b) { return b.v - a.v; })
+      .forEach(function (o, r) {
+        gNivel[o.j] = pal[niveles.length <= pal.length ? r
+          : Math.round(r * (pal.length - 1) / (niveles.length - 1))];
+      });
     var cab = '<tr><th class="rg-corner">Indicador · peso</th>' + niveles.map(function (n, j) {
       return '<th class="' + gNivel[j] + '">' + esc(n.etiqueta) +
         ' <span class="ver-pts">(' + esc(n.valor) + ')</span></th>';
