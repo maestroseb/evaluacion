@@ -1515,12 +1515,22 @@
     .ses-form .planner-asig-fecha, .ses-form .planner-asig-obs,
     .cal-fest-fila .cal-fest-nombre, .cal-fest-fila .cal-fest-desde, .cal-fest-fila .cal-fest-hasta,
     .rt-body, [contenteditable="true"] { font-size: 16px; }
-    /* A 16px la fecha necesita algo más de ancho para no recortar dd/mm/aaaa. */
-    .ses-form .planner-asig-fecha { width: 142px; }
-    /* Modal más ceñido en móvil (gana espacio para el formulario de sesión). */
+    /* Modal más ceñido en móvil: gana espacio horizontal para el formulario. */
     .modal { padding: 20px; }
-    .ses-tipo-seg { padding: 6px; }
-    .ses-reprog-btn { padding: 8px; }
+    /* Selector de Tipo a todo el ancho: los tres botones se reparten el espacio
+       (nunca se aprietan ni desbordan). */
+    .ses-tipo-seg { display: flex; width: 100%; padding: 4px; }
+    .ses-tipo-seg .ses-tipo-opt { flex: 1; padding: 6px 8px; }
+    /* Reprogramar: la etiqueta pasa arriba a todo el ancho y los dos botones van
+       debajo en su propia fila, así «◀ Adelantar» y «Retrasar ▶» no parten el
+       texto en dos líneas. */
+    .ses-reprog { flex-wrap: wrap; }
+    .ses-reprog-etq { order: -1; flex: 1 1 100%; justify-content: center; padding: 6px; }
+    .ses-reprog-btn { padding: 8px; white-space: nowrap; }
+    /* Fila de clase: el nombre se encoge (con elipsis) y la fecha conserva su
+       ancho, de modo que nombre + fecha caben siempre en una sola línea. */
+    .ses-form .planner-asig-nom { flex: 1 1 auto; width: auto; }
+    .ses-form .planner-asig-fecha { width: 130px; }
     /* Pie del modal fijo: una hairline lo separa del cuerpo al hacer scroll. */
     .modal-acciones { border-top: 1px solid var(--borde); padding-top: 12px; margin-top: 12px; }
   }
