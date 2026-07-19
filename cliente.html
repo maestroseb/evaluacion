@@ -2673,9 +2673,14 @@ var App = (function () {
     }
     rubEvalSel = { actId: actId, alId: alId, picks: picks };
     var niveles = def.niveles || [], maxP = rubMaxPts_(def);
-    // Color de cada nivel según su puntuación /10 (semáforo, como la rejilla).
+    // Color de cada nivel según su puntuación /10. Tramos propios del evaluador
+    // (no claseNota): en una rúbrica de 4 niveles, el semáforo de la rejilla
+    // pintaba el 3 en verde claro, casi igual que el 4. Aquí cada nivel cae en
+    // una gama bien distinta: verde / amarillo / naranja / rojo.
     var gNivel = niveles.map(function (n) {
-      return maxP > 0 ? claseNota((Number(n.valor) || 0) / maxP * 10) : '';
+      var v = maxP > 0 ? (Number(n.valor) || 0) / maxP * 10 : null;
+      if (v == null) return '';
+      return v < 5 ? 'g-susp' : v < 6.5 ? 'g-baja' : v < 8.5 ? 'g-media' : 'g-top';
     });
     var cab = '<tr><th class="rg-corner">Indicador · peso</th>' + niveles.map(function (n, j) {
       return '<th class="' + gNivel[j] + '">' + esc(n.etiqueta) +

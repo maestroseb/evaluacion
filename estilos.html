@@ -758,18 +758,34 @@
   .rubrica-evaluar td.rub-eval-celda { cursor: pointer; user-select: none;
     touch-action: manipulation; transition: background .12s, box-shadow .12s; }
   .rubrica-evaluar td.rub-eval-celda:hover { background: var(--acento-suave); }
-  /* Cada nivel con su color de semáforo: la cabecera siempre teñida y la
-     casilla SOLO al seleccionarla (marcada además con su borde). */
-  .rubrica-evaluar thead th.g-top   { background: var(--g-top-bg);   color: var(--g-top-tx); }
-  .rubrica-evaluar thead th.g-alta  { background: var(--g-alta-bg);  color: var(--g-alta-tx); }
-  .rubrica-evaluar thead th.g-media { background: var(--g-media-bg); color: var(--g-media-tx); }
-  .rubrica-evaluar thead th.g-baja  { background: var(--g-baja-bg);  color: var(--g-baja-tx); }
-  .rubrica-evaluar thead th.g-susp  { background: var(--g-susp-bg);  color: var(--g-susp-tx); }
-  .rubrica-evaluar td.sel.g-top   { background: var(--g-top-bg);   box-shadow: inset 0 0 0 2px var(--g-top-tx); }
-  .rubrica-evaluar td.sel.g-alta  { background: var(--g-alta-bg);  box-shadow: inset 0 0 0 2px var(--g-alta-tx); }
-  .rubrica-evaluar td.sel.g-media { background: var(--g-media-bg); box-shadow: inset 0 0 0 2px var(--g-media-tx); }
-  .rubrica-evaluar td.sel.g-baja  { background: var(--g-baja-bg);  box-shadow: inset 0 0 0 2px var(--g-baja-tx); }
-  .rubrica-evaluar td.sel.g-susp  { background: var(--g-susp-bg);  box-shadow: inset 0 0 0 2px var(--g-susp-tx); }
+  /* Cada columna vive en su gama: cabecera con la tinta plena (y un subrayado
+     de su color), casillas con un lavado suave de la MISMA gama; al pasar por
+     encima suben al tono pleno y la elegida queda plena + anillo. */
+  .rubrica-evaluar thead th.g-top   { background: var(--g-top-bg);   color: var(--g-top-tx);
+    box-shadow: inset 0 -3px 0 var(--g-top-tx); }
+  .rubrica-evaluar thead th.g-alta  { background: var(--g-alta-bg);  color: var(--g-alta-tx);
+    box-shadow: inset 0 -3px 0 var(--g-alta-tx); }
+  .rubrica-evaluar thead th.g-media { background: var(--g-media-bg); color: var(--g-media-tx);
+    box-shadow: inset 0 -3px 0 var(--g-media-tx); }
+  .rubrica-evaluar thead th.g-baja  { background: var(--g-baja-bg);  color: var(--g-baja-tx);
+    box-shadow: inset 0 -3px 0 var(--g-baja-tx); }
+  .rubrica-evaluar thead th.g-susp  { background: var(--g-susp-bg);  color: var(--g-susp-tx);
+    box-shadow: inset 0 -3px 0 var(--g-susp-tx); }
+  .rubrica-evaluar td.rub-eval-celda.g-top   { background: color-mix(in srgb, var(--g-top-bg) 38%, var(--surface)); }
+  .rubrica-evaluar td.rub-eval-celda.g-alta  { background: color-mix(in srgb, var(--g-alta-bg) 38%, var(--surface)); }
+  .rubrica-evaluar td.rub-eval-celda.g-media { background: color-mix(in srgb, var(--g-media-bg) 38%, var(--surface)); }
+  .rubrica-evaluar td.rub-eval-celda.g-baja  { background: color-mix(in srgb, var(--g-baja-bg) 38%, var(--surface)); }
+  .rubrica-evaluar td.rub-eval-celda.g-susp  { background: color-mix(in srgb, var(--g-susp-bg) 38%, var(--surface)); }
+  .rubrica-evaluar td.rub-eval-celda.g-top:hover,   .rubrica-evaluar td.sel.g-top   { background: var(--g-top-bg); }
+  .rubrica-evaluar td.rub-eval-celda.g-alta:hover,  .rubrica-evaluar td.sel.g-alta  { background: var(--g-alta-bg); }
+  .rubrica-evaluar td.rub-eval-celda.g-media:hover, .rubrica-evaluar td.sel.g-media { background: var(--g-media-bg); }
+  .rubrica-evaluar td.rub-eval-celda.g-baja:hover,  .rubrica-evaluar td.sel.g-baja  { background: var(--g-baja-bg); }
+  .rubrica-evaluar td.rub-eval-celda.g-susp:hover,  .rubrica-evaluar td.sel.g-susp  { background: var(--g-susp-bg); }
+  .rubrica-evaluar td.sel.g-top   { box-shadow: inset 0 0 0 2px var(--g-top-tx); }
+  .rubrica-evaluar td.sel.g-alta  { box-shadow: inset 0 0 0 2px var(--g-alta-tx); }
+  .rubrica-evaluar td.sel.g-media { box-shadow: inset 0 0 0 2px var(--g-media-tx); }
+  .rubrica-evaluar td.sel.g-baja  { box-shadow: inset 0 0 0 2px var(--g-baja-tx); }
+  .rubrica-evaluar td.sel.g-susp  { box-shadow: inset 0 0 0 2px var(--g-susp-tx); }
   .rubrica-evaluar td.rub-eval-celda.sel { font-weight: 600; }
   /* Columna de indicadores más contenida; los descriptores respiran más. */
   .rubrica-evaluar .rg-corner, .rubrica-evaluar .rg-ind {
