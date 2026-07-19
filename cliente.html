@@ -2468,9 +2468,7 @@ var App = (function () {
       'onclick="App.toggleRubExpand(event,\'' + a.actividadId + '\')">' +
       gripAct_(a.actividadId) + editAct_(a.actividadId) +
       '<span class="rub-exp-ico">' + svgUI('contraer') + '</span>' +
-      '<span class="act-nom">' + esc(a.nombre) + '</span>' +
-      '<small class="act-meta">' + esc(metaTipo_(a)) + '</small>' +
-      '<small class="act-crits">' + esc(metaCrits_(a)) + '</small></th>';
+      cabCuerpo_(a) + '</th>';
   }
   /** Retardo escalonado del deslizamiento de la columna k al expandir. */
   function rubDelay_(k) { return ' style="--rub-d:' + (k * 35) + 'ms"'; }
@@ -2506,9 +2504,18 @@ var App = (function () {
       (exp ? 'onclick="App.toggleRubExpand(event,\'' + a.actividadId + '\')" ' : '') + '>' +
       gripAct_(a.actividadId) + editAct_(a.actividadId) +
       (exp ? '<span class="rub-exp-ico">' + svgUI('expandir') + '</span>' : '') +
-      '<span class="act-nom">' + esc(a.nombre) + '</span>' +
-      '<small class="act-meta">' + esc(metaTipo_(a)) + '</small>' +
-      '<small class="act-crits">' + esc(metaCrits_(a)) + '</small></th>';
+      cabCuerpo_(a) + '</th>';
+  }
+
+  /** Cuerpo de la cabecera de actividad: nombre+tipo centrados en vertical y
+      los criterios en su propia banda, pegados abajo (línea del chevron). */
+  function cabCuerpo_(a) {
+    return '<span class="act-cab">' +
+      '<span class="act-centro">' +
+        '<span class="act-nom">' + esc(a.nombre) + '</span>' +
+        '<small class="act-meta">' + esc(metaTipo_(a)) + '</small>' +
+      '</span>' +
+      '<small class="act-crits">' + esc(metaCrits_(a)) + '</small></span>';
   }
 
   /** Celdas de una actividad para un alumno: 1 (normal) o global + N (rúbrica expandida). */
