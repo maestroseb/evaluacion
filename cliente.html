@@ -4765,12 +4765,17 @@ var App = (function () {
   var plannerMes = new Date(new Date().getFullYear(), new Date().getMonth(), 1); // mes visible
   var plannerDia = new Date();      // día visible (vista «Día», por defecto en móvil)
 
-  /** Revela la entrada del Planificador si el usuario tiene la bandera. */
+  /**
+   * La entrada del Planificador es VISIBLE por defecto (el módulo es público):
+   * así la tab bar sale completa desde el primer pintado, sin esperar al
+   * estado. Solo se oculta si el estado llega sin la bandera.
+   */
   function activarPlannerSiFlag_() {
-    if (!estado || !estado.flags || !estado.flags.planner) return;
+    var tiene = !!(estado && estado.flags && estado.flags.planner);
     [].forEach.call(document.querySelectorAll('.solo-planner'), function (el) {
-      el.hidden = false;
+      el.hidden = !tiene;
     });
+    if (!tiene) return;
     // Vista y layout con los que arranca (preferencia; en móvil, Día por defecto).
     plannerModoActual = vistaDefecto_();
     try {
@@ -5014,8 +5019,13 @@ var App = (function () {
   function clasesPlanner_() {
     return evalsProgramables_().map(function (ev) {
       return { id: ev.evalId, etiqueta: etiquetaEval_(ev), color: ev.color || '',
-        horario: ev.horario || [], sinGrupo: !ev.claseId };
+        icono: ev.icono || '', horario: ev.horario || [], sinGrupo: !ev.claseId };
     });
+  }
+  /** Icono de la clase, pequeño y en su color (identifica mejor que un punto). */
+  function icoClase_(c) {
+    return '<span class="pl-clase-ico" style="color:' + (c.color || 'var(--acento)') + '">' +
+      iconoSvg(c.icono || ICONO_DEFECTO) + '</span>';
   }
   function clasePlannerDe_(id) {
     return clasesPlanner_().filter(function (c) { return c.id === id; })[0];
@@ -5245,8 +5255,7 @@ var App = (function () {
       if (!cont) return;
       cont.innerHTML = clases.map(function (c) {
         return '<div class="fam-fila" id="fam-' + c.id + '">' +
-          '<span class="fam-nom"><span class="planner-asig-color" style="background:' +
-            (c.color || 'var(--acento)') + '"></span>' + esc(etiquetaClase_(c.id)) + '</span>' +
+          '<span class="fam-nom">' + icoClase_(c) + esc(etiquetaClase_(c.id)) + '</span>' +
           '<span class="fam-acc">' + famAccHtml_(c.id) + '</span></div>';
       }).join('');
     });
@@ -5570,10 +5579,8 @@ var App = (function () {
         '</span></div>');
     });
     clases.forEach(function (c) {
-      // Puntito con el color de la clase en la etiqueta de la fila.
-      var pico = '<span class="pl-fila-color" style="background:' + (c.color || 'var(--acento)') +
-        '"></span>';
-      cel.push('<div class="pl-esq pl-fila-lbl">' + pico + esc(etiquetaClase_(c.id)) + '</div>');
+      // Icono de la clase, en su color, en la etiqueta de la fila.
+      cel.push('<div class="pl-esq pl-fila-lbl">' + icoClase_(c) + esc(etiquetaClase_(c.id)) + '</div>');
       ctx.isos.forEach(function (iso, i) {
         var ens = ctx.porClaseFecha[c.id + '|' + iso] || [];
         if (ens.length) {
@@ -6496,8 +6503,7 @@ var App = (function () {
       // Preseleccionada (sesión nueva de una unidad): fecha sugerida a partir de
       // la sesión anterior de la unidad, según horario o siguiente día lectivo.
       var fecha = (a && a.fecha) || (pre[c.id] ? fechaSugerida_(c.id, s.unidadId || '') : '');
-      var pico = '<span class="planner-asig-color" style="background:' + (c.color || 'var(--acento)') +
-        '"></span>';
+      var pico = icoClase_(c);
       return '<div class="planner-asig-fila' + (marcada ? ' activa' : '') + '">' +
         '<label class="check planner-asig-nom"><input type="checkbox" class="planner-asig-chk" data-eval="' +
           c.id + '"' + (marcada ? ' checked' : '') +

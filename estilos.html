@@ -475,8 +475,11 @@
   .ses-form { display: grid; grid-template-columns: 1fr; gap: 0 22px; }
   @media (min-width: 760px) { .ses-form { grid-template-columns: 1fr 1fr; } }
   .ses-col { min-width: 0; }
-  .planner-asig-color { display: inline-block; width: 9px; height: 9px; border-radius: 50%;
-    margin: 0 5px 0 2px; vertical-align: 1px; flex: 0 0 auto; }
+  /* Icono de la clase (en su color) junto a su nombre: en la fila de la vista
+     semanal, en el editor de sesión, en compartir con familias… */
+  .pl-clase-ico { display: inline-flex; width: 14px; height: 14px; flex: 0 0 auto;
+    margin: 0 5px 0 1px; vertical-align: -2px; }
+  .pl-clase-ico svg { width: 100%; height: 100%; }
   .modal label, .ses-form label { display: block; margin-bottom: 14px; font-size: 13px; font-weight: 600; color: var(--texto); }
   .modal input, .modal select, .modal textarea,
   .ses-form input, .ses-form select, .ses-form textarea {
@@ -1343,9 +1346,6 @@
   .pl-chip-desc { padding: 4px 8px 6px; border-top: 1px solid var(--borde); font-size: 11.5px;
     color: var(--texto-2); line-height: 1.35; overflow-wrap: anywhere; cursor: pointer; }
   .pl-chip-arrastrando { opacity: .45; }
-  /* Punto con el color de la clase junto a la etiqueta de fila. */
-  .pl-fila-color { display: inline-block; width: 9px; height: 9px; border-radius: 50%;
-    margin-right: 6px; vertical-align: 1px; flex: 0 0 auto; }
   /* Celda resaltada mientras se arrastra una sesión encima (con o sin marco). */
   .pl-celda.pl-drop-ok { box-shadow: inset 0 0 0 2px var(--acento); }
   .pl-chip-txt { min-width: 0; display: flex; flex-direction: column; }
