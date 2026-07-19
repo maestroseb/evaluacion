@@ -837,7 +837,10 @@
   /* position sticky (y no relative): si no, esta regla —más específica— anularía
      el sticky de "thead th" y las columnas de actividades no se quedarían fijas
      al hacer scroll. Sticky también sirve de contenedor para grip/edit (absolute). */
-  table.rejilla th.act { position: sticky; cursor: default; font-weight: 600; padding: 7px 14px; }
+  /* El padding inferior reserva la banda de abajo: ahí viven los criterios
+     (absolutos) y el chevron; nombre y tipo se centran en el resto. */
+  table.rejilla th.act { position: sticky; cursor: default; font-weight: 600;
+    padding: 7px 14px 24px; }
   table.rejilla th.act.act-rub-col { cursor: pointer; } /* la cabecera de rúbrica se toca para expandir */
   table.rejilla th.act.arrastrando-col { opacity: .45; }
   table.rejilla th.act.soltar-antes { box-shadow: inset 3px 0 0 var(--acento); }
@@ -858,11 +861,13 @@
   table.rejilla th.act small { display: block; font-weight: 400; color: var(--texto-3); font-size: 10px; }
   /* Cabecera en 3 líneas: título · (ítems/tipo) · criterios (abajo del todo). */
   table.rejilla th.act .act-meta { margin-top: 2px; }
-  /* La lista de criterios no dicta el ancho de la columna: se recorta con
-     elipsis (la lista completa sigue en el title de la cabecera). */
-  table.rejilla th.act .act-crits { margin-top: 2px; color: var(--texto-2); font-weight: 600;
-    max-width: 130px; margin-left: auto; margin-right: auto;
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  /* Los criterios van PEGADOS al borde inferior de la cabecera (misma línea
+     que el chevron), fuera del flujo: nombre y tipo quedan centrados solos.
+     No dictan el ancho de la columna: se recortan con elipsis (la lista
+     completa sigue en el title de la cabecera). */
+  table.rejilla th.act .act-crits { position: absolute; left: 10px; right: 26px; bottom: 5px;
+    color: var(--texto-2); font-weight: 600; max-width: 130px;
+    margin: 0 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   /* Animación al desplegar: las sub-columnas se DESLIZAN desde la columna
      principal hacia la derecha, escalonadas (--rub-d = retardo por columna).
      La principal no se anima: existe antes y después de expandir, y animarla
