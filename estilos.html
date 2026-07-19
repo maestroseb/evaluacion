@@ -1517,20 +1517,18 @@
     .rt-body, [contenteditable="true"] { font-size: 16px; }
     /* Modal más ceñido en móvil: gana espacio horizontal para el formulario. */
     .modal { padding: 20px; }
-    /* Selector de Tipo a todo el ancho: los tres botones se reparten el espacio
-       (nunca se aprietan ni desbordan). */
-    .ses-tipo-seg { display: flex; width: 100%; padding: 4px; }
-    .ses-tipo-seg .ses-tipo-opt { flex: 1; padding: 6px 8px; }
-    /* Reprogramar: la etiqueta pasa arriba a todo el ancho y los dos botones van
-       debajo en su propia fila, así «◀ Adelantar» y «Retrasar ▶» no parten el
-       texto en dos líneas. */
-    .ses-reprog { flex-wrap: wrap; }
-    .ses-reprog-etq { order: -1; flex: 1 1 100%; justify-content: center; padding: 6px; }
+    /* Selector de Tipo: menos aire lateral para que las tres opciones quepan. */
+    .ses-tipo-seg { padding: 6px; }
+    .ses-tipo-seg .ses-tipo-opt { padding: 6px 10px; }
+    /* Reprogramar en su fila de tres: padding compacto para que «◀ Adelantar»,
+       «Reprogramar» y «Retrasar ▶» quepan cada uno en una sola línea. */
     .ses-reprog-btn { padding: 8px; white-space: nowrap; }
-    /* Fila de clase: el nombre se encoge (con elipsis) y la fecha conserva su
-       ancho, de modo que nombre + fecha caben siempre en una sola línea. */
+    .ses-reprog-etq { padding: 0 8px; }
+    /* Fila de clase: el nombre cede (con elipsis) y la fecha, compacta, no baja
+       de línea. El picker de fecha en iOS es nativo (no hay teclado), así que
+       15px aquí no dispara el zoom automático. */
     .ses-form .planner-asig-nom { flex: 1 1 auto; width: auto; }
-    .ses-form .planner-asig-fecha { width: 130px; }
+    .ses-form .planner-asig-fecha { width: 125px; font-size: 15px; padding: 6px; }
     /* Pie del modal fijo: una hairline lo separa del cuerpo al hacer scroll. */
     .modal-acciones { border-top: 1px solid var(--borde); padding-top: 12px; margin-top: 12px; }
   }
