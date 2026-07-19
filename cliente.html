@@ -2949,30 +2949,36 @@ var App = (function () {
     return -1;
   }
 
-  /** Engancha la matriz de inputs y sus eventos (teclado, dictado, pegar). */
+  /**
+   * Engancha la matriz de navegación 2D y sus eventos (teclado, dictado, pegar).
+   * La matriz se construye por ORDEN REAL de columnas en cada fila (no por
+   * índice de actividad): así las subcolumnas de una rúbrica o multinota
+   * EXPANDIDA entran también en el recorrido de las flechas, junto con los
+   * inputs y las celdas-botón (checks, escalas, texto, medias plegadas…), y
+   * data-r / data-c se reasignan aquí de forma coherente con ella.
+   */
   function wireRejilla() {
     inputs2d = [];
-    var inputs = document.querySelectorAll('#rejilla-cont .celda input:not(.celda-sub-inp)');
-    [].forEach.call(inputs, function (inp) {
-      var r = +inp.dataset.r, c = +inp.dataset.c;
-      (inputs2d[r] || (inputs2d[r] = []))[c] = inp;
-      inp.addEventListener('change', function () { commitInput(inp); });
-      inp.addEventListener('keydown', onTeclaRejilla);
-      inp.addEventListener('input', onDictado);
-      inp.addEventListener('paste', onPegar);
-    });
-    // Celdas-botón (multinota plegada, rúbrica, checks, escalas, texto): entran
-    // en la MISMA matriz 2D que los inputs, así las flechas recorren todas las
-    // columnas por igual; Intro o espacio equivale a tocarlas.
-    [].forEach.call(document.querySelectorAll('#rejilla-cont td.celda[tabindex]'), function (td) {
-      if (td.dataset.r == null || td.dataset.c == null) return; // subceldas expandidas: fuera
-      var r = +td.dataset.r, c = +td.dataset.c;
-      (inputs2d[r] || (inputs2d[r] = []))[c] = td;
-      td.addEventListener('keydown', onTeclaCeldaBtn);
-    });
-    // Sub-celdas de columnas multinota expandidas (fuera de la navegación 2D).
-    [].forEach.call(document.querySelectorAll('#rejilla-cont .celda-sub-inp'), function (inp) {
-      inp.addEventListener('change', function () { commitSubInput(inp); });
+    var filas = document.querySelectorAll('#rejilla-cont table.rejilla tbody tr');
+    [].forEach.call(filas, function (tr, r) {
+      var fila = inputs2d[r] = [];
+      var celdas = tr.querySelectorAll('td.celda input, td.celda[tabindex]');
+      [].forEach.call(celdas, function (el, c) {
+        el.dataset.r = r; el.dataset.c = c;
+        fila[c] = el;
+        if (el.tagName === 'INPUT') {
+          var sub = el.classList.contains('celda-sub-inp');
+          el.addEventListener('change', sub
+            ? function () { commitSubInput(el); }
+            : function () { commitInput(el); });
+          el.addEventListener('keydown', onTeclaRejilla);
+          el.addEventListener('input', onDictado);
+          el.addEventListener('paste', onPegar);
+        } else {
+          // Celda-botón: flechas como en los inputs; Intro/espacio la «toca».
+          el.addEventListener('keydown', onTeclaCeldaBtn);
+        }
+      });
     });
   }
 
@@ -3334,7 +3340,7 @@ var App = (function () {
   /** Siguiente celda en esa dirección (salta contadores, sin editor propio). */
   function focusCeldaDir(r, c, dir) {
     var fila = inputs2d[r] || [];
-    var n = (rejilla && rejilla.actividades.length) || 0;
+    var n = fila.length;
     var nc = c + dir;
     while (nc >= 0 && nc < n && !fila[nc]) nc += dir;
     if (fila[nc]) { fila[nc].focus(); if (fila[nc].select) fila[nc].select(); }
@@ -3346,7 +3352,7 @@ var App = (function () {
     if (/\s/.test(inp.value)) {
       var num = inp.value.trim().split(/\s+/)[0];
       inp.value = num;
-      commitInput(inp);
+      (inp.classList.contains('celda-sub-inp') ? commitSubInput : commitInput)(inp);
       focusCeldaDir(+inp.dataset.r, +inp.dataset.c, 1);
     }
   }
@@ -3362,9 +3368,15 @@ var App = (function () {
     lineas.forEach(function (linea, ri) {
       linea.split('\t').forEach(function (cel, ci) {
         var destino = inputs2d[r0 + ri] && inputs2d[r0 + ri][c0 + ci];
-        if (!destino) return;
+        // Solo se pega sobre inputs; las celdas-botón de la matriz se saltan.
+        if (!destino || destino.tagName !== 'INPUT') return;
         var val = String(cel).trim();
         destino.value = val === '' ? '' : val.replace(',', '.');
+        if (destino.classList.contains('celda-sub-inp')) {
+          commitSubInput(destino); // sub-celda multinota: guarda por criterio
+          cambios.push(1);
+          return;
+        }
         var ch = aplicarValor(destino);
         if (ch) { cambios.push(ch); filas[ch.alumnoId] = true; }
       });
