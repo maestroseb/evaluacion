@@ -4777,6 +4777,13 @@ var App = (function () {
       var lay = localStorage.getItem('planner-layout');
       if (lay === 'grupo' || lay === 'horario') plannerLayout = lay;
     } catch (e) {}
+    // Precarga en segundo plano: cuando el profe entre al planificador, sus
+    // datos (sesiones, unidades, calendario) ya suelen estar en caché y la
+    // vista sale poblada a la primera, sin pantalla de carga.
+    cargarPlannerDatos_(function () {
+      var v = document.getElementById('vista-planner');
+      if (v && !v.hidden) pintarPlanner(); // si ya está dentro, refresca
+    });
     // Pulsar en cualquier sitio FUERA del panel de edición guarda lo pendiente
     // y lo repinta (mismo espíritu que cerrar el modal tocando fuera). Se excluyen
     // los clics dentro de un modal (p. ej. el de confirmar borrado), que no deben
@@ -4801,14 +4808,26 @@ var App = (function () {
     if (sesionesCache && planUnidadesCache && critEvaluadosCache && calendarioCache) {
       pintarPlanner(); return;
     }
-    document.getElementById('planner-cont').innerHTML = spinner();
+    // Arranque «positivo»: la rejilla se pinta YA con las clases y sus huecos
+    // (salen del estado, que ya está cargado) y las sesiones aparecen encima en
+    // cuanto llegan. Nada de quedarse mirando una ruleta sobre fondo vacío.
+    pintarPlanner();
     cargarPlannerDatos_(pintarPlanner);
   }
 
+  var plannerCargaCbs = null; // callbacks esperando la carga en curso (null = ninguna)
   /** Carga sesiones, unidades, criterios evaluados y calendario (los que falten). */
   function cargarPlannerDatos_(cb) {
+    // Si ya hay una carga en vuelo (p. ej. la precarga del arranque), no se
+    // duplican las peticiones: el callback se suma a la espera.
+    if (plannerCargaCbs) { plannerCargaCbs.push(cb); return; }
+    plannerCargaCbs = [cb];
     var pend = 0;
-    function done() { if (--pend === 0) cb(); }
+    function done() {
+      if (--pend > 0) return;
+      var cbs = plannerCargaCbs; plannerCargaCbs = null;
+      cbs.forEach(function (f) { f(); });
+    }
     function pedir(fn, args, set, vacio) {
       pend++;
       google.script.run.withSuccessHandler(function (l) { set(l != null ? l : vacio); done(); })
@@ -4821,7 +4840,10 @@ var App = (function () {
       pedir('getCalendario', [(estado.cursos && estado.cursos.activo) || ''],
         function (c) { calendarioCache = c; }, { inicio: '', fin: '', festivos: [] });
     }
-    if (pend === 0) cb();
+    if (pend === 0) {
+      var cbs = plannerCargaCbs; plannerCargaCbs = null;
+      cbs.forEach(function (f) { f(); });
+    }
   }
 
   // ---------- días lectivos (calendario del curso) ----------
@@ -4940,6 +4962,26 @@ var App = (function () {
       do { d.setDate(d.getDate() + delta); } while (d.getDay() === 0 || d.getDay() === 6);
       plannerDia = d;
     }
+    pintarPlanner();
+  }
+  /** Pulsar la etiqueta de fecha abre el selector nativo (viajar rápido). */
+  function abrirSelectorFecha() {
+    var inp = document.getElementById('planner-fecha-inp');
+    if (!inp) return;
+    var base = plannerModoActual === 'dia' ? plannerDia
+      : plannerModoActual === 'mes' ? plannerMes : plannerLunes;
+    inp.value = isoLocal_(base);
+    if (inp.showPicker) { try { inp.showPicker(); return; } catch (e) {} }
+    inp.focus(); inp.click(); // navegadores sin showPicker
+  }
+  /** Fecha elegida en el selector: las tres vistas saltan a ella. */
+  function plannerFechaElegida(v) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v || '');
+    if (!m) return;
+    var d = new Date(+m[1], +m[2] - 1, +m[3]);
+    plannerDia = d;
+    plannerLunes = lunesDe_(d);
+    plannerMes = new Date(d.getFullYear(), d.getMonth(), 1);
     pintarPlanner();
   }
   /** Mueve el mes visible (+1/-1) o vuelve al actual (0). */
@@ -5384,14 +5426,17 @@ var App = (function () {
   function chipSesion_(en, conClase, conPreview) {
     var s = en.ses, a = en.asig;
     var tipo = s.tipo || 'clase';
-    var sub = '';
+    // Con clase (vistas Día y por horario): la CLASE va en grande y debajo la
+    // hora con el título de la sesión (la jornada se lee por clases).
+    var principal = s.titulo || 'Sin título', sub = '';
     if (conClase && a) {
       if (tipo !== 'clase') {
         sub = '<span class="pl-chip-sub">' + (tipo === 'evento' ? 'Evento' : 'Aviso') + '</span>';
       } else {
         var hora = horaClaseDia_(a.evalId, diaSemanaIso_(a.fecha));
+        principal = etiquetaClase_(a.evalId);
         sub = '<span class="pl-chip-sub">' + (hora ? esc(hora) + ' · ' : '') +
-          esc(etiquetaClase_(a.evalId)) + '</span>';
+          esc(s.titulo || 'Sin título') + '</span>';
       }
     }
     var obs = (a && a.observaciones)
@@ -5412,14 +5457,16 @@ var App = (function () {
     var descHtml = descInicialHtml_(s.descripcion || '');
     var edit = 'onclick="App.editarSesionDesde_(event,\'' + s.sesionId + '\')"';
     var preview = (conPreview && descHtml)
-      ? '<div class="pl-chip-desc rt-render" ' + edit + '>' + descHtml + '</div>' : '';
+      ? '<div class="pl-chip-desc rt-render">' + descHtml + '</div>' : '';
+    // El onclick va en la TARJETA entera: cabecera, cuerpo o zona en blanco,
+    // todo abre el editor (los enlaces del cuerpo siguen funcionando).
     return '<div class="pl-chip' + (tipo === 'evento' ? ' pl-chip-evento' : '') +
-        '" style="border-color:' + col + '"' + arr + '>' +
-      '<div class="pl-chip-cab" style="background:' + col + '" ' + edit +
+        '" style="border-color:' + col + '"' + arr + ' ' + edit + '>' +
+      '<div class="pl-chip-cab" style="background:' + col + '"' +
         ' title="' + esc(s.titulo || 'Sin título') +
         (a && a.observaciones ? ' — ' + esc(a.observaciones) : '') + '">' +
         grip +
-        '<span class="pl-chip-txt"><span class="pl-chip-tit">' + esc(s.titulo || 'Sin título') +
+        '<span class="pl-chip-txt"><span class="pl-chip-tit">' + esc(principal) +
           obs + '</span>' + sub + '</span>' +
       '</div>' + preview +
     '</div>';
@@ -5530,7 +5577,9 @@ var App = (function () {
       ctx.isos.forEach(function (iso, i) {
         var ens = ctx.porClaseFecha[c.id + '|' + iso] || [];
         if (ens.length) {
-          cel.push('<div class="pl-celda"' + dropAttrs_(c.id, iso) + '>' +
+          // El blanco sobrante de la celda también abre la (primera) sesión.
+          cel.push('<div class="pl-celda"' + dropAttrs_(c.id, iso) +
+            ' onclick="App.editarSesionDesde_(event,\'' + ens[0].ses.sesionId + '\')">' +
             ens.map(function (en) { return chipSesion_(en, false, prev); }).join('') + '</div>');
         } else {
           // Celda vacía: TODA la celda planifica (con clase y fecha ya puestas).
@@ -6242,6 +6291,7 @@ var App = (function () {
   /** Editar desde la tarjeta (cabecera o previsualización), salvo si es un enlace. */
   function editarSesionDesde_(ev, id) {
     if (ev && ev.target && ev.target.closest('a')) return; // deja funcionar los enlaces
+    if (ev && ev.stopPropagation) ev.stopPropagation(); // la celda de detrás no re-abre
     editarSesionUI(id);
   }
 
@@ -7008,6 +7058,7 @@ var App = (function () {
     irAPlanner: irAPlanner, pintarPlanner: pintarPlanner,
     plannerModo: plannerModo, plannerSemana: plannerSemana, setPlannerLayout: setPlannerLayout,
     plannerMesNav: plannerMesNav, plannerDiaNav: plannerDiaNav,
+    abrirSelectorFecha: abrirSelectorFecha, plannerFechaElegida: plannerFechaElegida,
     setVistaDefecto: setVistaDefecto, togglePlannerConfig: togglePlannerConfig,
     plannerMatCursoSel: plannerMatCursoSel,
     togglePlanUnidad: togglePlanUnidad,

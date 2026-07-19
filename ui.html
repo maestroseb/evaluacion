@@ -255,22 +255,24 @@
         </span>
         <span id="planner-nav-dia" class="planner-nav" hidden>
           <button class="btn btn-icono" title="Día anterior" onclick="App.plannerDiaNav(-1)"><svg class="svg-ico" viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg></button>
-          <span id="planner-dia-etq" class="planner-semana-etq"></span>
+          <span id="planner-dia-etq" class="planner-semana-etq" role="button" tabindex="0" title="Ir a una fecha…" onclick="App.abrirSelectorFecha()"></span>
           <button class="btn btn-icono" title="Día siguiente" onclick="App.plannerDiaNav(1)"><svg class="svg-ico" viewBox="0 0 24 24" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg></button>
           <button class="btn" onclick="App.plannerDiaNav(0)">Hoy</button>
         </span>
         <span id="planner-nav-mes" class="planner-nav" hidden>
           <button class="btn btn-icono" title="Mes anterior" onclick="App.plannerMesNav(-1)"><svg class="svg-ico" viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg></button>
-          <span id="planner-mes-etq" class="planner-semana-etq"></span>
+          <span id="planner-mes-etq" class="planner-semana-etq" role="button" tabindex="0" title="Ir a una fecha…" onclick="App.abrirSelectorFecha()"></span>
           <button class="btn btn-icono" title="Mes siguiente" onclick="App.plannerMesNav(1)"><svg class="svg-ico" viewBox="0 0 24 24" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg></button>
           <button class="btn" onclick="App.plannerMesNav(0)">Hoy</button>
         </span>
         <span id="planner-nav-semana" class="planner-nav">
           <button class="btn btn-icono" title="Semana anterior" onclick="App.plannerSemana(-1)"><svg class="svg-ico" viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg></button>
-          <span id="planner-semana-etq" class="planner-semana-etq"></span>
+          <span id="planner-semana-etq" class="planner-semana-etq" role="button" tabindex="0" title="Ir a una fecha…" onclick="App.abrirSelectorFecha()"></span>
           <button class="btn btn-icono" title="Semana siguiente" onclick="App.plannerSemana(1)"><svg class="svg-ico" viewBox="0 0 24 24" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg></button>
           <button class="btn" onclick="App.plannerSemana(0)">Hoy</button>
         </span>
+        <input type="date" id="planner-fecha-inp" class="planner-fecha-inp" aria-hidden="true" tabindex="-1"
+          onchange="App.plannerFechaElegida(this.value)">
       </div>
       <div id="planner-cont"></div>
     </section>

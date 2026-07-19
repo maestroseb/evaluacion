@@ -113,8 +113,9 @@ var CONFIG = {
     // Módulo de rúbricas: ABIERTO a todo el profesorado desde julio de 2026
     // (probado en privado con la lista de correos que hubo aquí hasta entonces).
     rubricas: '*',
-    // Planificador de sesiones: EN PRUEBAS, solo lo ve esta lista de correos.
-    planner: ['sgirjim495@g.educaand.es']
+    // Planificador de sesiones: ABIERTO a todo el profesorado (probado en
+    // privado hasta julio de 2026 con la lista de correos que hubo aquí).
+    planner: '*'
   }
 };
 
