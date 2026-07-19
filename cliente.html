@@ -1075,7 +1075,8 @@ var App = (function () {
     expandir:  '<polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/>',
     contraer:  '<polyline points="11 17 6 12 11 7"/><polyline points="18 17 13 12 18 7"/>',
     archivar:  '<polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/>',
-    enlace:    '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>'
+    enlace:    '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
+    chevron:   '<polyline points="9 6 15 12 9 18"/>'
   };
   /** Icono SVG de interfaz por id. */
   function svgUI(id) {
@@ -5568,6 +5569,26 @@ var App = (function () {
 
   // ---------- vista Unidades (unidades de planificación por materia + curso) ----------
   var plannerMatCurso = null; // 'area||curso' seleccionado en la vista Unidades
+  // Unidades desplegadas en la vista Unidades (id → 1). Se recuerda entre
+  // visitas: con muchas unidades, plegadas por defecto se llega a la 12 sin
+  // scroll infinito.
+  var plUniAbiertas = null;
+  function plUniAbiertas_() {
+    if (!plUniAbiertas) {
+      plUniAbiertas = {};
+      try { plUniAbiertas = JSON.parse(localStorage.getItem('planner-uni-abiertas')) || {}; }
+      catch (e) {}
+    }
+    return plUniAbiertas;
+  }
+  function togglePlanUnidad(id) {
+    var ab = plUniAbiertas_();
+    if (ab[id]) delete ab[id]; else ab[id] = 1;
+    try { localStorage.setItem('planner-uni-abiertas', JSON.stringify(ab)); } catch (e) {}
+    // Solo se pliega/despliega la tarjeta tocada: sin repintar (conserva el scroll).
+    var card = document.getElementById('pl-uni-' + id);
+    if (card) card.classList.toggle('plegada', !ab[id]);
+  }
   var sesUnidadSel = '';      // sesión mostrada en el panel de detalle (PC)
   var panelNuevoUid = '';     // unidad para la que el panel muestra una sesión nueva
 
@@ -5702,20 +5723,29 @@ var App = (function () {
           '</div>';
         }).join('')
       : '<div class="planner-vacio">Sin sesiones todavía.</div>';
-    return '<div class="pl-uni-card">' +
-      '<div class="pl-uni-head"><h3>' + esc(u.nombre) + '</h3>' +
+    // Abierta si el profe la desplegó o si contiene la sesión en edición (PC).
+    var abierta = !!plUniAbiertas_()[u.unidadId] ||
+      (sesUnidadSel && ses.some(function (s) { return s.sesionId === sesUnidadSel; }));
+    return '<div class="pl-uni-card' + (abierta ? '' : ' plegada') + '" id="pl-uni-' + u.unidadId + '">' +
+      '<div class="pl-uni-head">' +
+        '<button type="button" class="pl-uni-tog" onclick="App.togglePlanUnidad(\'' + u.unidadId + '\')">' +
+          '<span class="pl-uni-flecha">' + svgUI('chevron') + '</span>' +
+          '<h3>' + esc(u.nombre) + '</h3>' +
+          '<span class="pl-uni-meta">' + ses.length + ' sesión(es)</span>' +
+        '</button>' +
         '<span class="pl-uni-acc">' +
           '<button class="btn btn-icono" title="Editar" onclick="App.editarPlanUnidadUI(\'' + u.unidadId + '\')">' +
             svgUI('lapiz') + '</button>' +
           '<button class="btn peligro btn-icono" title="Eliminar" onclick="App.eliminarPlanUnidadUI(\'' + u.unidadId + '\')">' +
             svgUI('papelera') + '</button>' +
         '</span></div>' +
-      '<div class="pl-uni-meta">' + ses.length + ' sesión(es)</div>' +
-      (chips ? '<div class="pl-uni-crits"><span class="etq">Criterios programados ' + cobertura +
-        '</span>' + chips + '</div>' : '') +
-      '<div class="pl-uni-sesiones">' + filas + '</div>' +
-      '<button class="btn pl-uni-add" onclick="App.nuevaSesionEnUnidad(\'' + u.unidadId + '\')">' +
-        '+ Nueva sesión</button>' +
+      '<div class="pl-uni-cuerpo">' +
+        (chips ? '<div class="pl-uni-crits"><span class="etq">Criterios programados ' + cobertura +
+          '</span>' + chips + '</div>' : '') +
+        '<div class="pl-uni-sesiones">' + filas + '</div>' +
+        '<button class="btn pl-uni-add" onclick="App.nuevaSesionEnUnidad(\'' + u.unidadId + '\')">' +
+          '+ Nueva sesión</button>' +
+      '</div>' +
     '</div>';
   }
 
@@ -6887,6 +6917,7 @@ var App = (function () {
     plannerMesNav: plannerMesNav, plannerDiaNav: plannerDiaNav,
     setVistaDefecto: setVistaDefecto, togglePlannerConfig: togglePlannerConfig,
     plannerMatCursoSel: plannerMatCursoSel,
+    togglePlanUnidad: togglePlanUnidad,
     nuevaPlanUnidad: nuevaPlanUnidad, editarPlanUnidadUI: editarPlanUnidadUI,
     eliminarPlanUnidadUI: eliminarPlanUnidadUI,
     nuevaSesionEnUnidad: nuevaSesionEnUnidad, dragSesionUnidad: dragSesionUnidad,
