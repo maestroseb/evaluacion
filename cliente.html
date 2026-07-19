@@ -2526,10 +2526,11 @@ var App = (function () {
         'onclick="App.tapRubCelda(this)">' +
         (ng == null ? '·' : fmtNota(ng, evalActual && evalActual.curso)) + '</td>';
       // Sub-celdas: el VALOR (puntos) del nivel elegido en cada indicador.
+      var gamas = gamasNiveles_(def);
       var subs = (def.indicadores || []).map(function (ind, k) {
         var lvl = picks[k];
         var niv = (lvl != null) ? (def.niveles || [])[Math.round(lvl) - 1] : null;
-        var g = niv ? claseNota((Number(niv.valor) || 0) / maxP * 10) : '';
+        var g = niv ? (gamas[Math.round(lvl) - 1] || '') : '';
         return '<td class="celda celda-rub-ind' + (g ? ' ' + g : '') + '" data-act="' + a.actividadId +
           '" data-al="' + alId + '" data-ind="' + k + '"' + rubDelay_(k) + ' tabindex="0" role="button" ' +
           'aria-label="Elegir nivel" title="' + (niv ? esc(niv.etiqueta) : 'Sin valorar') + '" ' +
@@ -2640,6 +2641,31 @@ var App = (function () {
     td.textContent = (n == null ? '·' : fmtNota(n, evalActual && evalActual.curso));
   }
 
+  /**
+   * Gama de color de cada nivel de una rúbrica, por su RANGO (no por su nota
+   * absoluta): se ordenan por puntuación y se reparten las gamas según cuántos
+   * niveles haya, de modo que niveles contiguos nunca comparten color. Con 4:
+   * verde / amarillo / naranja / rojo (el verde claro se salta: se confundía
+   * con el verde). Con 5 entran las cinco gamas; con más, se interpola.
+   * Devuelve gama[i] = clase g-* del nivel i (mismo orden que def.niveles).
+   * La comparten el evaluador, las celdas de indicador y el selector flotante.
+   */
+  function gamasNiveles_(def) {
+    var niveles = (def && def.niveles) || [];
+    var pal = niveles.length <= 2 ? ['g-top', 'g-susp']
+      : niveles.length === 3 ? ['g-top', 'g-media', 'g-susp']
+      : niveles.length === 4 ? ['g-top', 'g-media', 'g-baja', 'g-susp']
+      : ['g-top', 'g-alta', 'g-media', 'g-baja', 'g-susp'];
+    var gama = [];
+    niveles.map(function (n, j) { return { j: j, v: Number(n.valor) || 0 }; })
+      .sort(function (a, b) { return b.v - a.v; })
+      .forEach(function (o, r) {
+        gama[o.j] = pal[niveles.length <= pal.length ? r
+          : Math.round(r * (pal.length - 1) / (niveles.length - 1))];
+      });
+    return gama;
+  }
+
   // ---------- evaluador de rúbrica completa (doble toque en la celda) ----------
   var rubTapUlt = { clave: null, t: 0 }; // último toque en una celda de rúbrica
   var rubEvalSel = null; // { actId, alId, picks } en edición dentro del modal
@@ -2672,23 +2698,8 @@ var App = (function () {
       Object.keys(prev).forEach(function (k) { picks[k] = prev[k]; });
     }
     rubEvalSel = { actId: actId, alId: alId, picks: picks };
-    var niveles = def.niveles || [], maxP = rubMaxPts_(def);
-    // Color de cada nivel por su RANGO (no por su nota absoluta): se ordenan
-    // por puntuación y se reparten las gamas según cuántos niveles haya, de
-    // modo que niveles contiguos nunca comparten color. Con 4: verde /
-    // amarillo / naranja / rojo (el verde claro se salta: se confundía con el
-    // verde). Con 5 entran las cinco gamas; con más, se interpola.
-    var pal = niveles.length <= 2 ? ['g-top', 'g-susp']
-      : niveles.length === 3 ? ['g-top', 'g-media', 'g-susp']
-      : niveles.length === 4 ? ['g-top', 'g-media', 'g-baja', 'g-susp']
-      : ['g-top', 'g-alta', 'g-media', 'g-baja', 'g-susp'];
-    var gNivel = [];
-    niveles.map(function (n, j) { return { j: j, v: Number(n.valor) || 0 }; })
-      .sort(function (a, b) { return b.v - a.v; })
-      .forEach(function (o, r) {
-        gNivel[o.j] = pal[niveles.length <= pal.length ? r
-          : Math.round(r * (pal.length - 1) / (niveles.length - 1))];
-      });
+    var niveles = def.niveles || [];
+    var gNivel = gamasNiveles_(def);
     var cab = '<tr><th class="rg-corner">Indicador · peso</th>' + niveles.map(function (n, j) {
       return '<th class="' + gNivel[j] + '">' + esc(n.etiqueta) +
         ' <span class="ver-pts">(' + esc(n.valor) + ')</span></th>';
@@ -2794,13 +2805,13 @@ var App = (function () {
   function abrirSelectorNivelRub(td) {
     var act = actDe(td.dataset.act), def = rubDef_(act);
     if (!def) return;
-    var k = Number(td.dataset.ind), niveles = def.niveles || [], maxP = rubMaxPts_(def);
+    var k = Number(td.dataset.ind), niveles = def.niveles || [], gamas = gamasNiveles_(def);
     var picks = valorItem(td.dataset.act, td.dataset.al);
     var cur = (picks && typeof picks === 'object') ? picks[k] : null;
     var pop = document.getElementById('pop-nivel');
     popNivelTd = td;
     pop.innerHTML = niveles.map(function (niv, i) {
-      var g = claseNota((Number(niv.valor) || 0) / maxP * 10);
+      var g = gamas[i] || '';
       return '<button type="button" class="pop-nivel-opt' + (Math.round(cur) === i + 1 ? ' sel' : '') +
         (g ? ' ' + g : '') + '" title="' + esc(niv.etiqueta + ' (' + niv.valor + ')') + '" ' +
         'onclick="App.elegirNivelRub(' + (i + 1) + ')">' + esc(niv.valor) + '</button>';
@@ -2828,9 +2839,8 @@ var App = (function () {
     var vacio = !Object.keys(picks).length;
     fijarValor(actId, alId, vacio ? null : picks);
     var niv = (nivel != null && def) ? (def.niveles || [])[nivel - 1] : null;
-    var maxP = def ? rubMaxPts_(def) : 0;
     td.className = td.className.replace(/\bg-\w+/g, '').trim();
-    if (niv && maxP > 0) { var g = claseNota((Number(niv.valor) || 0) / maxP * 10); if (g) td.classList.add(g); }
+    if (niv) { var g = gamasNiveles_(def)[nivel - 1]; if (g) td.classList.add(g); }
     td.title = niv ? niv.etiqueta : 'Sin valorar';
     td.textContent = niv ? niv.valor : '·';
     refrescarGlobalRub_(actId, alId); // la nota global de la fila, al momento
@@ -2950,6 +2960,15 @@ var App = (function () {
       inp.addEventListener('keydown', onTeclaRejilla);
       inp.addEventListener('input', onDictado);
       inp.addEventListener('paste', onPegar);
+    });
+    // Celdas-botón (multinota plegada, rúbrica, checks, escalas, texto): entran
+    // en la MISMA matriz 2D que los inputs, así las flechas recorren todas las
+    // columnas por igual; Intro o espacio equivale a tocarlas.
+    [].forEach.call(document.querySelectorAll('#rejilla-cont td.celda[tabindex]'), function (td) {
+      if (td.dataset.r == null || td.dataset.c == null) return; // subceldas expandidas: fuera
+      var r = +td.dataset.r, c = +td.dataset.c;
+      (inputs2d[r] || (inputs2d[r] = []))[c] = td;
+      td.addEventListener('keydown', onTeclaCeldaBtn);
     });
     // Sub-celdas de columnas multinota expandidas (fuera de la navegación 2D).
     [].forEach.call(document.querySelectorAll('#rejilla-cont .celda-sub-inp'), function (inp) {
@@ -3298,17 +3317,27 @@ var App = (function () {
     else if (k === 'ArrowRight' && inp.selectionStart === inp.value.length) { focusCeldaDir(r, c, 1); e.preventDefault(); }
     else if (k === 'ArrowLeft' && inp.selectionStart === 0) { focusCeldaDir(r, c, -1); e.preventDefault(); }
   }
-  function focusCelda(r, c) {
-    var fila = inputs2d[r];
-    if (fila && fila[c]) { fila[c].focus(); fila[c].select(); }
+  /** Flechas sobre una celda-botón (multinota, rúbrica, check…): mismas rutas
+      que los inputs; Intro/espacio la «toca». */
+  function onTeclaCeldaBtn(e) {
+    var td = e.currentTarget, r = +td.dataset.r, c = +td.dataset.c, k = e.key;
+    if (k === 'ArrowUp') { focusCelda(r - 1, c); e.preventDefault(); }
+    else if (k === 'ArrowDown') { focusCelda(r + 1, c); e.preventDefault(); }
+    else if (k === 'ArrowRight') { focusCeldaDir(r, c, 1); e.preventDefault(); }
+    else if (k === 'ArrowLeft') { focusCeldaDir(r, c, -1); e.preventDefault(); }
+    else if (k === 'Enter' || k === ' ') { td.click(); e.preventDefault(); }
   }
-  /** Siguiente celda de texto en esa dirección (salta checks y contadores). */
+  function focusCelda(r, c) {
+    var fila = inputs2d[r], el = fila && fila[c];
+    if (el) { el.focus(); if (el.select) el.select(); }
+  }
+  /** Siguiente celda en esa dirección (salta contadores, sin editor propio). */
   function focusCeldaDir(r, c, dir) {
     var fila = inputs2d[r] || [];
     var n = (rejilla && rejilla.actividades.length) || 0;
     var nc = c + dir;
     while (nc >= 0 && nc < n && !fila[nc]) nc += dir;
-    if (fila[nc]) { fila[nc].focus(); fila[nc].select(); }
+    if (fila[nc]) { fila[nc].focus(); if (fila[nc].select) fila[nc].select(); }
   }
 
   // --- dictado (Mac): un número seguido de espacio salta a la celda contigua ---
