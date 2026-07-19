@@ -757,10 +757,18 @@
      se tocan para elegir el nivel de cada indicador, como en RubricApp. */
   .rubrica-evaluar td.rub-eval-celda { cursor: pointer; user-select: none;
     touch-action: manipulation; transition: background .12s, box-shadow .12s; }
-  .rubrica-evaluar td.rub-eval-celda:hover { background: var(--acento-suave); }
+  /* El hover SOLO existe con puntero real: en táctil iOS lo deja «pegado» en la
+     última casilla tocada (quedaba el lavado tras desmarcar o al hacer scroll). */
+  @media (hover: hover) and (pointer: fine) {
+    .rubrica-evaluar td.rub-eval-celda:hover { background: var(--acento-suave); }
+    .rubrica-evaluar td.rub-eval-celda.g-top:hover   { background: color-mix(in srgb, var(--g-top-bg) 38%, var(--surface)); }
+    .rubrica-evaluar td.rub-eval-celda.g-alta:hover  { background: color-mix(in srgb, var(--g-alta-bg) 38%, var(--surface)); }
+    .rubrica-evaluar td.rub-eval-celda.g-media:hover { background: color-mix(in srgb, var(--g-media-bg) 38%, var(--surface)); }
+    .rubrica-evaluar td.rub-eval-celda.g-baja:hover  { background: color-mix(in srgb, var(--g-baja-bg) 38%, var(--surface)); }
+    .rubrica-evaluar td.rub-eval-celda.g-susp:hover  { background: color-mix(in srgb, var(--g-susp-bg) 38%, var(--surface)); }
+  }
   /* Cabecera con la tinta plena de su gama (y un subrayado de su color). Las
-     casillas van neutras y SOLO la marcada se tiñe (sin borde); el hover
-     anticipa la gama con un lavado suave. */
+     casillas van neutras y SOLO la marcada se tiñe (sin borde). */
   .rubrica-evaluar thead th.g-top   { background: var(--g-top-bg);   color: var(--g-top-tx);
     box-shadow: inset 0 -3px 0 var(--g-top-tx); }
   .rubrica-evaluar thead th.g-alta  { background: var(--g-alta-bg);  color: var(--g-alta-tx);
@@ -771,11 +779,6 @@
     box-shadow: inset 0 -3px 0 var(--g-baja-tx); }
   .rubrica-evaluar thead th.g-susp  { background: var(--g-susp-bg);  color: var(--g-susp-tx);
     box-shadow: inset 0 -3px 0 var(--g-susp-tx); }
-  .rubrica-evaluar td.rub-eval-celda.g-top:hover   { background: color-mix(in srgb, var(--g-top-bg) 38%, var(--surface)); }
-  .rubrica-evaluar td.rub-eval-celda.g-alta:hover  { background: color-mix(in srgb, var(--g-alta-bg) 38%, var(--surface)); }
-  .rubrica-evaluar td.rub-eval-celda.g-media:hover { background: color-mix(in srgb, var(--g-media-bg) 38%, var(--surface)); }
-  .rubrica-evaluar td.rub-eval-celda.g-baja:hover  { background: color-mix(in srgb, var(--g-baja-bg) 38%, var(--surface)); }
-  .rubrica-evaluar td.rub-eval-celda.g-susp:hover  { background: color-mix(in srgb, var(--g-susp-bg) 38%, var(--surface)); }
   .rubrica-evaluar td.sel.g-top,   .rubrica-evaluar td.sel.g-top:hover   { background: var(--g-top-bg);   color: var(--g-top-tx); }
   .rubrica-evaluar td.sel.g-alta,  .rubrica-evaluar td.sel.g-alta:hover  { background: var(--g-alta-bg);  color: var(--g-alta-tx); }
   .rubrica-evaluar td.sel.g-media, .rubrica-evaluar td.sel.g-media:hover { background: var(--g-media-bg); color: var(--g-media-tx); }
@@ -853,7 +856,11 @@
   table.rejilla th.act small { display: block; font-weight: 400; color: var(--texto-3); font-size: 10px; }
   /* Cabecera en 3 líneas: título · (ítems/tipo) · criterios (abajo del todo). */
   table.rejilla th.act .act-meta { margin-top: 2px; }
-  table.rejilla th.act .act-crits { margin-top: 2px; color: var(--texto-2); font-weight: 600; }
+  /* La lista de criterios no dicta el ancho de la columna: se recorta con
+     elipsis (la lista completa sigue en el title de la cabecera). */
+  table.rejilla th.act .act-crits { margin-top: 2px; color: var(--texto-2); font-weight: 600;
+    max-width: 130px; margin-left: auto; margin-right: auto;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   /* Animación al desplegar: las sub-columnas se DESLIZAN desde la columna
      principal hacia la derecha, escalonadas (--rub-d = retardo por columna).
      La principal no se anima: existe antes y después de expandir, y animarla
@@ -888,6 +895,8 @@
   table.rejilla .edit-act:hover { color: var(--acento); background: var(--acento-suave); }
 
   table.rejilla td.celda { padding: 4px; }
+  /* Celdas-botón dentro de la navegación por teclado: foco visible al recorrerlas. */
+  table.rejilla td.celda:focus-visible { outline: 2px solid var(--acento); outline-offset: -2px; }
   /* ---------- celdas por tipo de columna ---------- */
   table.rejilla td.celda-check { cursor: pointer; min-width: 44px; user-select: none;
     color: var(--texto-3); }
@@ -915,7 +924,7 @@
      (plegada o expandida): así no "cambia de color" al desplegar. */
   /* La cabecera desplegable reserva ya el hueco del borde superior (transparente)
      para que al desplegar —cuando se pinta en color— la altura no salte. */
-  table.rejilla th.act.act-rub-col { background: #e6e8fb; border-top: 3px solid transparent; }
+  table.rejilla th.act.act-rub-col { border-top: 3px solid transparent; }
   /* Marco en «L invertida» del bloque expandido: banda superior CONTINUA que
      nace en la propia columna principal y baja por el borde derecho de la
      última rama. Sin separadores verticales entre ramas (partían la banda);
@@ -927,13 +936,14 @@
   table.rejilla th.act.act-sub-fin { border-right: 3px solid var(--acento); }
   table.rejilla th.act.act-sub small { color: var(--acento-fuerte); }
   table.rejilla .rub-rama-vert { writing-mode: vertical-rl; transform: rotate(180deg);
-    display: inline-block; white-space: nowrap; max-height: 92px; overflow: hidden;
-    font-weight: 600; }
+    display: inline-block; white-space: nowrap; max-height: 80px; overflow: hidden;
+    text-overflow: ellipsis; font-weight: 600; }
   table.rejilla td.celda-rub-global { cursor: pointer; user-select: none; text-align: center;
     font-weight: 700; font-variant-numeric: tabular-nums; }
   /* Alto de cabecera reservado cuando la unidad tiene rúbricas: constante al
-     expandir/plegar (a costa de ser algo más alto). */
-  table.rejilla.con-rubrica thead th { height: 118px; vertical-align: bottom; }
+     expandir/plegar. Más contenido que antes (104px) y con el contenido
+     CENTRADO en vertical: menos aire muerto sobre los títulos. */
+  table.rejilla.con-rubrica thead th { height: 104px; vertical-align: middle; }
   /* Observación (texto libre): extracto con puntos suspensivos; tocar para editar. */
   table.rejilla td.celda-texto { cursor: pointer; user-select: none; max-width: 140px;
     overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
@@ -943,8 +953,8 @@
   /* Multinota (desglose): la media /10 va SOBRIA (sin semáforo ni acento),
      como una columna normal; el color queda para NOTA y las rúbricas. */
   table.rejilla td.celda-desglose { cursor: pointer; user-select: none; text-align: center;
-    font-weight: 600; color: var(--texto-2); font-variant-numeric: tabular-nums; }
-  table.rejilla td.celda-des-prim { color: var(--texto-2); font-weight: 600; }
+    font-weight: 500; color: var(--texto); font-variant-numeric: tabular-nums; }
+  table.rejilla td.celda-des-prim { color: var(--texto); font-weight: 500; }
   table.rejilla td.celda-desglose.vacia .svg-ico { width: 14px; height: 14px; vertical-align: -2px;
     color: var(--texto-3); }
   /* Multinota expandida: sub-celdas por criterio (banda de árbol, estrechas). */
@@ -1117,6 +1127,9 @@
     .buscador input, .curso-chip select,
     table.rejilla td input,
     .rubrica-grid .celda, .rubrica-grid .ind-txt { font-size: 16px; }
+    /* La media de una multinota plegada, al MISMO cuerpo que los inputs de las
+       demás columnas (si no, en táctil se veía de otro tamaño). */
+    table.rejilla td.celda-desglose, table.rejilla td.celda-des-prim { font-size: 16px; }
   }
 
   /* ---------- Planificador (tras la bandera FLAGS.planner) ---------- */
