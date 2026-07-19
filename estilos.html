@@ -826,6 +826,10 @@
   table.rejilla .idx::after { content: ''; position: absolute; top: 0; bottom: 0;
     right: -2px; width: 2px; background: inherit; }
   table.rejilla thead .idx { z-index: 3; }
+  /* «# Alumno/a»: pegados a la línea inferior de la cabecera (con el resto de
+     cabeceras altas quedaban flotando a media altura) y a un cuerpo mayor. */
+  table.rejilla thead .idx, table.rejilla thead .esq {
+    vertical-align: bottom; padding-bottom: 9px; font-size: 14px; }
   table.rejilla .esq { text-align: left; position: sticky; left: 36px; z-index: 1;
     font-weight: 500; color: var(--texto); }
   table.rejilla thead .esq { z-index: 3; }
@@ -838,7 +842,7 @@
      el sticky de "thead th" y las columnas de actividades no se quedarían fijas
      al hacer scroll. Sticky también sirve de contenedor para grip/edit (absolute). */
   table.rejilla th.act { position: sticky; cursor: default; font-weight: 600;
-    padding: 7px 14px; }
+    padding: 7px; }
   /* Cuerpo de la cabecera en columna flex: nombre+tipo centrados en el hueco
      y los criterios pegados abajo (los márgenes auto del centro los empujan). */
   table.rejilla th.act .act-cab { display: flex; flex-direction: column; height: 100%; }
