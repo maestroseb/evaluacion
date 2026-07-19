@@ -6360,13 +6360,14 @@ var App = (function () {
         '<label>Fecha' +
           '<input id="ses-evento-fecha" type="date" value="' + esc(eventoFecha) + '"></label>' +
       '</div>' +
-      reprogHtml_(s) +
       '<p class="ayuda ayuda-tipo" id="ses-tipo-ayuda"></p>' +
     '</div>';
+    // Reprogramar vive junto a las fechas que modifica: cabecera del bloque de clases.
     var dcha = '<div class="ses-col ses-col-dcha" id="ses-col-dcha">' +
       '<div class="campo-crit"><span class="etq">Clases donde se dará la sesión</span>' +
         '<p class="ayuda">La misma planificación sirve para varios grupos; cada uno lleva su ' +
           'fecha y su estado.</p>' +
+        reprogHtml_(s) +
         '<div class="planner-asigs">' + (filas ||
           '<div class="vacio">Aún no tienes clases: añade una con su nombre desde el botón ' +
           '«Horario» del planificador.</div>') + '</div></div>' +
