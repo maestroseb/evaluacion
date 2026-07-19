@@ -1420,9 +1420,21 @@
   .pl-uni-card { background: var(--surface); border: 1px solid var(--borde); border-radius: var(--radio);
     box-shadow: var(--sombra-1); padding: 12px 14px; margin-bottom: 12px; }
   .pl-uni-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-  .pl-uni-head h3 { margin: 0; font-size: 15px; }
+  .pl-uni-head h3 { margin: 0; font-size: 15px; min-width: 0;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .pl-uni-acc { display: inline-flex; gap: 4px; }
-  .pl-uni-meta { color: var(--texto-2); font-size: 12px; margin: 2px 0 8px; }
+  /* Cabecera clicable: pliega/despliega la unidad (con muchas unidades, todas
+     plegadas se llega a la última sin scroll). */
+  .pl-uni-tog { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px;
+    border: 0; background: transparent; padding: 2px 0; font: inherit; text-align: left;
+    cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .pl-uni-flecha { flex: 0 0 auto; display: inline-flex; color: var(--texto-3);
+    transition: transform .15s ease; transform: rotate(90deg); }
+  .pl-uni-flecha .svg-ico { width: 14px; height: 14px; }
+  .pl-uni-card.plegada .pl-uni-flecha { transform: none; }
+  .pl-uni-card.plegada .pl-uni-cuerpo { display: none; }
+  .pl-uni-cuerpo { margin-top: 8px; }
+  .pl-uni-meta { flex: 0 0 auto; color: var(--texto-2); font-size: 12px; font-weight: 500; }
   .pl-uni-crits { margin-bottom: 10px; }
   .pl-uni-crits .etq { display: block; margin-bottom: 4px; }
   .pl-uni-crit { display: inline-flex; align-items: center; gap: 3px; background: var(--acento-suave);
