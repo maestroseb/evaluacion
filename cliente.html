@@ -6387,6 +6387,19 @@ var App = (function () {
       var t = ((e.clipboardData || window.clipboardData).getData('text')) || '';
       try { document.execCommand('insertHTML', false, plainToHtmlConLinks_(t)); } catch (x) {}
     });
+    // Tabulador dentro de una lista: anida un nivel (sublista); Mayús+Tab lo saca.
+    if (ed) ed.addEventListener('keydown', function (e) {
+      if (e.key !== 'Tab') return;
+      var sel = window.getSelection();
+      var n = sel && sel.anchorNode, enLista = false;
+      while (n && n !== ed) {
+        if (n.nodeType === 1 && n.tagName === 'LI') { enLista = true; break; }
+        n = n.parentNode;
+      }
+      if (!enLista) return;   // fuera de una lista, el Tab sigue su comportamiento normal
+      e.preventDefault();
+      try { document.execCommand(e.shiftKey ? 'outdent' : 'indent', false, null); } catch (x) {}
+    });
     // Intro en el título pasa el foco a la descripción (seguir escribiendo).
     var tit = document.getElementById('ses-titulo');
     if (tit) tit.addEventListener('keydown', function (e) {
