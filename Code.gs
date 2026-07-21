@@ -12,6 +12,9 @@ function doGet() {
   return HtmlService.createTemplateFromFile('ui')
     .evaluate()
     .setTitle(CONFIG.NOMBRE_APP)
+    // Icono de la app (pestaña del navegador). Servido desde el propio repo
+    // público; sustituye al favicon genérico de Apps Script.
+    .setFaviconUrl('https://raw.githubusercontent.com/maestroseb/evaluacion/main/docs/icon-192.png')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1')
     // DEFAULT = la app no puede embeberse en iframes de terceros (protección
     // anti-clickjacking). Se entra siempre por URL directa; si algún día se
