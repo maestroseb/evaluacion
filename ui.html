@@ -7,7 +7,11 @@
        estos links cubren «añadir a pantalla de inicio» (iOS lee el documento
        que tiene delante, o sea este HTML dentro del iframe de Apps Script). -->
   <link rel="icon" type="image/png" sizes="32x32" href="https://raw.githubusercontent.com/maestroseb/evaluacion/main/docs/favicon-32.png">
-  <link rel="apple-touch-icon" sizes="192x192" href="https://raw.githubusercontent.com/maestroseb/evaluacion/main/docs/icon-192.png">
+  <!-- iOS ignora rel="icon" al añadir a pantalla de inicio: exige apple-touch-icon.
+       La variante SIN sizes y a 180×180 (el tamaño @3x) es la que Safari
+       resuelve con más fiabilidad. -->
+  <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/maestroseb/evaluacion/main/docs/apple-touch-icon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="https://raw.githubusercontent.com/maestroseb/evaluacion/main/docs/apple-touch-icon.png">
   <meta name="apple-mobile-web-app-title" content="EvaluAnda">
   <!-- Fuente por <link> (no @import dentro del CSS): el navegador la descubre
        antes y no retrasa el primer pintado. -->
