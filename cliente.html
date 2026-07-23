@@ -3684,6 +3684,12 @@ var App = (function () {
       '<select id="f-curso">' + optCursos + '</select></label>' +
       '<label>Copiar alumnado de otro grupo (opcional)' +
       '<select id="f-copiar" onchange="App.copiarDeClase()">' + optCopiar + '</select></label>' +
+      '<label id="f-classroom-lbl">Importar de Google Classroom (opcional)' +
+      '<div class="cl-imp-fila">' +
+        '<select id="f-classroom"><option value="">— Cargando cursos… —</option></select>' +
+        '<button type="button" class="btn" id="f-classroom-btn" onclick="App.importarClassroom()" ' +
+          'disabled>Importar</button>' +
+      '</div></label>' +
       '<label>Alumnado (uno por línea)' +
       '<textarea id="f-alumnos" rows="8" placeholder="Apellidos, Nombre"></textarea></label>' +
       '<p class="ayuda">Escribe cada línea como <b>Apellidos, Nombre</b>, tal y como aparece en ' +
@@ -3720,6 +3726,68 @@ var App = (function () {
           else abrirClaseCargada(cl);
         });
       });
+    cargarCursosClassroom_();  // rellena el desplegable de Classroom en segundo plano
+  }
+
+  /** Carga los cursos de Classroom del profe en el desplegable del modal. */
+  function cargarCursosClassroom_() {
+    var sel = document.getElementById('f-classroom');
+    if (!sel) return;
+    google.script.run
+      .withSuccessHandler(function (r) {
+        var s = document.getElementById('f-classroom');
+        var b = document.getElementById('f-classroom-btn');
+        if (!s) return;
+        if (!r || !r.ok) {
+          // Sin permiso o servicio: se oculta la opción (no estorba al flujo normal).
+          var lbl = document.getElementById('f-classroom-lbl');
+          if (lbl) lbl.hidden = true;
+          return;
+        }
+        if (!r.cursos.length) {
+          s.innerHTML = '<option value="">— No tienes cursos en Classroom —</option>';
+          return;
+        }
+        s.innerHTML = '<option value="">— Elige un curso —</option>' +
+          r.cursos.map(function (c) {
+            var etq = c.nombre + (c.seccion ? ' · ' + c.seccion : '');
+            return '<option value="' + esc(c.id) + '">' + esc(etq) + '</option>';
+          }).join('');
+        if (b) b.disabled = false;
+      })
+      .withFailureHandler(function () {
+        var lbl = document.getElementById('f-classroom-lbl');
+        if (lbl) lbl.hidden = true;
+      })
+      .listarCursosClassroom();
+  }
+
+  /** Trae el alumnado del curso de Classroom elegido al cuadro de alumnado. */
+  function importarClassroom() {
+    var sel = document.getElementById('f-classroom');
+    var btn = document.getElementById('f-classroom-btn');
+    var courseId = sel && sel.value;
+    if (!courseId) return aviso('Elige antes un curso de Classroom.');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-inline"></span> Importando…'; }
+    google.script.run
+      .withSuccessHandler(function (r) {
+        if (btn) { btn.disabled = false; btn.textContent = 'Importar'; }
+        if (!r || !r.ok) return aviso((r && r.error) || 'No se pudo importar de Classroom.');
+        if (!r.alumnos.length) return aviso('Ese curso de Classroom no tiene alumnado.');
+        // Se vuelca en el cuadro (añadiendo a lo que ya hubiera) para revisarlo
+        // antes de crear el grupo: los nombres vienen de Séneca, pero conviene
+        // un vistazo por si algún apellido compuesto llega incompleto.
+        var ta = document.getElementById('f-alumnos');
+        if (!ta) return;
+        var prev = ta.value.trim();
+        ta.value = (prev ? prev + '\n' : '') + r.alumnos.join('\n');
+        avisoOk('Importados ' + r.alumnos.length + ' alumnos/as. Revísalos antes de crear el grupo.');
+      })
+      .withFailureHandler(function (e) {
+        if (btn) { btn.disabled = false; btn.textContent = 'Importar'; }
+        aviso('No se pudo importar de Classroom: ' + ((e && e.message) || 'error'));
+      })
+      .alumnosCursoClassroom(courseId);
   }
 
   var copiaAlumnosEnCurso = false; // bloquea "Crear grupo" mientras carga la copia
@@ -7101,6 +7169,7 @@ var App = (function () {
     asigChkCambiada: asigChkCambiada, critSesionCambiado: critSesionCambiado,
     sesTipoCambiado: sesTipoCambiado, rtCmd: rtCmd, rtLink: rtLink,
     crearClaseHorario: crearClaseHorario, agGrupoCambiado: agGrupoCambiado,
+    importarClassroom: importarClassroom,
     irAEvaluaciones: irAEvaluaciones, irAClases: irAClases,
     toggleSidebar: toggleSidebar, cerrarSidebar: cerrarSidebar, filtrar: filtrar,
     irAPapelera: irAPapelera, restaurarItem: restaurarItem, vaciarPapeleraUI: vaciarPapeleraUI,

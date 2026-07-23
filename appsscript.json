@@ -2,7 +2,8 @@
   "timeZone": "Europe/Madrid",
   "dependencies": {
     "enabledAdvancedServices": [
-      { "userSymbol": "Calendar", "serviceId": "calendar", "version": "v3" }
+      { "userSymbol": "Calendar", "serviceId": "calendar", "version": "v3" },
+      { "userSymbol": "Classroom", "serviceId": "classroom", "version": "v1" }
     ]
   },
   "exceptionLogging": "STACKDRIVER",
@@ -19,6 +20,8 @@
     "https://www.googleapis.com/auth/userinfo.profile",
     "https://www.googleapis.com/auth/calendar.app.created",
     "https://www.googleapis.com/auth/calendar.acls",
-    "https://www.googleapis.com/auth/script.scriptapp"
+    "https://www.googleapis.com/auth/script.scriptapp",
+    "https://www.googleapis.com/auth/classroom.courses.readonly",
+    "https://www.googleapis.com/auth/classroom.rosters.readonly"
   ]
 }
