@@ -5053,6 +5053,8 @@ var App = (function () {
     document.getElementById('planner-nav-dia').hidden = !dia;
     document.getElementById('planner-nav-semana').hidden = !semana;
     document.getElementById('planner-nav-mes').hidden = !mes;
+    var navU = document.getElementById('planner-nav-unidades');
+    if (navU) navU.hidden = !unidades;
     sincronizarConfigMenu_();
     document.getElementById('planner-cont').innerHTML =
       dia ? htmlDia_() : semana ? htmlSemana_() : mes ? htmlMes_() : htmlUnidades_();
@@ -5465,8 +5467,9 @@ var App = (function () {
     // del cuerpo siguen funcionando (editarSesionDesde_ los respeta).
     var descHtml = descInicialHtml_(s.descripcion || '');
     var edit = 'onclick="App.editarSesionDesde_(event,\'' + s.sesionId + '\')"';
-    var preview = (conPreview && descHtml)
-      ? '<div class="pl-chip-desc rt-render">' + descHtml + '</div>' : '';
+    // El cuerpo blanco se pinta SIEMPRE (aunque no haya descripción, como una
+    // línea en blanco): todas las tarjetas comparten silueta y altura.
+    var preview = '<div class="pl-chip-desc rt-render">' + descHtml + '</div>';
     // El onclick va en la TARJETA entera: cabecera, cuerpo o zona en blanco,
     // todo abre el editor (los enlaces del cuerpo siguen funcionando).
     return '<div class="pl-chip' + (tipo === 'evento' ? ' pl-chip-evento' : '') +
@@ -5815,11 +5818,15 @@ var App = (function () {
         (plannerMatCurso !== '||' && !combos.some(function (c) { return c.key === plannerMatCurso; }))) {
       plannerMatCurso = combos.length ? combos[0].key : '||';
     }
-    var barra = '<div class="pl-uni-barra">' +
-      '<label class="pl-uni-materia">Materia y curso ' +
+    // La barra de materia + «Nueva unidad» vive en la línea de navegación del
+    // planificador (como la fecha en Día/Semana/Mes): a la izquierda en PC,
+    // con el selector de vistas a la derecha.
+    var nav = document.getElementById('planner-nav-unidades');
+    if (nav) nav.innerHTML = '<label class="pl-uni-materia">Materia y curso ' +
         '<select onchange="App.plannerMatCursoSel(this.value)">' +
         opcionesMatCurso_(plannerMatCurso, combos) + '</select></label>' +
-      '<button class="btn primario" onclick="App.nuevaPlanUnidad()">+ Nueva unidad</button></div>';
+      '<button class="btn primario" onclick="App.nuevaPlanUnidad()">+ Nueva unidad</button>';
+    var barra = '';
     var p = plannerMatCurso.split('||'), area = p[0], curso = p[1];
     var unidades = (planUnidadesCache || []).filter(function (u) {
       return (u.area || '') === area && (u.curso || '') === curso;
@@ -6440,11 +6447,14 @@ var App = (function () {
     return html;
   }
 
-  /** Selector de Tipo (segmentado compacto) para la barra de título del editor. */
+  /** Selector de Tipo (segmentado compacto) para la barra de título del editor.
+      Solo Sesión y Evento (excursiones, talleres…); los avisos antiguos se
+      siguen mostrando, pero ya no se crean nuevos. */
   function tipoSelectorHtml_(tipoActual) {
+    var tipos = tipoActual === 'aviso' ? ['clase', 'evento', 'aviso'] : ['clase', 'evento'];
     return '<span class="ses-tipo-seg">' +
-      ['clase', 'evento', 'aviso'].map(function (t) {
-        var etq = t === 'clase' ? 'Clase' : (t === 'evento' ? 'Evento' : 'Aviso');
+      tipos.map(function (t) {
+        var etq = t === 'clase' ? 'Sesión' : (t === 'evento' ? 'Evento' : 'Aviso');
         return '<label class="ses-tipo-opt' + (t === tipoActual ? ' activo' : '') + '">' +
           '<input type="radio" name="f-ses-tipo" value="' + t + '"' +
           (t === tipoActual ? ' checked' : '') + ' onchange="App.sesTipoCambiado()">' + etq + '</label>';
