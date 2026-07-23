@@ -1374,7 +1374,12 @@
   .pl-celda .pl-chip-tit { display: -webkit-box; -webkit-box-orient: vertical;
     -webkit-line-clamp: 2; overflow: hidden;
     min-height: 2.5em; /* 2 líneas × 1.25 */ }
-  .pl-chip-sub { font-size: 11px; color: var(--texto-2); font-weight: 500; }
+  /* Vistas Día y por horario: el subtítulo (hora · título de la sesión) reserva
+     SIEMPRE 2 líneas (y se recorta a 2 si es más largo), como el título en la
+     vista por grupo: todas las cabeceras quedan igual de altas. */
+  .pl-chip-sub { font-size: 11px; color: var(--texto-2); font-weight: 500;
+    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+    overflow: hidden; min-height: 2.6em; /* 2 líneas × 1.3 */ }
   /* Render de texto enriquecido (previsualización de la descripción). */
   .rt-render p { margin: 0 0 4px; }
   .rt-render p:last-child { margin-bottom: 0; }
