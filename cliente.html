@@ -7047,9 +7047,10 @@ var App = (function () {
     return ((estado && (estado.nombre || estado.usuario)) || '').trim();
   }
   var PDF_ESTILO_ = 'body{font-family:Arial,Helvetica,sans-serif;color:#111;margin:24px 28px}' +
-    'h1{font-size:20px;margin:0 0 2px}.meta{color:#666;font-size:12px;margin:0 0 16px}' +
-    'ul,ol{margin:4px 0;padding-left:20px}p{margin:0 0 4px}a{color:#5b5bd6}' +
-    'table{border-collapse:separate}';
+    'h1{font-size:21px;margin:0 0 3px;letter-spacing:-.2px}' +
+    '.meta{color:#6b7280;font-size:12px;margin:0 0 14px;padding-bottom:12px;' +
+      'border-bottom:2px solid #eceef2}' +
+    'ul,ol{margin:4px 0;padding-left:20px}p{margin:0 0 4px}a{color:#5b5bd6}';
 
   /**
    * Tarjeta de sesión para el PDF. El color de la sesión se marca con un BORDE
@@ -7057,22 +7058,40 @@ var App = (function () {
    * Google descarta los fondos (CSS background y bgcolor), pero respeta los
    * bordes y el color del texto —por eso antes salía sin color—.
    */
-  function tarjetaPdf_(en, col, sub, compacta) {
+  /** Tarjeta de la vista Día: espina de color, título + hora (a la derecha,
+      en color), clase debajo en color, y descripción/obs cuidadas. */
+  function tarjetaDiaPdf_(en, col, hora, clase) {
     var s = en.ses, a = en.asig;
     col = col || '#5b5bd6';
-    var pad = compacta ? '5px 4px 5px 8px' : '8px 12px';
-    var fs = compacta ? '12px' : '15px';
-    var desc = compacta ? '' : descInicialHtml_(s.descripcion || '');
-    var obs = (!compacta && a && a.observaciones)
-      ? '<div style="margin-top:6px;font-style:italic;color:#555">Obs.: ' + esc(a.observaciones) + '</div>' : '';
+    var desc = descInicialHtml_(s.descripcion || '');
+    var obs = (a && a.observaciones)
+      ? '<div style="margin-top:6px;font-style:italic;color:#666;font-size:12px">Obs.: ' +
+          esc(a.observaciones) + '</div>' : '';
     var cuerpo = (desc || obs)
-      ? '<div style="margin-top:6px;font-size:13px;color:#222">' + desc + obs + '</div>' : '';
+      ? '<div style="margin-top:7px;font-size:13px;color:#333;line-height:1.45">' + desc + obs + '</div>' : '';
+    var cab = '<table width="100%" cellspacing="0" cellpadding="0"><tr>' +
+      '<td style="font-weight:700;font-size:15px;color:#111">' + esc(s.titulo || 'Sin título') + '</td>' +
+      (hora ? '<td align="right" valign="top" style="font-size:12px;font-weight:700;color:' + col +
+        ';white-space:nowrap;padding-left:10px">' + esc(hora) + '</td>' : '') +
+      '</tr></table>';
+    var claseLn = clase ? '<div style="font-size:12px;font-weight:600;color:' + col +
+      ';margin-top:1px">' + esc(clase) + '</div>' : '';
     return '<table width="100%" cellspacing="0" cellpadding="0" ' +
-      'style="border-collapse:collapse;margin:0 0 10px">' +
-      '<tr><td style="border:1px solid #e5e7eb;border-left:6px solid ' + col + ';padding:' + pad + '">' +
-        '<div style="font-weight:700;font-size:' + fs + ';color:#111">' + esc(s.titulo || 'Sin título') + '</div>' +
-        (sub ? '<div style="font-size:11px;color:' + col + ';font-weight:600">' + sub + '</div>' : '') +
-        cuerpo +
+      'style="border-collapse:collapse;margin:0 0 12px">' +
+      '<tr><td style="border:1px solid #e5e7eb;border-left:7px solid ' + col + ';padding:10px 14px">' +
+        cab + claseLn + cuerpo +
+      '</td></tr></table>';
+  }
+
+  /** Tarjeta compacta para las celdas de la vista Semana (espina de color). */
+  function tarjetaSemPdf_(en, col, descTexto) {
+    var s = en.ses;
+    col = col || '#5b5bd6';
+    return '<table width="100%" cellspacing="0" cellpadding="0" ' +
+      'style="border-collapse:collapse;margin:0 0 6px">' +
+      '<tr><td style="border:1px solid #e5e7eb;border-left:5px solid ' + col + ';padding:5px 4px 5px 8px">' +
+        '<div style="font-weight:700;font-size:12px;color:#111">' + esc(s.titulo || 'Sin título') + '</div>' +
+        (descTexto ? '<div style="font-size:10px;color:#555;margin-top:2px">' + esc(descTexto) + '</div>' : '') +
       '</td></tr></table>';
   }
 
@@ -7111,8 +7130,7 @@ var App = (function () {
     if (!bloques.length && !avisos.length) return aviso('Ese día no tiene nada planificado.');
 
     var cuerpo = bloques.map(function (b) {
-      var sub = [b.hora && b.hora !== '~' ? esc(b.hora) : '', esc(b.clase)].filter(Boolean).join(' · ');
-      return tarjetaPdf_(b.en, b.col, sub, false);
+      return tarjetaDiaPdf_(b.en, b.col, (b.hora && b.hora !== '~') ? b.hora : '', b.clase);
     }).join('');
     var titulo = (DIAS_SEM[idx].charAt(0).toUpperCase() + DIAS_SEM[idx].slice(1)) + ', ' + fechaConAnio_(iso);
     var doc = docenteNombre_();
@@ -7152,8 +7170,7 @@ var App = (function () {
           var a = en.asig, tipo = en.ses.tipo || 'clase';
           var col = (tipo === 'clase' && a && a.evalId) ? colorClase_(a.evalId) : '#6b7280';
           var desc = htmlAtexto_(en.ses.descripcion || '').replace(/\n/g, ' ');
-          var sub = desc ? '<span style="color:#444;font-weight:400">' + esc(desc) + '</span>' : '';
-          return tarjetaPdf_(en, col, sub, true);
+          return tarjetaSemPdf_(en, col, desc);
         }).join('') + '</td>';
     };
 
