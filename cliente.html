@@ -7266,18 +7266,19 @@ var App = (function () {
     var prev = btn ? btn.innerHTML : '';
     if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-inline"></span>'; }
     var fin = function () { if (btn) { btn.disabled = false; btn.innerHTML = prev; } };
+    var alRespaldo = function (motivo) {
+      // Respaldo: conversor HTML (bordes, sin relleno) si el Doc no se pudo.
+      aviso('PDF a color no disponible (' + (motivo || 'error') + '). Se usa el formato básico.');
+      llamarConFallo_('generarPdf', [htmlFallback, nombre],
+        function (r) { fin(); entregarPdf_(r.b64, r.nombre, win); },
+        function (err) { fin(); if (win) win.close(); aviso('No se pudo generar el PDF: ' + err); });
+    };
     llamarConFallo_('generarPdfDoc', [payload, nombre],
-      function (r) { fin(); entregarPdf_(r.b64, r.nombre, win); },
-      function () {
-        // Respaldo: conversor HTML (bordes, sin relleno) si el Doc no se pudo.
-        // Un aviso lo deja claro: casi siempre es que falta reautorizar el
-        // permiso nuevo (o re-desplegar la versión con el color).
-        aviso('PDF en formato básico (sin relleno de color). Para el PDF a color, ' +
-          'reautoriza la app: hay un permiso nuevo pendiente.');
-        llamarConFallo_('generarPdf', [htmlFallback, nombre],
-          function (r) { fin(); entregarPdf_(r.b64, r.nombre, win); },
-          function (err) { fin(); if (win) win.close(); aviso('No se pudo generar el PDF: ' + err); });
-      });
+      function (r) {
+        if (r && r.ok) { fin(); entregarPdf_(r.b64, r.nombre, win); }
+        else alRespaldo((r && r.error) || 'desconocido');
+      },
+      function (err) { alRespaldo(err); });
   }
 
   /** Lleva el PDF a la pestaña abierta; si no la hay (bloqueada), comparte/descarga. */
