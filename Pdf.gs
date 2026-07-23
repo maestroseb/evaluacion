@@ -66,29 +66,17 @@ var Pdf = (function () {
       else dia_(body, payload.tarjetas || []);
       paso = 'guardar';
       doc.saveAndClose();
-      // Export a PDF por la API de Drive (UrlFetch): más predecible bajo el
-      // scope acotado drive.file que DriveApp.getAs.
-      var token = ScriptApp.getOAuthToken();
-      var resp = UrlFetchApp.fetch(
-        'https://www.googleapis.com/drive/v3/files/' + id + '/export?mimeType=application%2Fpdf',
-        { headers: { Authorization: 'Bearer ' + token }, muteHttpExceptions: true });
-      if (resp.getResponseCode() !== 200) {
-        return { ok: false, error: 'Export ' + resp.getResponseCode() + ': ' +
-          resp.getContentText().slice(0, 300) };
-      }
-      return { ok: true, b64: Utilities.base64Encode(resp.getBlob().getBytes()), nombre: nombre + '.pdf' };
+      paso = 'export';
+      // Export con DriveApp (servicio integrado): a diferencia de la Drive API
+      // REST, NO requiere habilitar la API en el proyecto de Cloud, y accede al
+      // Doc porque lo creó la propia app (scope drive.file).
+      var pdf = DriveApp.getFileById(id).getAs('application/pdf');
+      return { ok: true, b64: Utilities.base64Encode(pdf.getBytes()), nombre: nombre + '.pdf' };
     } catch (e) {
-      // El prefijo «pdf4/paso» confirma qué versión corre y en qué punto falló.
-      return { ok: false, error: 'pdf4/' + paso + ': ' + ((e && e.message) || String(e)) };
+      // El prefijo «pdf5/paso» confirma qué versión corre y en qué punto falló.
+      return { ok: false, error: 'pdf5/' + paso + ': ' + ((e && e.message) || String(e)) };
     } finally {
-      // Borra el Doc temporal (Drive API DELETE; no depende de DriveApp).
-      if (id) {
-        try {
-          UrlFetchApp.fetch('https://www.googleapis.com/drive/v3/files/' + id,
-            { method: 'delete', headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() },
-              muteHttpExceptions: true });
-        } catch (e2) {}
-      }
+      if (id) { try { DriveApp.getFileById(id).setTrashed(true); } catch (e2) {} }
     }
   }
 
