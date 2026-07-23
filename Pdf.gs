@@ -38,9 +38,10 @@ var Pdf = (function () {
 
   function generarDoc_(payload, nombre) {
     nombre = san_(nombre);
-    var doc = DocumentApp.create('EvaluAnda tmp ' + Date.now());
-    var id = doc.getId();
+    var id = null;
     try {
+      var doc = DocumentApp.create('EvaluAnda tmp ' + Date.now());
+      id = doc.getId();
       var body = doc.getBody();
       body.setMarginTop(26).setMarginBottom(26).setMarginLeft(30).setMarginRight(30);
       if (payload.orientacion === 'landscape') { body.setPageWidth(842).setPageHeight(595); }
@@ -53,10 +54,28 @@ var Pdf = (function () {
       if (payload.tipo === 'semana') semana_(body, payload);
       else dia_(body, payload.tarjetas || []);
       doc.saveAndClose();
-      var pdf = DriveApp.getFileById(id).getAs('application/pdf');
-      return { b64: Utilities.base64Encode(pdf.getBytes()), nombre: nombre + '.pdf' };
+      // Export a PDF por la API de Drive (UrlFetch): más predecible bajo el
+      // scope acotado drive.file que DriveApp.getAs.
+      var token = ScriptApp.getOAuthToken();
+      var resp = UrlFetchApp.fetch(
+        'https://www.googleapis.com/drive/v3/files/' + id + '/export?mimeType=application%2Fpdf',
+        { headers: { Authorization: 'Bearer ' + token }, muteHttpExceptions: true });
+      if (resp.getResponseCode() !== 200) {
+        return { ok: false, error: 'Export ' + resp.getResponseCode() + ': ' +
+          resp.getContentText().slice(0, 300) };
+      }
+      return { ok: true, b64: Utilities.base64Encode(resp.getBlob().getBytes()), nombre: nombre + '.pdf' };
+    } catch (e) {
+      return { ok: false, error: (e && e.message) || String(e) };
     } finally {
-      try { DriveApp.getFileById(id).setTrashed(true); } catch (e) {}
+      // Borra el Doc temporal (Drive API DELETE; no depende de DriveApp).
+      if (id) {
+        try {
+          UrlFetchApp.fetch('https://www.googleapis.com/drive/v3/files/' + id,
+            { method: 'delete', headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() },
+              muteHttpExceptions: true });
+        } catch (e2) {}
+      }
     }
   }
 
