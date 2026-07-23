@@ -1017,6 +1017,10 @@
     padding: 4px 8px; border-bottom: 1px solid var(--borde); background: var(--bg); }
   table.imp-tabla td { padding: 4px 8px; color: var(--texto-2); }
   table.imp-tabla tr + tr td { border-top: 1px dashed var(--borde); }
+  /* Importar de Classroom (modal de nuevo grupo): select + botón en una fila. */
+  .cl-imp-fila { display: flex; gap: 8px; align-items: center; }
+  .cl-imp-fila select { flex: 1 1 auto; min-width: 0; }
+  .cl-imp-fila .btn { flex: 0 0 auto; white-space: nowrap; }
   /* selector de tipo en el modal de actividad */
   .tipos-act { display: flex; flex-wrap: wrap; gap: 6px; }
   label.tipo-opt { display: inline-flex; align-items: center; gap: 6px; margin: 0;
