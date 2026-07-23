@@ -6823,16 +6823,19 @@ var App = (function () {
       sesionesCache = (sesionesCache || []).concat([nueva]);
       if (enPanel) { sesUnidadSel = tmpId; panelNuevoUid = ''; } // el panel sigue mostrando la nueva
       // Persistir antes de repintar (un fallo de render no debe perder el alta).
+      // Reconciliación por ID (no por identidad de objeto): si el array de
+      // sesiones se hubiera reemplazado entre medias (un reorden, una recarga
+      // tras error…), buscar por identidad fallaba y añadía la real SIN quitar
+      // la temporal → duplicado. reconciliarCreacion_ localiza el tmp por su id.
       llamarConFallo_('crearSesion', [payload],
         function (r) {
-          var idx = sesionesCache.indexOf(nueva);
-          if (idx >= 0) sesionesCache[idx] = r; else actualizarSesionCache_(r);
-          if (sesUnidadSel === tmpId) sesUnidadSel = r.sesionId; // pasa al id real
+          reconciliarCreacion_(tmpId, r, payload);
           if (!opts.noPintar) pintarPlanner();
         },
         function (err) {
-          sesionesCache = (sesionesCache || []).filter(function (x) { return x !== nueva; });
+          sesionesCache = (sesionesCache || []).filter(function (x) { return x.sesionId !== tmpId; });
           if (sesUnidadSel === tmpId) sesUnidadSel = '';
+          if (editorSesionCtx && editorSesionCtx.id === tmpId) editorSesionCtx = null;
           pintarPlanner();
           aviso('No se pudo crear la sesión: ' + err);
         });

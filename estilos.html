@@ -1368,6 +1368,12 @@
   .pl-celda.pl-drop-ok { box-shadow: inset 0 0 0 2px var(--acento); }
   .pl-chip-txt { min-width: 0; display: flex; flex-direction: column; }
   .pl-chip-tit { font-size: 12.5px; font-weight: 600; line-height: 1.25; word-break: break-word; }
+  /* Vista por grupo: el título reserva SIEMPRE 2 líneas (y se recorta a 2 si es
+     más largo), así todas las cabeceras de una fila quedan igual de altas y las
+     descripciones empiezan a la misma altura. */
+  .pl-celda .pl-chip-tit { display: -webkit-box; -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2; overflow: hidden;
+    min-height: 2.5em; /* 2 líneas × 1.25 */ }
   .pl-chip-sub { font-size: 11px; color: var(--texto-2); font-weight: 500; }
   /* Render de texto enriquecido (previsualización de la descripción). */
   .rt-render p { margin: 0 0 4px; }
