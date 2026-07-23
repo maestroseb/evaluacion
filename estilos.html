@@ -482,6 +482,8 @@
   .pl-clase-ico svg { width: 100%; height: 100%; }
   .modal label, .ses-form label { display: block; margin-bottom: 14px; font-size: 13px; font-weight: 600; color: var(--texto); }
   .modal input, .modal select, .modal textarea,
+  /* El título de la sesión destaca en negrita al editarlo. */
+  .ses-form #ses-titulo { font-weight: 700; }
   .ses-form input, .ses-form select, .ses-form textarea {
     width: 100%; margin-top: 6px; padding: 10px 11px; font-size: 14px; font-weight: 400;
     border: 1px solid var(--borde-fuerte); border-radius: 8px; font-family: inherit;
@@ -1173,6 +1175,19 @@
   @media (min-width: 821px) {
     .planner-barra { justify-content: space-between; }
     .planner-barra .planner-nav { order: -1; }
+    /* En Unidades no hay flechas de fecha: el margen manda los modos a la derecha. */
+    .planner-barra .planner-modos { margin-left: auto; }
+  }
+  /* Barra de la vista Unidades dentro de la línea de navegación. */
+  #planner-nav-unidades { gap: 8px; min-width: 0; }
+  #planner-nav-unidades .pl-uni-materia { display: inline-flex; align-items: center;
+    min-width: 0; white-space: nowrap; }
+  #planner-nav-unidades select { min-width: 0; }
+  @media (max-width: 820px) {
+    #planner-nav-unidades { flex-wrap: wrap; }
+    #planner-nav-unidades .pl-uni-materia { flex: 1 1 100%; }
+    #planner-nav-unidades .pl-uni-materia select { flex: 1; }
+    #planner-nav-unidades .btn { flex: 1; }
   }
   /* La etiqueta de fecha se pulsa para saltar a cualquier fecha. */
   .planner-semana-etq[role="button"] { cursor: pointer; border-radius: 8px;
@@ -1315,14 +1330,16 @@
   /* ---------- Rejilla semanal del planificador (grupos × días / por horario) ---------- */
   .pl-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 6px; }
   /* Layout "por grupo": rejilla con 1ª columna fija (etiqueta de clase). */
-  .pl-grid { display: grid; grid-template-columns: 132px repeat(var(--cols), minmax(120px, 1fr));
+  /* 1ª columna al ancho exacto del nombre de clase más largo (sin aire). */
+  .pl-grid { display: grid; grid-template-columns: max-content repeat(var(--cols), minmax(120px, 1fr));
     gap: 6px; min-width: 640px; align-items: stretch; }
   .pl-cab { font-size: 12px; font-weight: 700; color: var(--texto-2); text-transform: capitalize;
     padding: 2px 2px 6px; }
-  .pl-cab span, .pl-col-cab span { color: var(--texto-3); font-weight: 500; }
+  /* La fecha va SIEMPRE en su propia línea: todas las cabeceras, igual de altas. */
+  .pl-cab span, .pl-col-cab span { display: block; color: var(--texto-3); font-weight: 500; }
   .pl-esq { position: sticky; left: 0; background: var(--bg); z-index: 1; }
   .pl-fila-lbl { display: flex; align-items: center; font-size: 13px; font-weight: 600;
-    padding: 6px 8px 6px 0; }
+    padding: 6px 8px 6px 0; white-space: nowrap; }
   /* Celda con sesión: la tarjeta la llena por completo (sin marco gris). El
      cuadro blanco con borde solo se ve en los días vacíos (.pl-celda-nueva). */
   .pl-celda { min-height: 44px; border-radius: 8px; display: flex; flex-direction: column; gap: 4px; }
@@ -1343,7 +1360,8 @@
   .pl-chip-cab .pl-chip-sub { color: rgba(255, 255, 255, .88); }
   .pl-chip-cab .pl-chip-grip { color: rgba(255, 255, 255, .75); }
   .pl-chip-cab .pl-chip-obs { color: rgba(255, 255, 255, .9); }
-  .pl-chip-desc { padding: 4px 8px 6px; border-top: 1px solid var(--borde); font-size: 11.5px;
+  .pl-chip-desc { flex: 1 1 auto; min-height: 1.5em;
+    padding: 4px 8px 6px; border-top: 1px solid var(--borde); font-size: 11.5px;
     color: var(--texto-2); line-height: 1.35; overflow-wrap: anywhere; cursor: pointer; }
   .pl-chip-arrastrando { opacity: .45; }
   /* Celda resaltada mientras se arrastra una sesión encima (con o sin marco). */
@@ -1454,10 +1472,12 @@
     border-left-style: dashed; }
   /* ---------- Vista mensual ---------- */
   .pl-mes { min-width: 560px; }
-  .pl-mes-cabs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 6px; }
+  .pl-mes-cabs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; margin-bottom: 6px; }
   .pl-mes-cab { font-size: 12px; font-weight: 700; color: var(--texto-2); text-transform: capitalize;
     text-align: center; }
-  .pl-mes-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  /* minmax(0,1fr): el título de una sesión no puede ensanchar su columna. */
+  .pl-mes-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+  .pl-mes-dia { min-width: 0; }
   .pl-mes-dia { background: var(--surface); border: 1px solid var(--borde); border-radius: 8px;
     min-height: 88px; padding: 4px; display: flex; flex-direction: column; gap: 3px; }
   .pl-mes-fuera { background: var(--bg); }
@@ -1480,8 +1500,6 @@
   .pl-mes-grip { font-size: 11px; }
   .planner-sesion-grip { align-self: center; margin-right: 2px; font-size: 15px; }
   /* ---------- Vista Unidades (unidades de planificación) ---------- */
-  .pl-uni-barra { display: flex; align-items: center; justify-content: space-between; gap: 12px;
-    flex-wrap: wrap; margin-bottom: 14px; }
   .pl-uni-materia { font-size: 13px; color: var(--texto-2); font-weight: 600; }
   .pl-uni-materia select { margin-left: 6px; padding: 7px 9px; border: 1px solid var(--borde-fuerte);
     border-radius: 8px; background: var(--surface); font: inherit; font-size: 14px; }
