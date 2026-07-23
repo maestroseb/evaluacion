@@ -79,13 +79,17 @@ var Pdf = (function () {
     }
   }
 
+  /** Primer párrafo de una celda creada con texto (getChild(0) ya existe). */
+  function pCelda_(cell) { return cell.getChild(0).asParagraph(); }
+
   function avisos_(body, avisos) {
     if (!avisos.length) return;
     var t = body.appendTable(); t.setBorderWidth(0);
-    var cell = t.appendTableRow().appendTableCell();
+    // Celda creada CON texto: así trae su párrafo (una celda vacía no lo tiene).
+    var cell = t.appendTableRow().appendTableCell('No olvidar');
     cell.setBackgroundColor('#fff8e1')
       .setPaddingTop(7).setPaddingBottom(7).setPaddingLeft(11).setPaddingRight(11);
-    styleP_(cell.getChild(0).asParagraph().setText('No olvidar'), { bold: true, size: 11, color: '#8a6d10' });
+    styleP_(pCelda_(cell), { bold: true, size: 11, color: '#8a6d10' });
     avisos.forEach(function (av) {
       styleP_(cell.appendParagraph('• ' + (av.titulo || 'Aviso') + (av.texto ? ' — ' + av.texto : '')),
         { size: 11, color: '#7a5f10' });
@@ -99,14 +103,13 @@ var Pdf = (function () {
       var col = c.color || '#5b5bd6';
       var t = body.appendTable(); t.setBorderWidth(0);
       var row = t.appendTableRow();
-      var cA = row.appendTableCell(), cB = row.appendTableCell();
+      var cA = row.appendTableCell(c.titulo || 'Sin título');
+      var cB = row.appendTableCell(c.hora || ' ');
       cA.setBackgroundColor(col).setPaddingTop(7).setPaddingBottom(7).setPaddingLeft(12).setPaddingRight(6);
       cB.setBackgroundColor(col).setPaddingTop(7).setPaddingBottom(7).setPaddingLeft(6).setPaddingRight(12);
-      styleP_(cA.getChild(0).asParagraph().setText(c.titulo || 'Sin título'),
-        { bold: true, size: 13, color: BLANCO });
+      styleP_(pCelda_(cA), { bold: true, size: 13, color: BLANCO });
       if (c.clase) styleP_(cA.appendParagraph(c.clase), { size: 10, color: BLANCO });
-      styleP_(cB.getChild(0).asParagraph().setText(c.hora || ''),
-        { bold: true, size: 11, color: BLANCO, align: DocumentApp.HorizontalAlignment.RIGHT });
+      styleP_(pCelda_(cB), { bold: true, size: 11, color: BLANCO, align: DocumentApp.HorizontalAlignment.RIGHT });
       try { t.setColumnWidth(1, 96); } catch (e) {}
       if (c.desc) styleP_(body.appendParagraph(c.desc), { size: 11, color: '#333333', sb: 4 });
       if (c.obs) styleP_(body.appendParagraph('Obs.: ' + c.obs), { size: 10, color: '#666666', italic: true });
@@ -118,24 +121,24 @@ var Pdf = (function () {
   function semana_(body, p) {
     var t = body.appendTable(); t.setBorderWidth(0.5); t.setBorderColor('#e5e7eb');
     var hr = t.appendTableRow();
-    styleP_(hr.appendTableCell('').getChild(0).asParagraph(), { size: 9 });
+    styleP_(pCelda_(hr.appendTableCell(' ')), { size: 9 });
     (p.dias || []).forEach(function (d) {
-      var c = hr.appendTableCell('');
+      var c = hr.appendTableCell(d || ' ');
       c.setPaddingTop(3).setPaddingBottom(4).setPaddingLeft(5).setPaddingRight(5);
-      styleP_(c.getChild(0).asParagraph().setText(d), { bold: true, size: 9, color: '#374151' });
+      styleP_(pCelda_(c), { bold: true, size: 9, color: '#374151' });
     });
     (p.filas || []).forEach(function (fila) {
       var r = t.appendTableRow();
-      var cl = r.appendTableCell();
+      var cl = r.appendTableCell(fila.etq || ' ');
       cl.setPaddingTop(5).setPaddingBottom(5).setPaddingLeft(4).setPaddingRight(6);
-      styleP_(cl.getChild(0).asParagraph().setText(fila.etq || ''), { bold: true, size: 9, color: '#111111' });
+      styleP_(pCelda_(cl), { bold: true, size: 9, color: '#111111' });
       (fila.celdas || []).forEach(function (cards) {
-        var cell = r.appendTableCell();
+        var tiene = cards && cards.length;
+        var cell = r.appendTableCell(tiene ? (cards[0].titulo || 'Sin título') : '');
         cell.setPaddingTop(4).setPaddingBottom(4).setPaddingLeft(6).setPaddingRight(6);
-        if (cards && cards.length) {
+        if (tiene) {
           cell.setBackgroundColor(cards[0].color || '#5b5bd6');
-          styleP_(cell.getChild(0).asParagraph().setText(cards[0].titulo || 'Sin título'),
-            { bold: true, size: 9, color: BLANCO });
+          styleP_(pCelda_(cell), { bold: true, size: 9, color: BLANCO });
           if (cards[0].desc) styleP_(cell.appendParagraph(cards[0].desc), { size: 8, color: BLANCO });
           cards.slice(1).forEach(function (cd) {
             styleP_(cell.appendParagraph(cd.titulo || 'Sin título'), { bold: true, size: 9, color: BLANCO });
