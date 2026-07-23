@@ -7270,6 +7270,10 @@ var App = (function () {
       function (r) { fin(); entregarPdf_(r.b64, r.nombre, win); },
       function () {
         // Respaldo: conversor HTML (bordes, sin relleno) si el Doc no se pudo.
+        // Un aviso lo deja claro: casi siempre es que falta reautorizar el
+        // permiso nuevo (o re-desplegar la versión con el color).
+        aviso('PDF en formato básico (sin relleno de color). Para el PDF a color, ' +
+          'reautoriza la app: hay un permiso nuevo pendiente.');
         llamarConFallo_('generarPdf', [htmlFallback, nombre],
           function (r) { fin(); entregarPdf_(r.b64, r.nombre, win); },
           function (err) { fin(); if (win) win.close(); aviso('No se pudo generar el PDF: ' + err); });
