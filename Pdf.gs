@@ -38,21 +38,33 @@ var Pdf = (function () {
 
   function generarDoc_(payload, nombre) {
     nombre = san_(nombre);
-    var id = null;
+    var id = null, paso = 'inicio';
     try {
+      paso = 'crear';
       var doc = DocumentApp.create('EvaluAnda tmp ' + Date.now());
       id = doc.getId();
       var body = doc.getBody();
       body.setMarginTop(26).setMarginBottom(26).setMarginLeft(30).setMarginRight(30);
       if (payload.orientacion === 'landscape') { body.setPageWidth(842).setPageHeight(595); }
-      // Título en el primer párrafo (así no queda un vacío inicial).
-      styleP_(body.getChild(0).asParagraph().setText(payload.titulo || ''),
-        { bold: true, size: 18, color: '#111111', sa: 2 });
+      paso = 'titulo';
+      // Título con appendParagraph (no depende del primer hijo del cuerpo) y se
+      // quita el párrafo vacío inicial para no dejar un hueco arriba.
+      var vacio = body.getChild(0);
+      styleP_(body.appendParagraph(payload.titulo || ''), { bold: true, size: 18, color: '#111111', sa: 2 });
+      try {
+        if (vacio.getType() === DocumentApp.ElementType.PARAGRAPH && vacio.asParagraph().getText() === '') {
+          body.removeChild(vacio);
+        }
+      } catch (e0) {}
+      paso = 'meta';
       if (payload.meta) styleP_(body.appendParagraph(payload.meta), { size: 10, color: '#6b7280', sa: 6 });
       body.appendHorizontalRule();
+      paso = 'avisos';
       avisos_(body, payload.avisos || []);
+      paso = 'cuerpo';
       if (payload.tipo === 'semana') semana_(body, payload);
       else dia_(body, payload.tarjetas || []);
+      paso = 'guardar';
       doc.saveAndClose();
       // Export a PDF por la API de Drive (UrlFetch): más predecible bajo el
       // scope acotado drive.file que DriveApp.getAs.
@@ -66,7 +78,8 @@ var Pdf = (function () {
       }
       return { ok: true, b64: Utilities.base64Encode(resp.getBlob().getBytes()), nombre: nombre + '.pdf' };
     } catch (e) {
-      return { ok: false, error: (e && e.message) || String(e) };
+      // El prefijo «pdf4/paso» confirma qué versión corre y en qué punto falló.
+      return { ok: false, error: 'pdf4/' + paso + ': ' + ((e && e.message) || String(e)) };
     } finally {
       // Borra el Doc temporal (Drive API DELETE; no depende de DriveApp).
       if (id) {
