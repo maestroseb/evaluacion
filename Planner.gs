@@ -26,7 +26,9 @@
  * datos y aquí solo se hace la conversión. Devuelve el PDF en base64.
  */
 function generarPdf(html, nombre) {
-  nombre = String(nombre || 'planificacion').replace(/[^\w .\-]/g, '_').slice(0, 80);
+  // Se conservan letras (con acentos) y números; el resto → «_». El flag u + las
+  // clases \p{L}/\p{N} evitan que «José» acabe como «Jos_».
+  nombre = String(nombre || 'planificacion').replace(/[^\p{L}\p{N} .\-]/gu, '_').slice(0, 90);
   var pdf = Utilities.newBlob(String(html || ''), 'text/html', nombre + '.html').getAs('application/pdf');
   return { b64: Utilities.base64Encode(pdf.getBytes()), nombre: nombre + '.pdf' };
 }

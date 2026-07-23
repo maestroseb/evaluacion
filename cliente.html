@@ -7042,6 +7042,10 @@ var App = (function () {
       'Planificación copiada en Markdown: pégala donde quieras (documento, IA…).');
   }
 
+  /** Nombre del docente para el PDF y el nombre de archivo (perfil o correo). */
+  function docenteNombre_() {
+    return ((estado && (estado.nombre || estado.usuario)) || '').trim();
+  }
   var PDF_ESTILO_ = 'body{font-family:Arial,Helvetica,sans-serif;color:#111;margin:24px 28px}' +
     'h1{font-size:20px;margin:0 0 2px}.meta{color:#666;font-size:12px;margin:0 0 16px}' +
     'ul,ol{margin:4px 0;padding-left:20px}p{margin:0 0 4px}a{color:#5b5bd6}' +
@@ -7111,11 +7115,18 @@ var App = (function () {
       return tarjetaPdf_(b.en, b.col, sub, false);
     }).join('');
     var titulo = (DIAS_SEM[idx].charAt(0).toUpperCase() + DIAS_SEM[idx].slice(1)) + ', ' + fechaConAnio_(iso);
+    var doc = docenteNombre_();
     var html = '<html><head><meta charset="utf-8"><style>' + PDF_ESTILO_ + '</style></head><body>' +
       '<h1>' + esc(titulo) + '</h1>' +
-      '<div class="meta">' + esc(nombreApp_()) + ' · Planificación del día</div>' +
+      '<div class="meta">' + (doc ? esc(doc) + ' · ' : '') + esc(nombreApp_()) +
+        ' · Planificación del día</div>' +
       avisosPdf_(avisos) + cuerpo + '</body></html>';
-    generarPdfEnPestana_(html, 'Planificacion ' + iso);
+    generarPdfEnPestana_(html, nombreArchivoPdf_(doc, iso));
+  }
+
+  /** Nombre de archivo: «Docente - fecha» (o rango); el servidor lo sanea. */
+  function nombreArchivoPdf_(doc, fecha) {
+    return [doc, fecha].filter(Boolean).join(' - ') || 'Planificacion';
   }
 
   /** Abre lo planificado una semana como PDF apaisado (rejilla grupos × días). */
@@ -7159,15 +7170,17 @@ var App = (function () {
         ctx.isos.map(function (iso) { return celda(ctx.eventos[iso]); }).join('') + '</tr>';
     }
 
-    var rango = 'Semana del ' + fechaCorta_(ctx.isos[0]) + ' al ' + fechaCorta_(ctx.isos[ctx.isos.length - 1]);
+    var rangoCorto = fechaCorta_(ctx.isos[0]) + ' al ' + fechaCorta_(ctx.isos[ctx.isos.length - 1]);
+    var doc = docenteNombre_();
     var html = '<html><head><meta charset="utf-8"><style>' + PDF_ESTILO_ +
       '@page{size:landscape;margin:1cm}' + '</style></head><body>' +
-      '<h1>' + esc(rango) + '</h1>' +
-      '<div class="meta">' + esc(nombreApp_()) + ' · Planificación semanal</div>' +
+      '<h1>Semana del ' + esc(rangoCorto) + '</h1>' +
+      '<div class="meta">' + (doc ? esc(doc) + ' · ' : '') + esc(nombreApp_()) +
+        ' · Planificación semanal</div>' +
       avisosPdf_(ctx.avisos) +
       '<table width="100%" cellspacing="0" cellpadding="0" style="table-layout:fixed">' +
         cab + filas + '</table></body></html>';
-    generarPdfEnPestana_(html, 'Planificacion ' + ctx.isos[0] + ' semana');
+    generarPdfEnPestana_(html, nombreArchivoPdf_(doc, rangoCorto));
   }
 
   /**
