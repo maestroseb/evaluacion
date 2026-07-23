@@ -7046,6 +7046,10 @@ var App = (function () {
   function docenteNombre_() {
     return ((estado && (estado.nombre || estado.usuario)) || '').trim();
   }
+  /** Color hex válido para el Doc (los CSS var / vacíos caen al acento). */
+  function hexColor_(c) {
+    return /^#[0-9a-f]{3,8}$/i.test(c || '') ? c : '#5b5bd6';
+  }
   var PDF_ESTILO_ = 'body{font-family:Arial,Helvetica,sans-serif;color:#111;margin:24px 28px}' +
     'h1{font-size:21px;margin:0 0 3px;letter-spacing:-.2px}' +
     '.meta{color:#6b7280;font-size:12px;margin:0 0 14px;padding-bottom:12px;' +
@@ -7134,12 +7138,25 @@ var App = (function () {
     }).join('');
     var titulo = (DIAS_SEM[idx].charAt(0).toUpperCase() + DIAS_SEM[idx].slice(1)) + ', ' + fechaConAnio_(iso);
     var doc = docenteNombre_();
+    var meta = (doc ? doc + ' · ' : '') + nombreApp_() + ' · Planificación del día';
+    // HTML de respaldo (conversor viejo: bordes, sin relleno).
     var html = '<html><head><meta charset="utf-8"><style>' + PDF_ESTILO_ + '</style></head><body>' +
       '<h1>' + esc(titulo) + '</h1>' +
-      '<div class="meta">' + (doc ? esc(doc) + ' · ' : '') + esc(nombreApp_()) +
-        ' · Planificación del día</div>' +
+      '<div class="meta">' + esc(meta) + '</div>' +
       avisosPdf_(avisos) + cuerpo + '</body></html>';
-    generarPdfEnPestana_(html, nombreArchivoPdf_(doc, iso));
+    // Payload para el Doc (bandas de color rellenas, método principal).
+    var payload = { tipo: 'dia', orientacion: 'portrait', titulo: titulo, meta: meta,
+      avisos: avisos.map(function (en) {
+        return { titulo: en.ses.titulo || 'Aviso',
+          texto: htmlAtexto_(en.ses.descripcion || '').replace(/\n/g, ' ') };
+      }),
+      tarjetas: bloques.map(function (b) {
+        return { color: hexColor_(b.col), titulo: b.en.ses.titulo || 'Sin título',
+          hora: (b.hora && b.hora !== '~') ? b.hora : '', clase: b.clase,
+          desc: htmlAtexto_(b.en.ses.descripcion || ''),
+          obs: (b.en.asig && b.en.asig.observaciones) || '' };
+      }) };
+    abrirPdfDoc_(payload, html, nombreArchivoPdf_(doc, iso));
   }
 
   /** Nombre de archivo: «Docente - fecha» (o rango); el servidor lo sanea. */
@@ -7188,26 +7205,55 @@ var App = (function () {
     }
 
     var rangoCorto = fechaCorta_(ctx.isos[0]) + ' al ' + fechaCorta_(ctx.isos[ctx.isos.length - 1]);
+    var titulo = 'Semana del ' + rangoCorto;
     var doc = docenteNombre_();
+    var meta = (doc ? doc + ' · ' : '') + nombreApp_() + ' · Planificación semanal';
     var html = '<html><head><meta charset="utf-8"><style>' + PDF_ESTILO_ +
       '@page{size:landscape;margin:1cm}' + '</style></head><body>' +
-      '<h1>Semana del ' + esc(rangoCorto) + '</h1>' +
-      '<div class="meta">' + (doc ? esc(doc) + ' · ' : '') + esc(nombreApp_()) +
-        ' · Planificación semanal</div>' +
+      '<h1>' + esc(titulo) + '</h1>' +
+      '<div class="meta">' + esc(meta) + '</div>' +
       avisosPdf_(ctx.avisos) +
       '<table width="100%" cellspacing="0" cellpadding="0" style="table-layout:fixed">' +
         cab + filas + '</table></body></html>';
-    generarPdfEnPestana_(html, nombreArchivoPdf_(doc, rangoCorto));
+    // Payload para el Doc apaisado (celdas de color rellenas).
+    var cardsDe = function (ens) {
+      return (ens || []).map(function (en) {
+        var a = en.asig, tipo = en.ses.tipo || 'clase';
+        var col = (tipo === 'clase' && a && a.evalId) ? colorClase_(a.evalId) : '#6b7280';
+        return { color: hexColor_(col), titulo: en.ses.titulo || 'Sin título',
+          desc: htmlAtexto_(en.ses.descripcion || '').replace(/\n/g, ' ') };
+      });
+    };
+    var pFilas = clases.map(function (c) {
+      return { etq: etiquetaClase_(c.id),
+        celdas: ctx.isos.map(function (iso) { return cardsDe(ctx.porClaseFecha[c.id + '|' + iso]); }) };
+    });
+    if (hayEv) {
+      pFilas.push({ etq: 'Otros',
+        celdas: ctx.isos.map(function (iso) { return cardsDe(ctx.eventos[iso]); }) });
+    }
+    var payload = { tipo: 'semana', orientacion: 'landscape', titulo: titulo, meta: meta,
+      dias: ctx.isos.map(function (iso, i) { return DIAS_SEM[i].slice(0, 3) + ' ' + fechaCorta_(iso); }),
+      avisos: ctx.avisos.map(function (en) {
+        return { titulo: en.ses.titulo || 'Aviso',
+          texto: htmlAtexto_(en.ses.descripcion || '').replace(/\n/g, ' ') };
+      }),
+      filas: pFilas };
+    abrirPdfDoc_(payload, html, nombreArchivoPdf_(doc, rangoCorto));
   }
 
   /**
-   * Genera el PDF en el servidor y lo abre en una PESTAÑA NUEVA (solo PC). En
-   * móvil NO se abre pestaña: en iOS, salir a otra pestaña recarga la web app
+   * Genera el PDF y lo abre en PESTAÑA NUEVA (solo PC). Método principal: Google
+   * Doc con celdas de color rellenas (estilo Planboard); si falla (p. ej. antes
+   * de reautorizar el nuevo permiso), cae al conversor HTML de bordes para no
+   * dejar sin exportación.
+   *
+   * En móvil NO se abre pestaña: en iOS, salir a otra pestaña recarga la web app
    * al volver; allí se usa el compartir nativo (que además va bien para
    * WhatsApp). La pestaña de PC se abre YA (en el clic) con un «generando…»
    * para que el bloqueador no la corte; al llegar el PDF se navega a su blob.
    */
-  function generarPdfEnPestana_(html, nombre) {
+  function abrirPdfDoc_(payload, htmlFallback, nombre) {
     var win = null;
     if (!esMovil()) {
       try { win = window.open('', '_blank'); } catch (e) {}
@@ -7219,15 +7265,14 @@ var App = (function () {
     var btn = document.querySelector('#vista-planner .acciones-seccion .btn');
     var prev = btn ? btn.innerHTML : '';
     if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-inline"></span>'; }
-    llamarConFallo_('generarPdf', [html, nombre],
-      function (r) {
-        if (btn) { btn.disabled = false; btn.innerHTML = prev; }
-        entregarPdf_(r.b64, r.nombre, win);
-      },
-      function (err) {
-        if (btn) { btn.disabled = false; btn.innerHTML = prev; }
-        if (win) win.close();
-        aviso('No se pudo generar el PDF: ' + err);
+    var fin = function () { if (btn) { btn.disabled = false; btn.innerHTML = prev; } };
+    llamarConFallo_('generarPdfDoc', [payload, nombre],
+      function (r) { fin(); entregarPdf_(r.b64, r.nombre, win); },
+      function () {
+        // Respaldo: conversor HTML (bordes, sin relleno) si el Doc no se pudo.
+        llamarConFallo_('generarPdf', [htmlFallback, nombre],
+          function (r) { fin(); entregarPdf_(r.b64, r.nombre, win); },
+          function (err) { fin(); if (win) win.close(); aviso('No se pudo generar el PDF: ' + err); });
       });
   }
 
