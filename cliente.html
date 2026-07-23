@@ -7048,32 +7048,35 @@ var App = (function () {
     'table{border-collapse:separate}';
 
   /**
-   * Tarjeta de sesión para el PDF. La banda de color va en un <td bgcolor> (no
-   * en CSS background): la conversión HTML→PDF de Google respeta el atributo
-   * bgcolor pero descarta los fondos por CSS —por eso el PDF salía sin color—.
+   * Tarjeta de sesión para el PDF. El color de la sesión se marca con un BORDE
+   * IZQUIERDO grueso y con el subtítulo en ese color: la conversión HTML→PDF de
+   * Google descarta los fondos (CSS background y bgcolor), pero respeta los
+   * bordes y el color del texto —por eso antes salía sin color—.
    */
   function tarjetaPdf_(en, col, sub, compacta) {
     var s = en.ses, a = en.asig;
-    var pt = compacta ? '5px 8px' : '8px 12px';
+    col = col || '#5b5bd6';
+    var pad = compacta ? '5px 4px 5px 8px' : '8px 12px';
     var fs = compacta ? '12px' : '15px';
     var desc = compacta ? '' : descInicialHtml_(s.descripcion || '');
     var obs = (!compacta && a && a.observaciones)
       ? '<div style="margin-top:6px;font-style:italic;color:#555">Obs.: ' + esc(a.observaciones) + '</div>' : '';
     var cuerpo = (desc || obs)
-      ? '<tr><td style="padding:9px 12px;font-size:13px;color:#222;border:1px solid #e5e7eb;border-top:0">' +
-          desc + obs + '</td></tr>' : '';
-    return '<table width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 10px">' +
-      '<tr><td bgcolor="' + (col || '#5b5bd6') + '" style="color:#fff;padding:' + pt + '">' +
-        '<div style="font-weight:700;font-size:' + fs + '">' + esc(s.titulo || 'Sin título') + '</div>' +
-        (sub ? '<div style="font-size:11px">' + sub + '</div>' : '') +
-      '</td></tr>' + cuerpo + '</table>';
+      ? '<div style="margin-top:6px;font-size:13px;color:#222">' + desc + obs + '</div>' : '';
+    return '<table width="100%" cellspacing="0" cellpadding="0" ' +
+      'style="border-collapse:collapse;margin:0 0 10px">' +
+      '<tr><td style="border:1px solid #e5e7eb;border-left:6px solid ' + col + ';padding:' + pad + '">' +
+        '<div style="font-weight:700;font-size:' + fs + ';color:#111">' + esc(s.titulo || 'Sin título') + '</div>' +
+        (sub ? '<div style="font-size:11px;color:' + col + ';font-weight:600">' + sub + '</div>' : '') +
+        cuerpo +
+      '</td></tr></table>';
   }
 
   function avisosPdf_(avisos) {
     if (!avisos.length) return '';
-    return '<table width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 14px">' +
-      '<tr><td bgcolor="#fff8e1" style="border:1px solid #f0c000;padding:9px 12px">' +
-      '<div style="font-weight:700;font-size:13px;margin-bottom:4px">No olvidar</div>' +
+    return '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin:0 0 14px">' +
+      '<tr><td style="border:1px solid #f0c000;border-left:6px solid #f0c000;padding:9px 12px">' +
+      '<div style="font-weight:700;font-size:13px;margin-bottom:4px;color:#8a6d10">No olvidar</div>' +
       avisos.map(function (en) {
         return '<div style="font-size:13px">• ' + esc(en.ses.titulo || 'Aviso') +
           (en.ses.descripcion ? ' — ' + esc(htmlAtexto_(en.ses.descripcion).replace(/\n/g, ' ')) : '') + '</div>';
@@ -7138,8 +7141,8 @@ var App = (function () {
           var a = en.asig, tipo = en.ses.tipo || 'clase';
           var col = (tipo === 'clase' && a && a.evalId) ? colorClase_(a.evalId) : '#6b7280';
           var desc = htmlAtexto_(en.ses.descripcion || '').replace(/\n/g, ' ');
-          return tarjetaPdf_(en, col, '', true) +
-            (desc ? '<div style="font-size:10px;color:#444;margin:-6px 0 8px">' + esc(desc) + '</div>' : '');
+          var sub = desc ? '<span style="color:#444;font-weight:400">' + esc(desc) + '</span>' : '';
+          return tarjetaPdf_(en, col, sub, true);
         }).join('') + '</td>';
     };
 
@@ -7168,17 +7171,20 @@ var App = (function () {
   }
 
   /**
-   * Genera el PDF en el servidor y lo abre en una PESTAÑA NUEVA. La pestaña se
-   * abre YA (en el clic) con un aviso de «generando», para que el bloqueador de
-   * ventanas no la corte; al llegar el PDF se navega a su blob. Si el navegador
-   * la bloquea, se cae a compartir/descargar.
+   * Genera el PDF en el servidor y lo abre en una PESTAÑA NUEVA (solo PC). En
+   * móvil NO se abre pestaña: en iOS, salir a otra pestaña recarga la web app
+   * al volver; allí se usa el compartir nativo (que además va bien para
+   * WhatsApp). La pestaña de PC se abre YA (en el clic) con un «generando…»
+   * para que el bloqueador no la corte; al llegar el PDF se navega a su blob.
    */
   function generarPdfEnPestana_(html, nombre) {
     var win = null;
-    try { win = window.open('', '_blank'); } catch (e) {}
-    if (win) {
-      win.document.write('<!doctype html><meta charset="utf-8"><title>Generando PDF…</title>' +
-        '<body style="font-family:Arial,sans-serif;color:#555;padding:28px">Generando PDF…</body>');
+    if (!esMovil()) {
+      try { win = window.open('', '_blank'); } catch (e) {}
+      if (win) {
+        win.document.write('<!doctype html><meta charset="utf-8"><title>Generando PDF…</title>' +
+          '<body style="font-family:Arial,sans-serif;color:#555;padding:28px">Generando PDF…</body>');
+      }
     }
     var btn = document.querySelector('#vista-planner .acciones-seccion .btn');
     var prev = btn ? btn.innerHTML : '';
