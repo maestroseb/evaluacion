@@ -2,15 +2,16 @@
  * Generación de PDF con Google Docs.
  *
  * El conversor HTML→PDF de Apps Script descarta los rellenos de color, así que
- * para conseguir las bandas de color (estilo Planboard) construimos un Google
- * Doc temporal con celdas de tabla con color de fondo nativo —que sí se
- * exportan a PDF y paginan solas—, lo exportamos a PDF y lo borramos.
+ * para conseguir las bandas de color (estilo Planboard) usamos un Google Doc
+ * con celdas de tabla con color de fondo nativo —que sí se exportan a PDF y
+ * paginan solas—. Se reutiliza un único Doc «borrador» por profesor (se limpia
+ * y reescribe) y se exporta por la URL de descarga de Docs.
  *
  * El cliente envía un `payload` con la estructura ya resuelta (colores, textos),
  * de modo que este módulo solo maqueta. Pensado para reutilizarse en informes.
  *
- * Requiere el scope documents (crear/editar Docs); el Doc temporal lo maneja
- * DriveApp bajo drive.file (es un archivo creado por la app).
+ * Solo necesita el scope documents (crear/editar el Doc) + drive.file (que ya
+ * usa la app); NO usa el permiso amplio de Drive ni la Drive API REST.
  */
 function generarPdfDoc(payload, nombre) {
   return Pdf.generarDoc_(payload || {}, nombre);
@@ -38,14 +39,19 @@ var Pdf = (function () {
 
   function generarDoc_(payload, nombre) {
     nombre = san_(nombre);
-    var id = null, paso = 'inicio';
+    var paso = 'inicio';
     try {
       paso = 'crear';
-      var doc = DocumentApp.create('EvaluAnda tmp ' + Date.now());
-      id = doc.getId();
-      var body = doc.getBody();
+      // Un único Doc «borrador» reutilizable por profesor: así no hay que borrar
+      // un temporal en cada exportación (borrar exigiría el permiso amplio de
+      // Drive). Se limpia y se reescribe.
+      var doc = docBorrador_();
+      var id = doc.getId();
+      var body = doc.getBody().clear();
       body.setMarginTop(26).setMarginBottom(26).setMarginLeft(30).setMarginRight(30);
+      // Orientación explícita cada vez (el Doc se reutiliza): A4 vertical/apaisado.
       if (payload.orientacion === 'landscape') { body.setPageWidth(842).setPageHeight(595); }
+      else { body.setPageWidth(595).setPageHeight(842); }
       paso = 'titulo';
       // Título con appendParagraph (no depende del primer hijo del cuerpo) y se
       // quita el párrafo vacío inicial para no dejar un hueco arriba.
@@ -67,17 +73,41 @@ var Pdf = (function () {
       paso = 'guardar';
       doc.saveAndClose();
       paso = 'export';
-      // Export con DriveApp (servicio integrado): a diferencia de la Drive API
-      // REST, NO requiere habilitar la API en el proyecto de Cloud, y accede al
-      // Doc porque lo creó la propia app (scope drive.file).
-      var pdf = DriveApp.getFileById(id).getAs('application/pdf');
-      return { ok: true, b64: Utilities.base64Encode(pdf.getBytes()), nombre: nombre + '.pdf' };
+      // Export por la URL de descarga de Google Docs (la del menú «Descargar
+      // como PDF»): va con el token del usuario y NO usa la Drive API REST (no
+      // hay que habilitarla) ni DriveApp.getFileById (que exige el permiso
+      // amplio de Drive). Basta con documents / drive.file sobre el propio Doc.
+      var resp = UrlFetchApp.fetch(
+        'https://docs.google.com/document/d/' + id + '/export?format=pdf',
+        { headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() },
+          muteHttpExceptions: true, followRedirects: true });
+      var ct = String(resp.getHeaders()['Content-Type'] || resp.getHeaders()['content-type'] || '');
+      if (resp.getResponseCode() !== 200 || ct.indexOf('pdf') < 0) {
+        return { ok: false, error: 'export ' + resp.getResponseCode() + ' ct=' + ct + ' ' +
+          resp.getContentText().slice(0, 160) };
+      }
+      return { ok: true, b64: Utilities.base64Encode(resp.getBlob().getBytes()), nombre: nombre + '.pdf' };
     } catch (e) {
-      // El prefijo «pdf5/paso» confirma qué versión corre y en qué punto falló.
-      return { ok: false, error: 'pdf5/' + paso + ': ' + ((e && e.message) || String(e)) };
-    } finally {
-      if (id) { try { DriveApp.getFileById(id).setTrashed(true); } catch (e2) {} }
+      // El prefijo «pdf6/paso» confirma qué versión corre y en qué punto falló.
+      return { ok: false, error: 'pdf6/' + paso + ': ' + ((e && e.message) || String(e)) };
     }
+  }
+
+  /**
+   * Doc «borrador» reutilizable por profesor (id en las propiedades del usuario).
+   * Reutilizarlo evita tener que borrar un temporal en cada exportación —borrar
+   * exigiría el permiso amplio de Drive—. Si el guardado se perdió (el profe lo
+   * borró), se crea de nuevo.
+   */
+  function docBorrador_() {
+    var props = PropertiesService.getUserProperties();
+    var id = props.getProperty('pdfBorradorId');
+    if (id) {
+      try { var d = DocumentApp.openById(id); d.getBody(); return d; } catch (e) {}
+    }
+    var doc = DocumentApp.create('EvaluAnda — PDF (borrador, no borrar)');
+    props.setProperty('pdfBorradorId', doc.getId());
+    return doc;
   }
 
   /** Primer párrafo de una celda creada con texto (getChild(0) ya existe). */
