@@ -10,16 +10,26 @@
  *   - nota final = media de las notas globales de criterio.
  */
 
-function getResumen(evalId) {
-  return Resumen.calcular_(abrirCuaderno_(), evalId);
+function getResumen(evalId, unidadIds) {
+  return Resumen.calcular_(abrirCuaderno_(), evalId, unidadIds);
 }
 
 var Resumen = (function () {
 
-  function calcular_(ss, evalId) {
+  function calcular_(ss, evalId, unidadIds) {
     var ev = Evaluaciones.obtener_(ss, evalId);
     var alumnos = ev.clase.alumnos;
-    var unidades = Unidades.listar_(ss, evalId);
+    // Todas las unidades (para el selector) y las que entran en las medias: si
+    // se recibe una selección, se filtra a esas; si queda vacía o no llega, van
+    // todas. TODO el cálculo posterior usa `unidades` (las seleccionadas).
+    var unidadesTodas = Unidades.listar_(ss, evalId);
+    var unidades = unidadesTodas;
+    if (unidadIds && unidadIds.length) {
+      var sel = {};
+      unidadIds.forEach(function (id) { sel[id] = true; });
+      var filtradas = unidadesTodas.filter(function (u) { return sel[u.unidadId]; });
+      if (filtradas.length) unidades = filtradas;
+    }
 
     var propias = MapaPropio.filas_(ss);
     var criteriosInfo = {};
@@ -125,6 +135,7 @@ var Resumen = (function () {
       claseNombre: ev.clase.nombre,
       alumnos: alumnos,
       unidades: unidades.map(function (u) { return { unidadId: u.unidadId, nombre: u.nombre }; }),
+      unidadesTodas: unidadesTodas.map(function (u) { return { unidadId: u.unidadId, nombre: u.nombre }; }),
       criterios: Object.keys(critsUsados).sort(cmpCodigo_),
       criteriosInfo: criteriosInfo,
       unidadNota: unidadNota,
