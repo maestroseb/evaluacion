@@ -29,6 +29,7 @@ var Pdf = (function () {
     o = o || {};
     var t = p.editAsText();
     if (o.color) t.setForegroundColor(o.color);
+    if (o.hi) t.setBackgroundColor(o.hi); // resaltado del texto (highlight)
     if (o.bold != null) t.setBold(o.bold);
     if (o.italic) t.setItalic(true);
     if (o.size) t.setFontSize(o.size);
@@ -168,11 +169,14 @@ var Pdf = (function () {
         var cell = r.appendTableCell(tiene ? (cards[0].titulo || 'Sin título') : '');
         cell.setPaddingTop(4).setPaddingBottom(4).setPaddingLeft(6).setPaddingRight(6);
         if (tiene) {
-          cell.setBackgroundColor(cards[0].color || '#5b5bd6');
-          styleP_(pCelda_(cell), { bold: true, size: 9, color: BLANCO });
-          if (cards[0].desc) styleP_(cell.appendParagraph(cards[0].desc), { size: 8, color: BLANCO });
+          // Celda BLANCA: el color va como resaltado SOLO del título (como una
+          // etiqueta/cabecera) y la descripción queda en texto normal debajo.
+          var col = cards[0].color || '#5b5bd6';
+          styleP_(pCelda_(cell), { bold: true, size: 9, color: BLANCO, hi: col });
+          if (cards[0].desc) styleP_(cell.appendParagraph(cards[0].desc), { size: 8, color: '#333333' });
           cards.slice(1).forEach(function (cd) {
-            styleP_(cell.appendParagraph(cd.titulo || 'Sin título'), { bold: true, size: 9, color: BLANCO });
+            styleP_(cell.appendParagraph(cd.titulo || 'Sin título'),
+              { bold: true, size: 9, color: BLANCO, hi: cd.color || '#5b5bd6' });
           });
         }
       });
