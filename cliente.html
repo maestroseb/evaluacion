@@ -4116,6 +4116,13 @@ var App = (function () {
     var cuerpo = document.getElementById('modal-cuerpo');
     cuerpo.innerHTML = cuerpoHtml;
     cuerpo.scrollTop = 0; // el cuerpo conserva el scroll del modal anterior: siempre arriba
+    // Privacidad en equipos compartidos: se desactiva el autocompletado del
+    // NAVEGADOR en los campos del modal (nombres de alumnado, títulos…), para
+    // que no ofrezca lo que otro profe tecleó antes en el mismo navegador. No
+    // afecta a los datos de la app (que viven aislados en el Drive de cada uno).
+    [].forEach.call(cuerpo.querySelectorAll('input, textarea'), function (el) {
+      el.setAttribute('autocomplete', 'off');
+    });
     var b = document.getElementById('modal-aceptar');
     b.textContent = textoAceptar; b.disabled = false;
     // Texto del botón secundario (por defecto «Cancelar»; el editor de sesión,
