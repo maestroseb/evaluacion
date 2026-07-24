@@ -135,12 +135,15 @@ var Pdf = (function () {
       var col = c.color || '#5b5bd6';
       var t = body.appendTable(); t.setBorderWidth(0);
       var row = t.appendTableRow();
-      var cA = row.appendTableCell(c.titulo || 'Sin título');
+      // La CLASE en grande y, debajo, el título de la sesión más pequeño.
+      var principal = c.clase || c.titulo || 'Sin título';
+      var secundario = c.clase ? c.titulo : '';
+      var cA = row.appendTableCell(principal);
       var cB = row.appendTableCell(c.hora || ' ');
       cA.setBackgroundColor(col).setPaddingTop(7).setPaddingBottom(7).setPaddingLeft(12).setPaddingRight(6);
       cB.setBackgroundColor(col).setPaddingTop(7).setPaddingBottom(7).setPaddingLeft(6).setPaddingRight(12);
       styleP_(pCelda_(cA), { bold: true, size: 13, color: BLANCO });
-      if (c.clase) styleP_(cA.appendParagraph(c.clase), { size: 10, color: BLANCO });
+      if (secundario) styleP_(cA.appendParagraph(secundario), { size: 10, color: BLANCO });
       styleP_(pCelda_(cB), { bold: true, size: 11, color: BLANCO, align: DocumentApp.HorizontalAlignment.RIGHT });
       try { t.setColumnWidth(1, 96); } catch (e) {}
       if (c.desc) styleP_(body.appendParagraph(c.desc), { bold: false, size: 11, color: '#333333', sb: 4 });
@@ -152,12 +155,15 @@ var Pdf = (function () {
 
   /** Vista Semana: rejilla clases × días con celdas de color por sesión. */
   function semana_(body, p) {
-    var t = body.appendTable(); t.setBorderWidth(0.5); t.setBorderColor('#e5e7eb');
+    var t = body.appendTable();
+    // Bordes en BLANCO: sin líneas visibles (aire premium), y así la cabecera de
+    // color y su descripción se ven como un bloque continuo.
+    t.setBorderWidth(1).setBorderColor('#ffffff');
     var hr = t.appendTableRow();
     styleP_(pCelda_(hr.appendTableCell(' ')), { size: 9 });
     (p.dias || []).forEach(function (d) {
       var c = hr.appendTableCell(d || ' ');
-      c.setPaddingTop(3).setPaddingBottom(4).setPaddingLeft(5).setPaddingRight(5);
+      c.setPaddingTop(3).setPaddingBottom(6).setPaddingLeft(5).setPaddingRight(5);
       styleP_(pCelda_(c), { bold: true, size: 9, color: '#374151' });
     });
     // Cada clase ocupa DOS filas: la de arriba con la cabecera de color (título)
@@ -190,6 +196,20 @@ var Pdf = (function () {
         if (desc) styleP_(pCelda_(cD), { bold: false, size: 8, color: '#333333' });
       });
     });
+    // Anchos: 1ª columna al ancho (mínimo) del nombre de clase más largo; las
+    // columnas de día se reparten el resto de la página a partes iguales.
+    var nDias = (p.dias || []).length;
+    if (nDias) {
+      var maxCh = 6;
+      (p.filas || []).forEach(function (f) { maxCh = Math.max(maxCh, String(f.etq || '').length); });
+      var ancho = (p.orientacion === 'landscape' ? 842 : 595) - 60; // menos márgenes (30+30)
+      var w0 = Math.min(170, Math.max(70, Math.round(maxCh * 5.4) + 14));
+      var wd = Math.max(60, Math.floor((ancho - w0) / nDias));
+      try {
+        t.setColumnWidth(0, w0);
+        for (var i = 1; i <= nDias; i++) t.setColumnWidth(i, wd);
+      } catch (e) {}
+    }
   }
 
   return { generarDoc_: generarDoc_ };
