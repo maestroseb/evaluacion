@@ -143,8 +143,9 @@ var Pdf = (function () {
       if (c.clase) styleP_(cA.appendParagraph(c.clase), { size: 10, color: BLANCO });
       styleP_(pCelda_(cB), { bold: true, size: 11, color: BLANCO, align: DocumentApp.HorizontalAlignment.RIGHT });
       try { t.setColumnWidth(1, 96); } catch (e) {}
-      if (c.desc) styleP_(body.appendParagraph(c.desc), { size: 11, color: '#333333', sb: 4 });
-      if (c.obs) styleP_(body.appendParagraph('Obs.: ' + c.obs), { size: 10, color: '#666666', italic: true });
+      if (c.desc) styleP_(body.appendParagraph(c.desc), { bold: false, size: 11, color: '#333333', sb: 4 });
+      if (c.obs) styleP_(body.appendParagraph('Obs.: ' + c.obs),
+        { bold: false, size: 10, color: '#666666', italic: true });
       styleP_(body.appendParagraph(''), { size: 6 });
     });
   }
@@ -159,26 +160,34 @@ var Pdf = (function () {
       c.setPaddingTop(3).setPaddingBottom(4).setPaddingLeft(5).setPaddingRight(5);
       styleP_(pCelda_(c), { bold: true, size: 9, color: '#374151' });
     });
+    // Cada clase ocupa DOS filas: la de arriba con la cabecera de color (título)
+    // y la de abajo, en blanco, con la descripción. Así el color va a todo el
+    // ancho de la celda (una celda de Docs solo admite un color de fondo).
     (p.filas || []).forEach(function (fila) {
-      var r = t.appendTableRow();
-      var cl = r.appendTableCell(fila.etq || ' ');
-      cl.setPaddingTop(5).setPaddingBottom(5).setPaddingLeft(4).setPaddingRight(6);
-      styleP_(pCelda_(cl), { bold: true, size: 9, color: '#111111' });
+      var rT = t.appendTableRow(); // fila de títulos (con color)
+      var rD = t.appendTableRow(); // fila de descripciones (en blanco)
+      var clT = rT.appendTableCell(fila.etq || ' ');
+      clT.setPaddingTop(5).setPaddingBottom(2).setPaddingLeft(4).setPaddingRight(6);
+      styleP_(pCelda_(clT), { bold: true, size: 9, color: '#111111' });
+      var clD = rD.appendTableCell(' ');
+      clD.setPaddingTop(0).setPaddingBottom(5).setPaddingLeft(4).setPaddingRight(6);
       (fila.celdas || []).forEach(function (cards) {
         var tiene = cards && cards.length;
-        var cell = r.appendTableCell(tiene ? (cards[0].titulo || 'Sin título') : '');
-        cell.setPaddingTop(4).setPaddingBottom(4).setPaddingLeft(6).setPaddingRight(6);
+        // Fila 1: título con fondo de color (banda a todo el ancho de la celda).
+        var cT = rT.appendTableCell(tiene ? (cards[0].titulo || 'Sin título') : '');
+        cT.setPaddingTop(4).setPaddingBottom(4).setPaddingLeft(6).setPaddingRight(6);
         if (tiene) {
-          // Celda BLANCA: el color va como resaltado SOLO del título (como una
-          // etiqueta/cabecera) y la descripción queda en texto normal debajo.
-          var col = cards[0].color || '#5b5bd6';
-          styleP_(pCelda_(cell), { bold: true, size: 9, color: BLANCO, hi: col });
-          if (cards[0].desc) styleP_(cell.appendParagraph(cards[0].desc), { size: 8, color: '#333333' });
+          cT.setBackgroundColor(cards[0].color || '#5b5bd6');
+          styleP_(pCelda_(cT), { bold: true, size: 9, color: BLANCO });
           cards.slice(1).forEach(function (cd) {
-            styleP_(cell.appendParagraph(cd.titulo || 'Sin título'),
-              { bold: true, size: 9, color: BLANCO, hi: cd.color || '#5b5bd6' });
+            styleP_(cT.appendParagraph(cd.titulo || 'Sin título'), { bold: true, size: 9, color: BLANCO });
           });
         }
+        // Fila 2: descripción en texto normal sobre blanco.
+        var desc = tiene ? cards.map(function (c) { return c.desc; }).filter(Boolean).join(' · ') : '';
+        var cD = rD.appendTableCell(desc);
+        cD.setPaddingTop(0).setPaddingBottom(4).setPaddingLeft(6).setPaddingRight(6);
+        if (desc) styleP_(pCelda_(cD), { bold: false, size: 8, color: '#333333' });
       });
     });
   }
