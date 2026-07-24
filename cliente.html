@@ -1705,16 +1705,91 @@ var App = (function () {
     document.getElementById('resumen-titulo').textContent = 'Resumen — ' + tituloEval(evalActual);
     document.getElementById('resumen-meta').textContent = '';
     document.getElementById('resumen-cont').innerHTML = spinner();
+    cargarResumen_();
+  }
+
+  /** Pide el resumen al servidor con la selección de unidades guardada (o todas). */
+  function cargarResumen_() {
+    var evalId = evalActual.evalId;
+    document.getElementById('resumen-cont').innerHTML = spinner();
     // El resumen lee las notas del servidor: primero guardamos lo pendiente.
     flushNotas(function () {
-      llamar('getResumen', [evalActual.evalId], function (r) {
+      llamar('getResumen', [evalId, resumenUdSel_(evalId)], function (r) {
         resumenData = r;
+        var nUsadas = (r.unidades || []).length, nTot = (r.unidadesTodas || r.unidades || []).length;
+        var udsTxt = (nUsadas < nTot) ? (nUsadas + ' de ' + nTot + ' unidades') : (nTot + ' unidades');
         document.getElementById('resumen-meta').textContent =
-          r.claseNombre + ' · ' + r.curso + ' · ' + r.alumnos.length + ' alumnos/as · ' +
-          r.unidades.length + ' unidades';
+          r.claseNombre + ' · ' + r.curso + ' · ' + r.alumnos.length + ' alumnos/as · ' + udsTxt;
+        actualizarBtnResumenUds_();
         pintarResumen();
       });
     });
+  }
+
+  // ---------- selección de unidades que entran en las medias (por clase) ----------
+  /** Ids seleccionados (localStorage), o null = todas. */
+  function resumenUdSel_(evalId) {
+    try {
+      var v = JSON.parse(localStorage.getItem('resumen-uds-' + evalId));
+      return (Array.isArray(v) && v.length) ? v : null;
+    } catch (e) { return null; }
+  }
+  /** Guarda la selección; si están TODAS marcadas, se borra la clave (= todas). */
+  function guardarResumenUdSel_(evalId, ids, total) {
+    try {
+      if (!ids.length || ids.length >= total) localStorage.removeItem('resumen-uds-' + evalId);
+      else localStorage.setItem('resumen-uds-' + evalId, JSON.stringify(ids));
+    } catch (e) {}
+  }
+  function actualizarBtnResumenUds_() {
+    var btn = document.getElementById('resumen-uds-btn');
+    if (!btn || !resumenData) return;
+    var nUsadas = (resumenData.unidades || []).length;
+    var nTot = (resumenData.unidadesTodas || resumenData.unidades || []).length;
+    btn.textContent = (nUsadas < nTot) ? ('Unidades (' + nUsadas + '/' + nTot + ') ▾') : 'Unidades ▾';
+  }
+  /** Abre/cierra el menú de unidades y lo puebla con las casillas. */
+  function toggleResumenUds(ev) {
+    if (ev) ev.stopPropagation();
+    var menu = document.getElementById('resumen-uds-menu');
+    if (!menu || !resumenData) return;
+    if (!menu.hidden) { menu.hidden = true; return; }
+    // Cerrar al pulsar fuera (como el menú de config del planificador).
+    setTimeout(function () { document.addEventListener('click', cerrarResumenUdsFuera_); }, 0);
+    var todas = resumenData.unidadesTodas || resumenData.unidades || [];
+    var usadas = {};
+    (resumenData.unidades || []).forEach(function (u) { usadas[u.unidadId] = true; });
+    menu.innerHTML =
+      '<div class="pcfg-group"><span class="pcfg-tit">Unidades en las medias</span>' +
+      '<div class="ru-acc"><button type="button" class="link" onclick="App.resumenUdsTodas(true)">Todas</button>' +
+      '<button type="button" class="link" onclick="App.resumenUdsTodas(false)">Ninguna</button></div>' +
+      todas.map(function (u) {
+        return '<label class="check ru-item"><input type="checkbox" class="ru-chk" value="' +
+          esc(u.unidadId) + '"' + (usadas[u.unidadId] ? ' checked' : '') +
+          ' onchange="App.resumenUdCambiada()"> ' + esc(u.nombre) + '</label>';
+      }).join('') + '</div>';
+    menu.hidden = false;
+  }
+  function cerrarResumenUdsFuera_(ev) {
+    if (ev && ev.target && ev.target.closest && ev.target.closest('.resumen-uds-wrap')) return;
+    var menu = document.getElementById('resumen-uds-menu');
+    if (menu) menu.hidden = true;
+    document.removeEventListener('click', cerrarResumenUdsFuera_);
+  }
+  /** Marca/desmarca todas las casillas del menú y aplica. */
+  function resumenUdsTodas(si) {
+    [].forEach.call(document.querySelectorAll('#resumen-uds-menu .ru-chk'), function (c) { c.checked = si; });
+    resumenUdCambiada();
+  }
+  /** Recoge la selección del menú, la guarda y recarga el resumen. */
+  function resumenUdCambiada() {
+    var todas = (resumenData && resumenData.unidadesTodas) || [];
+    var ids = [];
+    [].forEach.call(document.querySelectorAll('#resumen-uds-menu .ru-chk'), function (c) {
+      if (c.checked) ids.push(c.value);
+    });
+    guardarResumenUdSel_(evalActual.evalId, ids, todas.length);
+    cargarResumen_();
   }
 
   /** Cabecera compacta de un RA: "RA1" de "RA1: Recepciona…" (o el texto entero). */
@@ -7360,6 +7435,7 @@ var App = (function () {
     clonarUnidad: clonarUnidad, eliminarUnidad: eliminarUnidad,
     copiarSeneca: copiarSeneca, infoSeneca: infoSeneca,
     verResumen: verResumen, pintarResumen: pintarResumen, copiarResumenSeneca: copiarResumenSeneca,
+    toggleResumenUds: toggleResumenUds, resumenUdsTodas: resumenUdsTodas, resumenUdCambiada: resumenUdCambiada,
     nuevaActividad: nuevaActividad,
     editarActividadUI: editarActividadUI, eliminarActividadUI: eliminarActividadUI,
     duplicarActividadUI: duplicarActividadUI, variasActividades: variasActividades,
